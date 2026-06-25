@@ -8,8 +8,12 @@ const out = join(root, ".vercel/output");
 await mkdir(join(out, "static"), { recursive: true });
 await mkdir(join(out, "functions/ssr.func"), { recursive: true });
 
-// Static client assets
-await cp(join(root, "dist/client"), join(out, "static"), { recursive: true });
+// TanStack Start serves client assets at /_build/... (client.base default).
+// Copy dist/client → static/_build/ so the filesystem handler resolves them.
+await cp(join(root, "dist/client"), join(out, "static/_build"), { recursive: true });
+
+// Public folder assets (images, fonts, etc.) served at /...
+await cp(join(root, "public"), join(out, "static"), { recursive: true }).catch(() => null);
 
 // Bundled SSR server (self-contained with ssr.noExternal)
 await cp(
@@ -85,23 +89,15 @@ await writeFile(
   )
 );
 
-// Build Output API v3 — route static assets first, then SSR
+// Build Output API v3 routing.
+// filesystem handler serves /_build/... from static/_build/ and /assets/... from static/assets/
+// Everything else falls through to the SSR function.
 await writeFile(
   join(out, "config.json"),
   JSON.stringify(
     {
       version: 3,
       routes: [
-        {
-          src: "/_build/(.*)",
-          dest: "/static/_build/$1",
-          headers: { "Cache-Control": "public, max-age=31536000, immutable" },
-        },
-        {
-          src: "/assets/(.*)",
-          dest: "/static/assets/$1",
-          headers: { "Cache-Control": "public, max-age=31536000, immutable" },
-        },
         { handle: "filesystem" },
         { src: "/(.*)", dest: "/ssr" },
       ],
