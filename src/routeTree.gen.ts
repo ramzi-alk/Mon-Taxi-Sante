@@ -21,6 +21,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ReservationIndexRouteImport } from './routes/reservation/index'
 import { Route as BlogIndexRouteImport } from './routes/blog/index'
 import { Route as TableauDeBordChauffeurRouteImport } from './routes/tableau-de-bord/chauffeur'
+import { Route as ReservationConfirmationRouteImport } from './routes/reservation/confirmation'
 import { Route as ChauffeursTarifsRouteImport } from './routes/chauffeurs/tarifs'
 import { Route as ChauffeursInscriptionRouteImport } from './routes/chauffeurs/inscription'
 import { Route as BlogTransportCpamRouteImport } from './routes/blog/transport-cpam'
@@ -88,6 +89,11 @@ const TableauDeBordChauffeurRoute = TableauDeBordChauffeurRouteImport.update({
   path: '/tableau-de-bord/chauffeur',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReservationConfirmationRoute = ReservationConfirmationRouteImport.update({
+  id: '/reservation/confirmation',
+  path: '/reservation/confirmation',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ChauffeursTarifsRoute = ChauffeursTarifsRouteImport.update({
   id: '/chauffeurs/tarifs',
   path: '/chauffeurs/tarifs',
@@ -135,6 +141,7 @@ export interface FileRoutesByFullPath {
   '/blog/transport-cpam': typeof BlogTransportCpamRoute
   '/chauffeurs/inscription': typeof ChauffeursInscriptionRoute
   '/chauffeurs/tarifs': typeof ChauffeursTarifsRoute
+  '/reservation/confirmation': typeof ReservationConfirmationRoute
   '/tableau-de-bord/chauffeur': typeof TableauDeBordChauffeurRoute
   '/blog': typeof BlogIndexRoute
   '/reservation': typeof ReservationIndexRoute
@@ -155,6 +162,7 @@ export interface FileRoutesByTo {
   '/blog/transport-cpam': typeof BlogTransportCpamRoute
   '/chauffeurs/inscription': typeof ChauffeursInscriptionRoute
   '/chauffeurs/tarifs': typeof ChauffeursTarifsRoute
+  '/reservation/confirmation': typeof ReservationConfirmationRoute
   '/tableau-de-bord/chauffeur': typeof TableauDeBordChauffeurRoute
   '/blog': typeof BlogIndexRoute
   '/reservation': typeof ReservationIndexRoute
@@ -176,6 +184,7 @@ export interface FileRoutesById {
   '/blog/transport-cpam': typeof BlogTransportCpamRoute
   '/chauffeurs/inscription': typeof ChauffeursInscriptionRoute
   '/chauffeurs/tarifs': typeof ChauffeursTarifsRoute
+  '/reservation/confirmation': typeof ReservationConfirmationRoute
   '/tableau-de-bord/chauffeur': typeof TableauDeBordChauffeurRoute
   '/blog/': typeof BlogIndexRoute
   '/reservation/': typeof ReservationIndexRoute
@@ -198,6 +207,7 @@ export interface FileRouteTypes {
     | '/blog/transport-cpam'
     | '/chauffeurs/inscription'
     | '/chauffeurs/tarifs'
+    | '/reservation/confirmation'
     | '/tableau-de-bord/chauffeur'
     | '/blog'
     | '/reservation'
@@ -218,6 +228,7 @@ export interface FileRouteTypes {
     | '/blog/transport-cpam'
     | '/chauffeurs/inscription'
     | '/chauffeurs/tarifs'
+    | '/reservation/confirmation'
     | '/tableau-de-bord/chauffeur'
     | '/blog'
     | '/reservation'
@@ -238,6 +249,7 @@ export interface FileRouteTypes {
     | '/blog/transport-cpam'
     | '/chauffeurs/inscription'
     | '/chauffeurs/tarifs'
+    | '/reservation/confirmation'
     | '/tableau-de-bord/chauffeur'
     | '/blog/'
     | '/reservation/'
@@ -259,6 +271,7 @@ export interface RootRouteChildren {
   BlogTransportCpamRoute: typeof BlogTransportCpamRoute
   ChauffeursInscriptionRoute: typeof ChauffeursInscriptionRoute
   ChauffeursTarifsRoute: typeof ChauffeursTarifsRoute
+  ReservationConfirmationRoute: typeof ReservationConfirmationRoute
   TableauDeBordChauffeurRoute: typeof TableauDeBordChauffeurRoute
   BlogIndexRoute: typeof BlogIndexRoute
   ReservationIndexRoute: typeof ReservationIndexRoute
@@ -350,6 +363,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TableauDeBordChauffeurRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reservation/confirmation': {
+      id: '/reservation/confirmation'
+      path: '/reservation/confirmation'
+      fullPath: '/reservation/confirmation'
+      preLoaderRoute: typeof ReservationConfirmationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/chauffeurs/tarifs': {
       id: '/chauffeurs/tarifs'
       path: '/chauffeurs/tarifs'
@@ -411,6 +431,7 @@ const rootRouteChildren: RootRouteChildren = {
   BlogTransportCpamRoute: BlogTransportCpamRoute,
   ChauffeursInscriptionRoute: ChauffeursInscriptionRoute,
   ChauffeursTarifsRoute: ChauffeursTarifsRoute,
+  ReservationConfirmationRoute: ReservationConfirmationRoute,
   TableauDeBordChauffeurRoute: TableauDeBordChauffeurRoute,
   BlogIndexRoute: BlogIndexRoute,
   ReservationIndexRoute: ReservationIndexRoute,

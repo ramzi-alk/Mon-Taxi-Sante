@@ -1,0 +1,142 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { z } from "zod";
+import { CheckCircle2, MapPin, Calendar, ShieldCheck, Phone } from "lucide-react";
+import { supabase } from "~/lib/supabase";
+import { formatDateFr, formatTimeFr } from "~/lib/utils";
+import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
+
+const confirmationSearchSchema = z.object({
+  id: z.string(),
+});
+
+export const Route = createFileRoute("/reservation/confirmation")({
+  validateSearch: confirmationSearchSchema,
+  head: () => ({
+    meta: [
+      { title: "Réservation confirmée — Mon Taxi Santé" },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
+  component: ConfirmationPage,
+});
+
+const cpamLabels: Record<string, string> = {
+  ald: "ALD — 100% Sécurité Sociale",
+  cmu: "CMU-C — Prise en charge totale",
+  css: "CSS — Prise en charge totale",
+  standard: "Assuré standard (65% SS)",
+  none: "Frais personnels",
+};
+
+async function fetchBooking(id: string) {
+  const { data, error } = await supabase
+    .from("bookings")
+    .select(
+      "id, pickup_address, dropoff_address, pickup_datetime, cpam_status, status"
+    )
+    .eq("id", id)
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+function ConfirmationPage() {
+  const { id } = Route.useSearch();
+
+  const { data: booking, isLoading, isError } = useQuery({
+    queryKey: ["booking-confirmation", id],
+    queryFn: () => fetchBooking(id),
+  });
+
+  return (
+    <section className="bg-[#F7F8FC] min-h-[calc(100vh-4rem)]">
+      <div className="container py-16 md:py-24 max-w-xl">
+        <div className="flex flex-col items-center text-center mb-8">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-green-50 mb-5">
+            <CheckCircle2 className="h-9 w-9 text-brand-green-600" aria-hidden="true" />
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-[#0B0F1C]">
+            Réservation confirmée
+          </h1>
+          <p className="mt-3 text-gray-500 leading-relaxed">
+            Vous recevrez une confirmation par SMS et email. Un chauffeur
+            conventionné Assurance Maladie va accepter votre course.
+          </p>
+        </div>
+
+        {isLoading && (
+          <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-100 text-center text-muted-foreground">
+            Chargement du récapitulatif…
+          </div>
+        )}
+
+        {isError && (
+          <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-100 text-center text-muted-foreground">
+            Votre réservation a bien été enregistrée. Nous n&apos;avons pas pu
+            charger le récapitulatif détaillé, mais vous recevrez toutes les
+            informations par SMS et email.
+          </div>
+        )}
+
+        {booking && (
+          <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden">
+            <div className="bg-brand-blue-600 px-5 py-4 text-white">
+              <p className="text-sm font-medium opacity-80">
+                Référence réservation
+              </p>
+              <p className="text-lg font-bold mt-0.5">{booking.id}</p>
+            </div>
+            <div className="px-5">
+              <div className="flex items-start gap-3 py-3 border-b border-gray-100">
+                <MapPin className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" aria-hidden="true" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-muted-foreground">Trajet</p>
+                  <p className="font-medium text-gray-900 mt-0.5">
+                    {booking.pickup_address} → {booking.dropoff_address}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 py-3 border-b border-gray-100">
+                <Calendar className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" aria-hidden="true" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-muted-foreground">Date & heure</p>
+                  <p className="font-medium text-gray-900 mt-0.5">
+                    {formatDateFr(booking.pickup_datetime)} à{" "}
+                    {formatTimeFr(booking.pickup_datetime)}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 py-3">
+                <ShieldCheck className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" aria-hidden="true" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-muted-foreground">Prise en charge</p>
+                  <p className="font-medium text-gray-900 mt-0.5">
+                    {cpamLabels[booking.cpam_status] ?? booking.cpam_status}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+          <Link
+            to="/"
+            className="btn-cta inline-flex items-center justify-center gap-2 bg-[#0B0F1C] text-white hover:bg-[#1244E8] transition-colors"
+          >
+            Retour à l&apos;accueil
+          </Link>
+          <a
+            href={`tel:${CONTACT_PHONE_TEL}`}
+            className="btn-cta inline-flex items-center justify-center gap-2 border-2 border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50 transition-colors"
+          >
+            <Phone className="h-4 w-4" aria-hidden="true" />
+            {CONTACT_PHONE_DISPLAY}
+          </a>
+        </div>
+      </div>
+    </section>
+  );
+}

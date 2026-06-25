@@ -6,6 +6,7 @@ export interface PricingInput {
   vehicleType: "taxi" | "vsl" | "pmr";
   hasReturn: boolean;
   requiresWheelchair?: boolean;
+  cpamStatus: "ald" | "cmu" | "css" | "standard" | "none";
 }
 
 export interface PricingResult {
@@ -17,6 +18,16 @@ export interface PricingResult {
   cpamCoverage: number;
   patientShare: number;
 }
+
+// CPAM reimbursement rate by coverage status
+// ALD / CMU-C / CSS: intégralement pris en charge — standard: 65% — none: à la charge du patient
+const CPAM_RATES: Record<PricingInput["cpamStatus"], number> = {
+  ald: 1,
+  cmu: 1,
+  css: 1,
+  standard: 0.65,
+  none: 0,
+};
 
 // Tariff A (urban, day) — approximate 2024 values
 const TARIFFS = {
@@ -49,8 +60,7 @@ export function calculateCpamPrice(input: PricingInput): PricingResult {
   let subtotal = basePrice + distanceCharge + pmrSupplement;
   subtotal = Math.max(subtotal, tariff.minFare);
 
-  // CPAM covers 65% for standard; 100% for ALD/CMU (handled at booking level)
-  const cpamRate = 0.65;
+  const cpamRate = CPAM_RATES[input.cpamStatus];
   const returnDiscount = input.hasReturn ? subtotal * 0.1 : 0;
   const total = Math.max(subtotal - returnDiscount, tariff.minFare);
   const cpamCoverage = total * cpamRate;

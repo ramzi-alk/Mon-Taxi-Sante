@@ -84,6 +84,8 @@ export interface Booking {
   pmt_file_url: string | null;
   // Step 9 – Notes
   medical_notes: string | null;
+  // Step 10 – Consent
+  consent_accepted_at: string | null;
   // Computed
   estimated_price: number | null;
   status: BookingStatus;

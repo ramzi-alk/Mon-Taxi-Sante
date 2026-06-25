@@ -84,12 +84,12 @@ export function TrustBadges({ className }: TrustBadgesProps) {
           ))}
         </ul>
 
-        {/* Partner strip */}
+        {/* Compliance strip */}
         <div className="mt-10 flex flex-wrap items-center gap-5">
           <span className="text-xs font-bold tracking-[0.12em] text-gray-300 uppercase">
-            Reconnu par
+            Conformité
           </span>
-          {["Assurance Maladie", "ARS", "HDS"].map((org) => (
+          {["Conventionné Assurance Maladie", "Hébergement HDS", "RGPD"].map((org) => (
             <span
               key={org}
               className="rounded-full border border-gray-200 px-4 py-1.5 text-xs font-semibold text-gray-500"

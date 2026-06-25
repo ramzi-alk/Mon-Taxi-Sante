@@ -18,6 +18,7 @@ import { Step8PMT } from "./steps/Step8PMT";
 import { Step9Notes } from "./steps/Step9Notes";
 import { Step10Confirmation } from "./steps/Step10Confirmation";
 import { supabase } from "~/lib/supabase";
+import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
 
 const DEFAULT_VALUES: Partial<BookingSchema> = {
   patient_full_name: "",
@@ -45,6 +46,7 @@ const DEFAULT_VALUES: Partial<BookingSchema> = {
   pmt_declared: false,
   pmt_file: null,
   medical_notes: "",
+  consent: false,
 };
 
 async function submitBooking(data: BookingSchema) {
@@ -96,6 +98,7 @@ async function submitBooking(data: BookingSchema) {
       pmt_declared: data.pmt_declared,
       pmt_file_url: pmtFileUrl,
       medical_notes: data.medical_notes || null,
+      consent_accepted_at: new Date().toISOString(),
       status: "pending",
     })
     .select("id")
@@ -216,10 +219,10 @@ export function BookingForm() {
         <div className="mt-6 flex items-center justify-center gap-2 text-sm text-muted-foreground">
           <span>Besoin d&apos;aide pour remplir le formulaire&nbsp;?</span>
           <a
-            href="tel:+33800000000"
+            href={`tel:${CONTACT_PHONE_TEL}`}
             className="font-semibold text-brand-blue-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
           >
-            Appelez le 0800 000 000
+            Appelez le {CONTACT_PHONE_DISPLAY}
           </a>
         </div>
       </div>

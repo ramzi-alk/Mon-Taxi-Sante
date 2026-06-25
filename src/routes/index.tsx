@@ -10,7 +10,7 @@ import {
   Users,
 } from "lucide-react";
 import { TrustBadges } from "~/components/TrustBadges";
-import { Testimonials } from "~/components/Testimonials";
+import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -76,13 +76,6 @@ const conditions = [
   "Soins psychiatriques",
   "Maternité",
   "Urgences planifiées",
-];
-
-const stats = [
-  { value: "50 000+", label: "Patients transportés" },
-  { value: "98%", label: "Taux de ponctualité" },
-  { value: "1 200+", label: "Chauffeurs certifiés" },
-  { value: "4.9/5", label: "Note moyenne patients" },
 ];
 
 type HomeFaqBlock =
@@ -262,11 +255,11 @@ function HeroSection() {
                 <ArrowRight className="h-5 w-5" aria-hidden="true" />
               </Link>
               <a
-                href="tel:+33800000000"
+                href={`tel:${CONTACT_PHONE_TEL}`}
                 className="btn-cta inline-flex items-center justify-center gap-2 border-2 border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                aria-label="Appeler le 0800 000 000 (gratuit)"
+                aria-label={`Appeler le ${CONTACT_PHONE_DISPLAY} (gratuit)`}
               >
-                0800 000 000
+                {CONTACT_PHONE_DISPLAY}
               </a>
             </div>
 
@@ -351,31 +344,6 @@ function HeroSection() {
             </div>
           </div>
         </div>
-      </div>
-    </section>
-  );
-}
-
-function StatsSection() {
-  return (
-    <section className="bg-[#0B0F1C]" aria-labelledby="stats-heading">
-      <h2 id="stats-heading" className="sr-only">
-        Nos chiffres clés
-      </h2>
-      <div className="container py-14 md:py-16">
-        <ul
-          className="grid grid-cols-2 md:grid-cols-4 gap-8 list-none"
-          role="list"
-        >
-          {stats.map(({ value, label }) => (
-            <li key={label} className="text-center">
-              <p className="text-4xl md:text-5xl font-black text-white tracking-tight">
-                {value}
-              </p>
-              <p className="text-sm text-white/40 mt-2 font-medium">{label}</p>
-            </li>
-          ))}
-        </ul>
       </div>
     </section>
   );
@@ -604,10 +572,10 @@ function CtaBanner() {
               <ArrowRight className="h-5 w-5" aria-hidden="true" />
             </Link>
             <a
-              href="tel:+33800000000"
+              href={`tel:${CONTACT_PHONE_TEL}`}
               className="btn-cta inline-flex items-center justify-center gap-2 border-2 border-white/30 text-white hover:border-white/60 hover:bg-white/10 transition-colors"
             >
-              Ou appeler le 0800 000 000
+              Ou appeler le {CONTACT_PHONE_DISPLAY}
             </a>
           </div>
         </div>
@@ -627,7 +595,7 @@ function HomeStructuredData() {
         url: "https://mon-taxi-sante.fr",
         description:
           "Plateforme de réservation de taxis conventionnés agréés Sécurité Sociale pour le transport médical en France.",
-        telephone: "+33800000000",
+        telephone: CONTACT_PHONE_TEL,
         email: "contact@mon-taxi-sante.fr",
         areaServed: { "@type": "Country", name: "France" },
         serviceType: "Transport médical conventionné Assurance Maladie",
@@ -660,11 +628,9 @@ function HomePage() {
     <>
       <HomeStructuredData />
       <HeroSection />
-      <StatsSection />
       <TrustBadges />
       <HowItWorksSection />
       <ConditionsSection />
-      <Testimonials />
       <HomeFaqSection />
       <CtaBanner />
     </>

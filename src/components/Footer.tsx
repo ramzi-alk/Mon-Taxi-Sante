@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Phone, Mail, MapPin } from "lucide-react";
+import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL, CONTACT_EMAIL } from "~/lib/contact";
 
 const footerLinks = {
   services: [
@@ -11,7 +12,6 @@ const footerLinks = {
   professionnels: [
     { to: "/chauffeurs/inscription", label: "Devenir chauffeur partenaire" },
     { to: "/chauffeurs/tarifs", label: "Abonnements chauffeurs" },
-    { to: "/admin", label: "Espace admin" },
   ],
   ressources: [
     { to: "/blog", label: "Guides patients" },
@@ -43,20 +43,20 @@ export function Footer() {
             </p>
             <div className="space-y-2.5 text-sm">
               <a
-                href="tel:+33800000000"
+                href={`tel:${CONTACT_PHONE_TEL}`}
                 className="flex items-center gap-2 hover:text-white transition-colors"
-                aria-label="Nous appeler au 0800 000 000"
+                aria-label={`Nous appeler au ${CONTACT_PHONE_DISPLAY}`}
               >
                 <Phone className="h-4 w-4 text-[#1244E8]" aria-hidden="true" />
-                0800 000 000 (gratuit)
+                {CONTACT_PHONE_DISPLAY} (gratuit)
               </a>
               <a
-                href="mailto:contact@mon-taxi-sante.fr"
+                href={`mailto:${CONTACT_EMAIL}`}
                 className="flex items-center gap-2 hover:text-white transition-colors"
                 aria-label="Nous envoyer un email"
               >
                 <Mail className="h-4 w-4 text-[#1244E8]" aria-hidden="true" />
-                contact@mon-taxi-sante.fr
+                {CONTACT_EMAIL}
               </a>
               <span className="flex items-center gap-2">
                 <MapPin
