@@ -1,6 +1,7 @@
 import { UseFormReturn } from "react-hook-form";
 import { MapPin, Navigation, ArrowDown } from "lucide-react";
 import type { BookingSchema } from "../schema";
+import { AddressAutocomplete } from "../AddressAutocomplete";
 
 interface StepProps {
   form: UseFormReturn<BookingSchema>;
@@ -8,22 +9,26 @@ interface StepProps {
 
 export function Step2Route({ form }: StepProps) {
   const {
-    register,
     formState: { errors },
     setValue,
     watch,
+    trigger,
   } = form;
 
-  // In production: integrate Google Places Autocomplete here
-  // For now: plain text inputs with instructions
   const pickupAddress = watch("pickup_address");
   const dropoffAddress = watch("dropoff_address");
+  const pickupLat = watch("pickup_lat");
+  const pickupLng = watch("pickup_lng");
+  const dropoffLat = watch("dropoff_lat");
+  const dropoffLng = watch("dropoff_lng");
 
   function swapAddresses() {
-    const pickup = pickupAddress;
-    const dropoff = dropoffAddress;
-    setValue("pickup_address", dropoff);
-    setValue("dropoff_address", pickup);
+    setValue("pickup_address", dropoffAddress);
+    setValue("pickup_lat", dropoffLat);
+    setValue("pickup_lng", dropoffLng);
+    setValue("dropoff_address", pickupAddress);
+    setValue("dropoff_lat", pickupLat);
+    setValue("dropoff_lng", pickupLng);
   }
 
   return (
@@ -42,23 +47,26 @@ export function Step2Route({ form }: StepProps) {
           Adresse de départ{" "}
           <span className="text-red-500" aria-hidden="true">*</span>
         </label>
-        <div className="relative">
-          <Navigation
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-brand-blue-500"
-            aria-hidden="true"
-          />
-          <input
-            id="pickup_address"
-            type="text"
-            autoComplete="street-address"
-            placeholder="Ex : 15 Rue de la Paix, 75001 Paris"
-            aria-required="true"
-            aria-describedby={errors.pickup_address ? "pickup-error" : "pickup-hint"}
-            {...register("pickup_address")}
-            className="w-full rounded-xl border border-input bg-white pl-11 pr-4 py-3.5 text-base placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            aria-invalid={!!errors.pickup_address}
-          />
-        </div>
+        <AddressAutocomplete
+          id="pickup_address"
+          value={pickupAddress}
+          onChange={(val) => {
+            setValue("pickup_address", val);
+            setValue("pickup_lat", null);
+            setValue("pickup_lng", null);
+          }}
+          onSelect={(suggestion) => {
+            setValue("pickup_lat", suggestion.lat);
+            setValue("pickup_lng", suggestion.lng);
+            trigger("pickup_address");
+          }}
+          onBlur={() => trigger("pickup_address")}
+          placeholder="Ex : 15 Rue de la Paix, 75001 Paris"
+          icon={<Navigation className="h-5 w-5 text-brand-blue-500" aria-hidden="true" />}
+          ariaDescribedBy={errors.pickup_address ? "pickup-error" : "pickup-hint"}
+          ariaInvalid={!!errors.pickup_address}
+          ariaRequired
+        />
         <p id="pickup-hint" className="text-xs text-muted-foreground">
           Votre domicile ou autre lieu de prise en charge.
         </p>
@@ -89,22 +97,26 @@ export function Step2Route({ form }: StepProps) {
           Adresse de destination{" "}
           <span className="text-red-500" aria-hidden="true">*</span>
         </label>
-        <div className="relative">
-          <MapPin
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-red-500"
-            aria-hidden="true"
-          />
-          <input
-            id="dropoff_address"
-            type="text"
-            placeholder="Ex : Hôpital Lariboisière, Paris"
-            aria-required="true"
-            aria-describedby={errors.dropoff_address ? "dropoff-error" : "dropoff-hint"}
-            {...register("dropoff_address")}
-            className="w-full rounded-xl border border-input bg-white pl-11 pr-4 py-3.5 text-base placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            aria-invalid={!!errors.dropoff_address}
-          />
-        </div>
+        <AddressAutocomplete
+          id="dropoff_address"
+          value={dropoffAddress}
+          onChange={(val) => {
+            setValue("dropoff_address", val);
+            setValue("dropoff_lat", null);
+            setValue("dropoff_lng", null);
+          }}
+          onSelect={(suggestion) => {
+            setValue("dropoff_lat", suggestion.lat);
+            setValue("dropoff_lng", suggestion.lng);
+            trigger("dropoff_address");
+          }}
+          onBlur={() => trigger("dropoff_address")}
+          placeholder="Ex : Hôpital Lariboisière, Paris"
+          icon={<MapPin className="h-5 w-5 text-red-500" aria-hidden="true" />}
+          ariaDescribedBy={errors.dropoff_address ? "dropoff-error" : "dropoff-hint"}
+          ariaInvalid={!!errors.dropoff_address}
+          ariaRequired
+        />
         <p id="dropoff-hint" className="text-xs text-muted-foreground">
           Hôpital, clinique, cabinet médical, centre de dialyse…
         </p>
@@ -120,7 +132,7 @@ export function Step2Route({ form }: StepProps) {
         className="rounded-xl bg-gray-100 h-40 flex items-center justify-center text-muted-foreground text-sm border border-dashed border-gray-300"
         aria-hidden="true"
       >
-        <span>Aperçu du trajet (Google Maps)</span>
+        <span>Aperçu du trajet</span>
       </div>
     </div>
   );
