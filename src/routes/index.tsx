@@ -7,7 +7,6 @@ import {
   CheckCircle2,
   Car,
   Users,
-  ChevronRight,
 } from "lucide-react";
 import { TrustBadges } from "~/components/TrustBadges";
 import { Testimonials } from "~/components/Testimonials";
@@ -43,7 +42,6 @@ const howItWorksSteps = [
     title: "Réservez à l'avance",
     description:
       "Remplissez notre formulaire sécurisé en 5 minutes. Indiquez votre adresse, l'hôpital, et la date de votre rendez-vous.",
-    color: "bg-brand-blue-50 text-brand-blue-600",
   },
   {
     step: "02",
@@ -51,7 +49,6 @@ const howItWorksSteps = [
     title: "Confirmation immédiate",
     description:
       "Votre réservation est confirmée par SMS et email. Un chauffeur conventionné CPAM accepte votre course.",
-    color: "bg-brand-green-50 text-brand-green-600",
   },
   {
     step: "03",
@@ -59,7 +56,6 @@ const howItWorksSteps = [
     title: "Le chauffeur arrive à l'heure",
     description:
       "Le jour J, votre chauffeur vous attend à l'heure convenue. Ponctualité garantie pour vos rendez-vous médicaux.",
-    color: "bg-brand-blue-50 text-brand-blue-600",
   },
   {
     step: "04",
@@ -67,7 +63,6 @@ const howItWorksSteps = [
     title: "Zéro démarche administrative",
     description:
       "Le Tiers-Payant est géré directement. Vous ne payez rien. La facture part automatiquement à l'Assurance Maladie.",
-    color: "bg-brand-green-50 text-brand-green-600",
   },
 ];
 
@@ -92,51 +87,41 @@ const stats = [
 function HeroSection() {
   return (
     <section
-      className="relative overflow-hidden bg-gradient-to-br from-brand-blue-700 via-brand-blue-600 to-brand-blue-500 text-white"
+      className="bg-white"
       aria-labelledby="hero-heading"
     >
-      {/* Background pattern */}
-      <div
-        className="absolute inset-0 opacity-10"
-        style={{
-          backgroundImage:
-            "radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)",
-          backgroundSize: "60px 60px",
-        }}
-        aria-hidden="true"
-      />
-
-      <div className="container relative py-20 md:py-28 lg:py-32">
-        <div className="grid gap-12 lg:grid-cols-2 lg:gap-16 items-center">
+      <div className="container py-16 md:py-24 lg:py-28">
+        <div className="grid gap-12 lg:grid-cols-2 lg:gap-20 items-center">
           {/* Left: Copy */}
           <div className="animate-fade-in">
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/15 border border-white/20 px-4 py-1.5 text-sm font-medium mb-6 backdrop-blur-sm">
-              <span className="h-2 w-2 rounded-full bg-brand-green-400 animate-pulse" aria-hidden="true" />
-              Agréé Sécurité Sociale • Tiers-Payant
+            <div className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-1.5 text-sm font-medium text-gray-600 mb-8">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" aria-hidden="true" />
+              Agréé Sécurité Sociale · Tiers-Payant intégral
             </div>
 
             <h1
               id="hero-heading"
-              className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight mb-6"
+              className="text-5xl sm:text-6xl lg:text-[4.25rem] font-black tracking-tight leading-[1.05] text-[#0B0F1C] mb-6"
             >
-              Votre taxi médical.{" "}
-              <span className="text-brand-green-300">
-                Pris en charge à 100%.
+              Votre taxi<br />
+              médical.<br />
+              <span className="text-[#1244E8]">
+                Pris en charge<br />à 100%.
               </span>
             </h1>
 
-            <p className="text-xl text-blue-100 leading-relaxed mb-8 max-w-lg">
+            <p className="text-lg text-gray-500 leading-relaxed mb-8 max-w-md">
               Concentrez-vous sur votre santé — nous gérons la route et
               l&apos;administratif. Réservation en ligne 24h/24, chauffeurs
               certifiés CPAM, zéro avance de frais.
             </p>
 
-            {/* CTA buttons — oversized for accessibility */}
-            <div className="flex flex-col sm:flex-row gap-4">
+            {/* CTA buttons */}
+            <div className="flex flex-col sm:flex-row gap-3">
               <Link
                 to="/reservation"
-                className="btn-cta inline-flex items-center justify-center gap-2 bg-white text-brand-blue-700 hover:bg-blue-50 rounded-xl transition-colors shadow-lg shadow-blue-900/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-brand-blue-600"
+                className="btn-cta inline-flex items-center justify-center gap-2 bg-[#0B0F1C] text-white hover:bg-[#1244E8] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 aria-label="Réserver mon taxi médical maintenant"
               >
                 Réserver maintenant
@@ -144,84 +129,86 @@ function HeroSection() {
               </Link>
               <a
                 href="tel:+33800000000"
-                className="btn-cta inline-flex items-center justify-center gap-2 border-2 border-white/40 bg-white/10 hover:bg-white/20 rounded-xl transition-colors backdrop-blur-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-                aria-label="Nous appeler au 0800 000 000"
+                className="btn-cta inline-flex items-center justify-center gap-2 border-2 border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                aria-label="Appeler le 0800 000 000 (gratuit)"
               >
-                Appeler le 0800 000 000
+                0800 000 000
               </a>
             </div>
 
             {/* Micro-trust */}
             <ul
-              className="mt-8 flex flex-wrap gap-4 text-sm text-blue-100 list-none"
+              className="mt-8 flex flex-wrap gap-5 text-sm text-gray-400 list-none"
               aria-label="Garanties"
             >
               {[
-                "✓ Zéro avance de frais",
-                "✓ Confirmation par SMS",
-                "✓ Annulation gratuite 24h avant",
+                "Zéro avance de frais",
+                "Confirmation par SMS",
+                "Annulation gratuite 24h avant",
               ].map((item) => (
-                <li key={item}>{item}</li>
+                <li key={item} className="flex items-center gap-1.5">
+                  <span className="h-1 w-1 rounded-full bg-gray-300" aria-hidden="true" />
+                  {item}
+                </li>
               ))}
             </ul>
           </div>
 
           {/* Right: Booking preview card */}
           <div className="hidden lg:block">
-            <div className="rounded-2xl bg-white p-6 shadow-2xl shadow-blue-900/30 text-gray-900">
-              <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
-                Réservation rapide
-              </p>
+            <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-[0_4px_40px_rgba(0,0,0,0.07)]">
+              <div className="flex items-center justify-between mb-5">
+                <p className="font-bold text-[#0B0F1C] text-sm">Réservation rapide</p>
+                <span className="text-xs bg-emerald-50 text-emerald-700 font-semibold px-3 py-1 rounded-full">
+                  100% pris en charge
+                </span>
+              </div>
 
-              {/* Mock form preview */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-3 rounded-xl bg-gray-50 px-4 py-3">
-                  <MapPin className="h-5 w-5 text-brand-blue-500 shrink-0" aria-hidden="true" />
+              {/* Route */}
+              <div className="space-y-1">
+                <div className="flex items-center gap-3 rounded-xl bg-gray-50 px-4 py-3.5">
+                  <div className="h-2 w-2 rounded-full bg-[#1244E8] shrink-0" aria-hidden="true" />
                   <div>
-                    <p className="text-xs text-muted-foreground">Départ</p>
-                    <p className="text-sm font-medium">15 Rue de la Paix, Lyon</p>
+                    <p className="text-xs text-gray-400 font-medium">Départ</p>
+                    <p className="text-sm font-semibold text-[#0B0F1C]">15 Rue de la Paix, Lyon</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 rounded-xl bg-gray-50 px-4 py-3">
-                  <MapPin className="h-5 w-5 text-brand-green-500 shrink-0" aria-hidden="true" />
+                <div className="ml-[1.35rem] h-4 border-l-2 border-dashed border-gray-200" aria-hidden="true" />
+                <div className="flex items-center gap-3 rounded-xl bg-gray-50 px-4 py-3.5">
+                  <div className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" aria-hidden="true" />
                   <div>
-                    <p className="text-xs text-muted-foreground">Destination</p>
-                    <p className="text-sm font-medium">Hôpital Édouard Herriot</p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="flex items-center gap-3 rounded-xl bg-gray-50 px-4 py-3">
-                    <CalendarCheck className="h-5 w-5 text-brand-blue-500 shrink-0" aria-hidden="true" />
-                    <div>
-                      <p className="text-xs text-muted-foreground">Date</p>
-                      <p className="text-sm font-medium">Demain</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 rounded-xl bg-gray-50 px-4 py-3">
-                    <Clock className="h-5 w-5 text-brand-blue-500 shrink-0" aria-hidden="true" />
-                    <div>
-                      <p className="text-xs text-muted-foreground">Heure</p>
-                      <p className="text-sm font-medium">08:30</p>
-                    </div>
+                    <p className="text-xs text-gray-400 font-medium">Destination</p>
+                    <p className="text-sm font-semibold text-[#0B0F1C]">Hôpital Édouard Herriot</p>
                   </div>
                 </div>
               </div>
 
-              <div className="mt-4 rounded-xl bg-brand-green-50 border border-brand-green-100 px-4 py-3 flex items-center gap-3">
-                <CheckCircle2 className="h-5 w-5 text-brand-green-600 shrink-0" aria-hidden="true" />
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                <div className="rounded-xl bg-gray-50 px-4 py-3.5">
+                  <p className="text-xs text-gray-400 font-medium">Date</p>
+                  <p className="text-sm font-semibold text-[#0B0F1C]">Demain</p>
+                </div>
+                <div className="rounded-xl bg-gray-50 px-4 py-3.5">
+                  <p className="text-xs text-gray-400 font-medium">Heure</p>
+                  <p className="text-sm font-semibold text-[#0B0F1C]">08:30</p>
+                </div>
+              </div>
+
+              <div className="mt-3 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 flex items-center gap-3">
+                <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" aria-hidden="true" />
                 <div>
-                  <p className="text-sm font-semibold text-brand-green-800">
-                    Pris en charge à 100%
-                  </p>
-                  <p className="text-xs text-brand-green-600">
+                  <p className="text-sm font-bold text-emerald-800">
                     Tiers-Payant — vous ne payez rien
+                  </p>
+                  <p className="text-xs text-emerald-600">
+                    Prise en charge directe par l'Assurance Maladie
                   </p>
                 </div>
               </div>
 
               <Link
                 to="/reservation"
-                className="mt-4 w-full btn-cta flex items-center justify-center gap-2 bg-brand-blue-600 text-white rounded-xl hover:bg-brand-blue-700 transition-colors"
+                className="mt-4 w-full btn-cta flex items-center justify-center gap-2 bg-[#1244E8] text-white hover:bg-[#0F38C4] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 aria-label="Commencer ma réservation"
               >
                 Commencer ma réservation
@@ -237,21 +224,21 @@ function HeroSection() {
 
 function StatsSection() {
   return (
-    <section className="bg-white border-b" aria-labelledby="stats-heading">
+    <section className="bg-[#0B0F1C]" aria-labelledby="stats-heading">
       <h2 id="stats-heading" className="sr-only">
         Nos chiffres clés
       </h2>
-      <div className="container py-10">
+      <div className="container py-14 md:py-16">
         <ul
           className="grid grid-cols-2 md:grid-cols-4 gap-8 list-none"
           role="list"
         >
           {stats.map(({ value, label }) => (
             <li key={label} className="text-center">
-              <p className="text-3xl md:text-4xl font-extrabold text-brand-blue-600">
+              <p className="text-4xl md:text-5xl font-black text-white tracking-tight">
                 {value}
               </p>
-              <p className="text-sm text-muted-foreground mt-1">{label}</p>
+              <p className="text-sm text-white/40 mt-2 font-medium">{label}</p>
             </li>
           ))}
         </ul>
@@ -262,54 +249,45 @@ function StatsSection() {
 
 function HowItWorksSection() {
   return (
-    <section className="section-medical bg-white" aria-labelledby="how-heading">
-      <div className="container">
-        <div className="text-center mb-14">
+    <section className="bg-[#F7F8FC]" aria-labelledby="how-heading">
+      <div className="container py-20 md:py-28">
+        <div className="mb-16">
+          <p className="text-xs font-bold tracking-[0.15em] text-[#1244E8] uppercase mb-4">
+            Comment ça marche
+          </p>
           <h2
             id="how-heading"
-            className="text-3xl font-bold text-gray-900 mb-3"
+            className="text-4xl md:text-5xl font-black text-[#0B0F1C] tracking-tight leading-tight max-w-xl"
           >
-            Aussi simple que de commander un taxi
+            Réservé en 5 minutes.<br />
+            Pris en charge automatiquement.
           </h2>
-          <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-            Notre plateforme a été conçue pour être utilisée par tous, même sans
-            expérience du numérique.
-          </p>
         </div>
 
-        <ol className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4 list-none" role="list">
-          {howItWorksSteps.map(({ step, icon: Icon, title, description, color }) => (
-            <li key={step} className="relative flex flex-col gap-4">
-              {/* Connector line */}
-              <div className="flex items-center gap-4">
-                <div
-                  className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ${color} text-2xl font-black`}
-                  aria-hidden="true"
-                >
-                  <Icon className="h-7 w-7" />
-                </div>
-                <span className="text-5xl font-black text-gray-100 leading-none select-none">
-                  {step}
-                </span>
+        <ol className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4 list-none" role="list">
+          {howItWorksSteps.map(({ step, icon: Icon, title, description }) => (
+            <li key={step} className="relative">
+              <div
+                className="text-[5.5rem] font-black text-gray-150 leading-none select-none mb-2 text-gray-200"
+                aria-hidden="true"
+              >
+                {step}
               </div>
-              <div>
-                <h3 className="font-bold text-gray-900 text-lg mb-1.5">
-                  {title}
-                </h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {description}
-                </p>
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#1244E8]/10 mb-4">
+                <Icon className="h-5 w-5 text-[#1244E8]" aria-hidden="true" />
               </div>
+              <h3 className="font-bold text-[#0B0F1C] text-lg mb-2">{title}</h3>
+              <p className="text-sm text-gray-500 leading-relaxed">{description}</p>
             </li>
           ))}
         </ol>
 
-        <div className="mt-12 text-center">
+        <div className="mt-14">
           <Link
             to="/reservation"
-            className="btn-cta inline-flex items-center gap-2 bg-brand-blue-600 text-white rounded-xl hover:bg-brand-blue-700 transition-colors shadow-md shadow-brand-blue-600/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="btn-cta inline-flex items-center gap-2 bg-[#0B0F1C] text-white hover:bg-[#1244E8] transition-colors shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
-            Je réserve mon taxi maintenant
+            Je réserve maintenant
             <ArrowRight className="h-5 w-5" aria-hidden="true" />
           </Link>
         </div>
@@ -321,50 +299,44 @@ function HowItWorksSection() {
 function ConditionsSection() {
   return (
     <section
-      className="section-medical bg-brand-blue-50"
+      className="bg-[#0B0F1C] text-white"
       aria-labelledby="conditions-heading"
     >
-      <div className="container">
-        <div className="grid gap-12 lg:grid-cols-2 items-center">
+      <div className="container py-20 md:py-28">
+        <div className="grid gap-16 lg:grid-cols-2 items-center">
           <div>
+            <p className="text-xs font-bold tracking-[0.15em] text-[#1244E8] uppercase mb-4">
+              Situations médicales
+            </p>
             <h2
               id="conditions-heading"
-              className="text-3xl font-bold text-gray-900 mb-4"
+              className="text-4xl md:text-5xl font-black text-white tracking-tight leading-tight mb-6"
             >
-              Pour quelles situations médicales&nbsp;?
+              Pour quelles<br />situations médicales&nbsp;?
             </h2>
-            <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
+            <p className="text-lg text-white/50 mb-10 leading-relaxed">
               Le transport médical conventionné est pris en charge par
               l&apos;Assurance Maladie pour de nombreuses situations. Votre
-              médecin vous a prescrit un transport&nbsp;? Nous nous occupons
-              du reste.
+              médecin vous a prescrit un transport&nbsp;? Nous nous occupons du
+              reste.
             </p>
             <ul className="grid grid-cols-2 gap-3 list-none" role="list">
               {conditions.map((c) => (
                 <li
                   key={c}
-                  className="flex items-center gap-2 text-sm font-medium text-gray-700"
+                  className="flex items-center gap-2.5 text-sm text-white/70"
                 >
-                  <CheckCircle2
-                    className="h-4 w-4 text-brand-green-600 shrink-0"
+                  <span
+                    className="h-1.5 w-1.5 rounded-full bg-[#1244E8] shrink-0"
                     aria-hidden="true"
                   />
                   {c}
                 </li>
               ))}
             </ul>
-            <div className="mt-8">
-              <Link
-                to="/blog/transport-cpam"
-                className="inline-flex items-center gap-1.5 text-brand-blue-600 font-semibold hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
-              >
-                En savoir plus sur les transports pris en charge
-                <ChevronRight className="h-4 w-4" aria-hidden="true" />
-              </Link>
-            </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             {[
               {
                 icon: Car,
@@ -374,29 +346,29 @@ function ConditionsSection() {
               {
                 icon: Users,
                 title: "VSL",
-                desc: "Véhicule Sanitaire Léger pour les patients pouvant s'asseoir mais nécessitant une assistance.",
+                desc: "Véhicule Sanitaire Léger pour les patients nécessitant une assistance.",
               },
               {
                 icon: CheckCircle2,
                 title: "Véhicule PMR",
-                desc: "Véhicule adapté aux fauteuils roulants et aux personnes à mobilité réduite.",
+                desc: "Véhicule adapté aux fauteuils roulants et personnes à mobilité réduite.",
               },
               {
                 icon: MapPin,
                 title: "Longue distance",
-                desc: "Trajets inter-régionaux pour les soins spécialisés non disponibles localement.",
+                desc: "Trajets inter-régionaux pour soins spécialisés non disponibles localement.",
               },
             ].map(({ icon: Icon, title, desc }) => (
               <div
                 key={title}
-                className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-100"
+                className="rounded-xl border border-white/10 bg-white/5 p-5 hover:bg-white/8 transition-colors"
               >
                 <Icon
-                  className="h-8 w-8 text-brand-blue-500 mb-3"
+                  className="h-7 w-7 text-[#1244E8] mb-3"
                   aria-hidden="true"
                 />
-                <h3 className="font-bold text-gray-900 text-sm mb-1">{title}</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">{desc}</p>
+                <h3 className="font-bold text-white text-sm mb-1.5">{title}</h3>
+                <p className="text-xs text-white/50 leading-relaxed">{desc}</p>
               </div>
             ))}
           </div>
@@ -409,42 +381,43 @@ function ConditionsSection() {
 function CtaBanner() {
   return (
     <section
-      className="bg-gradient-to-r from-brand-green-600 to-brand-green-500 text-white"
+      className="bg-[#1244E8] text-white"
       aria-labelledby="cta-heading"
     >
-      <div className="container py-16 text-center">
-        <h2
-          id="cta-heading"
-          className="text-3xl md:text-4xl font-bold mb-4"
-        >
-          Votre prochain rendez-vous médical approche&nbsp;?
-        </h2>
-        <p className="text-xl text-green-100 mb-8 max-w-xl mx-auto">
-          Anticipez votre transport dès maintenant. La réservation prend moins de
-          5 minutes et votre place est assurée.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link
-            to="/reservation"
-            className="btn-cta inline-flex items-center justify-center gap-2 bg-white text-brand-green-700 hover:bg-green-50 rounded-xl transition-colors shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-brand-green-600"
-            aria-label="Réserver mon transport médical"
+      <div className="container py-20 md:py-24">
+        <div className="max-w-2xl mx-auto text-center">
+          <h2
+            id="cta-heading"
+            className="text-4xl md:text-5xl font-black tracking-tight leading-tight mb-4"
           >
-            Réserver mon transport
-            <ArrowRight className="h-5 w-5" aria-hidden="true" />
-          </Link>
-          <a
-            href="tel:+33800000000"
-            className="btn-cta inline-flex items-center justify-center gap-2 border-2 border-white/40 bg-white/10 hover:bg-white/20 rounded-xl transition-colors"
-          >
-            Ou appeler le 0800 000 000
-          </a>
+            Votre prochain rendez-vous médical approche&nbsp;?
+          </h2>
+          <p className="text-xl text-white/70 mb-10">
+            Anticipez votre transport dès maintenant. La réservation prend
+            moins de 5 minutes et votre place est assurée.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link
+              to="/reservation"
+              className="btn-cta inline-flex items-center justify-center gap-2 bg-white text-[#1244E8] hover:bg-blue-50 transition-colors font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#1244E8]"
+              aria-label="Réserver mon transport médical"
+            >
+              Réserver mon transport
+              <ArrowRight className="h-5 w-5" aria-hidden="true" />
+            </Link>
+            <a
+              href="tel:+33800000000"
+              className="btn-cta inline-flex items-center justify-center gap-2 border-2 border-white/30 text-white hover:border-white/60 hover:bg-white/10 transition-colors"
+            >
+              Ou appeler le 0800 000 000
+            </a>
+          </div>
         </div>
       </div>
     </section>
   );
 }
 
-// Schema.org — Organization + WebSite structured data
 function HomeStructuredData() {
   const schema = {
     "@context": "https://schema.org",
