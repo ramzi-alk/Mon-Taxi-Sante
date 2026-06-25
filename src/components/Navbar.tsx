@@ -1,76 +1,45 @@
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Menu, X, Phone, Heart } from "lucide-react";
-import { cn } from "~/lib/utils";
+import { Menu, X } from "lucide-react";
 
 const navLinks = [
-  { to: "/reservation", label: "Réserver un taxi" },
   { to: "/comment-ca-marche", label: "Comment ça marche" },
   { to: "/blog", label: "Guides patients" },
-  { to: "/connexion", label: "Espace chauffeur", driver: true },
+  { to: "/connexion", label: "Espace chauffeur" },
 ];
 
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100 shadow-sm">
-      {/* Accessibility: skip link */}
+    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100">
       <a href="#main-content" className="skip-link">
         Aller au contenu principal
       </a>
 
-      {/* Top bar — phone number for elderly users */}
-      <div className="bg-brand-blue-600 text-white text-sm">
-        <div className="container flex items-center justify-between py-1.5">
-          <span className="flex items-center gap-1.5 font-medium">
-            <Phone className="h-3.5 w-3.5" aria-hidden="true" />
-            Besoin d&apos;aide&nbsp;? Appelez le{" "}
-            <a
-              href="tel:+33800000000"
-              className="underline underline-offset-2 hover:text-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
-              aria-label="Appeler Mon Taxi Santé au 0800 000 000"
-            >
-              0800 000 000
-            </a>{" "}
-            (gratuit)
-          </span>
-          <span className="hidden sm:flex items-center gap-1 text-blue-100 text-xs">
-            <Heart className="h-3 w-3 fill-red-300 text-red-300" aria-hidden="true" />
-            Agréé Sécurité Sociale
-          </span>
-        </div>
-      </div>
-
       <nav aria-label="Navigation principale">
         <div className="container flex h-16 items-center justify-between">
-          {/* Logo */}
+          {/* Logo — typographic wordmark */}
           <Link
             to="/"
-            className="flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md"
+            className="flex items-center gap-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md"
             aria-label="Mon Taxi Santé — Accueil"
           >
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-blue-600 text-white font-bold text-lg select-none">
-              M
-            </div>
-            <div className="flex flex-col leading-none">
-              <span className="font-bold text-brand-blue-700 text-lg">Mon Taxi</span>
-              <span className="text-brand-green-600 font-semibold text-sm -mt-0.5">Santé</span>
-            </div>
+            <span className="font-black text-[1.15rem] tracking-tight text-[#0B0F1C]">
+              Mon Taxi
+            </span>
+            <span className="font-black text-[1.15rem] tracking-tight text-[#1244E8] ml-1.5">
+              Santé
+            </span>
           </Link>
 
           {/* Desktop nav */}
-          <ul className="hidden md:flex items-center gap-6 list-none" role="list">
-            {navLinks.map(({ to, label, driver }) => (
+          <ul className="hidden md:flex items-center gap-8 list-none" role="list">
+            {navLinks.map(({ to, label }) => (
               <li key={to}>
                 <Link
                   to={to}
-                  className={cn(
-                    "text-sm font-medium transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm",
-                    driver
-                      ? "text-brand-green-600 hover:text-brand-green-700"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
+                  className="text-sm font-medium text-gray-500 hover:text-[#0B0F1C] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
                 >
                   {label}
                 </Link>
@@ -78,14 +47,21 @@ export function Navbar() {
             ))}
           </ul>
 
-          {/* CTA — large for accessibility */}
-          <div className="hidden md:flex items-center gap-3">
+          {/* CTA zone */}
+          <div className="hidden md:flex items-center gap-4">
+            <a
+              href="tel:+33800000000"
+              className="text-sm font-medium text-gray-500 hover:text-[#0B0F1C] transition-colors"
+              aria-label="Appeler le 0800 000 000 (gratuit)"
+            >
+              0800 000 000
+            </a>
             <Link
               to="/reservation"
-              className="btn-cta bg-brand-blue-600 hover:bg-brand-blue-700 text-white rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="btn-cta bg-[#0B0F1C] text-white hover:bg-[#1244E8] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               aria-label="Réserver mon taxi maintenant"
             >
-              Réserver maintenant
+              Réserver
             </Link>
           </div>
 
@@ -114,7 +90,7 @@ export function Navbar() {
                   <Link
                     to={to}
                     onClick={() => setMobileOpen(false)}
-                    className="block rounded-md px-3 py-3 text-base font-medium text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="block rounded-lg px-3 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     {label}
                   </Link>
@@ -124,9 +100,9 @@ export function Navbar() {
                 <Link
                   to="/reservation"
                   onClick={() => setMobileOpen(false)}
-                  className="block rounded-xl bg-brand-blue-600 px-4 py-4 text-center text-base font-bold text-white hover:bg-brand-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="block rounded-full bg-[#0B0F1C] px-4 py-4 text-center text-base font-bold text-white hover:bg-[#1244E8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  Réserver mon taxi santé
+                  Réserver mon taxi
                 </Link>
               </li>
             </ul>

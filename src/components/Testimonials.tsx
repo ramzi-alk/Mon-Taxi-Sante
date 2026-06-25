@@ -1,4 +1,4 @@
-import { Star, Quote } from "lucide-react";
+import { Star } from "lucide-react";
 import { cn } from "~/lib/utils";
 
 interface Testimonial {
@@ -25,7 +25,7 @@ const testimonials: Testimonial[] = [
     condition: "Traitement oncologique",
     date: "Novembre 2024",
     initials: "MB",
-    avatarColor: "bg-purple-100 text-purple-700",
+    avatarColor: "bg-violet-100 text-violet-700",
   },
   {
     id: 2,
@@ -49,7 +49,7 @@ const testimonials: Testimonial[] = [
     condition: "Rééducation PMR",
     date: "Décembre 2024",
     initials: "SL",
-    avatarColor: "bg-green-100 text-green-700",
+    avatarColor: "bg-emerald-100 text-emerald-700",
   },
   {
     id: 4,
@@ -57,7 +57,7 @@ const testimonials: Testimonial[] = [
     age: 79,
     city: "Toulouse",
     rating: 5,
-    text: "À mon âge, utiliser une application me faisait peur. Mais Ma fille m'a aidé la première fois, et depuis je réserve tout seul par téléphone. Le service client est très patient. Le chauffeur était ponctuel et très respectueux.",
+    text: "À mon âge, utiliser une application me faisait peur. Mais ma fille m'a aidé la première fois, et depuis je réserve tout seul par téléphone. Le service client est très patient. Le chauffeur était ponctuel et très respectueux.",
     condition: "Consultations cardiologiques",
     date: "Janvier 2025",
     initials: "RK",
@@ -91,12 +91,16 @@ const testimonials: Testimonial[] = [
 
 function StarRating({ rating }: { rating: number }) {
   return (
-    <div className="flex gap-0.5" aria-label={`${rating} étoiles sur 5`} role="img">
+    <div
+      className="flex gap-0.5"
+      aria-label={`${rating} étoiles sur 5`}
+      role="img"
+    >
       {[1, 2, 3, 4, 5].map((star) => (
         <Star
           key={star}
           className={cn(
-            "h-4 w-4",
+            "h-3.5 w-3.5",
             star <= rating
               ? "fill-amber-400 text-amber-400"
               : "fill-gray-200 text-gray-200"
@@ -116,88 +120,87 @@ export function Testimonials() {
   return (
     <section
       aria-labelledby="testimonials-heading"
-      className="section-medical bg-white"
+      className="bg-white border-t border-gray-100"
     >
-      <div className="container">
-        <div className="text-center mb-12">
-          <h2
-            id="testimonials-heading"
-            className="text-3xl font-bold text-gray-900 mb-3"
-          >
-            Ce que disent nos patients
-          </h2>
-          <div className="flex items-center justify-center gap-3 mb-3">
+      <div className="container py-20 md:py-28">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-14">
+          <div>
+            <p className="text-xs font-bold tracking-[0.15em] text-[#1244E8] uppercase mb-4">
+              Témoignages
+            </p>
+            <h2
+              id="testimonials-heading"
+              className="text-4xl md:text-5xl font-black text-[#0B0F1C] tracking-tight leading-tight"
+            >
+              Ce que disent<br />nos patients
+            </h2>
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
             <StarRating rating={5} />
-            <span className="font-bold text-gray-900 text-xl">{avgRating}/5</span>
-            <span className="text-muted-foreground text-sm">
-              basé sur {testimonials.length * 47}+ avis vérifiés
+            <span className="font-black text-[#0B0F1C] text-2xl">{avgRating}/5</span>
+            <span className="text-gray-400 text-sm">
+              {testimonials.length * 47}+ avis vérifiés
             </span>
           </div>
-          <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-            Des milliers de patients nous font confiance chaque mois pour leurs
-            transports médicaux.
-          </p>
         </div>
 
         <ul
-          className="list-none grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
+          className="list-none grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
           role="list"
           aria-label="Témoignages patients"
         >
           {testimonials.map((t) => (
             <li
               key={t.id}
-              className="flex flex-col gap-4 rounded-2xl bg-gray-50 p-6 ring-1 ring-gray-100"
+              className="flex flex-col gap-5 rounded-xl border border-gray-100 bg-white p-6 hover:border-gray-200 hover:shadow-sm transition-all duration-200"
             >
-              {/* Quote icon */}
-              <Quote
-                className="h-8 w-8 text-brand-blue-200"
-                aria-hidden="true"
-              />
+              {/* Stars + date */}
+              <div className="flex items-center justify-between">
+                <StarRating rating={t.rating} />
+                <span className="text-xs text-gray-400">{t.date}</span>
+              </div>
 
               {/* Text */}
               <blockquote>
-                <p className="text-gray-700 text-sm leading-relaxed italic">
+                <p className="text-[#0B0F1C] text-sm leading-relaxed">
                   &ldquo;{t.text}&rdquo;
                 </p>
               </blockquote>
 
+              {/* Condition tag */}
+              <div className="mt-auto">
+                <span className="inline-block text-xs font-medium bg-[#EEF2FF] text-[#1244E8] px-3 py-1 rounded-full">
+                  {t.condition}
+                </span>
+              </div>
+
               {/* Author */}
-              <footer className="mt-auto flex items-center gap-3">
+              <footer className="flex items-center gap-3 pt-1 border-t border-gray-50">
                 <div
                   className={cn(
-                    "flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold",
+                    "flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold",
                     t.avatarColor
                   )}
                   aria-hidden="true"
                 >
                   {t.initials}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <cite className="text-sm font-semibold text-gray-900 not-italic">
-                      {t.author}
-                    </cite>
-                    <span className="text-xs text-muted-foreground">
-                      {t.age} ans, {t.city}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <StarRating rating={t.rating} />
-                    <span className="text-xs text-muted-foreground truncate">
-                      {t.condition}
-                    </span>
-                  </div>
+                <div>
+                  <cite className="text-sm font-semibold text-[#0B0F1C] not-italic">
+                    {t.author}
+                  </cite>
+                  <p className="text-xs text-gray-400">
+                    {t.age} ans · {t.city}
+                  </p>
                 </div>
               </footer>
             </li>
           ))}
         </ul>
 
-        {/* Verification note */}
-        <p className="mt-8 text-center text-xs text-muted-foreground">
-          Avis collectés via notre plateforme après chaque trajet. Tous les
-          témoignages sont vérifiés et associés à une réservation réelle.
+        <p className="mt-10 text-center text-xs text-gray-400">
+          Avis collectés après chaque trajet. Tous les témoignages sont vérifiés
+          et associés à une réservation réelle.
         </p>
       </div>
     </section>

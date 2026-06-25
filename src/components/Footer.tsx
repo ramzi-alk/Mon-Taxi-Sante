@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Heart, Phone, Mail, MapPin } from "lucide-react";
+import { Phone, Mail, MapPin } from "lucide-react";
 
 const footerLinks = {
   services: [
@@ -23,31 +23,31 @@ const footerLinks = {
 
 export function Footer() {
   return (
-    <footer className="bg-gray-900 text-gray-300" role="contentinfo">
-      <div className="container py-16">
+    <footer className="bg-[#0B0F1C] text-gray-400" role="contentinfo">
+      <div className="container py-16 md:py-20">
         <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-4">
           {/* Brand */}
           <div className="lg:col-span-1">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-blue-600 text-white font-bold text-lg">
-                M
-              </div>
-              <div className="flex flex-col leading-none">
-                <span className="font-bold text-white text-lg">Mon Taxi</span>
-                <span className="text-brand-green-500 font-semibold text-sm -mt-0.5">Santé</span>
-              </div>
+            <div className="flex items-center gap-0 mb-5">
+              <span className="font-black text-[1.1rem] tracking-tight text-white">
+                Mon Taxi
+              </span>
+              <span className="font-black text-[1.1rem] tracking-tight text-[#1244E8] ml-1.5">
+                Santé
+              </span>
             </div>
-            <p className="text-sm leading-relaxed text-gray-400 mb-6">
-              La plateforme de réservation de taxis conventionnés agréée Sécurité Sociale.
-              Concentrez-vous sur votre santé — nous gérons le reste.
+            <p className="text-sm leading-relaxed text-gray-500 mb-6">
+              La plateforme de réservation de taxis conventionnés agréée
+              Sécurité Sociale. Concentrez-vous sur votre santé — nous gérons
+              le reste.
             </p>
-            <div className="space-y-2 text-sm">
+            <div className="space-y-2.5 text-sm">
               <a
                 href="tel:+33800000000"
                 className="flex items-center gap-2 hover:text-white transition-colors"
-                aria-label="Nous appeler"
+                aria-label="Nous appeler au 0800 000 000"
               >
-                <Phone className="h-4 w-4 text-brand-blue-400" aria-hidden="true" />
+                <Phone className="h-4 w-4 text-[#1244E8]" aria-hidden="true" />
                 0800 000 000 (gratuit)
               </a>
               <a
@@ -55,11 +55,14 @@ export function Footer() {
                 className="flex items-center gap-2 hover:text-white transition-colors"
                 aria-label="Nous envoyer un email"
               >
-                <Mail className="h-4 w-4 text-brand-blue-400" aria-hidden="true" />
+                <Mail className="h-4 w-4 text-[#1244E8]" aria-hidden="true" />
                 contact@mon-taxi-sante.fr
               </a>
               <span className="flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-brand-blue-400 shrink-0" aria-hidden="true" />
+                <MapPin
+                  className="h-4 w-4 text-[#1244E8] shrink-0"
+                  aria-hidden="true"
+                />
                 Disponible partout en France métropolitaine
               </span>
             </div>
@@ -67,8 +70,10 @@ export function Footer() {
 
           {/* Services */}
           <div>
-            <h3 className="font-semibold text-white mb-4">Patients</h3>
-            <ul className="space-y-2.5 list-none" role="list">
+            <h3 className="font-semibold text-white mb-5 text-sm uppercase tracking-wider">
+              Patients
+            </h3>
+            <ul className="space-y-3 list-none" role="list">
               {footerLinks.services.map(({ to, label }) => (
                 <li key={to}>
                   <Link
@@ -84,8 +89,10 @@ export function Footer() {
 
           {/* Professionnels */}
           <div>
-            <h3 className="font-semibold text-white mb-4">Professionnels</h3>
-            <ul className="space-y-2.5 list-none" role="list">
+            <h3 className="font-semibold text-white mb-5 text-sm uppercase tracking-wider">
+              Professionnels
+            </h3>
+            <ul className="space-y-3 list-none" role="list">
               {footerLinks.professionnels.map(({ to, label }) => (
                 <li key={to}>
                   <Link
@@ -101,8 +108,10 @@ export function Footer() {
 
           {/* Ressources */}
           <div>
-            <h3 className="font-semibold text-white mb-4">Ressources CPAM</h3>
-            <ul className="space-y-2.5 list-none" role="list">
+            <h3 className="font-semibold text-white mb-5 text-sm uppercase tracking-wider">
+              Ressources CPAM
+            </h3>
+            <ul className="space-y-3 list-none" role="list">
               {footerLinks.ressources.map(({ to, label }) => (
                 <li key={to}>
                   <Link
@@ -118,26 +127,28 @@ export function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div className="mt-12 border-t border-gray-800 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500">
-          <p>
-            © {new Date().getFullYear()} Mon Taxi Santé. Tous droits réservés.
-          </p>
-          <div className="flex items-center gap-4">
-            <Link to="/mentions-legales" className="hover:text-gray-300 transition-colors">
+        <div className="mt-14 border-t border-white/5 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-600">
+          <p>© {new Date().getFullYear()} Mon Taxi Santé. Tous droits réservés.</p>
+          <div className="flex items-center gap-6">
+            <Link
+              to="/mentions-legales"
+              className="hover:text-gray-300 transition-colors"
+            >
               Mentions légales
             </Link>
-            <Link to="/confidentialite" className="hover:text-gray-300 transition-colors">
+            <Link
+              to="/confidentialite"
+              className="hover:text-gray-300 transition-colors"
+            >
               Confidentialité & RGPD
             </Link>
-            <Link to="/cgv" className="hover:text-gray-300 transition-colors">
+            <Link
+              to="/cgv"
+              className="hover:text-gray-300 transition-colors"
+            >
               CGV
             </Link>
           </div>
-          <p className="flex items-center gap-1">
-            Fait avec{" "}
-            <Heart className="h-3 w-3 fill-red-400 text-red-400" aria-label="amour" />{" "}
-            pour les patients français
-          </p>
         </div>
       </div>
     </footer>
