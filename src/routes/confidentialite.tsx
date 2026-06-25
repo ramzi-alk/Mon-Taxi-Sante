@@ -74,7 +74,7 @@ function ConfidentialitePage() {
         <li>Données de réservation : 5 ans, à des fins comptables et de preuve</li>
         <li>
           Documents médicaux (PMT) : durée nécessaire à la prise en charge
-          CPAM, puis suppression sécurisée
+          Assurance Maladie, puis suppression sécurisée
         </li>
         <li>Données de compte chauffeur partenaire : durée du partenariat, augmentée des délais légaux</li>
       </ul>

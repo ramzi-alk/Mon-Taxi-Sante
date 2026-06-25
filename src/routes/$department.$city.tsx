@@ -70,8 +70,8 @@ export const Route = createFileRoute("/$department/$city")({
     const deptName = params.department.replace(/-/g, " ");
     const cityInfo = getCityInfo(params.city, params.department);
 
-    const title = `Taxi conventionné CPAM à ${cityName} (${cityInfo.departmentCode}) — Mon Taxi Santé`;
-    const description = `Réservez votre taxi médical agréé Sécurité Sociale à ${cityName} en ${deptName}. Chauffeurs CPAM certifiés, Tiers-Payant intégral, zéro avance de frais. Disponible pour dialyse, chimiothérapie, ALD.`;
+    const title = `Taxi conventionné Assurance Maladie à ${cityName} (${cityInfo.departmentCode}) — Mon Taxi Santé`;
+    const description = `Réservez votre taxi médical agréé Sécurité Sociale à ${cityName} en ${deptName}. Chauffeurs certifiés Assurance Maladie, Tiers-Payant intégral, zéro avance de frais. Disponible pour dialyse, chimiothérapie, ALD.`;
 
     return {
       meta: [
@@ -124,10 +124,10 @@ function LocalBusinessSchema({
     "@type": "LocalBusiness",
     "@id": `https://mon-taxi-sante.fr/${deptName.toLowerCase().replace(/ /g, "-")}/${cityName.toLowerCase().replace(/ /g, "-")}#business`,
     name: `Mon Taxi Santé — ${cityName}`,
-    description: `Service de taxi médical conventionné CPAM à ${cityName} (${deptCode}). Transport pour dialyse, chimiothérapie, ALD. Tiers-Payant.`,
+    description: `Service de taxi médical conventionné Assurance Maladie à ${cityName} (${deptCode}). Transport pour dialyse, chimiothérapie, ALD. Tiers-Payant.`,
     url: "https://mon-taxi-sante.fr",
     telephone: "+33800000000",
-    priceRange: "Pris en charge CPAM",
+    priceRange: "Pris en charge Assurance Maladie",
     image: "https://mon-taxi-sante.fr/og-image.jpg",
     address: {
       "@type": "PostalAddress",
@@ -160,7 +160,7 @@ function LocalBusinessSchema({
         "@type": "Offer",
         position: i + 1,
         name: `Transport vers ${h}`,
-        description: `Taxi conventionné CPAM depuis ${cityName} vers ${h}`,
+        description: `Taxi conventionné Assurance Maladie depuis ${cityName} vers ${h}`,
       })),
     },
   };
@@ -185,7 +185,7 @@ function LocalPage() {
 
   const faqItems = [
     {
-      q: `Comment réserver un taxi conventionné CPAM à ${City} ?`,
+      q: `Comment réserver un taxi conventionné Assurance Maladie à ${City} ?`,
       a: `Utilisez notre formulaire en ligne en 5 minutes, ou appelez le 0800 000 000 (gratuit). Votre réservation est confirmée immédiatement par SMS.`,
     },
     {
@@ -234,7 +234,7 @@ function LocalPage() {
             </span>
           </div>
           <h1 className="text-4xl md:text-5xl font-extrabold mb-4 leading-tight">
-            Taxi Conventionné CPAM<br />
+            Taxi Conventionné Assurance Maladie<br />
             <span className="text-brand-green-300">à {City}</span>
           </h1>
           <p className="text-xl text-blue-100 max-w-2xl mb-8">
@@ -294,7 +294,7 @@ function LocalPage() {
                 <div>
                   <p className="font-semibold text-gray-900">{hospital}</p>
                   <p className="text-sm text-muted-foreground mt-0.5">
-                    Transport conventionné CPAM disponible
+                    Transport conventionné Assurance Maladie disponible
                   </p>
                 </div>
               </li>
@@ -329,8 +329,8 @@ function LocalPage() {
                 desc: "Tôt le matin pour vos séances de dialyse, le soir après une chimio. Nous sommes là quand vous en avez besoin.",
               },
               {
-                title: "Agréé CPAM",
-                desc: `Tous nos chauffeurs à ${City} sont conventionnés par l'Assurance Maladie (CPAM ${Dept}).`,
+                title: "Agréé Assurance Maladie",
+                desc: `Tous nos chauffeurs à ${City} sont conventionnés par l'Assurance Maladie de ${Dept}.`,
               },
               {
                 title: "Véhicule PMR disponible",
@@ -381,7 +381,7 @@ function LocalPage() {
             Besoin d&apos;un taxi médical à {City}&nbsp;?
           </h2>
           <p className="text-xl text-blue-100 mb-8">
-            Réservez en 5 minutes. Nos chauffeurs conventionnés CPAM en {Dept} sont prêts.
+            Réservez en 5 minutes. Nos chauffeurs conventionnés Assurance Maladie en {Dept} sont prêts.
           </p>
           <Link
             to="/reservation"

@@ -80,7 +80,7 @@ export const BOOKING_STEPS = [
   { id: 4, title: "Type de véhicule", shortTitle: "Véhicule" },
   { id: 5, title: "Nature du trajet", shortTitle: "Nature" },
   { id: 6, title: "Besoins spécifiques", shortTitle: "Besoins" },
-  { id: 7, title: "Prise en charge CPAM", shortTitle: "CPAM" },
+  { id: 7, title: "Prise en charge Assurance Maladie", shortTitle: "Assurance Maladie" },
   { id: 8, title: "Prescription médicale", shortTitle: "PMT" },
   { id: 9, title: "Informations complémentaires", shortTitle: "Notes" },
   { id: 10, title: "Récapitulatif & Confirmation", shortTitle: "Confirmation" },

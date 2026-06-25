@@ -122,7 +122,7 @@ export function Step6Specificities({ form }: StepProps) {
       </div>
 
       <div className="rounded-xl bg-blue-50 border border-blue-100 p-4 text-sm text-blue-800">
-        Les accompagnants sont autorisés lors des transports médicaux CPAM sous
+        Les accompagnants sont autorisés lors des transports médicaux Assurance Maladie sous
         certaines conditions. Le chauffeur confirmera la prise en charge selon
         l&apos;ordonnance.
       </div>

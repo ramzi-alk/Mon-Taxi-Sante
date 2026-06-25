@@ -9,7 +9,7 @@ export const Route = createFileRoute("/blog/")({
       {
         name: "description",
         content:
-          "Tous nos guides pour comprendre la prise en charge CPAM de votre transport médical : ALD, prescription médicale de transport, Tiers-Payant.",
+          "Tous nos guides pour comprendre la prise en charge Assurance Maladie de votre transport médical : ALD, prescription médicale de transport, Tiers-Payant.",
       },
     ],
   }),
@@ -22,7 +22,7 @@ function BlogIndexPage() {
       <section className="bg-white">
         <div className="container py-16 md:py-24">
           <p className="text-xs font-bold tracking-[0.15em] text-[#1244E8] uppercase mb-4">
-            Ressources CPAM
+            Ressources Assurance Maladie
           </p>
           <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-[#0B0F1C] max-w-2xl">
             Guides patients

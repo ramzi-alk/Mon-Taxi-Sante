@@ -79,7 +79,7 @@ function PmtPrescriptionArticle() {
         Pour mieux comprendre les taux de remboursement applicables,
         consultez notre guide{" "}
         <Link to="/blog/transport-cpam">
-          Transport pris en charge CPAM : tout savoir
+          Transport pris en charge Assurance Maladie : tout savoir
         </Link>
         .
       </p>

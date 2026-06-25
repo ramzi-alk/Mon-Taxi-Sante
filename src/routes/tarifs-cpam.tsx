@@ -4,7 +4,7 @@ import { ArrowRight, CheckCircle2 } from "lucide-react";
 export const Route = createFileRoute("/tarifs-cpam")({
   head: () => ({
     meta: [
-      { title: "Tarifs et remboursements CPAM — Mon Taxi Santé" },
+      { title: "Tarifs et remboursements Assurance Maladie — Mon Taxi Santé" },
       {
         name: "description",
         content:
@@ -153,7 +153,7 @@ function TarifsCpamPage() {
             Vérifiez votre prise en charge en réservant
           </h2>
           <p className="text-white/70 mb-8">
-            Indiquez votre statut CPAM dans le formulaire et obtenez une
+            Indiquez votre statut Assurance Maladie dans le formulaire et obtenez une
             estimation immédiate du montant à votre charge.
           </p>
           <Link

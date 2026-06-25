@@ -87,7 +87,7 @@ export function Step10Confirmation({ form, isSubmitting }: StepProps) {
       <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden">
         {/* Header */}
         <div className="bg-brand-blue-600 px-5 py-4 text-white">
-          <p className="text-sm font-medium opacity-80">Transport médical CPAM</p>
+          <p className="text-sm font-medium opacity-80">Transport médical Assurance Maladie</p>
           <p className="text-lg font-bold mt-0.5">
             {data.pickup_address?.split(",")[0]} →{" "}
             {data.dropoff_address?.split(",")[0]}

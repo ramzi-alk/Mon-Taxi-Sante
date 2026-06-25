@@ -8,7 +8,7 @@ export const Route = createFileRoute("/cgv")({
       {
         name: "description",
         content:
-          "Conditions Générales de Vente de Mon Taxi Santé : réservation, prise en charge CPAM, annulation et responsabilité.",
+          "Conditions Générales de Vente de Mon Taxi Santé : réservation, prise en charge Assurance Maladie, annulation et responsabilité.",
       },
     ],
   }),
@@ -39,7 +39,7 @@ function CgvPage() {
         email dès qu'un chauffeur conventionné accepte la course.
       </p>
 
-      <h2>Article 3 — Prise en charge CPAM et tarifs</h2>
+      <h2>Article 3 — Prise en charge Assurance Maladie et tarifs</h2>
       <p>
         Les tarifs appliqués sont ceux de la convention en vigueur entre les
         transporteurs sanitaires et l'Assurance Maladie. Lorsque le patient

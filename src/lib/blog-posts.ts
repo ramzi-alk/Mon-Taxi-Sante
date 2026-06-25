@@ -13,7 +13,7 @@ export const blogPosts: BlogPost[] = [
     slug: "transport-cpam",
     to: "/blog/transport-cpam",
     category: "Prise en charge",
-    title: "Transport pris en charge CPAM : tout savoir",
+    title: "Transport pris en charge Assurance Maladie : tout savoir",
     excerpt:
       "Quelles situations médicales ouvrent droit à un transport remboursé, comment fonctionne le Tiers-Payant et quelles démarches effectuer.",
     readingTime: "5 min",

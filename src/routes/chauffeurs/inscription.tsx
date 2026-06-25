@@ -14,7 +14,7 @@ export const Route = createFileRoute("/chauffeurs/inscription")({
       {
         name: "description",
         content:
-          "Rejoignez le réseau Mon Taxi Santé : chauffeurs de taxi et VSL conventionnés CPAM. Inscription en ligne, validation par notre équipe.",
+          "Rejoignez le réseau Mon Taxi Santé : chauffeurs de taxi et VSL conventionnés Assurance Maladie. Inscription en ligne, validation par notre équipe.",
       },
     ],
   }),
@@ -124,7 +124,7 @@ function InscriptionChauffeurPage() {
           </h1>
           <p className="mt-5 text-lg text-gray-500 max-w-xl leading-relaxed">
             Rejoignez un réseau de chauffeurs de taxi et VSL conventionnés
-            CPAM. Recevez des courses qualifiées directement sur votre
+            Assurance Maladie. Recevez des courses qualifiées directement sur votre
             tableau de bord.
           </p>
         </div>
@@ -303,7 +303,7 @@ function InscriptionChauffeurPage() {
 
             <div className="rounded-xl bg-blue-50 border border-blue-100 p-4 text-sm text-blue-800">
               <strong>Validation manuelle&nbsp;:</strong> Votre dossier sera
-              examiné par notre équipe (conventionnement CPAM, documents
+              examiné par notre équipe (conventionnement Assurance Maladie, documents
               justificatifs) avant activation de votre compte chauffeur.
             </div>
 

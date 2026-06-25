@@ -4,7 +4,7 @@ import { BlogLayout } from "~/components/BlogLayout";
 export const Route = createFileRoute("/blog/transport-cpam")({
   head: () => ({
     meta: [
-      { title: "Transport pris en charge CPAM : tout savoir — Mon Taxi Santé" },
+      { title: "Transport pris en charge Assurance Maladie : tout savoir — Mon Taxi Santé" },
       {
         name: "description",
         content:
@@ -19,7 +19,7 @@ function TransportCpamArticle() {
   return (
     <BlogLayout
       category="Prise en charge"
-      title="Transport pris en charge CPAM : tout savoir"
+      title="Transport pris en charge Assurance Maladie : tout savoir"
       readingTime="5 min"
       publishedAt="12 mars 2026"
     >

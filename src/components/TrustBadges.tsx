@@ -12,7 +12,7 @@ const badges: Badge[] = [
     icon: ShieldCheck,
     title: "Agréé Sécurité Sociale",
     description:
-      "Tous nos chauffeurs sont conventionnés CPAM. Votre trajet est reconnu par l'Assurance Maladie.",
+      "Tous nos chauffeurs sont conventionnés par l'Assurance Maladie. Votre trajet est intégralement reconnu pour le remboursement.",
   },
   {
     icon: CreditCard,
@@ -24,7 +24,7 @@ const badges: Badge[] = [
     icon: BadgeCheck,
     title: "Chauffeurs certifiés",
     description:
-      "Convention CPAM valide, formation, véhicule aux normes et assurance à jour. Tous vérifiés.",
+      "Convention Assurance Maladie valide, formation, véhicule aux normes et assurance à jour. Tous vérifiés.",
   },
   {
     icon: Lock,
@@ -89,7 +89,7 @@ export function TrustBadges({ className }: TrustBadgesProps) {
           <span className="text-xs font-bold tracking-[0.12em] text-gray-300 uppercase">
             Reconnu par
           </span>
-          {["Assurance Maladie", "CPAM", "ARS", "HDS"].map((org) => (
+          {["Assurance Maladie", "ARS", "HDS"].map((org) => (
             <span
               key={org}
               className="rounded-full border border-gray-200 px-4 py-1.5 text-xs font-semibold text-gray-500"

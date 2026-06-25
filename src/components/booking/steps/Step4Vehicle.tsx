@@ -16,7 +16,7 @@ const vehicleOptions = [
       "Pour les patients pouvant se déplacer de manière autonome. Berline confortable, 1 à 3 passagers.",
     badge: "Le plus courant",
     badgeColor: "bg-brand-blue-100 text-brand-blue-700",
-    details: ["Idéal pour consultations ambulatoires", "Confort et discrétion", "Tarif officiel CPAM"],
+    details: ["Idéal pour consultations ambulatoires", "Confort et discrétion", "Tarif officiel Assurance Maladie"],
   },
   {
     value: "vsl" as const,

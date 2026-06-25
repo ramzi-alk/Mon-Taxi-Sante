@@ -15,14 +15,14 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       {
-        title: "Mon Taxi Santé — Réservez votre taxi conventionné CPAM en ligne",
+        title: "Mon Taxi Santé — Réservez votre taxi conventionné Assurance Maladie en ligne",
       },
       {
         name: "description",
         content:
-          "Réservez votre taxi médical agréé Sécurité Sociale en 2 minutes. Tiers-Payant intégral, chauffeurs certifiés CPAM. Zéro avance de frais pour ALD, dialyse, chimiothérapie.",
+          "Réservez votre taxi médical agréé Sécurité Sociale en 2 minutes. Tiers-Payant intégral, chauffeurs certifiés Assurance Maladie. Zéro avance de frais pour ALD, dialyse, chimiothérapie.",
       },
-      { property: "og:title", content: "Mon Taxi Santé — Taxi conventionné CPAM" },
+      { property: "og:title", content: "Mon Taxi Santé — Taxi conventionné Assurance Maladie" },
       {
         property: "og:description",
         content:
@@ -48,7 +48,7 @@ const howItWorksSteps = [
     icon: CheckCircle2,
     title: "Confirmation immédiate",
     description:
-      "Votre réservation est confirmée par SMS et email. Un chauffeur conventionné CPAM accepte votre course.",
+      "Votre réservation est confirmée par SMS et email. Un chauffeur conventionné Assurance Maladie accepte votre course.",
   },
   {
     step: "03",
@@ -114,7 +114,7 @@ function HeroSection() {
             <p className="text-lg text-gray-500 leading-relaxed mb-8 max-w-md">
               Concentrez-vous sur votre santé — nous gérons la route et
               l&apos;administratif. Réservation en ligne 24h/24, chauffeurs
-              certifiés CPAM, zéro avance de frais.
+              certifiés Assurance Maladie, zéro avance de frais.
             </p>
 
             {/* CTA buttons */}
@@ -432,7 +432,7 @@ function HomeStructuredData() {
         telephone: "+33800000000",
         email: "contact@mon-taxi-sante.fr",
         areaServed: { "@type": "Country", name: "France" },
-        serviceType: "Transport médical conventionné CPAM",
+        serviceType: "Transport médical conventionné Assurance Maladie",
       },
       {
         "@type": "WebSite",

@@ -17,7 +17,7 @@ export const Route = createFileRoute("/comment-ca-marche")({
       {
         name: "description",
         content:
-          "Découvrez comment réserver votre taxi médical conventionné CPAM en ligne : réservation, prise en charge, déroulement du trajet et Tiers-Payant.",
+          "Découvrez comment réserver votre taxi médical conventionné Assurance Maladie en ligne : réservation, prise en charge, déroulement du trajet et Tiers-Payant.",
       },
     ],
   }),
@@ -44,7 +44,7 @@ const steps = [
     icon: CheckCircle2,
     title: "Recevez votre confirmation",
     description:
-      "Vous recevez une confirmation par SMS et email dès qu'un chauffeur conventionné CPAM accepte votre course, avec son nom et l'heure de passage.",
+      "Vous recevez une confirmation par SMS et email dès qu'un chauffeur conventionné Assurance Maladie accepte votre course, avec son nom et l'heure de passage.",
   },
   {
     step: "04",

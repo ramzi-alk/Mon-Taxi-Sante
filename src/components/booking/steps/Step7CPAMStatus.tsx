@@ -42,7 +42,7 @@ const cpamOptions = [
   {
     value: "none" as const,
     title: "Sans couverture / Frais personnels",
-    description: "Transport non prescrit ou hors remboursement CPAM. Paiement direct.",
+    description: "Transport non prescrit ou hors remboursement Assurance Maladie. Paiement direct.",
     coverage: "À votre charge",
     coverageColor: "text-amber-700 bg-amber-50",
   },

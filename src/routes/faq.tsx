@@ -8,7 +8,7 @@ export const Route = createFileRoute("/faq")({
       {
         name: "description",
         content:
-          "Toutes les réponses à vos questions sur la réservation, la prise en charge CPAM, le Tiers-Payant et les chauffeurs partenaires.",
+          "Toutes les réponses à vos questions sur la réservation, la prise en charge Assurance Maladie, le Tiers-Payant et les chauffeurs partenaires.",
       },
     ],
   }),
@@ -52,7 +52,7 @@ const faqCategories: FaqCategory[] = [
     ],
   },
   {
-    category: "Prise en charge CPAM",
+    category: "Prise en charge Assurance Maladie",
     items: [
       {
         question: "Qu'est-ce que le Tiers-Payant et comment ça marche ?",
@@ -70,7 +70,7 @@ const faqCategories: FaqCategory[] = [
           "La PMT est un document signé par votre médecin attestant de la nécessité d'un transport sanitaire. Elle est indispensable pour bénéficier du Tiers-Payant intégral.",
       },
       {
-        question: "Je n'ai pas de prise en charge CPAM, puis-je quand même réserver ?",
+        question: "Je n'ai pas de prise en charge Assurance Maladie, puis-je quand même réserver ?",
         answer:
           "Oui, vous pouvez réserver en tant qu'assuré standard ou à frais personnels. Le tarif applicable vous sera communiqué avant la confirmation de votre course.",
       },
@@ -97,12 +97,12 @@ const faqCategories: FaqCategory[] = [
       {
         question: "Comment devenir chauffeur partenaire Mon Taxi Santé ?",
         answer:
-          "Rendez-vous sur notre page « Devenir chauffeur partenaire » pour déposer votre candidature. Une convention CPAM valide et les certifications requises sont nécessaires.",
+          "Rendez-vous sur notre page « Devenir chauffeur partenaire » pour déposer votre candidature. Une convention Assurance Maladie valide et les certifications requises sont nécessaires.",
       },
       {
         question: "Les chauffeurs sont-ils certifiés ?",
         answer:
-          "Tous nos chauffeurs partenaires disposent d'une convention CPAM valide, d'une formation aux gestes de transport sanitaire et d'une assurance professionnelle à jour.",
+          "Tous nos chauffeurs partenaires disposent d'une convention Assurance Maladie valide, d'une formation aux gestes de transport sanitaire et d'une assurance professionnelle à jour.",
       },
     ],
   },
