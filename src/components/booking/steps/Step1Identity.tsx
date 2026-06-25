@@ -96,26 +96,21 @@ export function Step1Identity({ form }: StepProps) {
       <div className="space-y-1.5">
         <label
           htmlFor="patient_birth_date"
-          className="block text-sm font-semibold text-gray-700"
+          className="flex items-center gap-1.5 text-sm font-semibold text-gray-700"
         >
+          <Calendar className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
           Date de naissance{" "}
           <span className="text-muted-foreground text-xs font-normal">(optionnel)</span>
         </label>
-        <div className="relative">
-          <Calendar
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground"
-            aria-hidden="true"
-          />
-          <input
-            id="patient_birth_date"
-            type="date"
-            autoComplete="bday"
-            max={new Date().toISOString().split("T")[0]}
-            aria-describedby="birth-hint"
-            {...register("patient_birth_date")}
-            className="w-full rounded-xl border border-input bg-white pl-11 pr-4 py-3.5 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          />
-        </div>
+        <input
+          id="patient_birth_date"
+          type="date"
+          autoComplete="bday"
+          max={new Date().toISOString().split("T")[0]}
+          aria-describedby="birth-hint"
+          {...register("patient_birth_date")}
+          className="w-full rounded-xl border border-input bg-white px-4 py-3.5 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        />
         <p id="birth-hint" className="text-xs text-muted-foreground">
           Peut être requise pour certains types de prise en charge Assurance Maladie.
         </p>

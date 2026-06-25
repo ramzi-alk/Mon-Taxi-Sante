@@ -44,26 +44,24 @@ export function Step3DateTime({ form }: StepProps) {
 
       {/* Date */}
       <div className="space-y-1.5">
-        <label htmlFor="pickup_date" className="block text-sm font-semibold text-gray-700">
+        <label
+          htmlFor="pickup_date"
+          className="flex items-center gap-1.5 text-sm font-semibold text-gray-700"
+        >
+          <Calendar className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
           Date du rendez-vous{" "}
           <span className="text-red-500" aria-hidden="true">*</span>
         </label>
-        <div className="relative">
-          <Calendar
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground"
-            aria-hidden="true"
-          />
-          <input
-            id="pickup_date"
-            type="date"
-            min={minDateStr}
-            aria-required="true"
-            aria-describedby={errors.pickup_date ? "date-error" : undefined}
-            {...register("pickup_date")}
-            className="w-full rounded-xl border border-input bg-white pl-11 pr-4 py-3.5 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            aria-invalid={!!errors.pickup_date}
-          />
-        </div>
+        <input
+          id="pickup_date"
+          type="date"
+          min={minDateStr}
+          aria-required="true"
+          aria-describedby={errors.pickup_date ? "date-error" : undefined}
+          {...register("pickup_date")}
+          className="w-full rounded-xl border border-input bg-white px-4 py-3.5 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          aria-invalid={!!errors.pickup_date}
+        />
         {errors.pickup_date && (
           <p id="date-error" role="alert" className="text-sm text-red-600">
             {errors.pickup_date.message}
@@ -73,24 +71,22 @@ export function Step3DateTime({ form }: StepProps) {
 
       {/* Time */}
       <div className="space-y-1.5">
-        <label htmlFor="pickup_time" className="block text-sm font-semibold text-gray-700">
+        <label
+          htmlFor="pickup_time"
+          className="flex items-center gap-1.5 text-sm font-semibold text-gray-700"
+        >
+          <Clock className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
           Heure de prise en charge{" "}
           <span className="text-red-500" aria-hidden="true">*</span>
         </label>
-        <div className="relative">
-          <Clock
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground"
-            aria-hidden="true"
-          />
-          <input
-            id="pickup_time"
-            type="time"
-            aria-required="true"
-            aria-describedby="time-hint"
-            {...register("pickup_time")}
-            className="w-full rounded-xl border border-input bg-white pl-11 pr-4 py-3.5 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          />
-        </div>
+        <input
+          id="pickup_time"
+          type="time"
+          aria-required="true"
+          aria-describedby="time-hint"
+          {...register("pickup_time")}
+          className="w-full rounded-xl border border-input bg-white px-4 py-3.5 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        />
         <p id="time-hint" className="text-xs text-muted-foreground">
           Prévoyez une marge de 30 minutes avant votre rendez-vous.
         </p>
@@ -133,34 +129,36 @@ export function Step3DateTime({ form }: StepProps) {
           <p className="text-sm font-semibold text-gray-700">Trajet retour</p>
 
           <div className="space-y-1.5">
-            <label htmlFor="return_date" className="block text-sm font-semibold text-gray-700">
+            <label
+              htmlFor="return_date"
+              className="flex items-center gap-1.5 text-sm font-semibold text-gray-700"
+            >
+              <Calendar className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
               Date de retour <span className="text-red-500" aria-hidden="true">*</span>
             </label>
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" aria-hidden="true" />
-              <input
-                id="return_date"
-                type="date"
-                min={minReturnDateStr}
-                {...register("return_date")}
-                className="w-full rounded-xl border border-input bg-white pl-9 pr-2 py-3.5 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              />
-            </div>
+            <input
+              id="return_date"
+              type="date"
+              min={minReturnDateStr}
+              {...register("return_date")}
+              className="w-full rounded-xl border border-input bg-white px-4 py-3.5 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            />
           </div>
 
           <div className="space-y-1.5">
-            <label htmlFor="return_time" className="block text-sm font-semibold text-gray-700">
+            <label
+              htmlFor="return_time"
+              className="flex items-center gap-1.5 text-sm font-semibold text-gray-700"
+            >
+              <Clock className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
               Heure de retour <span className="text-red-500" aria-hidden="true">*</span>
             </label>
-            <div className="relative">
-              <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" aria-hidden="true" />
-              <input
-                id="return_time"
-                type="time"
-                {...register("return_time")}
-                className="w-full rounded-xl border border-input bg-white pl-9 pr-2 py-3.5 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              />
-            </div>
+            <input
+              id="return_time"
+              type="time"
+              {...register("return_time")}
+              className="w-full rounded-xl border border-input bg-white px-4 py-3.5 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            />
           </div>
 
           <p className="text-xs text-muted-foreground">
