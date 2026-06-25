@@ -9,11 +9,41 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as MentionsLegalesRouteImport } from './routes/mentions-legales'
+import { Route as FaqRouteImport } from './routes/faq'
+import { Route as ConfidentialiteRouteImport } from './routes/confidentialite'
+import { Route as CommentCaMarcheRouteImport } from './routes/comment-ca-marche'
+import { Route as CgvRouteImport } from './routes/cgv'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ReservationIndexRouteImport } from './routes/reservation/index'
 import { Route as TableauDeBordChauffeurRouteImport } from './routes/tableau-de-bord/chauffeur'
 import { Route as DepartmentCityRouteImport } from './routes/$department.$city'
 
+const MentionsLegalesRoute = MentionsLegalesRouteImport.update({
+  id: '/mentions-legales',
+  path: '/mentions-legales',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FaqRoute = FaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConfidentialiteRoute = ConfidentialiteRouteImport.update({
+  id: '/confidentialite',
+  path: '/confidentialite',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CommentCaMarcheRoute = CommentCaMarcheRouteImport.update({
+  id: '/comment-ca-marche',
+  path: '/comment-ca-marche',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CgvRoute = CgvRouteImport.update({
+  id: '/cgv',
+  path: '/cgv',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -37,12 +67,22 @@ const DepartmentCityRoute = DepartmentCityRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/cgv': typeof CgvRoute
+  '/comment-ca-marche': typeof CommentCaMarcheRoute
+  '/confidentialite': typeof ConfidentialiteRoute
+  '/faq': typeof FaqRoute
+  '/mentions-legales': typeof MentionsLegalesRoute
   '/$department/$city': typeof DepartmentCityRoute
   '/tableau-de-bord/chauffeur': typeof TableauDeBordChauffeurRoute
   '/reservation': typeof ReservationIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/cgv': typeof CgvRoute
+  '/comment-ca-marche': typeof CommentCaMarcheRoute
+  '/confidentialite': typeof ConfidentialiteRoute
+  '/faq': typeof FaqRoute
+  '/mentions-legales': typeof MentionsLegalesRoute
   '/$department/$city': typeof DepartmentCityRoute
   '/tableau-de-bord/chauffeur': typeof TableauDeBordChauffeurRoute
   '/reservation': typeof ReservationIndexRoute
@@ -50,6 +90,11 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/cgv': typeof CgvRoute
+  '/comment-ca-marche': typeof CommentCaMarcheRoute
+  '/confidentialite': typeof ConfidentialiteRoute
+  '/faq': typeof FaqRoute
+  '/mentions-legales': typeof MentionsLegalesRoute
   '/$department/$city': typeof DepartmentCityRoute
   '/tableau-de-bord/chauffeur': typeof TableauDeBordChauffeurRoute
   '/reservation/': typeof ReservationIndexRoute
@@ -58,14 +103,33 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/cgv'
+    | '/comment-ca-marche'
+    | '/confidentialite'
+    | '/faq'
+    | '/mentions-legales'
     | '/$department/$city'
     | '/tableau-de-bord/chauffeur'
     | '/reservation'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/$department/$city' | '/tableau-de-bord/chauffeur' | '/reservation'
+  to:
+    | '/'
+    | '/cgv'
+    | '/comment-ca-marche'
+    | '/confidentialite'
+    | '/faq'
+    | '/mentions-legales'
+    | '/$department/$city'
+    | '/tableau-de-bord/chauffeur'
+    | '/reservation'
   id:
     | '__root__'
     | '/'
+    | '/cgv'
+    | '/comment-ca-marche'
+    | '/confidentialite'
+    | '/faq'
+    | '/mentions-legales'
     | '/$department/$city'
     | '/tableau-de-bord/chauffeur'
     | '/reservation/'
@@ -73,6 +137,11 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CgvRoute: typeof CgvRoute
+  CommentCaMarcheRoute: typeof CommentCaMarcheRoute
+  ConfidentialiteRoute: typeof ConfidentialiteRoute
+  FaqRoute: typeof FaqRoute
+  MentionsLegalesRoute: typeof MentionsLegalesRoute
   DepartmentCityRoute: typeof DepartmentCityRoute
   TableauDeBordChauffeurRoute: typeof TableauDeBordChauffeurRoute
   ReservationIndexRoute: typeof ReservationIndexRoute
@@ -80,6 +149,41 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/mentions-legales': {
+      id: '/mentions-legales'
+      path: '/mentions-legales'
+      fullPath: '/mentions-legales'
+      preLoaderRoute: typeof MentionsLegalesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/faq': {
+      id: '/faq'
+      path: '/faq'
+      fullPath: '/faq'
+      preLoaderRoute: typeof FaqRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/confidentialite': {
+      id: '/confidentialite'
+      path: '/confidentialite'
+      fullPath: '/confidentialite'
+      preLoaderRoute: typeof ConfidentialiteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/comment-ca-marche': {
+      id: '/comment-ca-marche'
+      path: '/comment-ca-marche'
+      fullPath: '/comment-ca-marche'
+      preLoaderRoute: typeof CommentCaMarcheRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cgv': {
+      id: '/cgv'
+      path: '/cgv'
+      fullPath: '/cgv'
+      preLoaderRoute: typeof CgvRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -113,6 +217,11 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CgvRoute: CgvRoute,
+  CommentCaMarcheRoute: CommentCaMarcheRoute,
+  ConfidentialiteRoute: ConfidentialiteRoute,
+  FaqRoute: FaqRoute,
+  MentionsLegalesRoute: MentionsLegalesRoute,
   DepartmentCityRoute: DepartmentCityRoute,
   TableauDeBordChauffeurRoute: TableauDeBordChauffeurRoute,
   ReservationIndexRoute: ReservationIndexRoute,
