@@ -116,7 +116,7 @@ export function Step1Identity({ form }: StepProps) {
           />
         </div>
         <p id="birth-hint" className="text-xs text-muted-foreground">
-          Peut être requise pour certains types de prise en charge CPAM.
+          Peut être requise pour certains types de prise en charge Assurance Maladie.
         </p>
       </div>
 

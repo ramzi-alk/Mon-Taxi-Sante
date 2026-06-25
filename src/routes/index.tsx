@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ArrowRight,
   CalendarCheck,
+  ChevronDown,
   Clock,
   MapPin,
   CheckCircle2,
@@ -15,14 +16,14 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       {
-        title: "Mon Taxi Santé — Réservez votre taxi conventionné CPAM en ligne",
+        title: "Mon Taxi Santé — Réservez votre taxi conventionné Assurance Maladie en ligne",
       },
       {
         name: "description",
         content:
-          "Réservez votre taxi médical agréé Sécurité Sociale en 2 minutes. Tiers-Payant intégral, chauffeurs certifiés CPAM. Zéro avance de frais pour ALD, dialyse, chimiothérapie.",
+          "Réservez votre taxi médical agréé Sécurité Sociale en 2 minutes. Tiers-Payant intégral, chauffeurs certifiés Assurance Maladie. Zéro avance de frais pour ALD, dialyse, chimiothérapie.",
       },
-      { property: "og:title", content: "Mon Taxi Santé — Taxi conventionné CPAM" },
+      { property: "og:title", content: "Mon Taxi Santé — Taxi conventionné Assurance Maladie" },
       {
         property: "og:description",
         content:
@@ -48,7 +49,7 @@ const howItWorksSteps = [
     icon: CheckCircle2,
     title: "Confirmation immédiate",
     description:
-      "Votre réservation est confirmée par SMS et email. Un chauffeur conventionné CPAM accepte votre course.",
+      "Votre réservation est confirmée par SMS et email. Un chauffeur conventionné Assurance Maladie accepte votre course.",
   },
   {
     step: "03",
@@ -84,6 +85,139 @@ const stats = [
   { value: "4.9/5", label: "Note moyenne patients" },
 ];
 
+type HomeFaqBlock =
+  | { kind: "paragraph"; text: string }
+  | { kind: "list"; items: string[] }
+  | { kind: "heading"; text: string };
+
+interface HomeFaqItem {
+  question: string;
+  blocks: HomeFaqBlock[];
+}
+
+const homeFaqItems: HomeFaqItem[] = [
+  {
+    question: "Quand mes frais de transport sont-ils remboursés par l'Assurance Maladie ?",
+    blocks: [
+      {
+        kind: "paragraph",
+        text: "Sur prescription médicale, l'Assurance Maladie peut rembourser vos frais de transport dans les situations suivantes :",
+      },
+      {
+        kind: "list",
+        items: [
+          "Vous êtes hospitalisé : le transport aller et/ou retour est couvert, quelle que soit la durée du séjour (hospitalisation complète, partielle ou ambulatoire).",
+          "Vous suivez un traitement lié à une affection de longue durée (ALD) et présentez une incapacité ou une déficience au déplacement reconnue par le Référentiel de prescription des transports.",
+          "Votre état de santé impose d'être transporté allongé ou sous surveillance médicale.",
+          "Le trajet dépasse 150 km en aller simple.",
+          "Vous effectuez des transports en série pour un même traitement : au moins 4 trajets de plus de 50 km aller sur une période de deux mois.",
+          "Vous êtes convoqué pour un contrôle réglementaire (contrôle médical, médecin expert ou fournisseur d'appareillage agréé).",
+          "Le trajet concerne un centre d'action médico-sociale précoce (CAMSP) ou un centre médico-psycho-pédagogique (CMPP).",
+          "Le transport est lié aux soins ou examens consécutifs à un accident du travail ou une maladie professionnelle.",
+        ],
+      },
+    ],
+  },
+  {
+    question: "Quelles sont les conditions pour bénéficier de la prise en charge du transport ?",
+    blocks: [
+      {
+        kind: "paragraph",
+        text: "Quel que soit le mode de transport utilisé, pour être remboursé vous devez disposer soit d'une prescription médicale délivrée par votre médecin, soit d'une convocation (service médical de l'Assurance Maladie, médecin expert, fournisseur d'appareillage, etc.). Dans certaines situations, le médecin remet une prescription accompagnée d'une demande d'accord préalable.",
+      },
+      { kind: "heading", text: "La prescription médicale" },
+      {
+        kind: "paragraph",
+        text: "Votre médecin établit la prescription et choisit le mode de transport le plus adapté à votre état de santé et à votre autonomie, en se conformant au Référentiel de prescription des transports : véhicule personnel, transport en commun, transport assis professionnalisé (taxi conventionné ou véhicule sanitaire léger) ou ambulance.",
+      },
+      {
+        kind: "paragraph",
+        text: "Sauf urgence, la prescription (simple ou avec demande d'accord préalable) doit être établie avant la réalisation du transport ; en cas d'urgence (appel du 15), elle peut être complétée a posteriori par un médecin de la structure de soins. La demande d'accord préalable doit, elle, être envoyée à la caisse d'assurance maladie avant le transport.",
+      },
+      {
+        kind: "paragraph",
+        text: "Pour un transport en commun, si la personne doit être accompagnée ou s'il s'agit d'un enfant de moins de 16 ans, le médecin doit le préciser sur la prescription.",
+      },
+      { kind: "heading", text: "Le respect du mode de transport prescrit" },
+      {
+        kind: "paragraph",
+        text: "Le remboursement suppose de respecter le mode de transport prescrit, sauf recours à un moyen moins coûteux. Par exemple, si un transport assis professionnalisé (taxi ou véhicule sanitaire léger) a été prescrit mais que vous êtes accompagné en voiture par un proche, vous pouvez demander le remboursement de vos frais de véhicule personnel pour motif médical.",
+      },
+      { kind: "heading", text: "L'accord préalable : des démarches supplémentaires" },
+      {
+        kind: "paragraph",
+        text: "Une demande d'accord préalable de l'Assurance Maladie est nécessaire pour :",
+      },
+      {
+        kind: "list",
+        items: [
+          "les transports de longue distance, de plus de 150 km en aller simple ;",
+          "les transports en série, soit au moins 4 trajets de plus de 50 km aller sur deux mois pour un même traitement (non requis pour les transports en série liés à une ALD) ;",
+          "les transports en avion ou bateau de ligne ;",
+          "les transports des femmes enceintes en cas de maternité éloignée ;",
+          "les transports liés aux soins des enfants et adolescents en CAMSP ou CMPP, ou nécessitant l'assistance d'un tiers ;",
+          "les transports des adultes handicapés vers un service d'accompagnement médico-social pour adultes handicapés (SAMSAH).",
+        ],
+      },
+      {
+        kind: "paragraph",
+        text: "Votre médecin vous remet une demande d'accord préalable, qui vaut prescription médicale de transport. Vous l'adressez complétée au médecin conseil de votre caisse d'assurance maladie, avant de prendre le transport, et devez attendre 15 jours : l'absence de réponse passé ce délai vaut accord ; en cas de refus, vous recevez un courrier de l'Assurance Maladie.",
+      },
+      { kind: "heading", text: "En cas d'affection de longue durée (ALD)" },
+      {
+        kind: "paragraph",
+        text: "La prise en charge de vos transports liés à une ALD suppose de répondre aux conditions suivantes :",
+      },
+      {
+        kind: "list",
+        items: [
+          "être reconnu atteint d'une ALD, exonérante ou non ;",
+          "le transport est en lien avec cette ALD ;",
+          "présenter des déficiences ou incapacités définies par le référentiel de prescription médicale des transports ;",
+          "disposer d'une prescription médicale ou, selon le cas, de l'accord préalable de l'Assurance Maladie.",
+        ],
+      },
+    ],
+  },
+  {
+    question: "Quel mode de transport pouvez-vous utiliser ?",
+    blocks: [
+      {
+        kind: "paragraph",
+        text: "C'est avant tout votre état de santé qui détermine le mode de transport prescrit :",
+      },
+      {
+        kind: "list",
+        items: [
+          "Vous devez être allongé ou demi-assis, sous surveillance, sous oxygène, brancardé, porté, ou transporté dans des conditions d'asepsie : une ambulance vous est prescrite.",
+          "Vous avez besoin d'aide pour vous déplacer, risquez des effets secondaires pendant le trajet, ou votre état nécessite le respect rigoureux de règles d'hygiène : un transport assis professionnalisé (VSL — véhicule sanitaire léger — ou taxi conventionné) vous est prescrit ; en l'absence de contre-indication médicale, il s'agit par défaut d'un transport partagé.",
+          "Vous pouvez vous déplacer seul ou accompagné d'un proche : votre véhicule personnel ou les transports en commun peuvent être utilisés.",
+        ],
+      },
+      {
+        kind: "paragraph",
+        text: "La prise en charge de vos frais de transport par l'Assurance Maladie suppose une prescription médicale rédigée avant le transport.",
+      },
+      { kind: "heading", text: "Les modes de transport pris en charge" },
+      {
+        kind: "list",
+        items: [
+          "le véhicule personnel (le vôtre ou celui d'un proche) ;",
+          "les transports en commun (bus, métro, train…) ;",
+          "le transport assis professionnalisé (taxi conventionné ou véhicule sanitaire léger), par défaut partagé en l'absence de contre-indication médicale ;",
+          "l'ambulance ;",
+          "l'avion ;",
+          "le bateau, en ligne régulière.",
+        ],
+      },
+      {
+        kind: "paragraph",
+        text: "C'est le médecin qui détermine le mode de transport le mieux adapté à votre état de santé et à votre niveau d'autonomie. Si vous utilisez un moyen moins onéreux que celui prescrit, vous pouvez tout de même bénéficier d'une prise en charge.",
+      },
+    ],
+  },
+];
+
 function HeroSection() {
   return (
     <section
@@ -114,7 +248,7 @@ function HeroSection() {
             <p className="text-lg text-gray-500 leading-relaxed mb-8 max-w-md">
               Concentrez-vous sur votre santé — nous gérons la route et
               l&apos;administratif. Réservation en ligne 24h/24, chauffeurs
-              certifiés CPAM, zéro avance de frais.
+              certifiés Assurance Maladie, zéro avance de frais.
             </p>
 
             {/* CTA buttons */}
@@ -378,6 +512,70 @@ function ConditionsSection() {
   );
 }
 
+function HomeFaqSection() {
+  return (
+    <section className="bg-[#F7F8FC]" aria-labelledby="home-faq-heading">
+      <div className="container max-w-3xl py-20 md:py-28">
+        <div className="mb-12">
+          <p className="text-xs font-bold tracking-[0.15em] text-[#1244E8] uppercase mb-4">
+            FAQ
+          </p>
+          <h2
+            id="home-faq-heading"
+            className="text-4xl md:text-5xl font-black text-[#0B0F1C] tracking-tight leading-tight"
+          >
+            Questions fréquentes
+          </h2>
+        </div>
+
+        <div className="divide-y divide-gray-200 rounded-xl border border-gray-200 bg-white overflow-hidden">
+          {homeFaqItems.map(({ question, blocks }) => (
+            <details key={question} className="group">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 font-semibold text-[#0B0F1C] hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                {question}
+                <ChevronDown
+                  className="h-5 w-5 shrink-0 text-gray-400 transition-transform duration-200 group-open:rotate-180"
+                  aria-hidden="true"
+                />
+              </summary>
+              <div className="px-5 pb-5 text-sm leading-relaxed text-gray-500 space-y-3">
+                {blocks.map((block, index) => {
+                  if (block.kind === "heading") {
+                    return (
+                      <p key={index} className="font-semibold text-[#0B0F1C] pt-1">
+                        {block.text}
+                      </p>
+                    );
+                  }
+                  if (block.kind === "list") {
+                    return (
+                      <ul key={index} className="space-y-2 list-disc pl-5">
+                        {block.items.map((item) => (
+                          <li key={item}>{item}</li>
+                        ))}
+                      </ul>
+                    );
+                  }
+                  return <p key={index}>{block.text}</p>;
+                })}
+              </div>
+            </details>
+          ))}
+        </div>
+
+        <div className="text-center mt-10">
+          <Link
+            to="/faq"
+            className="text-sm font-semibold text-[#1244E8] hover:underline"
+          >
+            Voir toutes les questions fréquentes →
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function CtaBanner() {
   return (
     <section
@@ -432,7 +630,7 @@ function HomeStructuredData() {
         telephone: "+33800000000",
         email: "contact@mon-taxi-sante.fr",
         areaServed: { "@type": "Country", name: "France" },
-        serviceType: "Transport médical conventionné CPAM",
+        serviceType: "Transport médical conventionné Assurance Maladie",
       },
       {
         "@type": "WebSite",
@@ -467,6 +665,7 @@ function HomePage() {
       <HowItWorksSection />
       <ConditionsSection />
       <Testimonials />
+      <HomeFaqSection />
       <CtaBanner />
     </>
   );

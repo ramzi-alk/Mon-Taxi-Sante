@@ -15,7 +15,7 @@ const footerLinks = {
   ],
   ressources: [
     { to: "/blog", label: "Guides patients" },
-    { to: "/blog/transport-cpam", label: "Transport pris en charge CPAM" },
+    { to: "/blog/transport-cpam", label: "Transport pris en charge Assurance Maladie" },
     { to: "/blog/pmt-prescription", label: "Prescription médicale de transport" },
     { to: "/blog/ald-transport", label: "Transport ALD : tout savoir" },
   ],
@@ -109,7 +109,7 @@ export function Footer() {
           {/* Ressources */}
           <div>
             <h3 className="font-semibold text-white mb-5 text-sm uppercase tracking-wider">
-              Ressources CPAM
+              Ressources Assurance Maladie
             </h3>
             <ul className="space-y-3 list-none" role="list">
               {footerLinks.ressources.map(({ to, label }) => (

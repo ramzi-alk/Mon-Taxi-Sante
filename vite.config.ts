@@ -8,6 +8,9 @@ export default defineConfig(({ command }) => ({
   server: {
     port: 3000,
   },
+  esbuild: {
+    jsx: "automatic",
+  },
   // Only bundle all deps during production build (for self-contained Vercel SSR).
   // No ssr config in dev — avoids Vite 7 bug where noExternal:false triggers
   // "filename.replace is not a function" in shouldExternalize.
