@@ -129,7 +129,7 @@ export function Step3DateTime({ form }: StepProps) {
 
       {/* Return fields */}
       {isReturnTrip && (
-        <div className="space-y-4 rounded-xl bg-gray-50 p-4 border border-gray-200">
+        <div className="space-y-4 rounded-xl bg-gray-50 p-3 sm:p-4 border border-gray-200">
           <p className="text-sm font-semibold text-gray-700">Trajet retour</p>
 
           <div className="space-y-1.5">
@@ -137,13 +137,13 @@ export function Step3DateTime({ form }: StepProps) {
               Date de retour <span className="text-red-500" aria-hidden="true">*</span>
             </label>
             <div className="relative">
-              <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" aria-hidden="true" />
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" aria-hidden="true" />
               <input
                 id="return_date"
                 type="date"
                 min={minReturnDateStr}
                 {...register("return_date")}
-                className="w-full rounded-xl border border-input bg-white pl-11 pr-4 py-3.5 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="w-full rounded-xl border border-input bg-white pl-9 pr-2 py-3.5 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />
             </div>
           </div>
@@ -153,12 +153,12 @@ export function Step3DateTime({ form }: StepProps) {
               Heure de retour <span className="text-red-500" aria-hidden="true">*</span>
             </label>
             <div className="relative">
-              <Clock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" aria-hidden="true" />
+              <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" aria-hidden="true" />
               <input
                 id="return_time"
                 type="time"
                 {...register("return_time")}
-                className="w-full rounded-xl border border-input bg-white pl-11 pr-4 py-3.5 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="w-full rounded-xl border border-input bg-white pl-9 pr-2 py-3.5 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />
             </div>
           </div>
