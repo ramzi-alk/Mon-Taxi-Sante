@@ -1,6 +1,7 @@
 node_modules
 .output
 .vinxi
+.vercel/output
 dist
 
 # Vinxi/Vite generated config cache files
