@@ -179,6 +179,43 @@ const homeFaqItems: HomeFaqItem[] = [
       },
     ],
   },
+  {
+    question: "Quel mode de transport pouvez-vous utiliser ?",
+    blocks: [
+      {
+        kind: "paragraph",
+        text: "C'est avant tout votre état de santé qui détermine le mode de transport prescrit :",
+      },
+      {
+        kind: "list",
+        items: [
+          "Vous devez être allongé ou demi-assis, sous surveillance, sous oxygène, brancardé, porté, ou transporté dans des conditions d'asepsie : une ambulance vous est prescrite.",
+          "Vous avez besoin d'aide pour vous déplacer, risquez des effets secondaires pendant le trajet, ou votre état nécessite le respect rigoureux de règles d'hygiène : un transport assis professionnalisé (VSL — véhicule sanitaire léger — ou taxi conventionné) vous est prescrit ; en l'absence de contre-indication médicale, il s'agit par défaut d'un transport partagé.",
+          "Vous pouvez vous déplacer seul ou accompagné d'un proche : votre véhicule personnel ou les transports en commun peuvent être utilisés.",
+        ],
+      },
+      {
+        kind: "paragraph",
+        text: "La prise en charge de vos frais de transport par l'Assurance Maladie suppose une prescription médicale rédigée avant le transport.",
+      },
+      { kind: "heading", text: "Les modes de transport pris en charge" },
+      {
+        kind: "list",
+        items: [
+          "le véhicule personnel (le vôtre ou celui d'un proche) ;",
+          "les transports en commun (bus, métro, train…) ;",
+          "le transport assis professionnalisé (taxi conventionné ou véhicule sanitaire léger), par défaut partagé en l'absence de contre-indication médicale ;",
+          "l'ambulance ;",
+          "l'avion ;",
+          "le bateau, en ligne régulière.",
+        ],
+      },
+      {
+        kind: "paragraph",
+        text: "C'est le médecin qui détermine le mode de transport le mieux adapté à votre état de santé et à votre niveau d'autonomie. Si vous utilisez un moyen moins onéreux que celui prescrit, vous pouvez tout de même bénéficier d'une prise en charge.",
+      },
+    ],
+  },
 ];
 
 function HeroSection() {
