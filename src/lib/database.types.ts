@@ -15,7 +15,7 @@ export interface Database {
       profiles: {
         Row: {
           id: string;
-          email: string;
+          email: string | null;
           full_name: string;
           phone: string | null;
           role: "patient" | "driver" | "admin";

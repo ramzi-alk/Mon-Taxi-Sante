@@ -20,6 +20,7 @@ import { Step10Confirmation } from "./steps/Step10Confirmation";
 import { supabase } from "~/lib/supabase";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
 import { logger } from "~/lib/logger";
+import { submitBookingServerFn } from "~/server/booking";
 
 const DEFAULT_VALUES: Partial<BookingSchema> = {
   patient_full_name: "",
@@ -50,15 +51,38 @@ const DEFAULT_VALUES: Partial<BookingSchema> = {
   consent: false,
 };
 
-async function submitBooking(data: BookingSchema) {
+async function getOrCreatePatientSession(fullName: string) {
   const { data: session } = await supabase.auth.getSession();
-  const userId = session?.session?.user?.id;
+  if (session?.session) return session.session;
+
+  // The booking form never asks patients to create an account. Sign them in
+  // anonymously so bookings.patient_id (NOT NULL, RLS-protected) has a valid,
+  // RLS-scoped owner without any visible signup step.
+  const { data: anon, error } = await supabase.auth.signInAnonymously({
+    options: { data: { full_name: fullName, role: "patient" } },
+  });
+
+  if (error || !anon.session) {
+    logger.error("booking.submit anonymous signin failed", {
+      error: error?.message,
+    });
+    throw new Error(
+      error?.message ?? "Impossible de démarrer la réservation. Réessayez."
+    );
+  }
+
+  return anon.session;
+}
+
+async function submitBooking(data: BookingSchema) {
+  const session = await getOrCreatePatientSession(data.patient_full_name);
+  const userId = session.user.id;
 
   // Upload PMT file if present
   let pmtFileUrl: string | null = null;
   if (data.pmt_declared && data.pmt_file instanceof File) {
     const ext = data.pmt_file.name.split(".").pop();
-    const path = `${userId ?? "anon"}/${Date.now()}.${ext}`;
+    const path = `${userId}/${Date.now()}.${ext}`;
     const { error: uploadError } = await supabase.storage
       .from("pmt-documents")
       .upload(path, data.pmt_file, { upsert: false });
@@ -74,50 +98,41 @@ async function submitBooking(data: BookingSchema) {
     }
   }
 
-  const { data: booking, error } = await supabase
-    .from("bookings")
-    .insert({
-      patient_id: userId!,
-      patient_full_name: data.patient_full_name,
-      patient_phone: data.patient_phone,
-      patient_birth_date: data.patient_birth_date || null,
-      pickup_address: data.pickup_address,
-      pickup_lat: data.pickup_lat,
-      pickup_lng: data.pickup_lng,
-      dropoff_address: data.dropoff_address,
-      dropoff_lat: data.dropoff_lat,
-      dropoff_lng: data.dropoff_lng,
-      pickup_datetime: `${data.pickup_date}T${data.pickup_time}:00`,
-      return_datetime:
-        data.has_return && data.return_date && data.return_time
-          ? `${data.return_date}T${data.return_time}:00`
-          : null,
-      vehicle_type: data.vehicle_type,
-      trip_type: data.trip_type,
-      requires_wheelchair: data.requires_wheelchair,
-      requires_stretcher: data.requires_stretcher,
-      requires_oxygen: data.requires_oxygen,
-      passenger_count: data.passenger_count,
-      cpam_status: data.cpam_status,
-      mutual_name: data.mutual_name || null,
-      pmt_declared: data.pmt_declared,
-      pmt_file_url: pmtFileUrl,
-      medical_notes: data.medical_notes || null,
-      consent_accepted_at: new Date().toISOString(),
-      status: "pending",
-    })
-    .select("id")
-    .single();
-
-  if (error) {
-    logger.error("booking.submit failed", {
-      error: error.message,
-      vehicle_type: data.vehicle_type,
-      cpam_status: data.cpam_status,
-    });
-    throw new Error(error.message);
-  }
-  return booking;
+  return submitBookingServerFn({
+    data: {
+      accessToken: session.access_token,
+      payload: {
+        patient_id: userId,
+        patient_full_name: data.patient_full_name,
+        patient_phone: data.patient_phone,
+        patient_birth_date: data.patient_birth_date || null,
+        pickup_address: data.pickup_address,
+        pickup_lat: data.pickup_lat,
+        pickup_lng: data.pickup_lng,
+        dropoff_address: data.dropoff_address,
+        dropoff_lat: data.dropoff_lat,
+        dropoff_lng: data.dropoff_lng,
+        pickup_datetime: `${data.pickup_date}T${data.pickup_time}:00`,
+        return_datetime:
+          data.has_return && data.return_date && data.return_time
+            ? `${data.return_date}T${data.return_time}:00`
+            : null,
+        vehicle_type: data.vehicle_type,
+        trip_type: data.trip_type,
+        requires_wheelchair: data.requires_wheelchair,
+        requires_stretcher: data.requires_stretcher,
+        requires_oxygen: data.requires_oxygen,
+        passenger_count: data.passenger_count,
+        cpam_status: data.cpam_status,
+        mutual_name: data.mutual_name || null,
+        pmt_declared: data.pmt_declared,
+        pmt_file_url: pmtFileUrl,
+        medical_notes: data.medical_notes || null,
+        consent_accepted_at: new Date().toISOString(),
+        status: "pending",
+      },
+    },
+  });
 }
 
 export function BookingForm() {
