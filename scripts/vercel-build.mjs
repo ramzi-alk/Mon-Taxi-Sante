@@ -64,6 +64,12 @@ export default async function handler(req, res) {
 `.trimStart()
 );
 
+// ESM flag — without this Node.js treats .js files as CJS and chokes on import statements
+await writeFile(
+  join(out, "functions/ssr.func/package.json"),
+  JSON.stringify({ type: "module" }, null, 2)
+);
+
 // Vercel Node.js serverless function config
 await writeFile(
   join(out, "functions/ssr.func/.vc-config.json"),
