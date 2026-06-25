@@ -8,12 +8,9 @@ const out = join(root, ".vercel/output");
 await mkdir(join(out, "static"), { recursive: true });
 await mkdir(join(out, "functions/ssr.func"), { recursive: true });
 
-// TanStack Start serves client assets at /_build/... (client.base default).
-// Copy dist/client → static/_build/ so the filesystem handler resolves them.
-await cp(join(root, "dist/client"), join(out, "static/_build"), { recursive: true });
-
-// Public folder assets (images, fonts, etc.) served at /...
-await cp(join(root, "public"), join(out, "static"), { recursive: true }).catch(() => null);
+// dist/client already contains public/ files (Vite merges publicDir into build output).
+// Copy everything to static/ — assets served at /assets/..., JS/CSS at /assets/...
+await cp(join(root, "dist/client"), join(out, "static"), { recursive: true });
 
 // Bundled SSR server (self-contained with ssr.noExternal)
 await cp(
