@@ -7,7 +7,7 @@ import { AlertCircle, CheckCircle2, Loader2, User, Mail, Lock, Phone, Car, FileT
 import { z } from "zod";
 import { supabase } from "~/lib/supabase";
 import { logger } from "~/lib/logger";
-import { lookupCompanyBySiret, SiretNotFoundError, type CompanyInfo } from "~/lib/siren";
+import { lookupCompanyBySiret, SiretNotFoundError, SirenRateLimitedError, type CompanyInfo } from "~/lib/siren";
 
 export const Route = createFileRoute("/chauffeurs/inscription")({
   head: () => ({
@@ -44,6 +44,7 @@ type SiretLookupState =
   | { status: "loading" }
   | { status: "success"; company: CompanyInfo }
   | { status: "not_found" }
+  | { status: "rate_limited" }
   | { status: "error" };
 
 async function registerDriver(data: InscriptionSchema, companyName: string | null) {
@@ -123,6 +124,9 @@ function InscriptionChauffeurPage() {
         if ((err as Error).name === "AbortError") return;
         if (err instanceof SiretNotFoundError) {
           setSiretLookup({ status: "not_found" });
+        } else if (err instanceof SirenRateLimitedError) {
+          logger.warn("siret_lookup.rate_limited");
+          setSiretLookup({ status: "rate_limited" });
         } else {
           logger.warn("siret_lookup.fetch_failed", { error: (err as Error).message });
           setSiretLookup({ status: "error" });
@@ -331,6 +335,12 @@ function InscriptionChauffeurPage() {
                   <span className="flex items-center gap-1.5 text-red-600">
                     <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
                     SIRET introuvable. Vérifiez le numéro saisi.
+                  </span>
+                )}
+                {siretLookup.status === "rate_limited" && (
+                  <span className="flex items-center gap-1.5 text-amber-600">
+                    <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+                    Service de vérification surchargé, réessayez dans un instant.
                   </span>
                 )}
               </p>
