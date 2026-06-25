@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ArrowRight,
   CalendarCheck,
+  ChevronDown,
   Clock,
   MapPin,
   CheckCircle2,
@@ -82,6 +83,30 @@ const stats = [
   { value: "98%", label: "Taux de ponctualité" },
   { value: "1 200+", label: "Chauffeurs certifiés" },
   { value: "4.9/5", label: "Note moyenne patients" },
+];
+
+interface HomeFaqItem {
+  question: string;
+  intro: string;
+  points?: string[];
+}
+
+const homeFaqItems: HomeFaqItem[] = [
+  {
+    question: "Dans quel cas vos frais de transport sont-ils pris en charge ?",
+    intro:
+      "Vous pouvez être remboursé de vos frais de transport par l'Assurance Maladie, sur prescription médicale, dans les cas suivants :",
+    points: [
+      "Transports liés à une hospitalisation (entrée et/ou sortie de l'hôpital), quelle que soit la durée de l'hospitalisation (complète, partielle, ou ambulatoire).",
+      "Transports liés aux traitements et soins en lien avec votre affection de longue durée (ALD), si vous présentez une incapacité ou déficience au déplacement définies par le Référentiel de prescription des transports.",
+      "Transports liés à votre état, qui nécessite d'être allongé ou sous surveillance.",
+      "Transports pour parcourir une longue distance (plus de 150 km aller).",
+      "Transports pour vous déplacer plusieurs fois (transports en série — au moins 4 voyages de plus de 50 km aller, sur une période de deux mois, au titre d'un même traitement).",
+      "Transports pour un contrôle réglementaire (convocation du contrôle médical, d'un médecin expert, ou d'un fournisseur d'appareillage agréé).",
+      "Transports vers un centre d'action médico-sociale précoce (CAMSP) ou centre médico-psycho-pédagogique (CMPP).",
+      "Transports liés aux traitements ou examens en rapport avec un accident du travail ou une maladie professionnelle.",
+    ],
+  },
 ];
 
 function HeroSection() {
@@ -378,6 +403,59 @@ function ConditionsSection() {
   );
 }
 
+function HomeFaqSection() {
+  return (
+    <section className="bg-[#F7F8FC]" aria-labelledby="home-faq-heading">
+      <div className="container max-w-3xl py-20 md:py-28">
+        <div className="mb-12">
+          <p className="text-xs font-bold tracking-[0.15em] text-[#1244E8] uppercase mb-4">
+            FAQ
+          </p>
+          <h2
+            id="home-faq-heading"
+            className="text-4xl md:text-5xl font-black text-[#0B0F1C] tracking-tight leading-tight"
+          >
+            Questions fréquentes
+          </h2>
+        </div>
+
+        <div className="divide-y divide-gray-200 rounded-xl border border-gray-200 bg-white overflow-hidden">
+          {homeFaqItems.map(({ question, intro, points }) => (
+            <details key={question} className="group">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 font-semibold text-[#0B0F1C] hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                {question}
+                <ChevronDown
+                  className="h-5 w-5 shrink-0 text-gray-400 transition-transform duration-200 group-open:rotate-180"
+                  aria-hidden="true"
+                />
+              </summary>
+              <div className="px-5 pb-5 text-sm leading-relaxed text-gray-500">
+                <p>{intro}</p>
+                {points && (
+                  <ul className="mt-3 space-y-2 list-disc pl-5">
+                    {points.map((point) => (
+                      <li key={point}>{point}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </details>
+          ))}
+        </div>
+
+        <div className="text-center mt-10">
+          <Link
+            to="/faq"
+            className="text-sm font-semibold text-[#1244E8] hover:underline"
+          >
+            Voir toutes les questions fréquentes →
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function CtaBanner() {
   return (
     <section
@@ -467,6 +545,7 @@ function HomePage() {
       <HowItWorksSection />
       <ConditionsSection />
       <Testimonials />
+      <HomeFaqSection />
       <CtaBanner />
     </>
   );
