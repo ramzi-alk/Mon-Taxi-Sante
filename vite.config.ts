@@ -8,10 +8,8 @@ export default defineConfig(({ command }) => ({
   server: {
     port: 3000,
   },
-  ssr: {
-    // Bundle all deps only for production build so server.js is self-contained
-    // (needed for Vercel deployment via Build Output API).
-    // In dev, keep deps external so Vite's module runner doesn't choke on CJS modules.
-    noExternal: command === "build",
-  },
+  // Only bundle all deps during production build (for self-contained Vercel SSR).
+  // No ssr config in dev — avoids Vite 7 bug where noExternal:false triggers
+  // "filename.replace is not a function" in shouldExternalize.
+  ...(command === "build" ? { ssr: { noExternal: true } } : {}),
 }));
