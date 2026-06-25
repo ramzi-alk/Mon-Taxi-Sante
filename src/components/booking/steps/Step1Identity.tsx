@@ -1,6 +1,12 @@
 import { UseFormReturn } from "react-hook-form";
-import { User, Phone, Calendar } from "lucide-react";
+import { format, parseISO } from "date-fns";
+import { fr } from "date-fns/locale";
+import { User, Phone, CalendarIcon } from "lucide-react";
 import type { BookingSchema } from "../schema";
+import { Button } from "~/components/ui/button";
+import { Calendar } from "~/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
+import { cn } from "~/lib/utils";
 
 interface StepProps {
   form: UseFormReturn<BookingSchema>;
@@ -10,7 +16,12 @@ export function Step1Identity({ form }: StepProps) {
   const {
     register,
     formState: { errors },
+    watch,
+    setValue,
   } = form;
+
+  const birthDate = watch("patient_birth_date");
+  const today = new Date();
 
   return (
     <div className="space-y-6">
@@ -98,19 +109,47 @@ export function Step1Identity({ form }: StepProps) {
           htmlFor="patient_birth_date"
           className="flex items-center gap-1.5 text-sm font-semibold text-gray-700"
         >
-          <Calendar className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+          <CalendarIcon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
           Date de naissance{" "}
           <span className="text-muted-foreground text-xs font-normal">(optionnel)</span>
         </label>
-        <input
-          id="patient_birth_date"
-          type="date"
-          autoComplete="bday"
-          max={new Date().toISOString().split("T")[0]}
-          aria-describedby="birth-hint"
-          {...register("patient_birth_date")}
-          className="w-full rounded-xl border border-input bg-white px-4 py-3.5 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        />
+        <input type="hidden" {...register("patient_birth_date")} />
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              id="patient_birth_date"
+              type="button"
+              variant="outline"
+              aria-describedby="birth-hint"
+              className={cn(
+                "h-auto w-full justify-start rounded-xl px-4 py-3.5 text-left text-base font-normal",
+                !birthDate && "text-muted-foreground"
+              )}
+            >
+              {birthDate
+                ? format(parseISO(birthDate), "d MMMM yyyy", { locale: fr })
+                : "Choisir une date"}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-2" align="start">
+            <Calendar
+              mode="single"
+              locale={fr}
+              selected={birthDate ? parseISO(birthDate) : undefined}
+              onSelect={(date) =>
+                date &&
+                setValue("patient_birth_date", format(date, "yyyy-MM-dd"), {
+                  shouldValidate: true,
+                })
+              }
+              disabled={{ after: today }}
+              defaultMonth={birthDate ? parseISO(birthDate) : undefined}
+              captionLayout="dropdown"
+              startMonth={new Date(today.getFullYear() - 120, 0)}
+              endMonth={today}
+            />
+          </PopoverContent>
+        </Popover>
         <p id="birth-hint" className="text-xs text-muted-foreground">
           Peut être requise pour certains types de prise en charge Assurance Maladie.
         </p>

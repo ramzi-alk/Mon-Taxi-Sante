@@ -1,13 +1,72 @@
 import { UseFormReturn } from "react-hook-form";
-import { Calendar, Clock, RefreshCw } from "lucide-react";
+import { format, parseISO } from "date-fns";
+import { fr } from "date-fns/locale";
+import { CalendarIcon, Clock, RefreshCw } from "lucide-react";
 import type { BookingSchema } from "../schema";
+import { Button } from "~/components/ui/button";
+import { Calendar } from "~/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
+import { cn } from "~/lib/utils";
 
 interface StepProps {
   form: UseFormReturn<BookingSchema>;
 }
 
 function toDateStr(date: Date) {
-  return date.toISOString().split("T")[0];
+  return format(date, "yyyy-MM-dd");
+}
+
+interface DatePickerFieldProps {
+  id: string;
+  value: string | undefined;
+  onChange: (value: string) => void;
+  disabledBefore: Date;
+  placeholder?: string;
+  invalid?: boolean;
+  describedBy?: string;
+}
+
+function DatePickerField({
+  id,
+  value,
+  onChange,
+  disabledBefore,
+  placeholder = "Choisir une date",
+  invalid,
+  describedBy,
+}: DatePickerFieldProps) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          id={id}
+          type="button"
+          variant="outline"
+          aria-describedby={describedBy}
+          aria-invalid={invalid}
+          className={cn(
+            "h-auto w-full justify-start rounded-xl px-4 py-3.5 text-left text-base font-normal",
+            invalid && "border-red-500",
+            !value && "text-muted-foreground"
+          )}
+        >
+          {value
+            ? format(parseISO(value), "EEEE d MMMM yyyy", { locale: fr })
+            : placeholder}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-2" align="start">
+        <Calendar
+          mode="single"
+          autoFocus
+          locale={fr}
+          selected={value ? parseISO(value) : undefined}
+          onSelect={(date) => date && onChange(toDateStr(date))}
+          disabled={{ before: disabledBefore }}
+        />
+      </PopoverContent>
+    </Popover>
+  );
 }
 
 export function Step3DateTime({ form }: StepProps) {
@@ -21,6 +80,7 @@ export function Step3DateTime({ form }: StepProps) {
   const hasReturn = watch("has_return");
   const tripType = watch("trip_type");
   const pickupDate = watch("pickup_date");
+  const returnDate = watch("return_date");
   const isReturnTrip = hasReturn || tripType === "aller_retour";
 
   // Computed at render time (not module load) so "tomorrow" stays correct
@@ -30,8 +90,8 @@ export function Step3DateTime({ form }: StepProps) {
   const minDateStr = toDateStr(minDate);
 
   // Return trip can't be scheduled before the outbound pickup date.
-  const minReturnDateStr =
-    pickupDate && pickupDate > minDateStr ? pickupDate : minDateStr;
+  const minReturnDate =
+    pickupDate && pickupDate > minDateStr ? parseISO(pickupDate) : minDate;
 
   return (
     <div className="space-y-6">
@@ -48,19 +108,19 @@ export function Step3DateTime({ form }: StepProps) {
           htmlFor="pickup_date"
           className="flex items-center gap-1.5 text-sm font-semibold text-gray-700"
         >
-          <Calendar className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+          <CalendarIcon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
           Date du rendez-vous{" "}
           <span className="text-red-500" aria-hidden="true">*</span>
         </label>
-        <input
+        <DatePickerField
           id="pickup_date"
-          type="date"
-          min={minDateStr}
-          aria-required="true"
-          aria-describedby={errors.pickup_date ? "date-error" : undefined}
-          {...register("pickup_date")}
-          className="w-full rounded-xl border border-input bg-white px-4 py-3.5 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          aria-invalid={!!errors.pickup_date}
+          value={pickupDate}
+          onChange={(value) =>
+            setValue("pickup_date", value, { shouldValidate: true })
+          }
+          disabledBefore={minDate}
+          invalid={!!errors.pickup_date}
+          describedBy={errors.pickup_date ? "date-error" : undefined}
         />
         {errors.pickup_date && (
           <p id="date-error" role="alert" className="text-sm text-red-600">
@@ -133,16 +193,24 @@ export function Step3DateTime({ form }: StepProps) {
               htmlFor="return_date"
               className="flex items-center gap-1.5 text-sm font-semibold text-gray-700"
             >
-              <Calendar className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+              <CalendarIcon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
               Date de retour <span className="text-red-500" aria-hidden="true">*</span>
             </label>
-            <input
+            <DatePickerField
               id="return_date"
-              type="date"
-              min={minReturnDateStr}
-              {...register("return_date")}
-              className="w-full rounded-xl border border-input bg-white px-4 py-3.5 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              value={returnDate || undefined}
+              onChange={(value) =>
+                setValue("return_date", value, { shouldValidate: true })
+              }
+              disabledBefore={minReturnDate}
+              invalid={!!errors.return_date}
+              describedBy={errors.return_date ? "return-date-error" : undefined}
             />
+            {errors.return_date && (
+              <p id="return-date-error" role="alert" className="text-sm text-red-600">
+                {errors.return_date.message}
+              </p>
+            )}
           </div>
 
           <div className="space-y-1.5">
