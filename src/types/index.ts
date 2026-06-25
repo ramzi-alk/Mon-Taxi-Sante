@@ -21,6 +21,7 @@ export interface DriverDetails {
   id: string;
   profile_id: string;
   siret: string;
+  company_name: string | null;
   convention_cpam: boolean;
   convention_number: string | null;
   vehicle_type: VehicleType;

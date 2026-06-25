@@ -18,6 +18,7 @@ interface PendingDriver {
   id: string;
   profile_id: string;
   siret: string;
+  company_name: string | null;
   vehicle_type: string;
   vehicle_registration: string;
   pmr_equipped: boolean;
@@ -41,7 +42,7 @@ async function fetchCurrentRole(): Promise<"admin" | "driver" | "patient" | null
 async function fetchPendingDrivers(): Promise<PendingDriver[]> {
   const { data, error } = await supabase
     .from("drivers_details")
-    .select("id, profile_id, siret, vehicle_type, vehicle_registration, pmr_equipped, created_at, profiles:profile_id(full_name, email, phone)")
+    .select("id, profile_id, siret, company_name, vehicle_type, vehicle_registration, pmr_equipped, created_at, profiles:profile_id(full_name, email, phone)")
     .is("approved_at", null)
     .order("created_at", { ascending: true });
 
@@ -216,7 +217,12 @@ function AdminDashboard() {
                         {driver.pmr_equipped && " · PMR"}
                         <div className="text-xs text-gray-400">{driver.vehicle_registration}</div>
                       </td>
-                      <td className="px-5 py-4 text-gray-500">{driver.siret}</td>
+                      <td className="px-5 py-4 text-gray-500">
+                        {driver.siret}
+                        {driver.company_name && (
+                          <div className="text-xs text-gray-400">{driver.company_name}</div>
+                        )}
+                      </td>
                       <td className="px-5 py-4 text-right">
                         <button
                           type="button"

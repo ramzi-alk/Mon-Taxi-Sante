@@ -154,7 +154,8 @@ export function BookingForm() {
         search: { id: booking.id },
       });
     },
-    onError: () => {
+    onError: (error: Error) => {
+      logger.error("booking.submit failed", { error: error.message });
       setSubmitError(
         "Une erreur est survenue lors de l'envoi de votre réservation. Veuillez réessayer ou nous appeler directement."
       );

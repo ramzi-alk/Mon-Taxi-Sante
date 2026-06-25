@@ -40,13 +40,22 @@ export default async function handler(req, res) {
     if (v != null) headers.set(k, Array.isArray(v) ? v.join(", ") : String(v));
   }
 
+  // Buffer the body instead of streaming it via Readable.toWeb(): combined
+  // with duplex:"half" that hangs indefinitely on POST requests in Vercel's
+  // Node serverless runtime. Booking submission and other server-fn calls
+  // carry small JSON payloads — large files (PMT documents) go straight to
+  // Supabase Storage from the browser, never through this route.
+  let body;
+  if (req.method !== "GET" && req.method !== "HEAD") {
+    const chunks = [];
+    for await (const chunk of req) chunks.push(chunk);
+    body = Buffer.concat(chunks);
+  }
+
   const request = new Request(url, {
     method: req.method,
     headers,
-    body: req.method !== "GET" && req.method !== "HEAD"
-      ? Readable.toWeb(req)
-      : undefined,
-    duplex: "half",
+    body,
   });
 
   const response = await server.fetch(request);

@@ -3,10 +3,12 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
-import { AlertCircle, CheckCircle2, User, Mail, Lock, Phone, Car, FileText } from "lucide-react";
+import { AlertCircle, CheckCircle2, User, Mail, Lock, Phone, Car } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "~/lib/supabase";
 import { logger } from "~/lib/logger";
+import { SiretAutocomplete } from "~/components/chauffeurs/SiretAutocomplete";
+import type { CompanySuggestion } from "~/lib/siren";
 
 export const Route = createFileRoute("/chauffeurs/inscription")({
   head: () => ({
@@ -23,14 +25,12 @@ export const Route = createFileRoute("/chauffeurs/inscription")({
 });
 
 const frenchPhone = /^(\+33|0)[1-9](\d{2}){4}$/;
-const siretRegex = /^\d{14}$/;
 
 const inscriptionSchema = z.object({
   full_name: z.string().min(3, "Veuillez saisir votre nom complet"),
   email: z.string().email("Adresse email invalide"),
   password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères"),
   phone: z.string().regex(frenchPhone, "Numéro de téléphone français invalide"),
-  siret: z.string().regex(siretRegex, "Le SIRET doit contenir 14 chiffres"),
   vehicle_type: z.enum(["taxi", "vsl", "ambulance"]),
   vehicle_registration: z.string().min(4, "Plaque d'immatriculation requise"),
   pmr_equipped: z.boolean(),
@@ -38,7 +38,7 @@ const inscriptionSchema = z.object({
 
 type InscriptionSchema = z.infer<typeof inscriptionSchema>;
 
-async function registerDriver(data: InscriptionSchema) {
+async function registerDriver(data: InscriptionSchema, company: CompanySuggestion) {
   const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
     email: data.email,
     password: data.password,
@@ -60,7 +60,8 @@ async function registerDriver(data: InscriptionSchema) {
 
   const { error: detailsError } = await supabase.from("drivers_details").insert({
     profile_id: userId,
-    siret: data.siret,
+    siret: company.siret,
+    company_name: company.name,
     convention_cpam: false,
     convention_number: null,
     vehicle_type: data.vehicle_type,
@@ -81,6 +82,8 @@ async function registerDriver(data: InscriptionSchema) {
 
 function InscriptionChauffeurPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [siretQuery, setSiretQuery] = useState("");
+  const [company, setCompany] = useState<CompanySuggestion | null>(null);
 
   const {
     register,
@@ -92,11 +95,17 @@ function InscriptionChauffeurPage() {
   });
 
   const { mutate, isPending, isSuccess } = useMutation({
-    mutationFn: registerDriver,
+    mutationFn: (data: InscriptionSchema) => registerDriver(data, company as CompanySuggestion),
     onError: (error: Error) => setErrorMessage(error.message),
   });
 
   function onSubmit(data: InscriptionSchema) {
+    if (!company) {
+      setErrorMessage(
+        "Recherchez votre entreprise par nom ou par SIRET, puis sélectionnez-la dans la liste avant de continuer."
+      );
+      return;
+    }
     setErrorMessage(null);
     mutate(data);
   }
@@ -250,21 +259,28 @@ function InscriptionChauffeurPage() {
 
             <div className="space-y-1.5">
               <label htmlFor="siret" className="block text-sm font-semibold text-gray-700">
-                Numéro SIRET <span className="text-red-500" aria-hidden="true">*</span>
+                SIRET <span className="text-red-500" aria-hidden="true">*</span>{" "}
+                <span className="font-normal text-muted-foreground">(recherche automatique)</span>
               </label>
-              <div className="relative">
-                <FileText className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" aria-hidden="true" />
-                <input
-                  id="siret"
-                  type="text"
-                  inputMode="numeric"
-                  placeholder="12345678901234"
-                  aria-invalid={!!errors.siret}
-                  {...register("siret")}
-                  className="w-full rounded-xl border border-input bg-white pl-11 pr-4 py-3.5 text-base placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring aria-[invalid=true]:border-red-500"
-                />
-              </div>
-              {errors.siret && <p role="alert" className="text-sm text-red-600">{errors.siret.message}</p>}
+              <SiretAutocomplete
+                id="siret"
+                value={siretQuery}
+                onChange={(v) => {
+                  setSiretQuery(v);
+                  setCompany(null);
+                }}
+                onSelect={(selected) => setCompany(selected)}
+                placeholder="Nom de l'entreprise ou numéro SIRET"
+                ariaDescribedBy="siret-status"
+                ariaInvalid={!company && siretQuery.length > 0}
+              />
+              {company && (
+                <p id="siret-status" role="status" className="flex items-center gap-1.5 text-sm text-emerald-600">
+                  <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  {company.address}
+                  {!company.active && " — établissement fermé"}
+                </p>
+              )}
             </div>
 
             <div className="space-y-1.5">
