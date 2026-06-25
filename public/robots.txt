@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+Disallow: /admin
+Disallow: /tableau-de-bord/
+Disallow: /connexion
+Disallow: /reservation/
+
+Sitemap: https://mon-taxi-sante.fr/sitemap.xml
