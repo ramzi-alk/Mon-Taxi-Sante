@@ -73,6 +73,18 @@ export const bookingSchema = z
       path: ["return_date"],
     }
   )
+  .refine(
+    (data) => {
+      if (data.return_date) {
+        return data.return_date >= data.pickup_date;
+      }
+      return true;
+    },
+    {
+      message: "La date de retour doit être postérieure ou égale à la date de départ",
+      path: ["return_date"],
+    }
+  )
   .refine((data) => data.consent === true, {
     message: "Vous devez accepter les CGV et la politique de confidentialité pour continuer",
     path: ["consent"],

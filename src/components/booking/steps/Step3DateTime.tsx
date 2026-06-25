@@ -6,9 +6,9 @@ interface StepProps {
   form: UseFormReturn<BookingSchema>;
 }
 
-const minDate = new Date();
-minDate.setDate(minDate.getDate() + 1); // At least tomorrow
-const minDateStr = minDate.toISOString().split("T")[0];
+function toDateStr(date: Date) {
+  return date.toISOString().split("T")[0];
+}
 
 export function Step3DateTime({ form }: StepProps) {
   const {
@@ -20,7 +20,18 @@ export function Step3DateTime({ form }: StepProps) {
 
   const hasReturn = watch("has_return");
   const tripType = watch("trip_type");
+  const pickupDate = watch("pickup_date");
   const isReturnTrip = hasReturn || tripType === "aller_retour";
+
+  // Computed at render time (not module load) so "tomorrow" stays correct
+  // even if the form is left open across midnight.
+  const minDate = new Date();
+  minDate.setDate(minDate.getDate() + 1); // At least tomorrow
+  const minDateStr = toDateStr(minDate);
+
+  // Return trip can't be scheduled before the outbound pickup date.
+  const minReturnDateStr =
+    pickupDate && pickupDate > minDateStr ? pickupDate : minDateStr;
 
   return (
     <div className="space-y-6">
@@ -130,7 +141,7 @@ export function Step3DateTime({ form }: StepProps) {
               <input
                 id="return_date"
                 type="date"
-                min={minDateStr}
+                min={minReturnDateStr}
                 {...register("return_date")}
                 className="w-full rounded-xl border border-input bg-white pl-11 pr-4 py-3.5 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />

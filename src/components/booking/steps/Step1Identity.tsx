@@ -110,6 +110,7 @@ export function Step1Identity({ form }: StepProps) {
             id="patient_birth_date"
             type="date"
             autoComplete="bday"
+            max={new Date().toISOString().split("T")[0]}
             aria-describedby="birth-hint"
             {...register("patient_birth_date")}
             className="w-full rounded-xl border border-input bg-white pl-11 pr-4 py-3.5 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
