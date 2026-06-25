@@ -1,16 +1,18 @@
-// Lookup company info from the French government's public "Recherche
+// Search companies via the French government's public "Recherche
 // d'entreprises" API (api.gouv.fr), built on top of the INSEE Sirene
 // register. Free, no API key, CORS-enabled — same integration pattern as
-// the BAN address API used in AddressAutocomplete.
+// the BAN address API used in AddressAutocomplete. Accepts a free-text
+// query: company name, SIREN, or SIRET.
 //
 // Rate limit: 7 req/s (the admin may lower it under server load), enforced
-// server-side via HTTP 429. The caller debounces input so a single user
-// stays well under this, but a 429 must be surfaced distinctly rather than
-// treated as a generic failure.
+// server-side via HTTP 429 — surfaced as SirenRateLimitedError so callers
+// can distinguish it from "no results".
 
 const SEARCH_URL = "https://recherche-entreprises.api.gouv.fr/search";
+const MAX_RESULTS = 5;
 
-export interface CompanyInfo {
+export interface CompanySuggestion {
+  siret: string;
   name: string;
   address: string | null;
   active: boolean;
@@ -33,39 +35,42 @@ interface SearchResponse {
   results: SearchResult[];
 }
 
-export class SiretNotFoundError extends Error {
-  constructor() {
-    super("SIRET introuvable. Vérifiez le numéro saisi.");
-  }
-}
-
 export class SirenRateLimitedError extends Error {
   constructor() {
     super("Service de vérification SIRET momentanément surchargé. Réessayez dans un instant.");
   }
 }
 
-export async function lookupCompanyBySiret(
-  siret: string,
+export async function searchCompanies(
+  query: string,
   signal?: AbortSignal
-): Promise<CompanyInfo> {
-  const url = `${SEARCH_URL}?q=${encodeURIComponent(siret)}&per_page=1`;
+): Promise<CompanySuggestion[]> {
+  const url = `${SEARCH_URL}?q=${encodeURIComponent(query)}&per_page=${MAX_RESULTS}`;
   const res = await fetch(url, { signal });
   if (res.status === 429) throw new SirenRateLimitedError();
   if (!res.ok) throw new Error(`API Recherche d'entreprises a répondu ${res.status}`);
 
   const data: SearchResponse = await res.json();
-  const result = data.results?.[0];
-  if (!result) throw new SiretNotFoundError();
+  const suggestions: CompanySuggestion[] = [];
 
-  const etablissement =
-    result.matching_etablissements?.find((e) => e.siret === siret) ?? result.siege;
-  if (!etablissement) throw new SiretNotFoundError();
+  for (const result of data.results ?? []) {
+    const name = result.nom_complet ?? result.nom_raison_sociale ?? "Entreprise inconnue";
+    const etablissements = result.matching_etablissements?.length
+      ? result.matching_etablissements
+      : result.siege
+      ? [result.siege]
+      : [];
 
-  const name = result.nom_complet ?? result.nom_raison_sociale ?? "Entreprise inconnue";
-  return {
-    name,
-    address: etablissement.adresse ?? null,
-    active: etablissement.etat_administratif === "A",
-  };
+    for (const etab of etablissements) {
+      suggestions.push({
+        siret: etab.siret,
+        name,
+        address: etab.adresse ?? null,
+        active: etab.etat_administratif === "A",
+      });
+      if (suggestions.length >= MAX_RESULTS) return suggestions;
+    }
+  }
+
+  return suggestions;
 }
