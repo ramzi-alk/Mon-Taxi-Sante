@@ -1,6 +1,7 @@
 import { UseFormReturn } from "react-hook-form";
 import { Car, Ambulance, Users } from "lucide-react";
 import { cn } from "~/lib/utils";
+import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
 import type { BookingSchema } from "../schema";
 
 interface StepProps {
@@ -143,7 +144,7 @@ export function Step4Vehicle({ form }: StepProps) {
         <strong>Besoin d&apos;aide pour choisir&nbsp;?</strong> Le type de véhicule est
         généralement indiqué sur votre prescription médicale de transport (PMT). En
         cas de doute, contactez-nous au{" "}
-        <a href="tel:+33800000000" className="font-semibold underline">0800 000 000</a>.
+        <a href={`tel:${CONTACT_PHONE_TEL}`} className="font-semibold underline">{CONTACT_PHONE_DISPLAY}</a>.
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, MapPin, CheckCircle2, Phone, Star } from "lucide-react";
+import { ArrowRight, MapPin, CheckCircle2, Phone } from "lucide-react";
+import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
 
 // Static data store — in production, pull from a CMS or database
 const cityData: Record<string, {
@@ -126,7 +127,7 @@ function LocalBusinessSchema({
     name: `Mon Taxi Santé — ${cityName}`,
     description: `Service de taxi médical conventionné Assurance Maladie à ${cityName} (${deptCode}). Transport pour dialyse, chimiothérapie, ALD. Tiers-Payant.`,
     url: "https://mon-taxi-sante.fr",
-    telephone: "+33800000000",
+    telephone: CONTACT_PHONE_TEL,
     priceRange: "Pris en charge Assurance Maladie",
     image: "https://mon-taxi-sante.fr/og-image.jpg",
     address: {
@@ -147,12 +148,6 @@ function LocalBusinessSchema({
         closes: "22:00",
       },
     ],
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: "4.9",
-      reviewCount: "312",
-      bestRating: "5",
-    },
     hasOfferCatalog: {
       "@type": "OfferCatalog",
       name: "Transports médicaux",
@@ -186,7 +181,7 @@ function LocalPage() {
   const faqItems = [
     {
       q: `Comment réserver un taxi conventionné Assurance Maladie à ${City} ?`,
-      a: `Utilisez notre formulaire en ligne en 5 minutes, ou appelez le 0800 000 000 (gratuit). Votre réservation est confirmée immédiatement par SMS.`,
+      a: `Utilisez notre formulaire en ligne en 5 minutes, ou appelez le ${CONTACT_PHONE_DISPLAY} (gratuit). Votre réservation est confirmée immédiatement par SMS.`,
     },
     {
       q: `Le transport médical est-il vraiment gratuit à ${City} ?`,
@@ -251,22 +246,12 @@ function LocalPage() {
               <ArrowRight className="h-5 w-5" aria-hidden="true" />
             </Link>
             <a
-              href="tel:+33800000000"
+              href={`tel:${CONTACT_PHONE_TEL}`}
               className="btn-cta inline-flex items-center justify-center gap-2 border-2 border-white/40 bg-white/10 hover:bg-white/20 rounded-xl transition-colors"
             >
               <Phone className="h-4 w-4" aria-hidden="true" />
-              0800 000 000 (gratuit)
+              {CONTACT_PHONE_DISPLAY} (gratuit)
             </a>
-          </div>
-
-          {/* Stars */}
-          <div className="flex items-center gap-2 mt-8">
-            {[1,2,3,4,5].map((s) => (
-              <Star key={s} className="h-5 w-5 fill-amber-400 text-amber-400" aria-hidden="true" />
-            ))}
-            <span className="text-blue-100 text-sm">
-              4.9/5 — {(300 + Math.abs(City.length * 7)).toFixed(0)} avis vérifiés à {City}
-            </span>
           </div>
         </div>
       </section>

@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronDown } from "lucide-react";
+import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
 
 export const Route = createFileRoute("/faq")({
   head: () => ({
@@ -47,7 +48,7 @@ const faqCategories: FaqCategory[] = [
       {
         question: "Puis-je annuler ou modifier ma réservation ?",
         answer:
-          "Oui, toute annulation effectuée plus de 24h avant l'heure prévue est gratuite. Contactez notre service client au 0800 000 000 pour modifier une réservation.",
+          `Oui, toute annulation effectuée plus de 24h avant l'heure prévue est gratuite. Contactez notre service client au ${CONTACT_PHONE_DISPLAY} pour modifier une réservation.`,
       },
     ],
   },
@@ -87,7 +88,7 @@ const faqCategories: FaqCategory[] = [
       {
         question: "Que se passe-t-il si mon chauffeur est en retard ?",
         answer:
-          "Vous êtes informé en temps réel par SMS en cas de retard. Notre équipe reste disponible au 0800 000 000 pour vous assister en cas d'imprévu.",
+          `Vous êtes informé en temps réel par SMS en cas de retard. Notre équipe reste disponible au ${CONTACT_PHONE_DISPLAY} pour vous assister en cas d'imprévu.`,
       },
     ],
   },
@@ -121,8 +122,8 @@ function FaqPage() {
           </h1>
           <p className="mt-5 text-lg text-gray-500 max-w-xl leading-relaxed">
             Vous ne trouvez pas votre réponse ? Appelez-nous au{" "}
-            <a href="tel:+33800000000" className="text-[#1244E8] underline">
-              0800 000 000
+            <a href={`tel:${CONTACT_PHONE_TEL}`} className="text-[#1244E8] underline">
+              {CONTACT_PHONE_DISPLAY}
             </a>{" "}
             (gratuit) ou écrivez à{" "}
             <a href="mailto:contact@mon-taxi-sante.fr" className="text-[#1244E8] underline">

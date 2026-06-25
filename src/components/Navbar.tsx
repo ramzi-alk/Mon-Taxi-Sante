@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
+import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
 
 const navLinks = [
   { to: "/comment-ca-marche", label: "Comment ça marche" },
@@ -50,11 +51,11 @@ export function Navbar() {
           {/* CTA zone */}
           <div className="hidden md:flex items-center gap-4">
             <a
-              href="tel:+33800000000"
+              href={`tel:${CONTACT_PHONE_TEL}`}
               className="text-sm font-medium text-gray-500 hover:text-[#0B0F1C] transition-colors"
-              aria-label="Appeler le 0800 000 000 (gratuit)"
+              aria-label={`Appeler le ${CONTACT_PHONE_DISPLAY} (gratuit)`}
             >
-              0800 000 000
+              {CONTACT_PHONE_DISPLAY}
             </a>
             <Link
               to="/reservation"

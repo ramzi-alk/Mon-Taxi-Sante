@@ -15,6 +15,7 @@ import type { BookingSchema } from "../schema";
 interface StepProps {
   form: UseFormReturn<BookingSchema>;
   isSubmitting: boolean;
+  submitError?: string | null;
 }
 
 const vehicleLabels: Record<string, string> = {
@@ -57,7 +58,8 @@ function SummaryRow({
   );
 }
 
-export function Step10Confirmation({ form, isSubmitting }: StepProps) {
+export function Step10Confirmation({ form, isSubmitting, submitError }: StepProps) {
+  const { register, formState: { errors } } = form;
   const data = form.getValues();
 
   const pickupDatetime = data.pickup_date && data.pickup_time
@@ -140,25 +142,43 @@ export function Step10Confirmation({ form, isSubmitting }: StepProps) {
       </div>
 
       {/* Terms */}
-      <label className="flex items-start gap-3 cursor-pointer group">
-        <input
-          type="checkbox"
-          required
-          className="mt-0.5 h-5 w-5 rounded border-gray-300 text-brand-blue-600 focus:ring-brand-blue-500 cursor-pointer"
-          aria-required="true"
-        />
-        <span className="text-sm text-gray-700">
-          J&apos;accepte les{" "}
-          <a href="/cgv" target="_blank" className="text-brand-blue-600 underline">
-            Conditions Générales de Vente
-          </a>{" "}
-          et la{" "}
-          <a href="/confidentialite" target="_blank" className="text-brand-blue-600 underline">
-            Politique de confidentialité
-          </a>
-          . Je confirme que les informations médicales fournies sont exactes.
-        </span>
-      </label>
+      <div>
+        <label className="flex items-start gap-3 cursor-pointer group">
+          <input
+            type="checkbox"
+            {...register("consent")}
+            className="mt-0.5 h-5 w-5 rounded border-gray-300 text-brand-blue-600 focus:ring-brand-blue-500 cursor-pointer"
+            aria-required="true"
+            aria-invalid={!!errors.consent}
+          />
+          <span className="text-sm text-gray-700">
+            J&apos;accepte les{" "}
+            <a href="/cgv" target="_blank" className="text-brand-blue-600 underline">
+              Conditions Générales de Vente
+            </a>{" "}
+            et la{" "}
+            <a href="/confidentialite" target="_blank" className="text-brand-blue-600 underline">
+              Politique de confidentialité
+            </a>
+            . Je confirme que les informations médicales fournies sont exactes.
+          </span>
+        </label>
+        {errors.consent && (
+          <p role="alert" className="mt-2 text-sm text-red-600">
+            {errors.consent.message}
+          </p>
+        )}
+      </div>
+
+      {submitError && (
+        <div
+          role="alert"
+          className="flex items-start gap-2 rounded-xl bg-red-50 border border-red-100 p-3 text-sm text-red-700"
+        >
+          <AlertCircle className="h-5 w-5 shrink-0" aria-hidden="true" />
+          {submitError}
+        </div>
+      )}
 
       {/* Submit button — extra large for accessibility */}
       <button

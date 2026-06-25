@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ShieldAlert, CheckCircle2, Clock, Users, Car, ClipboardList } from "lucide-react";
 import { supabase } from "~/lib/supabase";
+import { logger } from "~/lib/logger";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -44,13 +45,19 @@ async function fetchPendingDrivers(): Promise<PendingDriver[]> {
     .is("approved_at", null)
     .order("created_at", { ascending: true });
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    logger.error("admin.fetchPendingDrivers failed", { error: error.message });
+    throw new Error(error.message);
+  }
   return (data ?? []) as unknown as PendingDriver[];
 }
 
 async function fetchBookingStats(): Promise<Record<string, number>> {
   const { data, error } = await supabase.from("bookings").select("status");
-  if (error) throw new Error(error.message);
+  if (error) {
+    logger.error("admin.fetchBookingStats failed", { error: error.message });
+    throw new Error(error.message);
+  }
 
   return (data ?? []).reduce<Record<string, number>>((acc, row) => {
     acc[row.status] = (acc[row.status] ?? 0) + 1;
@@ -65,7 +72,13 @@ async function approveDriver(driverDetailsId: string) {
     .update({ approved_at: new Date().toISOString(), approved_by: user?.id ?? null })
     .eq("id", driverDetailsId);
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    logger.error("admin.approveDriver failed", {
+      error: error.message,
+      driverDetailsId,
+    });
+    throw new Error(error.message);
+  }
 }
 
 function AdminPage() {

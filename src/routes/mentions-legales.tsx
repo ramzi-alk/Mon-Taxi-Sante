@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { LegalPageLayout } from "~/components/LegalPageLayout";
+import { CONTACT_PHONE_DISPLAY, CONTACT_EMAIL } from "~/lib/contact";
 
 export const Route = createFileRoute("/mentions-legales")({
   head: () => ({
@@ -26,7 +27,7 @@ function MentionsLegalesPage() {
         <li>SIRET : [à compléter]</li>
         <li>RCS : [à compléter]</li>
         <li>Directeur de la publication : [nom à compléter]</li>
-        <li>Contact : contact@mon-taxi-sante.fr — 0800 000 000 (appel gratuit)</li>
+        <li>Contact : {CONTACT_EMAIL} — {CONTACT_PHONE_DISPLAY} (appel gratuit)</li>
       </ul>
 
       <h2>Hébergement</h2>

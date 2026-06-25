@@ -15,7 +15,7 @@ export interface Database {
       profiles: {
         Row: {
           id: string;
-          email: string;
+          email: string | null;
           full_name: string;
           phone: string | null;
           role: "patient" | "driver" | "admin";
@@ -71,6 +71,7 @@ export interface Database {
           pmt_declared: boolean;
           pmt_file_url: string | null;
           medical_notes: string | null;
+          consent_accepted_at: string | null;
           estimated_price: number | null;
           status: "draft" | "pending" | "confirmed" | "available" | "accepted" | "in_progress" | "completed" | "cancelled";
           created_at: string;

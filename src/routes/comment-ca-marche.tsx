@@ -9,6 +9,7 @@ import {
   Users,
   ShieldCheck,
 } from "lucide-react";
+import { CONTACT_PHONE_DISPLAY } from "~/lib/contact";
 
 export const Route = createFileRoute("/comment-ca-marche")({
   head: () => ({
@@ -165,7 +166,7 @@ function CommentCaMarchePage() {
             Une question sur votre prise en charge ?
           </h2>
           <p className="text-lg text-white/70 mb-10">
-            Consultez notre FAQ ou contactez-nous au 0800 000 000, gratuit
+            Consultez notre FAQ ou contactez-nous au {CONTACT_PHONE_DISPLAY}, gratuit
             depuis un poste fixe ou mobile.
           </p>
           <Link

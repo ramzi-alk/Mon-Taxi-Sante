@@ -1,0 +1,29 @@
+# Mon Taxi Santé
+
+> Plateforme française de réservation en ligne de transport sanitaire (taxi conventionné, VSL, véhicule PMR) pris en charge par l'Assurance Maladie. Permet à un patient de réserver un trajet médical avec Tiers-Payant (zéro avance de frais pour les assurés ALD, CMU-C, CSS ou standard) et aux chauffeurs conventionnés CPAM de recevoir des courses.
+
+Le remboursement dépend du statut de l'assuré : prise en charge à 100 % pour les patients en ALD, CMU-C ou CSS ; à 65 % pour un assuré standard avec une Prescription Médicale de Transport (PMT) ; à la charge du patient sans PMT ou statut de prise en charge. Le Tiers-Payant signifie que l'Assurance Maladie règle directement le chauffeur, sans avance de frais pour le patient éligible.
+
+## Pages principales
+
+- [Accueil](https://mon-taxi-sante.fr/): présentation du service, types de véhicules (taxi conventionné, VSL, PMR) et garanties.
+- [Comment ça marche](https://mon-taxi-sante.fr/comment-ca-marche): étapes du parcours de réservation.
+- [Tarifs et prise en charge CPAM](https://mon-taxi-sante.fr/tarifs-cpam): règles de remboursement Assurance Maladie par statut d'assuré.
+- [FAQ](https://mon-taxi-sante.fr/faq): questions fréquentes sur la réservation, le Tiers-Payant et la PMT.
+
+## Chauffeurs
+
+- [Devenir chauffeur conventionné](https://mon-taxi-sante.fr/chauffeurs/inscription): inscription pour les chauffeurs conventionnés CPAM.
+- [Tarifs abonnement chauffeur](https://mon-taxi-sante.fr/chauffeurs/tarifs): grille tarifaire de l'abonnement plateforme.
+
+## Blog
+
+- [Transport pris en charge Assurance Maladie](https://mon-taxi-sante.fr/blog/transport-cpam)
+- [Prescription médicale de transport (PMT)](https://mon-taxi-sante.fr/blog/pmt-prescription)
+- [Transport ALD](https://mon-taxi-sante.fr/blog/ald-transport)
+
+## Informations légales
+
+- [CGV](https://mon-taxi-sante.fr/cgv)
+- [Politique de confidentialité](https://mon-taxi-sante.fr/confidentialite)
+- [Mentions légales](https://mon-taxi-sante.fr/mentions-legales)

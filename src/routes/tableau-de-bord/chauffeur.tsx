@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "~/lib/supabase";
+import { logger } from "~/lib/logger";
 import { useRealtime } from "~/hooks/useRealtime";
 import { RideCard, type PoolRide } from "~/components/driver/RideCard";
 
@@ -33,7 +34,10 @@ async function fetchRidePool(): Promise<PoolRide[]> {
     .eq("status", "available")
     .order("pickup_datetime", { ascending: true });
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    logger.error("driver.fetchRidePool failed", { error: error.message });
+    throw new Error(error.message);
+  }
   return (data ?? []) as PoolRide[];
 }
 
@@ -51,7 +55,10 @@ async function fetchMyRides(): Promise<PoolRide[]> {
     .order("pickup_datetime", { ascending: false })
     .limit(20);
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    logger.error("driver.fetchMyRides failed", { error: error.message });
+    throw new Error(error.message);
+  }
 
   // Map to PoolRide shape (rename patient_full_name → patient_first_name)
   return (data ?? []).map((r) => ({
@@ -70,7 +77,10 @@ async function acceptRide(rideId: string): Promise<void> {
     .eq("id", rideId)
     .eq("status", "available"); // optimistic lock — only update if still available
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    logger.error("driver.acceptRide failed", { error: error.message, rideId });
+    throw new Error(error.message);
+  }
 }
 
 // ─── Stats card ─────────────────────────────────────────────────────────────

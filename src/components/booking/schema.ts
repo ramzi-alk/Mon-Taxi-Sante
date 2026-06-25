@@ -57,6 +57,9 @@ export const bookingSchema = z
 
     // Step 9 — Notes
     medical_notes: z.string().max(500, "Maximum 500 caractères").optional().or(z.literal("")),
+
+    // Step 10 — Consent
+    consent: z.boolean(),
   })
   .refine(
     (data) => {
@@ -69,7 +72,23 @@ export const bookingSchema = z
       message: "La date et l'heure de retour sont requises pour un aller-retour",
       path: ["return_date"],
     }
-  );
+  )
+  .refine(
+    (data) => {
+      if (data.return_date) {
+        return data.return_date >= data.pickup_date;
+      }
+      return true;
+    },
+    {
+      message: "La date de retour doit être postérieure ou égale à la date de départ",
+      path: ["return_date"],
+    }
+  )
+  .refine((data) => data.consent === true, {
+    message: "Vous devez accepter les CGV et la politique de confidentialité pour continuer",
+    path: ["consent"],
+  });
 
 export type BookingSchema = z.infer<typeof bookingSchema>;
 
@@ -96,5 +115,5 @@ export const STEP_FIELDS: Record<number, (keyof BookingSchema)[]> = {
   7: ["cpam_status"],
   8: ["pmt_declared"],
   9: ["medical_notes"],
-  10: [],
+  10: ["consent"],
 };
