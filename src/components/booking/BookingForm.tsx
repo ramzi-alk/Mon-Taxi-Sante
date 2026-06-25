@@ -19,6 +19,7 @@ import { Step9Notes } from "./steps/Step9Notes";
 import { Step10Confirmation } from "./steps/Step10Confirmation";
 import { supabase } from "~/lib/supabase";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
+import { logger } from "~/lib/logger";
 
 const DEFAULT_VALUES: Partial<BookingSchema> = {
   patient_full_name: "",
@@ -66,6 +67,10 @@ async function submitBooking(data: BookingSchema) {
         .from("pmt-documents")
         .getPublicUrl(path);
       pmtFileUrl = urlData.publicUrl;
+    } else {
+      logger.warn("booking.submit pmt upload failed, continuing without file", {
+        error: uploadError.message,
+      });
     }
   }
 
@@ -104,12 +109,20 @@ async function submitBooking(data: BookingSchema) {
     .select("id")
     .single();
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    logger.error("booking.submit failed", {
+      error: error.message,
+      vehicle_type: data.vehicle_type,
+      cpam_status: data.cpam_status,
+    });
+    throw new Error(error.message);
+  }
   return booking;
 }
 
 export function BookingForm() {
   const [currentStep, setCurrentStep] = useState(1);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const form = useForm<BookingSchema>({
@@ -125,6 +138,11 @@ export function BookingForm() {
         to: "/reservation/confirmation",
         search: { id: booking.id },
       });
+    },
+    onError: () => {
+      setSubmitError(
+        "Une erreur est survenue lors de l'envoi de votre réservation. Veuillez réessayer ou nous appeler directement."
+      );
     },
   });
 
@@ -145,6 +163,7 @@ export function BookingForm() {
   async function handleSubmit() {
     const valid = await form.trigger();
     if (!valid) return;
+    setSubmitError(null);
     const data = form.getValues();
     await mutateAsync(data);
   }
@@ -184,7 +203,11 @@ export function BookingForm() {
             {currentStep === 8 && <Step8PMT form={form} />}
             {currentStep === 9 && <Step9Notes form={form} />}
             {currentStep === 10 && (
-              <Step10Confirmation form={form} isSubmitting={isPending} />
+              <Step10Confirmation
+                form={form}
+                isSubmitting={isPending}
+                submitError={submitError}
+              />
             )}
           </div>
 

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { CheckCircle2, MapPin, Calendar, ShieldCheck, Phone } from "lucide-react";
 import { supabase } from "~/lib/supabase";
 import { formatDateFr, formatTimeFr } from "~/lib/utils";
+import { logger } from "~/lib/logger";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
 
 const confirmationSearchSchema = z.object({
@@ -38,7 +39,10 @@ async function fetchBooking(id: string) {
     .eq("id", id)
     .single();
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    logger.error("booking.fetchConfirmation failed", { error: error.message, id });
+    throw new Error(error.message);
+  }
   return data;
 }
 

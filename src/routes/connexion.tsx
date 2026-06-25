@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Mail, Lock, AlertCircle } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "~/lib/supabase";
+import { logger } from "~/lib/logger";
 
 export const Route = createFileRoute("/connexion")({
   head: () => ({
@@ -29,7 +30,10 @@ async function login(data: LoginSchema) {
     email: data.email,
     password: data.password,
   });
-  if (error) throw new Error("Email ou mot de passe incorrect.");
+  if (error) {
+    logger.warn("auth.login failed", { error: error.message });
+    throw new Error("Email ou mot de passe incorrect.");
+  }
 
   const { data: profile } = await supabase
     .from("profiles")

@@ -6,6 +6,7 @@ import { useState } from "react";
 import { AlertCircle, CheckCircle2, User, Mail, Lock, Phone, Car, FileText } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "~/lib/supabase";
+import { logger } from "~/lib/logger";
 
 export const Route = createFileRoute("/chauffeurs/inscription")({
   head: () => ({
@@ -45,7 +46,10 @@ async function registerDriver(data: InscriptionSchema) {
       data: { full_name: data.full_name, role: "driver" },
     },
   });
-  if (signUpError) throw new Error(signUpError.message);
+  if (signUpError) {
+    logger.error("driver.register signup failed", { error: signUpError.message });
+    throw new Error(signUpError.message);
+  }
 
   const userId = signUpData.user?.id;
   if (!userId) {
@@ -66,7 +70,13 @@ async function registerDriver(data: InscriptionSchema) {
     subscription_ends_at: null,
     approved_at: null,
   });
-  if (detailsError) throw new Error(detailsError.message);
+  if (detailsError) {
+    logger.error("driver.register details insert failed", {
+      error: detailsError.message,
+      userId,
+    });
+    throw new Error(detailsError.message);
+  }
 }
 
 function InscriptionChauffeurPage() {

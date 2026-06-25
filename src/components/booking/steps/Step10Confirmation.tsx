@@ -15,6 +15,7 @@ import type { BookingSchema } from "../schema";
 interface StepProps {
   form: UseFormReturn<BookingSchema>;
   isSubmitting: boolean;
+  submitError?: string | null;
 }
 
 const vehicleLabels: Record<string, string> = {
@@ -57,7 +58,7 @@ function SummaryRow({
   );
 }
 
-export function Step10Confirmation({ form, isSubmitting }: StepProps) {
+export function Step10Confirmation({ form, isSubmitting, submitError }: StepProps) {
   const { register, formState: { errors } } = form;
   const data = form.getValues();
 
@@ -168,6 +169,16 @@ export function Step10Confirmation({ form, isSubmitting }: StepProps) {
           </p>
         )}
       </div>
+
+      {submitError && (
+        <div
+          role="alert"
+          className="flex items-start gap-2 rounded-xl bg-red-50 border border-red-100 p-3 text-sm text-red-700"
+        >
+          <AlertCircle className="h-5 w-5 shrink-0" aria-hidden="true" />
+          {submitError}
+        </div>
+      )}
 
       {/* Submit button — extra large for accessibility */}
       <button
