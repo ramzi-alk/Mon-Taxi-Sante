@@ -12,13 +12,17 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TarifsCpamRouteImport } from './routes/tarifs-cpam'
 import { Route as MentionsLegalesRouteImport } from './routes/mentions-legales'
 import { Route as FaqRouteImport } from './routes/faq'
+import { Route as ConnexionRouteImport } from './routes/connexion'
 import { Route as ConfidentialiteRouteImport } from './routes/confidentialite'
 import { Route as CommentCaMarcheRouteImport } from './routes/comment-ca-marche'
 import { Route as CgvRouteImport } from './routes/cgv'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ReservationIndexRouteImport } from './routes/reservation/index'
 import { Route as BlogIndexRouteImport } from './routes/blog/index'
 import { Route as TableauDeBordChauffeurRouteImport } from './routes/tableau-de-bord/chauffeur'
+import { Route as ChauffeursTarifsRouteImport } from './routes/chauffeurs/tarifs'
+import { Route as ChauffeursInscriptionRouteImport } from './routes/chauffeurs/inscription'
 import { Route as BlogTransportCpamRouteImport } from './routes/blog/transport-cpam'
 import { Route as BlogPmtPrescriptionRouteImport } from './routes/blog/pmt-prescription'
 import { Route as BlogAldTransportRouteImport } from './routes/blog/ald-transport'
@@ -39,6 +43,11 @@ const FaqRoute = FaqRouteImport.update({
   path: '/faq',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ConnexionRoute = ConnexionRouteImport.update({
+  id: '/connexion',
+  path: '/connexion',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ConfidentialiteRoute = ConfidentialiteRouteImport.update({
   id: '/confidentialite',
   path: '/confidentialite',
@@ -52,6 +61,11 @@ const CommentCaMarcheRoute = CommentCaMarcheRouteImport.update({
 const CgvRoute = CgvRouteImport.update({
   id: '/cgv',
   path: '/cgv',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -72,6 +86,16 @@ const BlogIndexRoute = BlogIndexRouteImport.update({
 const TableauDeBordChauffeurRoute = TableauDeBordChauffeurRouteImport.update({
   id: '/tableau-de-bord/chauffeur',
   path: '/tableau-de-bord/chauffeur',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChauffeursTarifsRoute = ChauffeursTarifsRouteImport.update({
+  id: '/chauffeurs/tarifs',
+  path: '/chauffeurs/tarifs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChauffeursInscriptionRoute = ChauffeursInscriptionRouteImport.update({
+  id: '/chauffeurs/inscription',
+  path: '/chauffeurs/inscription',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BlogTransportCpamRoute = BlogTransportCpamRouteImport.update({
@@ -97,9 +121,11 @@ const DepartmentCityRoute = DepartmentCityRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/cgv': typeof CgvRoute
   '/comment-ca-marche': typeof CommentCaMarcheRoute
   '/confidentialite': typeof ConfidentialiteRoute
+  '/connexion': typeof ConnexionRoute
   '/faq': typeof FaqRoute
   '/mentions-legales': typeof MentionsLegalesRoute
   '/tarifs-cpam': typeof TarifsCpamRoute
@@ -107,15 +133,19 @@ export interface FileRoutesByFullPath {
   '/blog/ald-transport': typeof BlogAldTransportRoute
   '/blog/pmt-prescription': typeof BlogPmtPrescriptionRoute
   '/blog/transport-cpam': typeof BlogTransportCpamRoute
+  '/chauffeurs/inscription': typeof ChauffeursInscriptionRoute
+  '/chauffeurs/tarifs': typeof ChauffeursTarifsRoute
   '/tableau-de-bord/chauffeur': typeof TableauDeBordChauffeurRoute
   '/blog': typeof BlogIndexRoute
   '/reservation': typeof ReservationIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/cgv': typeof CgvRoute
   '/comment-ca-marche': typeof CommentCaMarcheRoute
   '/confidentialite': typeof ConfidentialiteRoute
+  '/connexion': typeof ConnexionRoute
   '/faq': typeof FaqRoute
   '/mentions-legales': typeof MentionsLegalesRoute
   '/tarifs-cpam': typeof TarifsCpamRoute
@@ -123,6 +153,8 @@ export interface FileRoutesByTo {
   '/blog/ald-transport': typeof BlogAldTransportRoute
   '/blog/pmt-prescription': typeof BlogPmtPrescriptionRoute
   '/blog/transport-cpam': typeof BlogTransportCpamRoute
+  '/chauffeurs/inscription': typeof ChauffeursInscriptionRoute
+  '/chauffeurs/tarifs': typeof ChauffeursTarifsRoute
   '/tableau-de-bord/chauffeur': typeof TableauDeBordChauffeurRoute
   '/blog': typeof BlogIndexRoute
   '/reservation': typeof ReservationIndexRoute
@@ -130,9 +162,11 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/cgv': typeof CgvRoute
   '/comment-ca-marche': typeof CommentCaMarcheRoute
   '/confidentialite': typeof ConfidentialiteRoute
+  '/connexion': typeof ConnexionRoute
   '/faq': typeof FaqRoute
   '/mentions-legales': typeof MentionsLegalesRoute
   '/tarifs-cpam': typeof TarifsCpamRoute
@@ -140,6 +174,8 @@ export interface FileRoutesById {
   '/blog/ald-transport': typeof BlogAldTransportRoute
   '/blog/pmt-prescription': typeof BlogPmtPrescriptionRoute
   '/blog/transport-cpam': typeof BlogTransportCpamRoute
+  '/chauffeurs/inscription': typeof ChauffeursInscriptionRoute
+  '/chauffeurs/tarifs': typeof ChauffeursTarifsRoute
   '/tableau-de-bord/chauffeur': typeof TableauDeBordChauffeurRoute
   '/blog/': typeof BlogIndexRoute
   '/reservation/': typeof ReservationIndexRoute
@@ -148,9 +184,11 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/cgv'
     | '/comment-ca-marche'
     | '/confidentialite'
+    | '/connexion'
     | '/faq'
     | '/mentions-legales'
     | '/tarifs-cpam'
@@ -158,15 +196,19 @@ export interface FileRouteTypes {
     | '/blog/ald-transport'
     | '/blog/pmt-prescription'
     | '/blog/transport-cpam'
+    | '/chauffeurs/inscription'
+    | '/chauffeurs/tarifs'
     | '/tableau-de-bord/chauffeur'
     | '/blog'
     | '/reservation'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin'
     | '/cgv'
     | '/comment-ca-marche'
     | '/confidentialite'
+    | '/connexion'
     | '/faq'
     | '/mentions-legales'
     | '/tarifs-cpam'
@@ -174,15 +216,19 @@ export interface FileRouteTypes {
     | '/blog/ald-transport'
     | '/blog/pmt-prescription'
     | '/blog/transport-cpam'
+    | '/chauffeurs/inscription'
+    | '/chauffeurs/tarifs'
     | '/tableau-de-bord/chauffeur'
     | '/blog'
     | '/reservation'
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/cgv'
     | '/comment-ca-marche'
     | '/confidentialite'
+    | '/connexion'
     | '/faq'
     | '/mentions-legales'
     | '/tarifs-cpam'
@@ -190,6 +236,8 @@ export interface FileRouteTypes {
     | '/blog/ald-transport'
     | '/blog/pmt-prescription'
     | '/blog/transport-cpam'
+    | '/chauffeurs/inscription'
+    | '/chauffeurs/tarifs'
     | '/tableau-de-bord/chauffeur'
     | '/blog/'
     | '/reservation/'
@@ -197,9 +245,11 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
   CgvRoute: typeof CgvRoute
   CommentCaMarcheRoute: typeof CommentCaMarcheRoute
   ConfidentialiteRoute: typeof ConfidentialiteRoute
+  ConnexionRoute: typeof ConnexionRoute
   FaqRoute: typeof FaqRoute
   MentionsLegalesRoute: typeof MentionsLegalesRoute
   TarifsCpamRoute: typeof TarifsCpamRoute
@@ -207,6 +257,8 @@ export interface RootRouteChildren {
   BlogAldTransportRoute: typeof BlogAldTransportRoute
   BlogPmtPrescriptionRoute: typeof BlogPmtPrescriptionRoute
   BlogTransportCpamRoute: typeof BlogTransportCpamRoute
+  ChauffeursInscriptionRoute: typeof ChauffeursInscriptionRoute
+  ChauffeursTarifsRoute: typeof ChauffeursTarifsRoute
   TableauDeBordChauffeurRoute: typeof TableauDeBordChauffeurRoute
   BlogIndexRoute: typeof BlogIndexRoute
   ReservationIndexRoute: typeof ReservationIndexRoute
@@ -235,6 +287,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FaqRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/connexion': {
+      id: '/connexion'
+      path: '/connexion'
+      fullPath: '/connexion'
+      preLoaderRoute: typeof ConnexionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/confidentialite': {
       id: '/confidentialite'
       path: '/confidentialite'
@@ -254,6 +313,13 @@ declare module '@tanstack/react-router' {
       path: '/cgv'
       fullPath: '/cgv'
       preLoaderRoute: typeof CgvRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -282,6 +348,20 @@ declare module '@tanstack/react-router' {
       path: '/tableau-de-bord/chauffeur'
       fullPath: '/tableau-de-bord/chauffeur'
       preLoaderRoute: typeof TableauDeBordChauffeurRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/chauffeurs/tarifs': {
+      id: '/chauffeurs/tarifs'
+      path: '/chauffeurs/tarifs'
+      fullPath: '/chauffeurs/tarifs'
+      preLoaderRoute: typeof ChauffeursTarifsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/chauffeurs/inscription': {
+      id: '/chauffeurs/inscription'
+      path: '/chauffeurs/inscription'
+      fullPath: '/chauffeurs/inscription'
+      preLoaderRoute: typeof ChauffeursInscriptionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/blog/transport-cpam': {
@@ -317,9 +397,11 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
   CgvRoute: CgvRoute,
   CommentCaMarcheRoute: CommentCaMarcheRoute,
   ConfidentialiteRoute: ConfidentialiteRoute,
+  ConnexionRoute: ConnexionRoute,
   FaqRoute: FaqRoute,
   MentionsLegalesRoute: MentionsLegalesRoute,
   TarifsCpamRoute: TarifsCpamRoute,
@@ -327,6 +409,8 @@ const rootRouteChildren: RootRouteChildren = {
   BlogAldTransportRoute: BlogAldTransportRoute,
   BlogPmtPrescriptionRoute: BlogPmtPrescriptionRoute,
   BlogTransportCpamRoute: BlogTransportCpamRoute,
+  ChauffeursInscriptionRoute: ChauffeursInscriptionRoute,
+  ChauffeursTarifsRoute: ChauffeursTarifsRoute,
   TableauDeBordChauffeurRoute: TableauDeBordChauffeurRoute,
   BlogIndexRoute: BlogIndexRoute,
   ReservationIndexRoute: ReservationIndexRoute,
