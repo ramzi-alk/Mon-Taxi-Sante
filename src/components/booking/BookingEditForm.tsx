@@ -5,6 +5,9 @@ import { Navigation, MapPin, Loader2, X } from "lucide-react";
 import { editBookingSchema, type EditBookingSchema } from "./editBookingSchema";
 import { AddressAutocomplete } from "./AddressAutocomplete";
 import { Input } from "~/components/ui/input";
+import { Textarea } from "~/components/ui/textarea";
+import { Checkbox } from "~/components/ui/checkbox";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "~/components/ui/select";
 import { supabase } from "~/lib/supabase";
 import { useToast } from "~/components/ui/toast";
 import * as bookingsRepository from "~/repositories/bookingsRepository";
@@ -57,9 +60,6 @@ function defaultValuesFromBooking(booking: MyBookingRow): EditBookingSchema {
   };
 }
 
-const inputClass =
-  "w-full rounded-xl border border-input bg-white px-4 py-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
-
 export function BookingEditForm({ booking, lookupCredentials, onClose, onSaved }: BookingEditFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -80,6 +80,8 @@ export function BookingEditForm({ booking, lookupCredentials, onClose, onSaved }
   const dropoffAddress = watch("dropoff_address");
   const hasReturn = watch("has_return");
   const tripType = watch("trip_type");
+  const vehicleType = watch("vehicle_type");
+  const cpamStatus = watch("cpam_status");
   const passengerCount = watch("passenger_count");
   const isReturnTrip = hasReturn || tripType === "aller_retour";
 
@@ -232,7 +234,10 @@ export function BookingEditForm({ booking, lookupCredentials, onClose, onSaved }
       </div>
 
       <label className="flex items-center gap-2 text-sm text-gray-700">
-        <input type="checkbox" {...register("has_return")} className="h-4 w-4 rounded border-gray-300" />
+        <Checkbox
+          checked={watch("has_return")}
+          onCheckedChange={(checked) => setValue("has_return", checked === true)}
+        />
         Trajet aller-retour
       </label>
 
@@ -273,21 +278,37 @@ export function BookingEditForm({ booking, lookupCredentials, onClose, onSaved }
           <label htmlFor="edit_vehicle_type" className="text-xs font-semibold text-gray-700">
             Véhicule
           </label>
-          <select id="edit_vehicle_type" {...register("vehicle_type")} className={inputClass}>
-            <option value="taxi">Taxi</option>
-            <option value="vsl">VSL</option>
-            <option value="pmr">Véhicule PMR</option>
-          </select>
+          <Select
+            value={vehicleType}
+            onValueChange={(v) => setValue("vehicle_type", v as EditBookingSchema["vehicle_type"])}
+          >
+            <SelectTrigger id="edit_vehicle_type">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="taxi">Taxi</SelectItem>
+              <SelectItem value="vsl">VSL</SelectItem>
+              <SelectItem value="pmr">Véhicule PMR</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         <div className="space-y-1">
           <label htmlFor="edit_trip_type" className="text-xs font-semibold text-gray-700">
             Nature du trajet
           </label>
-          <select id="edit_trip_type" {...register("trip_type")} className={inputClass}>
-            <option value="aller_simple">Aller simple</option>
-            <option value="aller_retour">Aller-retour</option>
-            <option value="multiple">Trajets multiples</option>
-          </select>
+          <Select
+            value={tripType}
+            onValueChange={(v) => setValue("trip_type", v as EditBookingSchema["trip_type"])}
+          >
+            <SelectTrigger id="edit_trip_type">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="aller_simple">Aller simple</SelectItem>
+              <SelectItem value="aller_retour">Aller-retour</SelectItem>
+              <SelectItem value="multiple">Trajets multiples</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -296,15 +317,24 @@ export function BookingEditForm({ booking, lookupCredentials, onClose, onSaved }
         <p className="text-xs font-semibold text-gray-700">Besoins spécifiques</p>
         <div className="flex flex-wrap gap-4">
           <label className="flex items-center gap-2 text-sm text-gray-700">
-            <input type="checkbox" {...register("requires_wheelchair")} className="h-4 w-4 rounded border-gray-300" />
+            <Checkbox
+              checked={watch("requires_wheelchair")}
+              onCheckedChange={(checked) => setValue("requires_wheelchair", checked === true)}
+            />
             Fauteuil roulant
           </label>
           <label className="flex items-center gap-2 text-sm text-gray-700">
-            <input type="checkbox" {...register("requires_stretcher")} className="h-4 w-4 rounded border-gray-300" />
+            <Checkbox
+              checked={watch("requires_stretcher")}
+              onCheckedChange={(checked) => setValue("requires_stretcher", checked === true)}
+            />
             Brancard
           </label>
           <label className="flex items-center gap-2 text-sm text-gray-700">
-            <input type="checkbox" {...register("requires_oxygen")} className="h-4 w-4 rounded border-gray-300" />
+            <Checkbox
+              checked={watch("requires_oxygen")}
+              onCheckedChange={(checked) => setValue("requires_oxygen", checked === true)}
+            />
             Oxygène
           </label>
         </div>
@@ -331,13 +361,21 @@ export function BookingEditForm({ booking, lookupCredentials, onClose, onSaved }
           <label htmlFor="edit_cpam_status" className="text-xs font-semibold text-gray-700">
             Prise en charge
           </label>
-          <select id="edit_cpam_status" {...register("cpam_status")} className={inputClass}>
-            <option value="ald">ALD</option>
-            <option value="cmu">CMU-C</option>
-            <option value="css">CSS</option>
-            <option value="standard">Assuré standard</option>
-            <option value="none">Sans couverture</option>
-          </select>
+          <Select
+            value={cpamStatus}
+            onValueChange={(v) => setValue("cpam_status", v as EditBookingSchema["cpam_status"])}
+          >
+            <SelectTrigger id="edit_cpam_status">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ald">ALD</SelectItem>
+              <SelectItem value="cmu">CMU-C</SelectItem>
+              <SelectItem value="css">CSS</SelectItem>
+              <SelectItem value="standard">Assuré standard</SelectItem>
+              <SelectItem value="none">Sans couverture</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         <div className="space-y-1">
           <label htmlFor="edit_mutual_name" className="text-xs font-semibold text-gray-700">
@@ -352,11 +390,11 @@ export function BookingEditForm({ booking, lookupCredentials, onClose, onSaved }
         <label htmlFor="edit_medical_notes" className="text-xs font-semibold text-gray-700">
           Message au chauffeur (optionnel)
         </label>
-        <textarea
+        <Textarea
           id="edit_medical_notes"
           rows={3}
           {...register("medical_notes")}
-          className={`${inputClass} resize-none`}
+          className="resize-none"
         />
         {errors.medical_notes && (
           <p role="alert" className="text-xs text-red-600">{errors.medical_notes.message}</p>
