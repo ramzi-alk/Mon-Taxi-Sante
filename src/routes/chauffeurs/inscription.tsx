@@ -7,6 +7,8 @@ import { AlertCircle, CheckCircle2, User, Mail, Lock, Phone, Car } from "lucide-
 import { z } from "zod";
 import { supabase } from "~/lib/supabase";
 import { logger } from "~/lib/logger";
+import * as authRepository from "~/repositories/authRepository";
+import * as driversRepository from "~/repositories/driversRepository";
 import { SiretAutocomplete } from "~/components/chauffeurs/SiretAutocomplete";
 import type { CompanySuggestion } from "~/lib/siren";
 
@@ -39,13 +41,12 @@ const inscriptionSchema = z.object({
 type InscriptionSchema = z.infer<typeof inscriptionSchema>;
 
 async function registerDriver(data: InscriptionSchema, company: CompanySuggestion) {
-  const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-    email: data.email,
-    password: data.password,
-    options: {
-      data: { full_name: data.full_name, role: "driver" },
-    },
-  });
+  const { data: signUpData, error: signUpError } = await authRepository.signUp(
+    supabase,
+    data.email,
+    data.password,
+    { full_name: data.full_name, role: "driver" }
+  );
   if (signUpError) {
     logger.error("driver.register signup failed", { error: signUpError.message });
     throw new Error(signUpError.message);
@@ -58,7 +59,7 @@ async function registerDriver(data: InscriptionSchema, company: CompanySuggestio
     );
   }
 
-  const { error: detailsError } = await supabase.from("drivers_details").insert({
+  await driversRepository.insertDriverDetails(supabase, {
     profile_id: userId,
     siret: company.siret,
     company_name: company.name,
@@ -71,13 +72,6 @@ async function registerDriver(data: InscriptionSchema, company: CompanySuggestio
     subscription_ends_at: null,
     approved_at: null,
   });
-  if (detailsError) {
-    logger.error("driver.register details insert failed", {
-      error: detailsError.message,
-      userId,
-    });
-    throw new Error(detailsError.message);
-  }
 }
 
 function InscriptionChauffeurPage() {

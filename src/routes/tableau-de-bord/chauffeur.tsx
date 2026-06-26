@@ -11,9 +11,10 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "~/lib/supabase";
-import { logger } from "~/lib/logger";
 import { useRealtime } from "~/hooks/useRealtime";
 import { RideCard, type PoolRide } from "~/components/driver/RideCard";
+import * as authRepository from "~/repositories/authRepository";
+import * as bookingsRepository from "~/repositories/bookingsRepository";
 
 export const Route = createFileRoute("/tableau-de-bord/chauffeur")({
   head: () => ({
@@ -28,59 +29,26 @@ export const Route = createFileRoute("/tableau-de-bord/chauffeur")({
 // ─── Data fetching ───────────────────────────────────────────────────────────
 
 async function fetchRidePool(): Promise<PoolRide[]> {
-  const { data, error } = await supabase
-    .from("bookings_pool_for_drivers")
-    .select("*")
-    .eq("status", "available")
-    .order("pickup_datetime", { ascending: true });
-
-  if (error) {
-    logger.error("driver.fetchRidePool failed", { error: error.message });
-    throw new Error(error.message);
-  }
-  return (data ?? []) as PoolRide[];
+  return bookingsRepository.fetchRidePool(supabase);
 }
 
 async function fetchMyRides(): Promise<PoolRide[]> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await authRepository.getCurrentUser(supabase);
   if (!user) return [];
 
-  const { data, error } = await supabase
-    .from("bookings")
-    .select(
-      "id, driver_id, patient_full_name, patient_phone, pickup_address, pickup_lat, pickup_lng, dropoff_address, dropoff_lat, dropoff_lng, distance_km, pickup_datetime, return_datetime, vehicle_type, trip_type, requires_wheelchair, requires_stretcher, requires_oxygen, passenger_count, estimated_price, status, created_at"
-    )
-    .eq("driver_id", user.id)
-    .in("status", ["accepted", "in_progress", "completed"])
-    .order("pickup_datetime", { ascending: false })
-    .limit(20);
-
-  if (error) {
-    logger.error("driver.fetchMyRides failed", { error: error.message });
-    throw new Error(error.message);
-  }
+  const rides = await bookingsRepository.fetchDriverRides(supabase, user.id);
 
   // Map to PoolRide shape (rename patient_full_name → patient_first_name)
-  return (data ?? []).map((r) => ({
+  return rides.map((r) => ({
     ...r,
     patient_first_name: r.patient_full_name?.split(" ")[0] ?? "—",
   })) as unknown as PoolRide[];
 }
 
 async function acceptRide(rideId: string): Promise<void> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await authRepository.getCurrentUser(supabase);
   if (!user) throw new Error("Non authentifié");
-
-  const { error } = await supabase
-    .from("bookings")
-    .update({ driver_id: user.id, status: "accepted" })
-    .eq("id", rideId)
-    .eq("status", "available"); // optimistic lock — only update if still available
-
-  if (error) {
-    logger.error("driver.acceptRide failed", { error: error.message, rideId });
-    throw new Error(error.message);
-  }
+  await bookingsRepository.acceptRide(supabase, rideId, user.id);
 }
 
 // ─── Stats card ─────────────────────────────────────────────────────────────

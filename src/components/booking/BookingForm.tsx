@@ -21,6 +21,8 @@ import { supabase } from "~/lib/supabase";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
 import { logger } from "~/lib/logger";
 import { submitBookingServerFn } from "~/server/booking";
+import * as authRepository from "~/repositories/authRepository";
+import * as storageRepository from "~/repositories/storageRepository";
 
 const DEFAULT_VALUES: Partial<BookingSchema> = {
   patient_full_name: "",
@@ -52,14 +54,15 @@ const DEFAULT_VALUES: Partial<BookingSchema> = {
 };
 
 async function getOrCreatePatientSession(fullName: string) {
-  const { data: session } = await supabase.auth.getSession();
-  if (session?.session) return session.session;
+  const session = await authRepository.getCurrentSession(supabase);
+  if (session) return session;
 
   // The booking form never asks patients to create an account. Sign them in
   // anonymously so bookings.patient_id (NOT NULL, RLS-protected) has a valid,
   // RLS-scoped owner without any visible signup step.
-  const { data: anon, error } = await supabase.auth.signInAnonymously({
-    options: { data: { full_name: fullName, role: "patient" } },
+  const { data: anon, error } = await authRepository.signInAnonymously(supabase, {
+    full_name: fullName,
+    role: "patient",
   });
 
   if (error || !anon.session) {
@@ -83,19 +86,12 @@ async function submitBooking(data: BookingSchema) {
   if (data.pmt_declared && data.pmt_file instanceof File) {
     const ext = data.pmt_file.name.split(".").pop();
     const path = `${userId}/${Date.now()}.${ext}`;
-    const { error: uploadError } = await supabase.storage
-      .from("pmt-documents")
-      .upload(path, data.pmt_file, { upsert: false });
-    if (!uploadError) {
-      const { data: urlData } = supabase.storage
-        .from("pmt-documents")
-        .getPublicUrl(path);
-      pmtFileUrl = urlData.publicUrl;
-    } else {
-      logger.warn("booking.submit pmt upload failed, continuing without file", {
-        error: uploadError.message,
-      });
-    }
+    pmtFileUrl = await storageRepository.uploadFile(
+      supabase,
+      "pmt-documents",
+      path,
+      data.pmt_file
+    );
   }
 
   return submitBookingServerFn({

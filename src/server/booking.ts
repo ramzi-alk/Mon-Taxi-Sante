@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "~/lib/database.types";
-import { logger } from "~/lib/logger";
+import * as bookingsRepository from "~/repositories/bookingsRepository";
 
 interface SubmitBookingPayload {
   patient_id: string;
@@ -47,20 +47,5 @@ export const submitBookingServerFn = createServerFn({ method: "POST" })
       auth: { persistSession: false },
     });
 
-    const { data: booking, error } = await supabase
-      .from("bookings")
-      .insert(data.payload)
-      .select("id")
-      .single();
-
-    if (error) {
-      logger.error("booking.submit failed", {
-        error: error.message,
-        vehicle_type: data.payload.vehicle_type,
-        cpam_status: data.payload.cpam_status,
-      });
-      throw new Error(error.message);
-    }
-
-    return booking;
+    return bookingsRepository.insertBooking(supabase, data.payload);
   });
