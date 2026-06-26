@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { MapPin, Calendar, Car, XCircle, User, Phone, Download, Loader2, Pencil } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
+import { MapPin, Calendar, Car, XCircle, User, Phone, Download, Loader2, Pencil, Repeat } from "lucide-react";
 import { formatDateFr, formatTimeFr, formatPrice, formatReferenceCode, cn } from "~/lib/utils";
+import { bookingToPrefillData, storeBookingPrefill } from "~/lib/bookingPrefill";
 import { VEHICLE_LABELS } from "~/lib/vehicle";
 import { openBookingReceipt } from "~/lib/receipt";
 import { supabase } from "~/lib/supabase";
@@ -47,6 +49,12 @@ export function BookingStatusCard({
   const [editing, setEditing] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+
+  function handleRebook() {
+    storeBookingPrefill(bookingToPrefillData(displayBooking));
+    navigate({ to: "/reservation" });
+  }
 
   const cancelMutation = useMutation({
     mutationFn: () =>
@@ -220,6 +228,17 @@ export function BookingStatusCard({
                 Télécharger le justificatif
               </button>
             )}
+
+            <div className="border-t pt-3">
+              <button
+                type="button"
+                onClick={handleRebook}
+                className="flex items-center gap-2 text-sm font-semibold text-brand-blue-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+              >
+                <Repeat className="h-4 w-4" aria-hidden="true" />
+                Réserver à nouveau avec ces informations
+              </button>
+            </div>
 
             {allowEdit && isEditable(status) && (
               <div className="border-t pt-3">

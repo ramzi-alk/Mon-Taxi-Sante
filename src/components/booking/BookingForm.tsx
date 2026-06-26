@@ -1,11 +1,12 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ChevronLeft, ChevronRight, Sparkles, X } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 
 import { bookingSchema, BOOKING_STEPS, STEP_FIELDS, type BookingSchema } from "./schema";
+import { consumeBookingPrefill } from "~/lib/bookingPrefill";
 import { ProgressBar } from "./ProgressBar";
 import { Step1Identity } from "./steps/Step1Identity";
 import { Step2Route } from "./steps/Step2Route";
@@ -136,11 +137,23 @@ export function BookingForm() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const navigate = useNavigate();
 
+  const [isPrefilled, setIsPrefilled] = useState(false);
+
   const form = useForm<BookingSchema>({
     resolver: zodResolver(bookingSchema),
     defaultValues: DEFAULT_VALUES,
     mode: "onBlur",
   });
+
+  // One-shot: a previous booking's identity/trip fields, handed off via
+  // sessionStorage from "Mes réservations" or the reference+phone lookup,
+  // so patients don't have to retype information they've already given us.
+  useEffect(() => {
+    const prefill = consumeBookingPrefill();
+    if (!prefill) return;
+    form.reset({ ...DEFAULT_VALUES, ...prefill });
+    setIsPrefilled(true);
+  }, [form]);
 
   const { mutateAsync, isPending } = useMutation({
     mutationFn: submitBooking,
@@ -192,6 +205,27 @@ export function BookingForm() {
       </div>
 
       <div className="container py-8 max-w-2xl">
+        {isPrefilled && currentStep <= 2 && (
+          <div
+            role="status"
+            className="mb-6 flex items-start gap-3 rounded-2xl bg-brand-blue-50 border border-brand-blue-100 p-4 text-sm text-brand-blue-900"
+          >
+            <Sparkles className="h-5 w-5 shrink-0 text-brand-blue-600" aria-hidden="true" />
+            <p className="flex-1 leading-relaxed">
+              Nous avons repris les informations de votre dernière réservation.
+              Vérifiez-les, modifiez-les si besoin, ou laissez-les telles quelles.
+            </p>
+            <button
+              type="button"
+              onClick={() => setIsPrefilled(false)}
+              className="shrink-0 text-brand-blue-600 hover:text-brand-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+              aria-label="Masquer ce message"
+            >
+              <X className="h-4 w-4" aria-hidden="true" />
+            </button>
+          </div>
+        )}
+
         <form
           onSubmit={(e) => {
             e.preventDefault();
