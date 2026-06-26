@@ -18,4 +18,4 @@ export function getResendClient(): Resend {
 }
 
 export const EMAIL_FROM =
-  process.env.RESEND_FROM_EMAIL || "Mon Taxi Santé <reservations@mon-taxi-sante.fr>";
+  process.env.RESEND_FROM_EMAIL || "Mon Taxi Santé <reservations@mon-taxi-sante.com>";

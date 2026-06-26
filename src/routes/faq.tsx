@@ -126,8 +126,8 @@ function FaqPage() {
               {CONTACT_PHONE_DISPLAY}
             </a>{" "}
             (gratuit) ou écrivez à{" "}
-            <a href="mailto:contact@mon-taxi-sante.fr" className="text-[#1244E8] underline">
-              contact@mon-taxi-sante.fr
+            <a href="mailto:contact@mon-taxi-sante.com" className="text-[#1244E8] underline">
+              contact@mon-taxi-sante.com
             </a>
             .
           </p>

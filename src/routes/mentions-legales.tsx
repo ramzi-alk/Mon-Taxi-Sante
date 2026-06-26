@@ -20,7 +20,7 @@ function MentionsLegalesPage() {
   return (
     <LegalPageLayout title="Mentions légales" lastUpdated="25 juin 2026">
       <h2>Éditeur du site</h2>
-      <p>Le site mon-taxi-sante.fr est édité par :</p>
+      <p>Le site mon-taxi-sante.com est édité par :</p>
       <ul>
         <li>Mon Taxi Santé SAS [forme juridique et capital social à compléter]</li>
         <li>Siège social : [adresse à compléter]</li>

@@ -590,25 +590,25 @@ function HomeStructuredData() {
     "@graph": [
       {
         "@type": "Organization",
-        "@id": "https://mon-taxi-sante.fr/#organization",
+        "@id": "https://mon-taxi-sante.com/#organization",
         name: "Mon Taxi Santé",
-        url: "https://mon-taxi-sante.fr",
+        url: "https://mon-taxi-sante.com",
         description:
           "Plateforme de réservation de taxis conventionnés agréés Sécurité Sociale pour le transport médical en France.",
         telephone: CONTACT_PHONE_TEL,
-        email: "contact@mon-taxi-sante.fr",
+        email: "contact@mon-taxi-sante.com",
         areaServed: { "@type": "Country", name: "France" },
         serviceType: "Transport médical conventionné Assurance Maladie",
       },
       {
         "@type": "WebSite",
-        "@id": "https://mon-taxi-sante.fr/#website",
-        url: "https://mon-taxi-sante.fr",
+        "@id": "https://mon-taxi-sante.com/#website",
+        url: "https://mon-taxi-sante.com",
         name: "Mon Taxi Santé",
-        publisher: { "@id": "https://mon-taxi-sante.fr/#organization" },
+        publisher: { "@id": "https://mon-taxi-sante.com/#organization" },
         potentialAction: {
           "@type": "SearchAction",
-          target: "https://mon-taxi-sante.fr/search?q={search_term_string}",
+          target: "https://mon-taxi-sante.com/search?q={search_term_string}",
           "query-input": "required name=search_term_string",
         },
       },
