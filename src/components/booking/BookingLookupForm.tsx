@@ -1,15 +1,16 @@
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { Search, AlertCircle } from "lucide-react";
 import { z } from "zod";
-import { supabase } from "~/lib/supabase";
 import { logger } from "~/lib/logger";
-import * as bookingsRepository from "~/repositories/bookingsRepository";
+import { lookupBookingServerFn } from "~/server/bookingLookup";
 import type { MyBookingRow } from "~/repositories/bookingsRepository";
 import { BookingStatusCard } from "./BookingStatusCard";
 
 const frenchPhone = /^(\+33|0)[1-9](\d{2}){4}$/;
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string;
 
 const lookupSchema = z.object({
   booking_id: z.string().uuid("Référence invalide (ex : 8b1e0c2a-...-...)"),
@@ -18,8 +19,62 @@ const lookupSchema = z.object({
 
 type LookupSchema = z.infer<typeof lookupSchema>;
 
-async function lookupBooking(data: LookupSchema): Promise<MyBookingRow | null> {
-  return bookingsRepository.lookupBookingByReference(supabase, data.booking_id, data.phone);
+declare global {
+  interface Window {
+    turnstile?: {
+      render: (container: HTMLElement, options: Record<string, unknown>) => string;
+      reset: (widgetId: string) => void;
+    };
+  }
+}
+
+function useTurnstile(siteKey: string) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const widgetIdRef = useRef<string | null>(null);
+  const [token, setToken] = useState("");
+
+  useEffect(() => {
+    if (!siteKey) return;
+
+    const renderWidget = () => {
+      if (!containerRef.current || !window.turnstile) return;
+      widgetIdRef.current = window.turnstile.render(containerRef.current, {
+        sitekey: siteKey,
+        callback: (t: string) => setToken(t),
+        "expired-callback": () => setToken(""),
+      });
+    };
+
+    if (window.turnstile) {
+      renderWidget();
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+    script.async = true;
+    script.onload = renderWidget;
+    document.body.appendChild(script);
+
+    return () => {
+      script.remove();
+    };
+  }, [siteKey]);
+
+  const reset = () => {
+    if (window.turnstile && widgetIdRef.current) {
+      window.turnstile.reset(widgetIdRef.current);
+    }
+    setToken("");
+  };
+
+  return { containerRef, token, reset };
+}
+
+async function lookupBooking(
+  data: LookupSchema & { turnstileToken: string }
+): Promise<MyBookingRow | null> {
+  return lookupBookingServerFn({ data });
 }
 
 export function BookingLookupForm() {
@@ -29,12 +84,25 @@ export function BookingLookupForm() {
     formState: { errors },
   } = useForm<LookupSchema>({ resolver: zodResolver(lookupSchema) });
 
+  const { containerRef, token, reset } = useTurnstile(TURNSTILE_SITE_KEY);
+  const [captchaRequired, setCaptchaRequired] = useState(false);
+
   const { mutate, data: found, isPending, isSuccess, error } = useMutation({
     mutationFn: lookupBooking,
+    onSettled: reset,
     onError: (err: Error) => {
       logger.warn("booking.lookup failed", { error: err.message });
     },
   });
+
+  const onSubmit = (data: LookupSchema) => {
+    if (!token) {
+      setCaptchaRequired(true);
+      return;
+    }
+    setCaptchaRequired(false);
+    mutate({ ...data, turnstileToken: token });
+  };
 
   return (
     <div className="rounded-2xl bg-white shadow-sm ring-1 ring-gray-100 p-6">
@@ -48,7 +116,7 @@ export function BookingLookupForm() {
       </p>
 
       <form
-        onSubmit={handleSubmit((data) => mutate(data))}
+        onSubmit={handleSubmit(onSubmit)}
         noValidate
         className="mt-4 space-y-3"
         aria-label="Retrouver une réservation"
@@ -92,6 +160,13 @@ export function BookingLookupForm() {
           )}
         </div>
 
+        {TURNSTILE_SITE_KEY && <div ref={containerRef} />}
+        {captchaRequired && (
+          <p role="alert" className="text-xs text-red-600">
+            Veuillez valider la vérification anti-robot avant de continuer.
+          </p>
+        )}
+
         <button
           type="submit"
           disabled={isPending}
@@ -108,7 +183,9 @@ export function BookingLookupForm() {
           className="mt-4 flex items-start gap-2 rounded-xl bg-red-50 border border-red-100 p-3 text-sm text-red-700"
         >
           <AlertCircle className="h-5 w-5 shrink-0" aria-hidden="true" />
-          Une erreur est survenue. Vérifiez les informations et réessayez.
+          {error.message.includes("Trop de tentatives") || error.message.includes("anti-robot")
+            ? error.message
+            : "Une erreur est survenue. Vérifiez les informations et réessayez."}
         </div>
       )}
 

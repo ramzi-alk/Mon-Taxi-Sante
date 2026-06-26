@@ -60,6 +60,9 @@ export async function lookupBookingByReference(
   });
 
   if (error) {
+    if (error.message.includes("too_many_attempts")) {
+      throw new Error("Trop de tentatives pour cette référence. Réessayez dans 15 minutes ou contactez-nous directement.");
+    }
     logger.error("bookings.lookupBookingByReference failed", { error: error.message });
     throw new Error(error.message);
   }
