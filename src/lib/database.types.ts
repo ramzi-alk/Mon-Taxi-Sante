@@ -47,6 +47,7 @@ export interface Database {
       bookings: {
         Row: {
           id: string;
+          reference_code: string;
           patient_id: string;
           driver_id: string | null;
           patient_full_name: string;
@@ -78,16 +79,17 @@ export interface Database {
           created_at: string;
           updated_at: string;
         };
-        Insert: Omit<Database["public"]["Tables"]["bookings"]["Row"], "id" | "created_at" | "updated_at">;
+        Insert: Omit<Database["public"]["Tables"]["bookings"]["Row"], "id" | "reference_code" | "created_at" | "updated_at">;
         Update: Partial<Database["public"]["Tables"]["bookings"]["Insert"]>;
       };
     };
     Views: Record<string, never>;
     Functions: {
       lookup_booking_by_reference: {
-        Args: { p_booking_id: string; p_phone: string };
+        Args: { p_reference_code: string; p_phone: string };
         Returns: {
           id: string;
+          reference_code: string;
           pickup_address: string;
           dropoff_address: string;
           pickup_datetime: string;

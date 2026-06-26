@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { CheckCircle2, MapPin, Calendar, ShieldCheck, Phone, ClipboardList } from "lucide-react";
 import { supabase } from "~/lib/supabase";
-import { formatDateFr, formatTimeFr, cn } from "~/lib/utils";
+import { formatDateFr, formatTimeFr, formatReferenceCode, cn } from "~/lib/utils";
 import { logger } from "~/lib/logger";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
 import { useRealtime } from "~/hooks/useRealtime";
@@ -36,7 +36,7 @@ async function fetchBooking(id: string) {
   const { data, error } = await supabase
     .from("bookings")
     .select(
-      "id, pickup_address, dropoff_address, pickup_datetime, cpam_status, status"
+      "id, reference_code, pickup_address, dropoff_address, pickup_datetime, cpam_status, status"
     )
     .eq("id", id)
     .single();
@@ -100,7 +100,9 @@ function ConfirmationPage() {
                 <p className="text-sm font-medium opacity-80">
                   Référence réservation
                 </p>
-                <p className="text-lg font-bold mt-0.5">{booking.id}</p>
+                <p className="text-lg font-bold mt-0.5 tracking-wide">
+                  {formatReferenceCode(booking.reference_code)}
+                </p>
               </div>
               <span
                 className={cn(

@@ -10,10 +10,13 @@ import type { MyBookingRow } from "~/repositories/bookingsRepository";
 import { BookingStatusCard } from "./BookingStatusCard";
 
 const frenchPhone = /^(\+33|0)[1-9](\d{2}){4}$/;
+const referenceCodePattern = /^[A-Z2-9]{4}-?[A-Z2-9]{4}$/i;
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string;
 
 const lookupSchema = z.object({
-  booking_id: z.string().uuid("Référence invalide (ex : 8b1e0c2a-...-...)"),
+  reference_code: z
+    .string()
+    .regex(referenceCodePattern, "Référence invalide (format : K7H4-X9QF)"),
   phone: z.string().regex(frenchPhone, "Numéro de téléphone français invalide"),
 });
 
@@ -74,7 +77,9 @@ function useTurnstile(siteKey: string) {
 async function lookupBooking(
   data: LookupSchema & { turnstileToken: string }
 ): Promise<MyBookingRow | null> {
-  return lookupBookingServerFn({ data });
+  return lookupBookingServerFn({
+    data: { ...data, reference_code: data.reference_code.replace(/-/g, "").toUpperCase() },
+  });
 }
 
 export function BookingLookupForm() {
@@ -122,20 +127,20 @@ export function BookingLookupForm() {
         aria-label="Retrouver une réservation"
       >
         <div className="space-y-1">
-          <label htmlFor="booking_id" className="block text-xs font-semibold text-gray-700">
+          <label htmlFor="reference_code" className="block text-xs font-semibold text-gray-700">
             Référence de réservation
           </label>
           <input
-            id="booking_id"
+            id="reference_code"
             type="text"
-            placeholder="8b1e0c2a-4f3d-4e2b-9a1c-..."
-            aria-invalid={!!errors.booking_id}
-            {...register("booking_id")}
-            className="w-full rounded-xl border border-input bg-white px-4 py-2.5 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring aria-[invalid=true]:border-red-500"
+            placeholder="K7H4-X9QF"
+            aria-invalid={!!errors.reference_code}
+            {...register("reference_code")}
+            className="w-full rounded-xl border border-input bg-white px-4 py-2.5 text-sm uppercase placeholder:text-muted-foreground placeholder:normal-case focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring aria-[invalid=true]:border-red-500"
           />
-          {errors.booking_id && (
+          {errors.reference_code && (
             <p role="alert" className="text-xs text-red-600">
-              {errors.booking_id.message}
+              {errors.reference_code.message}
             </p>
           )}
         </div>

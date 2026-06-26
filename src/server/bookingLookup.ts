@@ -6,7 +6,7 @@ import type { MyBookingRow } from "~/repositories/bookingsRepository";
 import { logger } from "~/lib/logger";
 
 interface LookupBookingInput {
-  booking_id: string;
+  reference_code: string;
   phone: string;
   turnstileToken: string;
 }
@@ -42,5 +42,5 @@ export const lookupBookingServerFn = createServerFn({ method: "POST" })
       auth: { persistSession: false },
     });
 
-    return bookingsRepository.lookupBookingByReference(supabase, data.booking_id, data.phone);
+    return bookingsRepository.lookupBookingByReference(supabase, data.reference_code, data.phone);
   });

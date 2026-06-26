@@ -35,3 +35,7 @@ export function formatPrice(cents: number): string {
     currency: "EUR",
   }).format(cents / 100);
 }
+
+export function formatReferenceCode(code: string): string {
+  return `${code.slice(0, 4)}-${code.slice(4)}`;
+}

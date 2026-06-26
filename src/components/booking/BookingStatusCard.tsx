@@ -1,5 +1,5 @@
 import { MapPin, Calendar, Car, XCircle } from "lucide-react";
-import { formatDateFr, formatTimeFr, formatPrice, cn } from "~/lib/utils";
+import { formatDateFr, formatTimeFr, formatPrice, formatReferenceCode, cn } from "~/lib/utils";
 import {
   STATUS_ORDER,
   STATUS_LABELS,
@@ -30,11 +30,16 @@ export function BookingStatusCard({ booking }: BookingStatusCardProps) {
       aria-label={`Réservation du ${formatDateFr(booking.pickup_datetime)}`}
     >
       <div className="flex items-center justify-between gap-3 bg-gray-50 border-b px-5 py-3">
-        <span className="flex items-center gap-1.5 text-sm font-semibold text-gray-700">
-          <Calendar className="h-4 w-4 text-brand-blue-500" aria-hidden="true" />
-          <time dateTime={booking.pickup_datetime}>
-            {formatDateFr(booking.pickup_datetime)} à {formatTimeFr(booking.pickup_datetime)}
-          </time>
+        <span className="flex flex-col gap-0.5">
+          <span className="flex items-center gap-1.5 text-sm font-semibold text-gray-700">
+            <Calendar className="h-4 w-4 text-brand-blue-500" aria-hidden="true" />
+            <time dateTime={booking.pickup_datetime}>
+              {formatDateFr(booking.pickup_datetime)} à {formatTimeFr(booking.pickup_datetime)}
+            </time>
+          </span>
+          <span className="text-xs text-muted-foreground tracking-wide">
+            Réf. {formatReferenceCode(booking.reference_code)}
+          </span>
         </span>
         <span
           className={cn(

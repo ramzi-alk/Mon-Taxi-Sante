@@ -13,6 +13,7 @@ export type DriverRideRow = Omit<PoolRide, "patient_first_name"> & {
 export type MyBookingRow = Pick<
   BookingRow,
   | "id"
+  | "reference_code"
   | "pickup_address"
   | "dropoff_address"
   | "pickup_datetime"
@@ -33,7 +34,7 @@ export async function fetchMyBookings(client: SupabaseClient): Promise<MyBooking
   const { data, error } = await client
     .from("bookings")
     .select(
-      "id, pickup_address, dropoff_address, pickup_datetime, return_datetime, vehicle_type, trip_type, estimated_price, status, created_at"
+      "id, reference_code, pickup_address, dropoff_address, pickup_datetime, return_datetime, vehicle_type, trip_type, estimated_price, status, created_at"
     )
     .order("created_at", { ascending: false });
 
@@ -45,17 +46,17 @@ export async function fetchMyBookings(client: SupabaseClient): Promise<MyBooking
 }
 
 /**
- * Recovers a single booking by UUID reference + phone number, for when the
- * anonymous browser session backing RLS access (see fetchMyBookings) is
- * lost — cleared cookies, private tab, different device.
+ * Recovers a single booking by its human-friendly reference_code + phone
+ * number, for when the anonymous browser session backing RLS access (see
+ * fetchMyBookings) is lost — cleared cookies, private tab, different device.
  */
 export async function lookupBookingByReference(
   client: SupabaseClient,
-  bookingId: string,
+  referenceCode: string,
   phone: string
 ): Promise<MyBookingRow | null> {
   const { data, error } = await client.rpc("lookup_booking_by_reference", {
-    p_booking_id: bookingId,
+    p_reference_code: referenceCode,
     p_phone: phone,
   });
 
@@ -139,11 +140,11 @@ export async function acceptRide(
 export async function insertBooking(
   client: SupabaseClient,
   payload: BookingInsert
-): Promise<{ id: string }> {
+): Promise<{ id: string; reference_code: string }> {
   const { data, error } = await client
     .from("bookings")
     .insert(payload)
-    .select("id")
+    .select("id, reference_code")
     .single();
 
   if (error) {
