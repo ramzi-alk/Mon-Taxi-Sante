@@ -4,10 +4,67 @@ import type { Database } from "~/lib/database.types";
 import type { PoolRide } from "~/components/driver/RideCard";
 
 type BookingInsert = Database["public"]["Tables"]["bookings"]["Insert"];
+type BookingRow = Database["public"]["Tables"]["bookings"]["Row"];
 
 export type DriverRideRow = Omit<PoolRide, "patient_first_name"> & {
   patient_full_name: string;
 };
+
+export type MyBookingRow = Pick<
+  BookingRow,
+  | "id"
+  | "pickup_address"
+  | "dropoff_address"
+  | "pickup_datetime"
+  | "return_datetime"
+  | "vehicle_type"
+  | "trip_type"
+  | "estimated_price"
+  | "status"
+  | "created_at"
+>;
+
+/**
+ * Bookings for the current session's patient (RLS-scoped — anonymous
+ * booking sessions persist per browser, so this returns every reservation
+ * made from this device/browser, not a cross-device account history).
+ */
+export async function fetchMyBookings(client: SupabaseClient): Promise<MyBookingRow[]> {
+  const { data, error } = await client
+    .from("bookings")
+    .select(
+      "id, pickup_address, dropoff_address, pickup_datetime, return_datetime, vehicle_type, trip_type, estimated_price, status, created_at"
+    )
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    logger.error("bookings.fetchMyBookings failed", { error: error.message });
+    throw new Error(error.message);
+  }
+  return data ?? [];
+}
+
+/**
+ * Recovers a single booking by UUID reference + phone number, for when the
+ * anonymous browser session backing RLS access (see fetchMyBookings) is
+ * lost — cleared cookies, private tab, different device.
+ */
+export async function lookupBookingByReference(
+  client: SupabaseClient,
+  bookingId: string,
+  phone: string
+): Promise<MyBookingRow | null> {
+  const { data, error } = await client.rpc("lookup_booking_by_reference", {
+    p_booking_id: bookingId,
+    p_phone: phone,
+  });
+
+  if (error) {
+    logger.error("bookings.lookupBookingByReference failed", { error: error.message });
+    throw new Error(error.message);
+  }
+  return data?.[0] ?? null;
+}
 
 export async function fetchBookingStatusCounts(
   client: SupabaseClient

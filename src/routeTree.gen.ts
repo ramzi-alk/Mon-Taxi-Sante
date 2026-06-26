@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TarifsCpamRouteImport } from './routes/tarifs-cpam'
+import { Route as MesReservationsRouteImport } from './routes/mes-reservations'
 import { Route as MentionsLegalesRouteImport } from './routes/mentions-legales'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as ConnexionRouteImport } from './routes/connexion'
@@ -32,6 +33,11 @@ import { Route as DepartmentCityRouteImport } from './routes/$department.$city'
 const TarifsCpamRoute = TarifsCpamRouteImport.update({
   id: '/tarifs-cpam',
   path: '/tarifs-cpam',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MesReservationsRoute = MesReservationsRouteImport.update({
+  id: '/mes-reservations',
+  path: '/mes-reservations',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MentionsLegalesRoute = MentionsLegalesRouteImport.update({
@@ -134,6 +140,7 @@ export interface FileRoutesByFullPath {
   '/connexion': typeof ConnexionRoute
   '/faq': typeof FaqRoute
   '/mentions-legales': typeof MentionsLegalesRoute
+  '/mes-reservations': typeof MesReservationsRoute
   '/tarifs-cpam': typeof TarifsCpamRoute
   '/$department/$city': typeof DepartmentCityRoute
   '/blog/ald-transport': typeof BlogAldTransportRoute
@@ -155,6 +162,7 @@ export interface FileRoutesByTo {
   '/connexion': typeof ConnexionRoute
   '/faq': typeof FaqRoute
   '/mentions-legales': typeof MentionsLegalesRoute
+  '/mes-reservations': typeof MesReservationsRoute
   '/tarifs-cpam': typeof TarifsCpamRoute
   '/$department/$city': typeof DepartmentCityRoute
   '/blog/ald-transport': typeof BlogAldTransportRoute
@@ -177,6 +185,7 @@ export interface FileRoutesById {
   '/connexion': typeof ConnexionRoute
   '/faq': typeof FaqRoute
   '/mentions-legales': typeof MentionsLegalesRoute
+  '/mes-reservations': typeof MesReservationsRoute
   '/tarifs-cpam': typeof TarifsCpamRoute
   '/$department/$city': typeof DepartmentCityRoute
   '/blog/ald-transport': typeof BlogAldTransportRoute
@@ -200,6 +209,7 @@ export interface FileRouteTypes {
     | '/connexion'
     | '/faq'
     | '/mentions-legales'
+    | '/mes-reservations'
     | '/tarifs-cpam'
     | '/$department/$city'
     | '/blog/ald-transport'
@@ -221,6 +231,7 @@ export interface FileRouteTypes {
     | '/connexion'
     | '/faq'
     | '/mentions-legales'
+    | '/mes-reservations'
     | '/tarifs-cpam'
     | '/$department/$city'
     | '/blog/ald-transport'
@@ -242,6 +253,7 @@ export interface FileRouteTypes {
     | '/connexion'
     | '/faq'
     | '/mentions-legales'
+    | '/mes-reservations'
     | '/tarifs-cpam'
     | '/$department/$city'
     | '/blog/ald-transport'
@@ -264,6 +276,7 @@ export interface RootRouteChildren {
   ConnexionRoute: typeof ConnexionRoute
   FaqRoute: typeof FaqRoute
   MentionsLegalesRoute: typeof MentionsLegalesRoute
+  MesReservationsRoute: typeof MesReservationsRoute
   TarifsCpamRoute: typeof TarifsCpamRoute
   DepartmentCityRoute: typeof DepartmentCityRoute
   BlogAldTransportRoute: typeof BlogAldTransportRoute
@@ -284,6 +297,13 @@ declare module '@tanstack/react-router' {
       path: '/tarifs-cpam'
       fullPath: '/tarifs-cpam'
       preLoaderRoute: typeof TarifsCpamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mes-reservations': {
+      id: '/mes-reservations'
+      path: '/mes-reservations'
+      fullPath: '/mes-reservations'
+      preLoaderRoute: typeof MesReservationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mentions-legales': {
@@ -424,6 +444,7 @@ const rootRouteChildren: RootRouteChildren = {
   ConnexionRoute: ConnexionRoute,
   FaqRoute: FaqRoute,
   MentionsLegalesRoute: MentionsLegalesRoute,
+  MesReservationsRoute: MesReservationsRoute,
   TarifsCpamRoute: TarifsCpamRoute,
   DepartmentCityRoute: DepartmentCityRoute,
   BlogAldTransportRoute: BlogAldTransportRoute,

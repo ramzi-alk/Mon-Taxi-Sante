@@ -83,7 +83,23 @@ export interface Database {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      lookup_booking_by_reference: {
+        Args: { p_booking_id: string; p_phone: string };
+        Returns: {
+          id: string;
+          pickup_address: string;
+          dropoff_address: string;
+          pickup_datetime: string;
+          return_datetime: string | null;
+          vehicle_type: "taxi" | "vsl" | "pmr";
+          trip_type: "aller_simple" | "aller_retour" | "multiple";
+          estimated_price: number | null;
+          status: "draft" | "pending" | "confirmed" | "available" | "accepted" | "in_progress" | "completed" | "cancelled";
+          created_at: string;
+        }[];
+      };
+    };
     Enums: {
       user_role: "patient" | "driver" | "admin";
       vehicle_type: "taxi" | "vsl" | "ambulance";

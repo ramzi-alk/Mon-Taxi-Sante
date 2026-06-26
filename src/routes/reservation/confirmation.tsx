@@ -1,11 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
-import { CheckCircle2, MapPin, Calendar, ShieldCheck, Phone } from "lucide-react";
+import { CheckCircle2, MapPin, Calendar, ShieldCheck, Phone, ClipboardList } from "lucide-react";
 import { supabase } from "~/lib/supabase";
-import { formatDateFr, formatTimeFr } from "~/lib/utils";
+import { formatDateFr, formatTimeFr, cn } from "~/lib/utils";
 import { logger } from "~/lib/logger";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
+import { useRealtime } from "~/hooks/useRealtime";
+import { STATUS_LABELS, STATUS_BADGE_CLASSES, type BookingStatus } from "~/lib/bookingStatus";
 
 const confirmationSearchSchema = z.object({
   id: z.string(),
@@ -54,6 +56,13 @@ function ConfirmationPage() {
     queryFn: () => fetchBooking(id),
   });
 
+  useRealtime({
+    table: "bookings",
+    queryKey: ["booking-confirmation", id],
+    event: "UPDATE",
+    filter: `id=eq.${id}`,
+  });
+
   return (
     <section className="bg-[#F7F8FC] min-h-[calc(100vh-4rem)]">
       <div className="container py-16 md:py-24 max-w-xl">
@@ -86,11 +95,21 @@ function ConfirmationPage() {
 
         {booking && (
           <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden">
-            <div className="bg-brand-blue-600 px-5 py-4 text-white">
-              <p className="text-sm font-medium opacity-80">
-                Référence réservation
-              </p>
-              <p className="text-lg font-bold mt-0.5">{booking.id}</p>
+            <div className="bg-brand-blue-600 px-5 py-4 text-white flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium opacity-80">
+                  Référence réservation
+                </p>
+                <p className="text-lg font-bold mt-0.5">{booking.id}</p>
+              </div>
+              <span
+                className={cn(
+                  "shrink-0 rounded-full px-3 py-1 text-xs font-bold",
+                  STATUS_BADGE_CLASSES[booking.status as BookingStatus]
+                )}
+              >
+                {STATUS_LABELS[booking.status as BookingStatus]}
+              </span>
             </div>
             <div className="px-5">
               <div className="flex items-start gap-3 py-3 border-b border-gray-100">
@@ -127,10 +146,11 @@ function ConfirmationPage() {
 
         <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
           <Link
-            to="/"
+            to="/mes-reservations"
             className="btn-cta inline-flex items-center justify-center gap-2 bg-[#0B0F1C] text-white hover:bg-[#1244E8] transition-colors"
           >
-            Retour à l&apos;accueil
+            <ClipboardList className="h-4 w-4" aria-hidden="true" />
+            Suivre ma réservation
           </Link>
           <a
             href={`tel:${CONTACT_PHONE_TEL}`}
@@ -140,6 +160,12 @@ function ConfirmationPage() {
             {CONTACT_PHONE_DISPLAY}
           </a>
         </div>
+
+        <p className="mt-5 text-center">
+          <Link to="/" className="text-sm font-medium text-gray-500 hover:text-gray-700 underline">
+            Retour à l&apos;accueil
+          </Link>
+        </p>
       </div>
     </section>
   );
