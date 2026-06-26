@@ -1,27 +1,27 @@
-type LogLevel = "info" | "warn" | "error";
+import pino from "pino";
 
 type LogMeta = Record<string, unknown>;
 
-function emit(level: LogLevel, message: string, meta?: LogMeta) {
-  const entry = {
-    timestamp: new Date().toISOString(),
-    level,
-    message,
-    ...meta,
-  };
-  const line = JSON.stringify(entry);
+const level =
+  (typeof process !== "undefined" && process.env?.LOG_LEVEL) || "info";
 
-  if (level === "error") console.error(line);
-  else if (level === "warn") console.warn(line);
-  else console.log(line);
-}
+const pinoLogger = pino({
+  level,
+  base: null,
+  messageKey: "message",
+  timestamp: pino.stdTimeFunctions.isoTime,
+  formatters: {
+    level: (label) => ({ level: label }),
+  },
+});
 
-// Structured JSON logger. On Vercel, anything written to stdout/stderr during
-// SSR or a server function shows up in the project's Runtime Logs, and the
-// JSON shape lets you filter by `level`/`message`/metadata fields there.
-// Calls made from client-rendered code only land in the browser console.
+// Structured JSON logger backed by pino. On Vercel, anything written to
+// stdout/stderr during SSR or a server function shows up in the project's
+// Runtime Logs, and the JSON shape lets you filter by `level`/`message`/
+// metadata fields there. Bundlers swap in pino's browser build for
+// client-rendered code, where calls only land in the browser console.
 export const logger = {
-  info: (message: string, meta?: LogMeta) => emit("info", message, meta),
-  warn: (message: string, meta?: LogMeta) => emit("warn", message, meta),
-  error: (message: string, meta?: LogMeta) => emit("error", message, meta),
+  info: (message: string, meta?: LogMeta) => pinoLogger.info(meta ?? {}, message),
+  warn: (message: string, meta?: LogMeta) => pinoLogger.warn(meta ?? {}, message),
+  error: (message: string, meta?: LogMeta) => pinoLogger.error(meta ?? {}, message),
 };
