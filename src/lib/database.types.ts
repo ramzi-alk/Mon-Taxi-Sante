@@ -9,6 +9,37 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
+interface MyBookingFunctionRow {
+  id: string;
+  reference_code: string;
+  pickup_address: string;
+  pickup_lat: number | null;
+  pickup_lng: number | null;
+  dropoff_address: string;
+  dropoff_lat: number | null;
+  dropoff_lng: number | null;
+  pickup_datetime: string;
+  return_datetime: string | null;
+  vehicle_type: "taxi" | "vsl" | "pmr";
+  trip_type: "aller_simple" | "aller_retour" | "multiple";
+  requires_wheelchair: boolean;
+  requires_stretcher: boolean;
+  requires_oxygen: boolean;
+  passenger_count: number;
+  estimated_price: number | null;
+  status: "draft" | "pending" | "confirmed" | "available" | "accepted" | "in_progress" | "completed" | "cancelled";
+  created_at: string;
+  patient_full_name: string;
+  cpam_status: "ald" | "cmu" | "css" | "standard" | "none";
+  mutual_name: string | null;
+  medical_notes: string | null;
+  driver_full_name: string | null;
+  driver_phone: string | null;
+  vehicle_brand: string | null;
+  vehicle_model: string | null;
+  vehicle_registration: string | null;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -24,6 +55,7 @@ export interface Database {
         };
         Insert: Omit<Database["public"]["Tables"]["profiles"]["Row"], "created_at" | "updated_at">;
         Update: Partial<Database["public"]["Tables"]["profiles"]["Insert"]>;
+        Relationships: [];
       };
       drivers_details: {
         Row: {
@@ -35,6 +67,8 @@ export interface Database {
           convention_number: string | null;
           vehicle_type: "taxi" | "vsl" | "ambulance";
           vehicle_registration: string;
+          vehicle_brand: string | null;
+          vehicle_model: string | null;
           pmr_equipped: boolean;
           subscription_status: "trial" | "active" | "past_due" | "cancelled";
           subscription_ends_at: string | null;
@@ -43,10 +77,12 @@ export interface Database {
         };
         Insert: Omit<Database["public"]["Tables"]["drivers_details"]["Row"], "id" | "created_at">;
         Update: Partial<Database["public"]["Tables"]["drivers_details"]["Insert"]>;
+        Relationships: [];
       };
       bookings: {
         Row: {
           id: string;
+          reference_code: string;
           patient_id: string;
           driver_id: string | null;
           patient_full_name: string;
@@ -78,12 +114,77 @@ export interface Database {
           created_at: string;
           updated_at: string;
         };
-        Insert: Omit<Database["public"]["Tables"]["bookings"]["Row"], "id" | "created_at" | "updated_at">;
+        Insert: Omit<Database["public"]["Tables"]["bookings"]["Row"], "id" | "reference_code" | "created_at" | "updated_at">;
         Update: Partial<Database["public"]["Tables"]["bookings"]["Insert"]>;
+        Relationships: [];
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      lookup_booking_by_reference: {
+        Args: { p_reference_code: string; p_phone: string };
+        Returns: MyBookingFunctionRow[];
+      };
+      get_my_bookings: {
+        Args: Record<string, never>;
+        Returns: MyBookingFunctionRow[];
+      };
+      cancel_booking: {
+        Args: { p_booking_id: string; p_reason?: string | null };
+        Returns: undefined;
+      };
+      update_booking: {
+        Args: {
+          p_booking_id: string;
+          p_pickup_address: string;
+          p_pickup_lat: number | null;
+          p_pickup_lng: number | null;
+          p_dropoff_address: string;
+          p_dropoff_lat: number | null;
+          p_dropoff_lng: number | null;
+          p_pickup_datetime: string;
+          p_return_datetime: string | null;
+          p_vehicle_type: "taxi" | "vsl" | "pmr";
+          p_trip_type: "aller_simple" | "aller_retour" | "multiple";
+          p_requires_wheelchair: boolean;
+          p_requires_stretcher: boolean;
+          p_requires_oxygen: boolean;
+          p_passenger_count: number;
+          p_cpam_status: "ald" | "cmu" | "css" | "standard" | "none";
+          p_mutual_name: string | null;
+          p_medical_notes: string | null;
+        };
+        Returns: undefined;
+      };
+      cancel_booking_by_reference: {
+        Args: { p_reference_code: string; p_phone: string; p_reason?: string | null };
+        Returns: string;
+      };
+      update_booking_by_reference: {
+        Args: {
+          p_reference_code: string;
+          p_phone: string;
+          p_pickup_address: string;
+          p_pickup_lat: number | null;
+          p_pickup_lng: number | null;
+          p_dropoff_address: string;
+          p_dropoff_lat: number | null;
+          p_dropoff_lng: number | null;
+          p_pickup_datetime: string;
+          p_return_datetime: string | null;
+          p_vehicle_type: "taxi" | "vsl" | "pmr";
+          p_trip_type: "aller_simple" | "aller_retour" | "multiple";
+          p_requires_wheelchair: boolean;
+          p_requires_stretcher: boolean;
+          p_requires_oxygen: boolean;
+          p_passenger_count: number;
+          p_cpam_status: "ald" | "cmu" | "css" | "standard" | "none";
+          p_mutual_name: string | null;
+          p_medical_notes: string | null;
+        };
+        Returns: string;
+      };
+    };
     Enums: {
       user_role: "patient" | "driver" | "admin";
       vehicle_type: "taxi" | "vsl" | "ambulance";

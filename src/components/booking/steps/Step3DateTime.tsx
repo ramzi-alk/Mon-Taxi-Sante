@@ -6,6 +6,7 @@ import type { BookingSchema } from "../schema";
 import { Button } from "~/components/ui/button";
 import { Calendar } from "~/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
+import { Input } from "~/components/ui/input";
 import { cn } from "~/lib/utils";
 
 interface StepProps {
@@ -139,13 +140,13 @@ export function Step3DateTime({ form }: StepProps) {
           Heure de prise en charge{" "}
           <span className="text-red-500" aria-hidden="true">*</span>
         </label>
-        <input
+        <Input
           id="pickup_time"
           type="time"
           aria-required="true"
           aria-describedby="time-hint"
           {...register("pickup_time")}
-          className="w-full rounded-xl border border-input bg-white px-4 py-3.5 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="py-3.5 text-base"
         />
         <p id="time-hint" className="text-xs text-muted-foreground">
           Prévoyez une marge de 30 minutes avant votre rendez-vous.
@@ -221,11 +222,11 @@ export function Step3DateTime({ form }: StepProps) {
               <Clock className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
               Heure de retour <span className="text-red-500" aria-hidden="true">*</span>
             </label>
-            <input
+            <Input
               id="return_time"
               type="time"
               {...register("return_time")}
-              className="w-full rounded-xl border border-input bg-white px-4 py-3.5 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="py-3.5 text-base"
             />
           </div>
 

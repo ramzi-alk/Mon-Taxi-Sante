@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Search, Building2, Loader2, AlertTriangle } from "lucide-react";
 import { logger } from "~/lib/logger";
 import { searchCompanies, SirenRateLimitedError, type CompanySuggestion } from "~/lib/siren";
+import { Input } from "~/components/ui/input";
 
 interface SiretAutocompleteProps {
   id: string;
@@ -112,7 +113,7 @@ export function SiretAutocomplete({
     <div ref={containerRef} className="relative">
       <div className="relative">
         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" aria-hidden="true" />
-        <input
+        <Input
           id={id}
           type="text"
           role="combobox"
@@ -132,7 +133,7 @@ export function SiretAutocomplete({
             if (suggestions.length > 0) setIsOpen(true);
           }}
           onBlur={onBlur}
-          className="w-full rounded-xl border border-input bg-white pl-11 pr-10 py-3.5 text-base placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring aria-[invalid=true]:border-red-500"
+          className="pl-11 pr-10 py-3.5 text-base"
         />
         {isLoading && (
           <Loader2

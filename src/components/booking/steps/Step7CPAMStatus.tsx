@@ -1,6 +1,7 @@
 import { UseFormReturn } from "react-hook-form";
 import { ShieldCheck, HelpCircle } from "lucide-react";
 import { cn } from "~/lib/utils";
+import { Input } from "~/components/ui/input";
 import type { BookingSchema } from "../schema";
 
 interface StepProps {
@@ -131,12 +132,12 @@ export function Step7CPAMStatus({ form }: StepProps) {
           Nom de votre mutuelle{" "}
           <span className="text-muted-foreground text-xs font-normal">(optionnel)</span>
         </label>
-        <input
+        <Input
           id="mutual_name"
           type="text"
           placeholder="Ex : MGEN, Malakoff Humanis, Harmonie Mutuelle…"
           {...register("mutual_name")}
-          className="w-full rounded-xl border border-input bg-white px-4 py-3.5 text-base placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="py-3.5 text-base"
         />
       </div>
 

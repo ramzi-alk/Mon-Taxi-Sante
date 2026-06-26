@@ -1,11 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
-import { CheckCircle2, MapPin, Calendar, ShieldCheck, Phone } from "lucide-react";
+import { CheckCircle2, MapPin, Calendar, ShieldCheck, Phone, ClipboardList } from "lucide-react";
 import { supabase } from "~/lib/supabase";
-import { formatDateFr, formatTimeFr } from "~/lib/utils";
+import { formatDateFr, formatTimeFr, formatReferenceCode, cn } from "~/lib/utils";
 import { logger } from "~/lib/logger";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
+import { useRealtime } from "~/hooks/useRealtime";
+import { STATUS_LABELS, STATUS_BADGE_CLASSES, type BookingStatus } from "~/lib/bookingStatus";
+import { CPAM_LABELS } from "~/lib/cpam";
 
 const confirmationSearchSchema = z.object({
   id: z.string(),
@@ -22,19 +25,11 @@ export const Route = createFileRoute("/reservation/confirmation")({
   component: ConfirmationPage,
 });
 
-const cpamLabels: Record<string, string> = {
-  ald: "ALD — 100% Sécurité Sociale",
-  cmu: "CMU-C — Prise en charge totale",
-  css: "CSS — Prise en charge totale",
-  standard: "Assuré standard (65% SS)",
-  none: "Frais personnels",
-};
-
 async function fetchBooking(id: string) {
   const { data, error } = await supabase
     .from("bookings")
     .select(
-      "id, pickup_address, dropoff_address, pickup_datetime, cpam_status, status"
+      "id, reference_code, pickup_address, dropoff_address, pickup_datetime, cpam_status, status"
     )
     .eq("id", id)
     .single();
@@ -52,6 +47,13 @@ function ConfirmationPage() {
   const { data: booking, isLoading, isError } = useQuery({
     queryKey: ["booking-confirmation", id],
     queryFn: () => fetchBooking(id),
+  });
+
+  useRealtime({
+    table: "bookings",
+    queryKey: ["booking-confirmation", id],
+    event: "UPDATE",
+    filter: `id=eq.${id}`,
   });
 
   return (
@@ -86,11 +88,23 @@ function ConfirmationPage() {
 
         {booking && (
           <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden">
-            <div className="bg-brand-blue-600 px-5 py-4 text-white">
-              <p className="text-sm font-medium opacity-80">
-                Référence réservation
-              </p>
-              <p className="text-lg font-bold mt-0.5">{booking.id}</p>
+            <div className="bg-brand-blue-600 px-5 py-4 text-white flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium opacity-80">
+                  Référence réservation
+                </p>
+                <p className="text-lg font-bold mt-0.5 tracking-wide">
+                  {formatReferenceCode(booking.reference_code)}
+                </p>
+              </div>
+              <span
+                className={cn(
+                  "shrink-0 rounded-full px-3 py-1 text-xs font-bold",
+                  STATUS_BADGE_CLASSES[booking.status as BookingStatus]
+                )}
+              >
+                {STATUS_LABELS[booking.status as BookingStatus]}
+              </span>
             </div>
             <div className="px-5">
               <div className="flex items-start gap-3 py-3 border-b border-gray-100">
@@ -117,7 +131,7 @@ function ConfirmationPage() {
                 <div className="flex-1 min-w-0">
                   <p className="text-xs text-muted-foreground">Prise en charge</p>
                   <p className="font-medium text-gray-900 mt-0.5">
-                    {cpamLabels[booking.cpam_status] ?? booking.cpam_status}
+                    {CPAM_LABELS[booking.cpam_status] ?? booking.cpam_status}
                   </p>
                 </div>
               </div>
@@ -127,10 +141,11 @@ function ConfirmationPage() {
 
         <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
           <Link
-            to="/"
+            to="/mes-reservations"
             className="btn-cta inline-flex items-center justify-center gap-2 bg-[#0B0F1C] text-white hover:bg-[#1244E8] transition-colors"
           >
-            Retour à l&apos;accueil
+            <ClipboardList className="h-4 w-4" aria-hidden="true" />
+            Suivre ma réservation
           </Link>
           <a
             href={`tel:${CONTACT_PHONE_TEL}`}
@@ -140,6 +155,12 @@ function ConfirmationPage() {
             {CONTACT_PHONE_DISPLAY}
           </a>
         </div>
+
+        <p className="mt-5 text-center">
+          <Link to="/" className="text-sm font-medium text-gray-500 hover:text-gray-700 underline">
+            Retour à l&apos;accueil
+          </Link>
+        </p>
       </div>
     </section>
   );

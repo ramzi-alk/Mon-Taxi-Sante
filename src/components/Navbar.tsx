@@ -6,6 +6,7 @@ import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
 const navLinks = [
   { to: "/comment-ca-marche", label: "Comment ça marche" },
   { to: "/blog", label: "Guides patients" },
+  { to: "/mes-reservations", label: "Suivre ma réservation" },
   { to: "/connexion", label: "Espace chauffeur" },
 ];
 

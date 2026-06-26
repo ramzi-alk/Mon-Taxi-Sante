@@ -6,6 +6,7 @@ import type { BookingSchema } from "../schema";
 import { Button } from "~/components/ui/button";
 import { Calendar } from "~/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
+import { Input } from "~/components/ui/input";
 import { cn } from "~/lib/utils";
 
 interface StepProps {
@@ -48,7 +49,7 @@ export function Step1Identity({ form }: StepProps) {
             className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground"
             aria-hidden="true"
           />
-          <input
+          <Input
             id="patient_full_name"
             type="text"
             autoComplete="name"
@@ -56,7 +57,7 @@ export function Step1Identity({ form }: StepProps) {
             aria-required="true"
             aria-describedby={errors.patient_full_name ? "name-error" : undefined}
             {...register("patient_full_name")}
-            className="w-full rounded-xl border border-input bg-white pl-11 pr-4 py-3.5 text-base placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring aria-[invalid=true]:border-red-500"
+            className="pl-11 pr-4 py-3.5 text-base"
             aria-invalid={!!errors.patient_full_name}
           />
         </div>
@@ -81,7 +82,7 @@ export function Step1Identity({ form }: StepProps) {
             className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground"
             aria-hidden="true"
           />
-          <input
+          <Input
             id="patient_phone"
             type="tel"
             autoComplete="tel"
@@ -89,7 +90,7 @@ export function Step1Identity({ form }: StepProps) {
             aria-required="true"
             aria-describedby={errors.patient_phone ? "phone-error" : "phone-hint"}
             {...register("patient_phone")}
-            className="w-full rounded-xl border border-input bg-white pl-11 pr-4 py-3.5 text-base placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="pl-11 pr-4 py-3.5 text-base"
             aria-invalid={!!errors.patient_phone}
           />
         </div>

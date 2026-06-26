@@ -10,6 +10,7 @@ import { logger } from "~/lib/logger";
 import * as authRepository from "~/repositories/authRepository";
 import * as driversRepository from "~/repositories/driversRepository";
 import { SiretAutocomplete } from "~/components/chauffeurs/SiretAutocomplete";
+import { Input } from "~/components/ui/input";
 import type { CompanySuggestion } from "~/lib/siren";
 
 export const Route = createFileRoute("/chauffeurs/inscription")({
@@ -174,14 +175,14 @@ function InscriptionChauffeurPage() {
               </label>
               <div className="relative">
                 <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" aria-hidden="true" />
-                <input
+                <Input
                   id="full_name"
                   type="text"
                   autoComplete="name"
                   placeholder="Ex : Karim Benali"
                   aria-invalid={!!errors.full_name}
                   {...register("full_name")}
-                  className="w-full rounded-xl border border-input bg-white pl-11 pr-4 py-3.5 text-base placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring aria-[invalid=true]:border-red-500"
+                  className="pl-11 pr-4 py-3.5 text-base"
                 />
               </div>
               {errors.full_name && <p role="alert" className="text-sm text-red-600">{errors.full_name.message}</p>}
@@ -193,14 +194,14 @@ function InscriptionChauffeurPage() {
               </label>
               <div className="relative">
                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" aria-hidden="true" />
-                <input
+                <Input
                   id="email"
                   type="email"
                   autoComplete="email"
                   placeholder="vous@exemple.fr"
                   aria-invalid={!!errors.email}
                   {...register("email")}
-                  className="w-full rounded-xl border border-input bg-white pl-11 pr-4 py-3.5 text-base placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring aria-[invalid=true]:border-red-500"
+                  className="pl-11 pr-4 py-3.5 text-base"
                 />
               </div>
               {errors.email && <p role="alert" className="text-sm text-red-600">{errors.email.message}</p>}
@@ -212,14 +213,14 @@ function InscriptionChauffeurPage() {
               </label>
               <div className="relative">
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" aria-hidden="true" />
-                <input
+                <Input
                   id="password"
                   type="password"
                   autoComplete="new-password"
                   placeholder="••••••••"
                   aria-invalid={!!errors.password}
                   {...register("password")}
-                  className="w-full rounded-xl border border-input bg-white pl-11 pr-4 py-3.5 text-base placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring aria-[invalid=true]:border-red-500"
+                  className="pl-11 pr-4 py-3.5 text-base"
                 />
               </div>
               {errors.password && <p role="alert" className="text-sm text-red-600">{errors.password.message}</p>}
@@ -231,14 +232,14 @@ function InscriptionChauffeurPage() {
               </label>
               <div className="relative">
                 <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" aria-hidden="true" />
-                <input
+                <Input
                   id="phone"
                   type="tel"
                   autoComplete="tel"
                   placeholder="06 12 34 56 78"
                   aria-invalid={!!errors.phone}
                   {...register("phone")}
-                  className="w-full rounded-xl border border-input bg-white pl-11 pr-4 py-3.5 text-base placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring aria-[invalid=true]:border-red-500"
+                  className="pl-11 pr-4 py-3.5 text-base"
                 />
               </div>
               {errors.phone && <p role="alert" className="text-sm text-red-600">{errors.phone.message}</p>}
@@ -299,13 +300,13 @@ function InscriptionChauffeurPage() {
               <label htmlFor="vehicle_registration" className="block text-sm font-semibold text-gray-700">
                 Plaque d'immatriculation <span className="text-red-500" aria-hidden="true">*</span>
               </label>
-              <input
+              <Input
                 id="vehicle_registration"
                 type="text"
                 placeholder="AB-123-CD"
                 aria-invalid={!!errors.vehicle_registration}
                 {...register("vehicle_registration")}
-                className="w-full rounded-xl border border-input bg-white px-4 py-3.5 text-base placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring aria-[invalid=true]:border-red-500"
+                className="py-3.5 text-base"
               />
               {errors.vehicle_registration && (
                 <p role="alert" className="text-sm text-red-600">{errors.vehicle_registration.message}</p>

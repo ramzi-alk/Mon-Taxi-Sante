@@ -10,6 +10,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import type { ReactNode } from "react";
 import { Navbar } from "~/components/Navbar";
 import { Footer } from "~/components/Footer";
+import { ToastProvider } from "~/components/ui/toast";
 import { logger } from "~/lib/logger";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
 import appCss from "~/styles/app.css?url";
@@ -98,10 +99,12 @@ function RootDocument({ children }: { children: ReactNode }) {
       </head>
       <body className="min-h-screen bg-background font-sans antialiased">
         <QueryClientProvider client={queryClient}>
-          <Navbar />
-          <main id="main-content">{children}</main>
-          <Footer />
-          {import.meta.env.DEV && <ReactQueryDevtools />}
+          <ToastProvider>
+            <Navbar />
+            <main id="main-content">{children}</main>
+            <Footer />
+            {import.meta.env.DEV && <ReactQueryDevtools />}
+          </ToastProvider>
         </QueryClientProvider>
         <Scripts />
       </body>

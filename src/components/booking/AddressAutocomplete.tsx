@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Loader2 } from "lucide-react";
 import { logger } from "~/lib/logger";
+import { Input } from "~/components/ui/input";
 
 interface AddressSuggestion {
   label: string;
@@ -135,7 +136,7 @@ export function AddressAutocomplete({
         <span className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-current pointer-events-none">
           {icon}
         </span>
-        <input
+        <Input
           id={id}
           type="text"
           role="combobox"
@@ -155,7 +156,7 @@ export function AddressAutocomplete({
             if (suggestions.length > 0) setIsOpen(true);
           }}
           onBlur={onBlur}
-          className="w-full rounded-xl border border-input bg-white pl-11 pr-10 py-3.5 text-base placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="pl-11 pr-10 py-3.5 text-base"
         />
         {isLoading && (
           <Loader2

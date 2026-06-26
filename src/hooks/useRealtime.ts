@@ -4,25 +4,36 @@ import { supabase } from "~/lib/supabase";
 
 export type RealtimeEvent = "INSERT" | "UPDATE" | "DELETE" | "*";
 
+interface RealtimePayload {
+  new: Record<string, unknown>;
+  old: Record<string, unknown>;
+}
+
 interface UseRealtimeOptions {
   table: string;
   queryKey: unknown[];
   event?: RealtimeEvent;
   filter?: string;
+  onChange?: (payload: RealtimePayload) => void;
 }
 
 /**
  * Subscribe to Supabase Realtime changes on a table.
- * Automatically invalidates the given TanStack Query queryKey on change.
+ * Automatically invalidates the given TanStack Query queryKey on change,
+ * and optionally calls onChange with the raw payload (e.g. to surface a
+ * notification before the refetched data lands).
  */
 export function useRealtime({
   table,
   queryKey,
   event = "*",
   filter,
+  onChange,
 }: UseRealtimeOptions) {
   const queryClient = useQueryClient();
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
 
   useEffect(() => {
     const channelName = `realtime:${table}:${event}:${filter ?? "all"}`;
@@ -30,7 +41,6 @@ export function useRealtime({
     const channel = supabase
       .channel(channelName)
       .on(
-        // @ts-expect-error — supabase types are overly strict here
         "postgres_changes",
         {
           event,
@@ -38,7 +48,8 @@ export function useRealtime({
           table,
           ...(filter ? { filter } : {}),
         },
-        () => {
+        (payload: RealtimePayload) => {
+          onChangeRef.current?.(payload);
           queryClient.invalidateQueries({ queryKey });
         }
       )
