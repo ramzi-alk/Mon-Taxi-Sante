@@ -9,6 +9,7 @@ import { supabase } from "~/lib/supabase";
 import { logger } from "~/lib/logger";
 import * as authRepository from "~/repositories/authRepository";
 import * as profilesRepository from "~/repositories/profilesRepository";
+import { Input } from "~/components/ui/input";
 
 export const Route = createFileRoute("/connexion")({
   head: () => ({
@@ -107,7 +108,7 @@ function ConnexionPage() {
                 className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground"
                 aria-hidden="true"
               />
-              <input
+              <Input
                 id="email"
                 type="email"
                 autoComplete="email"
@@ -115,7 +116,7 @@ function ConnexionPage() {
                 aria-required="true"
                 aria-invalid={!!errors.email}
                 {...register("email")}
-                className="w-full rounded-xl border border-input bg-white pl-11 pr-4 py-3.5 text-base placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring aria-[invalid=true]:border-red-500"
+                className="pl-11 pr-4 py-3.5 text-base"
               />
             </div>
             {errors.email && (
@@ -134,7 +135,7 @@ function ConnexionPage() {
                 className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground"
                 aria-hidden="true"
               />
-              <input
+              <Input
                 id="password"
                 type="password"
                 autoComplete="current-password"
@@ -142,7 +143,7 @@ function ConnexionPage() {
                 aria-required="true"
                 aria-invalid={!!errors.password}
                 {...register("password")}
-                className="w-full rounded-xl border border-input bg-white pl-11 pr-4 py-3.5 text-base placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring aria-[invalid=true]:border-red-500"
+                className="pl-11 pr-4 py-3.5 text-base"
               />
             </div>
             {errors.password && (

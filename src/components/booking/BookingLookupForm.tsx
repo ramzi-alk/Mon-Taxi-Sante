@@ -8,6 +8,7 @@ import { logger } from "~/lib/logger";
 import { lookupBookingServerFn } from "~/server/bookingLookup";
 import type { MyBookingRow } from "~/repositories/bookingsRepository";
 import { BookingStatusCard } from "./BookingStatusCard";
+import { Input } from "~/components/ui/input";
 
 const frenchPhone = /^(\+33|0)[1-9](\d{2}){4}$/;
 const referenceCodePattern = /^[A-Z2-9]{4}-?[A-Z2-9]{4}$/i;
@@ -133,13 +134,13 @@ export function BookingLookupForm() {
           <label htmlFor="reference_code" className="block text-xs font-semibold text-gray-700">
             Référence de réservation
           </label>
-          <input
+          <Input
             id="reference_code"
             type="text"
             placeholder="K7H4-X9QF"
             aria-invalid={!!errors.reference_code}
             {...register("reference_code")}
-            className="w-full rounded-xl border border-input bg-white px-4 py-2.5 text-sm uppercase placeholder:text-muted-foreground placeholder:normal-case focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring aria-[invalid=true]:border-red-500"
+            className="uppercase placeholder:normal-case"
           />
           {errors.reference_code && (
             <p role="alert" className="text-xs text-red-600">
@@ -152,14 +153,13 @@ export function BookingLookupForm() {
           <label htmlFor="lookup_phone" className="block text-xs font-semibold text-gray-700">
             Numéro de téléphone utilisé
           </label>
-          <input
+          <Input
             id="lookup_phone"
             type="tel"
             autoComplete="tel"
             placeholder="06 12 34 56 78"
             aria-invalid={!!errors.phone}
             {...register("phone")}
-            className="w-full rounded-xl border border-input bg-white px-4 py-2.5 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring aria-[invalid=true]:border-red-500"
           />
           {errors.phone && (
             <p role="alert" className="text-xs text-red-600">

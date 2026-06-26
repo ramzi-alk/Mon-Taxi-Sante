@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Navigation, MapPin, Loader2, X } from "lucide-react";
 import { editBookingSchema, type EditBookingSchema } from "./editBookingSchema";
 import { AddressAutocomplete } from "./AddressAutocomplete";
+import { Input } from "~/components/ui/input";
 import { supabase } from "~/lib/supabase";
 import { useToast } from "~/components/ui/toast";
 import * as bookingsRepository from "~/repositories/bookingsRepository";
@@ -206,12 +207,12 @@ export function BookingEditForm({ booking, lookupCredentials, onClose, onSaved }
           <label htmlFor="edit_pickup_date" className="text-xs font-semibold text-gray-700">
             Date
           </label>
-          <input
+          <Input
             id="edit_pickup_date"
             type="date"
             min={minDateStr}
             {...register("pickup_date")}
-            className={inputClass}
+            className="py-3"
           />
           {errors.pickup_date && (
             <p role="alert" className="text-xs text-red-600">{errors.pickup_date.message}</p>
@@ -221,11 +222,11 @@ export function BookingEditForm({ booking, lookupCredentials, onClose, onSaved }
           <label htmlFor="edit_pickup_time" className="text-xs font-semibold text-gray-700">
             Heure
           </label>
-          <input
+          <Input
             id="edit_pickup_time"
             type="time"
             {...register("pickup_time")}
-            className={inputClass}
+            className="py-3"
           />
         </div>
       </div>
@@ -241,12 +242,12 @@ export function BookingEditForm({ booking, lookupCredentials, onClose, onSaved }
             <label htmlFor="edit_return_date" className="text-xs font-semibold text-gray-700">
               Date de retour
             </label>
-            <input
+            <Input
               id="edit_return_date"
               type="date"
               min={minDateStr}
               {...register("return_date")}
-              className={inputClass}
+              className="py-3"
             />
             {errors.return_date && (
               <p role="alert" className="text-xs text-red-600">{errors.return_date.message}</p>
@@ -256,11 +257,11 @@ export function BookingEditForm({ booking, lookupCredentials, onClose, onSaved }
             <label htmlFor="edit_return_time" className="text-xs font-semibold text-gray-700">
               Heure de retour
             </label>
-            <input
+            <Input
               id="edit_return_time"
               type="time"
               {...register("return_time")}
-              className={inputClass}
+              className="py-3"
             />
           </div>
         </div>
@@ -313,14 +314,14 @@ export function BookingEditForm({ booking, lookupCredentials, onClose, onSaved }
         <label htmlFor="edit_passenger_count" className="text-xs font-semibold text-gray-700">
           Nombre de passagers
         </label>
-        <input
+        <Input
           id="edit_passenger_count"
           type="number"
           min={1}
           max={8}
           value={passengerCount}
           onChange={(e) => setValue("passenger_count", Math.max(1, Math.min(8, Number(e.target.value) || 1)))}
-          className={`${inputClass} max-w-[100px]`}
+          className="py-3 max-w-[100px]"
         />
       </div>
 
@@ -342,7 +343,7 @@ export function BookingEditForm({ booking, lookupCredentials, onClose, onSaved }
           <label htmlFor="edit_mutual_name" className="text-xs font-semibold text-gray-700">
             Mutuelle (optionnel)
           </label>
-          <input id="edit_mutual_name" type="text" {...register("mutual_name")} className={inputClass} />
+          <Input id="edit_mutual_name" type="text" {...register("mutual_name")} className="py-3" />
         </div>
       </div>
 
