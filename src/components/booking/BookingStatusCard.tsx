@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { MapPin, Calendar, Car, XCircle, User, Phone, Download, Loader2 } from "lucide-react";
+import { MapPin, Calendar, Car, XCircle, User, Phone, Download, Loader2, Pencil } from "lucide-react";
 import { formatDateFr, formatTimeFr, formatPrice, formatReferenceCode, cn } from "~/lib/utils";
 import { VEHICLE_LABELS } from "~/lib/vehicle";
 import { openBookingReceipt } from "~/lib/receipt";
@@ -13,21 +13,26 @@ import {
   STATUS_BADGE_CLASSES,
   getStatusStepState,
   isCancellable,
+  isEditable,
   type BookingStatus,
 } from "~/lib/bookingStatus";
 import * as bookingsRepository from "~/repositories/bookingsRepository";
 import type { MyBookingRow } from "~/repositories/bookingsRepository";
+import { BookingEditForm } from "./BookingEditForm";
 
 interface BookingStatusCardProps {
   booking: MyBookingRow;
   /** Only the live session ("Mes réservations") may cancel; the lost-session recovery flow is read-only. */
   allowCancel?: boolean;
+  /** Only the live session ("Mes réservations") may edit; the lost-session recovery flow is read-only. */
+  allowEdit?: boolean;
 }
 
-export function BookingStatusCard({ booking, allowCancel = false }: BookingStatusCardProps) {
+export function BookingStatusCard({ booking, allowCancel = false, allowEdit = false }: BookingStatusCardProps) {
   const status = booking.status as BookingStatus;
   const isCancelled = status === "cancelled";
   const [confirmingCancel, setConfirmingCancel] = useState(false);
+  const [editing, setEditing] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -130,93 +135,120 @@ export function BookingStatusCard({ booking, allowCancel = false }: BookingStatu
           </div>
         )}
 
-        {isCancelled ? (
-          <div className="flex items-start gap-2 rounded-xl bg-red-50 border border-red-100 p-3 text-sm text-red-700">
-            <XCircle className="h-5 w-5 shrink-0" aria-hidden="true" />
-            {STATUS_DESCRIPTIONS.cancelled}
-          </div>
+        {editing ? (
+          <BookingEditForm booking={booking} onClose={() => setEditing(false)} />
         ) : (
-          <div>
-            <ol
-              className="flex items-center"
-              aria-label={`Avancement : ${STATUS_LABELS[status]}`}
-            >
-              {STATUS_ORDER.map((step, i) => {
-                const state = getStatusStepState(step, status);
-                return (
-                  <li key={step} className="flex-1 flex items-center last:flex-none">
-                    <span
-                      className={cn(
-                        "h-2.5 w-2.5 rounded-full shrink-0",
-                        state === "done" && "bg-brand-green-500",
-                        state === "active" &&
-                          "bg-brand-blue-600 ring-4 ring-brand-blue-100",
-                        state === "pending" && "bg-gray-200"
-                      )}
-                      aria-current={state === "active" ? "step" : undefined}
-                    />
-                    {i < STATUS_ORDER.length - 1 && (
-                      <span
-                        className={cn(
-                          "h-0.5 flex-1",
-                          state === "done" ? "bg-brand-green-500" : "bg-gray-200"
-                        )}
-                        aria-hidden="true"
-                      />
-                    )}
-                  </li>
-                );
-              })}
-            </ol>
-            <p className="mt-2.5 text-sm text-gray-600">{STATUS_DESCRIPTIONS[status]}</p>
-          </div>
-        )}
-
-        {status === "completed" && (
-          <button
-            type="button"
-            onClick={() => openBookingReceipt(booking)}
-            className="flex items-center gap-2 text-sm font-semibold text-brand-blue-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
-          >
-            <Download className="h-4 w-4" aria-hidden="true" />
-            Télécharger le justificatif
-          </button>
-        )}
-
-        {allowCancel && isCancellable(status) && (
-          <div className="border-t pt-3">
-            {confirmingCancel ? (
-              <div className="flex items-center gap-3 text-sm">
-                <span className="text-gray-700">Confirmer l&apos;annulation ?</span>
-                <button
-                  type="button"
-                  onClick={() => cancelMutation.mutate()}
-                  disabled={cancelMutation.isPending}
-                  className="font-bold text-red-600 hover:underline disabled:opacity-60 flex items-center gap-1.5"
-                >
-                  {cancelMutation.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
-                  Oui, annuler
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setConfirmingCancel(false)}
-                  disabled={cancelMutation.isPending}
-                  className="text-gray-500 hover:underline"
-                >
-                  Non
-                </button>
+          <>
+            {isCancelled ? (
+              <div className="flex items-start gap-2 rounded-xl bg-red-50 border border-red-100 p-3 text-sm text-red-700">
+                <XCircle className="h-5 w-5 shrink-0" aria-hidden="true" />
+                {STATUS_DESCRIPTIONS.cancelled}
               </div>
             ) : (
+              <div>
+                <ol
+                  className="flex items-center"
+                  aria-label={`Avancement : ${STATUS_LABELS[status]}`}
+                >
+                  {STATUS_ORDER.map((step, i) => {
+                    const state = getStatusStepState(step, status);
+                    return (
+                      <li key={step} className="flex-1 flex items-center last:flex-none">
+                        <span
+                          className={cn(
+                            "h-2.5 w-2.5 rounded-full shrink-0",
+                            state === "done" && "bg-brand-green-500",
+                            state === "active" &&
+                              "bg-brand-blue-600 ring-4 ring-brand-blue-100",
+                            state === "pending" && "bg-gray-200"
+                          )}
+                          aria-current={state === "active" ? "step" : undefined}
+                        />
+                        {i < STATUS_ORDER.length - 1 && (
+                          <span
+                            className={cn(
+                              "h-0.5 flex-1",
+                              state === "done" ? "bg-brand-green-500" : "bg-gray-200"
+                            )}
+                            aria-hidden="true"
+                          />
+                        )}
+                      </li>
+                    );
+                  })}
+                </ol>
+                <p className="mt-2.5 text-sm text-gray-600">{STATUS_DESCRIPTIONS[status]}</p>
+              </div>
+            )}
+
+            {status === "completed" && (
               <button
                 type="button"
-                onClick={() => setConfirmingCancel(true)}
-                className="flex items-center gap-2 text-sm font-semibold text-red-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+                onClick={() => openBookingReceipt(booking)}
+                className="flex items-center gap-2 text-sm font-semibold text-brand-blue-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
               >
-                <XCircle className="h-4 w-4" aria-hidden="true" />
-                Annuler cette réservation
+                <Download className="h-4 w-4" aria-hidden="true" />
+                Télécharger le justificatif
               </button>
             )}
-          </div>
+
+            {allowEdit && isEditable(status) && (
+              <div className="border-t pt-3">
+                <button
+                  type="button"
+                  onClick={() => setEditing(true)}
+                  className="flex items-center gap-2 text-sm font-semibold text-brand-blue-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+                >
+                  <Pencil className="h-4 w-4" aria-hidden="true" />
+                  Modifier cette réservation
+                </button>
+              </div>
+            )}
+
+            {allowEdit && !isEditable(status) && isCancellable(status) && (
+              <div className="border-t pt-3 text-sm text-gray-500">
+                Cette réservation est déjà en cours de traitement et ne peut plus être
+                modifiée. Pour changer un détail important, annulez-la puis créez-en une
+                nouvelle.
+              </div>
+            )}
+
+            {allowCancel && isCancellable(status) && (
+              <div className="border-t pt-3">
+                {confirmingCancel ? (
+                  <div className="flex items-center gap-3 text-sm">
+                    <span className="text-gray-700">Confirmer l&apos;annulation ?</span>
+                    <button
+                      type="button"
+                      onClick={() => cancelMutation.mutate()}
+                      disabled={cancelMutation.isPending}
+                      className="font-bold text-red-600 hover:underline disabled:opacity-60 flex items-center gap-1.5"
+                    >
+                      {cancelMutation.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
+                      Oui, annuler
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmingCancel(false)}
+                      disabled={cancelMutation.isPending}
+                      className="text-gray-500 hover:underline"
+                    >
+                      Non
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setConfirmingCancel(true)}
+                    className="flex items-center gap-2 text-sm font-semibold text-red-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+                  >
+                    <XCircle className="h-4 w-4" aria-hidden="true" />
+                    Annuler cette réservation
+                  </button>
+                )}
+              </div>
+            )}
+          </>
         )}
       </div>
     </article>

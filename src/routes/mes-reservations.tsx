@@ -132,7 +132,7 @@ function MyBookingsPage() {
             </h2>
             <div className="space-y-4">
               {active.map((booking) => (
-                <BookingStatusCard key={booking.id} booking={booking} allowCancel />
+                <BookingStatusCard key={booking.id} booking={booking} allowCancel allowEdit />
               ))}
             </div>
           </section>

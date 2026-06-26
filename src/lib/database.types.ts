@@ -13,16 +13,26 @@ interface MyBookingFunctionRow {
   id: string;
   reference_code: string;
   pickup_address: string;
+  pickup_lat: number | null;
+  pickup_lng: number | null;
   dropoff_address: string;
+  dropoff_lat: number | null;
+  dropoff_lng: number | null;
   pickup_datetime: string;
   return_datetime: string | null;
   vehicle_type: "taxi" | "vsl" | "pmr";
   trip_type: "aller_simple" | "aller_retour" | "multiple";
+  requires_wheelchair: boolean;
+  requires_stretcher: boolean;
+  requires_oxygen: boolean;
+  passenger_count: number;
   estimated_price: number | null;
   status: "draft" | "pending" | "confirmed" | "available" | "accepted" | "in_progress" | "completed" | "cancelled";
   created_at: string;
   patient_full_name: string;
   cpam_status: "ald" | "cmu" | "css" | "standard" | "none";
+  mutual_name: string | null;
+  medical_notes: string | null;
   driver_full_name: string | null;
   driver_phone: string | null;
   vehicle_brand: string | null;
@@ -121,6 +131,29 @@ export interface Database {
       };
       cancel_booking: {
         Args: { p_booking_id: string; p_reason?: string | null };
+        Returns: undefined;
+      };
+      update_booking: {
+        Args: {
+          p_booking_id: string;
+          p_pickup_address: string;
+          p_pickup_lat: number | null;
+          p_pickup_lng: number | null;
+          p_dropoff_address: string;
+          p_dropoff_lat: number | null;
+          p_dropoff_lng: number | null;
+          p_pickup_datetime: string;
+          p_return_datetime: string | null;
+          p_vehicle_type: "taxi" | "vsl" | "pmr";
+          p_trip_type: "aller_simple" | "aller_retour" | "multiple";
+          p_requires_wheelchair: boolean;
+          p_requires_stretcher: boolean;
+          p_requires_oxygen: boolean;
+          p_passenger_count: number;
+          p_cpam_status: "ald" | "cmu" | "css" | "standard" | "none";
+          p_mutual_name: string | null;
+          p_medical_notes: string | null;
+        };
         Returns: undefined;
       };
     };

@@ -55,6 +55,13 @@ export function isCancellable(status: BookingStatus): boolean {
   return CANCELLABLE_STATUSES.includes(status);
 }
 
+// Editing is only safe before any confirmation/driver dispatch has started —
+// past `pending`, a change is no longer a small correction but a different
+// request, so the patient is asked to cancel and rebook instead.
+export function isEditable(status: BookingStatus): boolean {
+  return status === "pending";
+}
+
 export function getStatusStepState(
   step: BookingStatus,
   currentStatus: BookingStatus
