@@ -2,11 +2,13 @@ import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "~/lib/database.types";
 import * as bookingsRepository from "~/repositories/bookingsRepository";
+import { sendBookingConfirmationEmail } from "./email";
 
 interface SubmitBookingPayload {
   patient_id: string;
   patient_full_name: string;
   patient_phone: string;
+  patient_email: string;
   patient_birth_date: string | null;
   pickup_address: string;
   pickup_lat: number | null;
@@ -47,5 +49,16 @@ export const submitBookingServerFn = createServerFn({ method: "POST" })
       auth: { persistSession: false },
     });
 
-    return bookingsRepository.insertBooking(supabase, data.payload);
+    const booking = await bookingsRepository.insertBooking(supabase, data.payload);
+
+    await sendBookingConfirmationEmail({
+      to: data.payload.patient_email,
+      patientFullName: data.payload.patient_full_name,
+      referenceCode: booking.reference_code,
+      pickupAddress: data.payload.pickup_address,
+      dropoffAddress: data.payload.dropoff_address,
+      pickupDatetime: data.payload.pickup_datetime,
+    });
+
+    return booking;
   });

@@ -10,6 +10,8 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TarifsCpamRouteImport } from './routes/tarifs-cpam'
+import { Route as ReinitialiserMotDePasseRouteImport } from './routes/reinitialiser-mot-de-passe'
+import { Route as MotDePasseOublieRouteImport } from './routes/mot-de-passe-oublie'
 import { Route as MesReservationsRouteImport } from './routes/mes-reservations'
 import { Route as MentionsLegalesRouteImport } from './routes/mentions-legales'
 import { Route as FaqRouteImport } from './routes/faq'
@@ -33,6 +35,16 @@ import { Route as DepartmentCityRouteImport } from './routes/$department.$city'
 const TarifsCpamRoute = TarifsCpamRouteImport.update({
   id: '/tarifs-cpam',
   path: '/tarifs-cpam',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReinitialiserMotDePasseRoute = ReinitialiserMotDePasseRouteImport.update({
+  id: '/reinitialiser-mot-de-passe',
+  path: '/reinitialiser-mot-de-passe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MotDePasseOublieRoute = MotDePasseOublieRouteImport.update({
+  id: '/mot-de-passe-oublie',
+  path: '/mot-de-passe-oublie',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MesReservationsRoute = MesReservationsRouteImport.update({
@@ -141,6 +153,8 @@ export interface FileRoutesByFullPath {
   '/faq': typeof FaqRoute
   '/mentions-legales': typeof MentionsLegalesRoute
   '/mes-reservations': typeof MesReservationsRoute
+  '/mot-de-passe-oublie': typeof MotDePasseOublieRoute
+  '/reinitialiser-mot-de-passe': typeof ReinitialiserMotDePasseRoute
   '/tarifs-cpam': typeof TarifsCpamRoute
   '/$department/$city': typeof DepartmentCityRoute
   '/blog/ald-transport': typeof BlogAldTransportRoute
@@ -163,6 +177,8 @@ export interface FileRoutesByTo {
   '/faq': typeof FaqRoute
   '/mentions-legales': typeof MentionsLegalesRoute
   '/mes-reservations': typeof MesReservationsRoute
+  '/mot-de-passe-oublie': typeof MotDePasseOublieRoute
+  '/reinitialiser-mot-de-passe': typeof ReinitialiserMotDePasseRoute
   '/tarifs-cpam': typeof TarifsCpamRoute
   '/$department/$city': typeof DepartmentCityRoute
   '/blog/ald-transport': typeof BlogAldTransportRoute
@@ -186,6 +202,8 @@ export interface FileRoutesById {
   '/faq': typeof FaqRoute
   '/mentions-legales': typeof MentionsLegalesRoute
   '/mes-reservations': typeof MesReservationsRoute
+  '/mot-de-passe-oublie': typeof MotDePasseOublieRoute
+  '/reinitialiser-mot-de-passe': typeof ReinitialiserMotDePasseRoute
   '/tarifs-cpam': typeof TarifsCpamRoute
   '/$department/$city': typeof DepartmentCityRoute
   '/blog/ald-transport': typeof BlogAldTransportRoute
@@ -210,6 +228,8 @@ export interface FileRouteTypes {
     | '/faq'
     | '/mentions-legales'
     | '/mes-reservations'
+    | '/mot-de-passe-oublie'
+    | '/reinitialiser-mot-de-passe'
     | '/tarifs-cpam'
     | '/$department/$city'
     | '/blog/ald-transport'
@@ -232,6 +252,8 @@ export interface FileRouteTypes {
     | '/faq'
     | '/mentions-legales'
     | '/mes-reservations'
+    | '/mot-de-passe-oublie'
+    | '/reinitialiser-mot-de-passe'
     | '/tarifs-cpam'
     | '/$department/$city'
     | '/blog/ald-transport'
@@ -254,6 +276,8 @@ export interface FileRouteTypes {
     | '/faq'
     | '/mentions-legales'
     | '/mes-reservations'
+    | '/mot-de-passe-oublie'
+    | '/reinitialiser-mot-de-passe'
     | '/tarifs-cpam'
     | '/$department/$city'
     | '/blog/ald-transport'
@@ -277,6 +301,8 @@ export interface RootRouteChildren {
   FaqRoute: typeof FaqRoute
   MentionsLegalesRoute: typeof MentionsLegalesRoute
   MesReservationsRoute: typeof MesReservationsRoute
+  MotDePasseOublieRoute: typeof MotDePasseOublieRoute
+  ReinitialiserMotDePasseRoute: typeof ReinitialiserMotDePasseRoute
   TarifsCpamRoute: typeof TarifsCpamRoute
   DepartmentCityRoute: typeof DepartmentCityRoute
   BlogAldTransportRoute: typeof BlogAldTransportRoute
@@ -297,6 +323,20 @@ declare module '@tanstack/react-router' {
       path: '/tarifs-cpam'
       fullPath: '/tarifs-cpam'
       preLoaderRoute: typeof TarifsCpamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reinitialiser-mot-de-passe': {
+      id: '/reinitialiser-mot-de-passe'
+      path: '/reinitialiser-mot-de-passe'
+      fullPath: '/reinitialiser-mot-de-passe'
+      preLoaderRoute: typeof ReinitialiserMotDePasseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mot-de-passe-oublie': {
+      id: '/mot-de-passe-oublie'
+      path: '/mot-de-passe-oublie'
+      fullPath: '/mot-de-passe-oublie'
+      preLoaderRoute: typeof MotDePasseOublieRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mes-reservations': {
@@ -445,6 +485,8 @@ const rootRouteChildren: RootRouteChildren = {
   FaqRoute: FaqRoute,
   MentionsLegalesRoute: MentionsLegalesRoute,
   MesReservationsRoute: MesReservationsRoute,
+  MotDePasseOublieRoute: MotDePasseOublieRoute,
+  ReinitialiserMotDePasseRoute: ReinitialiserMotDePasseRoute,
   TarifsCpamRoute: TarifsCpamRoute,
   DepartmentCityRoute: DepartmentCityRoute,
   BlogAldTransportRoute: BlogAldTransportRoute,

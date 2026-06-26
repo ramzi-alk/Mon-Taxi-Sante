@@ -28,6 +28,7 @@ import * as storageRepository from "~/repositories/storageRepository";
 const DEFAULT_VALUES: Partial<BookingSchema> = {
   patient_full_name: "",
   patient_phone: "",
+  patient_email: "",
   patient_birth_date: "",
   pickup_address: "",
   pickup_lat: null,
@@ -102,6 +103,7 @@ async function submitBooking(data: BookingSchema) {
         patient_id: userId,
         patient_full_name: data.patient_full_name,
         patient_phone: data.patient_phone,
+        patient_email: data.patient_email,
         patient_birth_date: data.patient_birth_date || null,
         pickup_address: data.pickup_address,
         pickup_lat: data.pickup_lat,

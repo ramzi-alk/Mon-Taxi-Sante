@@ -43,6 +43,7 @@
     "react-day-picker": "^10.0.1",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.53.1",
+    "resend": "^6.16.0",
     "tailwind-merge": "^2.5.4",
     "zod": "^3.23.8"
   },

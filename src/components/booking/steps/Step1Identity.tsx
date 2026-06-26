@@ -1,7 +1,7 @@
 import { UseFormReturn } from "react-hook-form";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
-import { User, Phone, CalendarIcon } from "lucide-react";
+import { User, Phone, Mail, CalendarIcon } from "lucide-react";
 import type { BookingSchema } from "../schema";
 import { Button } from "~/components/ui/button";
 import { Calendar } from "~/components/ui/calendar";
@@ -100,6 +100,42 @@ export function Step1Identity({ form }: StepProps) {
         {errors.patient_phone && (
           <p id="phone-error" role="alert" className="text-sm text-red-600">
             {errors.patient_phone.message}
+          </p>
+        )}
+      </div>
+
+      {/* Email */}
+      <div className="space-y-1.5">
+        <label
+          htmlFor="patient_email"
+          className="block text-sm font-semibold text-gray-700"
+        >
+          Adresse email{" "}
+          <span className="text-red-500" aria-hidden="true">*</span>
+        </label>
+        <div className="relative">
+          <Mail
+            className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground"
+            aria-hidden="true"
+          />
+          <Input
+            id="patient_email"
+            type="email"
+            autoComplete="email"
+            placeholder="marie.dupont@email.fr"
+            aria-required="true"
+            aria-describedby={errors.patient_email ? "email-error" : "email-hint"}
+            {...register("patient_email")}
+            className="pl-11 pr-4 py-3.5 text-base"
+            aria-invalid={!!errors.patient_email}
+          />
+        </div>
+        <p id="email-hint" className="text-xs text-muted-foreground">
+          Utilisée pour vous envoyer la confirmation de réservation.
+        </p>
+        {errors.patient_email && (
+          <p id="email-error" role="alert" className="text-sm text-red-600">
+            {errors.patient_email.message}
           </p>
         )}
       </div>

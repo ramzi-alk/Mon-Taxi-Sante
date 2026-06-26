@@ -53,7 +53,6 @@ export async function approveDriver(
 ): Promise<void> {
   const { error } = await client
     .from("drivers_details")
-    // @ts-expect-error — approved_by exists in the schema (001_initial_schema.sql) but is missing from the database.types.ts stub
     .update({ approved_at: new Date().toISOString(), approved_by: approvedBy })
     .eq("id", driverDetailsId);
 

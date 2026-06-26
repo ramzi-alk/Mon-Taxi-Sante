@@ -7,6 +7,7 @@ import * as profilesRepository from "~/repositories/profilesRepository";
 import * as driversRepository from "~/repositories/driversRepository";
 import * as bookingsRepository from "~/repositories/bookingsRepository";
 import type { PendingDriver } from "~/repositories/driversRepository";
+import { notifyDriverApprovedServerFn } from "~/server/email";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -35,6 +36,7 @@ async function fetchBookingStats(): Promise<Record<string, number>> {
 async function approveDriver(driverDetailsId: string) {
   const user = await authRepository.getCurrentUser(supabase);
   await driversRepository.approveDriver(supabase, driverDetailsId, user?.id ?? null);
+  await notifyDriverApprovedServerFn({ data: { driverDetailsId } });
 }
 
 function AdminPage() {
