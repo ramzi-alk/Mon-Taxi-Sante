@@ -12,6 +12,10 @@ export const bookingSchema = z
     patient_phone: z
       .string()
       .regex(frenchPhone, "Numéro de téléphone français invalide (ex: 06 12 34 56 78)"),
+    patient_email: z
+      .string()
+      .min(1, "Adresse email requise")
+      .email("Adresse email invalide"),
     patient_birth_date: z
       .string()
       .regex(frenchDate, "Date de naissance invalide")
@@ -106,7 +110,7 @@ export const BOOKING_STEPS = [
 ] as const;
 
 export const STEP_FIELDS: Record<number, (keyof BookingSchema)[]> = {
-  1: ["patient_full_name", "patient_phone", "patient_birth_date"],
+  1: ["patient_full_name", "patient_phone", "patient_email", "patient_birth_date"],
   2: ["pickup_address", "dropoff_address"],
   3: ["pickup_date", "pickup_time"],
   4: ["vehicle_type"],

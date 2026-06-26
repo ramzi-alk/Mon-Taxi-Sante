@@ -100,6 +100,7 @@ export function Step10Confirmation({ form, isSubmitting, submitError }: StepProp
         <div className="px-5">
           <SummaryRow icon={User} label="Patient" value={data.patient_full_name || "—"} />
           <SummaryRow icon={User} label="Téléphone" value={data.patient_phone || "—"} />
+          <SummaryRow icon={User} label="Email" value={data.patient_email || "—"} />
           <SummaryRow icon={MapPin} label="Départ" value={data.pickup_address || "—"} />
           <SummaryRow icon={MapPin} label="Destination" value={data.dropoff_address || "—"} />
           <SummaryRow icon={Calendar} label="Date & heure" value={pickupDatetime} />
