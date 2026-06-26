@@ -2,7 +2,11 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ShieldAlert, CheckCircle2, Clock, Users, Car, ClipboardList } from "lucide-react";
 import { supabase } from "~/lib/supabase";
-import { logger } from "~/lib/logger";
+import * as authRepository from "~/repositories/authRepository";
+import * as profilesRepository from "~/repositories/profilesRepository";
+import * as driversRepository from "~/repositories/driversRepository";
+import * as bookingsRepository from "~/repositories/bookingsRepository";
+import type { PendingDriver } from "~/repositories/driversRepository";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -14,72 +18,23 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-interface PendingDriver {
-  id: string;
-  profile_id: string;
-  siret: string;
-  company_name: string | null;
-  vehicle_type: string;
-  vehicle_registration: string;
-  pmr_equipped: boolean;
-  created_at: string;
-  profiles: { full_name: string; email: string; phone: string | null } | null;
-}
-
 async function fetchCurrentRole(): Promise<"admin" | "driver" | "patient" | null> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await authRepository.getCurrentUser(supabase);
   if (!user) return null;
-
-  const { data } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  return data?.role ?? null;
+  return profilesRepository.getProfileRole(supabase, user.id);
 }
 
 async function fetchPendingDrivers(): Promise<PendingDriver[]> {
-  const { data, error } = await supabase
-    .from("drivers_details")
-    .select("id, profile_id, siret, company_name, vehicle_type, vehicle_registration, pmr_equipped, created_at, profiles:profile_id(full_name, email, phone)")
-    .is("approved_at", null)
-    .order("created_at", { ascending: true });
-
-  if (error) {
-    logger.error("admin.fetchPendingDrivers failed", { error: error.message });
-    throw new Error(error.message);
-  }
-  return (data ?? []) as unknown as PendingDriver[];
+  return driversRepository.fetchPendingDrivers(supabase);
 }
 
 async function fetchBookingStats(): Promise<Record<string, number>> {
-  const { data, error } = await supabase.from("bookings").select("status");
-  if (error) {
-    logger.error("admin.fetchBookingStats failed", { error: error.message });
-    throw new Error(error.message);
-  }
-
-  return (data ?? []).reduce<Record<string, number>>((acc, row) => {
-    acc[row.status] = (acc[row.status] ?? 0) + 1;
-    return acc;
-  }, {});
+  return bookingsRepository.fetchBookingStatusCounts(supabase);
 }
 
 async function approveDriver(driverDetailsId: string) {
-  const { data: { user } } = await supabase.auth.getUser();
-  const { error } = await supabase
-    .from("drivers_details")
-    .update({ approved_at: new Date().toISOString(), approved_by: user?.id ?? null })
-    .eq("id", driverDetailsId);
-
-  if (error) {
-    logger.error("admin.approveDriver failed", {
-      error: error.message,
-      driverDetailsId,
-    });
-    throw new Error(error.message);
-  }
+  const user = await authRepository.getCurrentUser(supabase);
+  await driversRepository.approveDriver(supabase, driverDetailsId, user?.id ?? null);
 }
 
 function AdminPage() {

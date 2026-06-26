@@ -7,6 +7,8 @@ import { Mail, Lock, AlertCircle } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "~/lib/supabase";
 import { logger } from "~/lib/logger";
+import * as authRepository from "~/repositories/authRepository";
+import * as profilesRepository from "~/repositories/profilesRepository";
 
 export const Route = createFileRoute("/connexion")({
   head: () => ({
@@ -26,22 +28,18 @@ const loginSchema = z.object({
 type LoginSchema = z.infer<typeof loginSchema>;
 
 async function login(data: LoginSchema) {
-  const { data: signInData, error } = await supabase.auth.signInWithPassword({
-    email: data.email,
-    password: data.password,
-  });
+  const { data: signInData, error } = await authRepository.signInWithPassword(
+    supabase,
+    data.email,
+    data.password
+  );
   if (error) {
     logger.warn("auth.login failed", { error: error.message });
     throw new Error("Email ou mot de passe incorrect.");
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", signInData.user.id)
-    .single();
-
-  return profile?.role ?? "patient";
+  const role = await profilesRepository.getProfileRole(supabase, signInData.user.id);
+  return role ?? "patient";
 }
 
 function ConnexionPage() {
