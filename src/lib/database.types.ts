@@ -9,6 +9,27 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
+interface MyBookingFunctionRow {
+  id: string;
+  reference_code: string;
+  pickup_address: string;
+  dropoff_address: string;
+  pickup_datetime: string;
+  return_datetime: string | null;
+  vehicle_type: "taxi" | "vsl" | "pmr";
+  trip_type: "aller_simple" | "aller_retour" | "multiple";
+  estimated_price: number | null;
+  status: "draft" | "pending" | "confirmed" | "available" | "accepted" | "in_progress" | "completed" | "cancelled";
+  created_at: string;
+  patient_full_name: string;
+  cpam_status: "ald" | "cmu" | "css" | "standard" | "none";
+  driver_full_name: string | null;
+  driver_phone: string | null;
+  vehicle_brand: string | null;
+  vehicle_model: string | null;
+  vehicle_registration: string | null;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -24,6 +45,7 @@ export interface Database {
         };
         Insert: Omit<Database["public"]["Tables"]["profiles"]["Row"], "created_at" | "updated_at">;
         Update: Partial<Database["public"]["Tables"]["profiles"]["Insert"]>;
+        Relationships: [];
       };
       drivers_details: {
         Row: {
@@ -35,6 +57,8 @@ export interface Database {
           convention_number: string | null;
           vehicle_type: "taxi" | "vsl" | "ambulance";
           vehicle_registration: string;
+          vehicle_brand: string | null;
+          vehicle_model: string | null;
           pmr_equipped: boolean;
           subscription_status: "trial" | "active" | "past_due" | "cancelled";
           subscription_ends_at: string | null;
@@ -43,6 +67,7 @@ export interface Database {
         };
         Insert: Omit<Database["public"]["Tables"]["drivers_details"]["Row"], "id" | "created_at">;
         Update: Partial<Database["public"]["Tables"]["drivers_details"]["Insert"]>;
+        Relationships: [];
       };
       bookings: {
         Row: {
@@ -81,25 +106,22 @@ export interface Database {
         };
         Insert: Omit<Database["public"]["Tables"]["bookings"]["Row"], "id" | "reference_code" | "created_at" | "updated_at">;
         Update: Partial<Database["public"]["Tables"]["bookings"]["Insert"]>;
+        Relationships: [];
       };
     };
     Views: Record<string, never>;
     Functions: {
       lookup_booking_by_reference: {
         Args: { p_reference_code: string; p_phone: string };
-        Returns: {
-          id: string;
-          reference_code: string;
-          pickup_address: string;
-          dropoff_address: string;
-          pickup_datetime: string;
-          return_datetime: string | null;
-          vehicle_type: "taxi" | "vsl" | "pmr";
-          trip_type: "aller_simple" | "aller_retour" | "multiple";
-          estimated_price: number | null;
-          status: "draft" | "pending" | "confirmed" | "available" | "accepted" | "in_progress" | "completed" | "cancelled";
-          created_at: string;
-        }[];
+        Returns: MyBookingFunctionRow[];
+      };
+      get_my_bookings: {
+        Args: Record<string, never>;
+        Returns: MyBookingFunctionRow[];
+      };
+      cancel_booking: {
+        Args: { p_booking_id: string; p_reason?: string | null };
+        Returns: undefined;
       };
     };
     Enums: {

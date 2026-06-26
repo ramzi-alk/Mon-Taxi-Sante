@@ -5,9 +5,10 @@ import { supabase } from "~/lib/supabase";
 import { useRealtime } from "~/hooks/useRealtime";
 import { BookingStatusCard } from "~/components/booking/BookingStatusCard";
 import { BookingLookupForm } from "~/components/booking/BookingLookupForm";
+import { useToast } from "~/components/ui/toast";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
 import * as bookingsRepository from "~/repositories/bookingsRepository";
-import { isTerminalStatus } from "~/lib/bookingStatus";
+import { STATUS_LABELS, isTerminalStatus, type BookingStatus } from "~/lib/bookingStatus";
 
 export const Route = createFileRoute("/mes-reservations")({
   head: () => ({
@@ -25,13 +26,29 @@ async function fetchMyBookings() {
 
 function MyBookingsPage() {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["my-bookings"],
     queryFn: fetchMyBookings,
   });
 
-  useRealtime({ table: "bookings", queryKey: ["my-bookings"], event: "*" });
+  useRealtime({
+    table: "bookings",
+    queryKey: ["my-bookings"],
+    event: "*",
+    onChange: ({ old: oldRow, new: newRow }) => {
+      const oldStatus = oldRow.status as BookingStatus | undefined;
+      const newStatus = newRow.status as BookingStatus | undefined;
+      if (newStatus && oldStatus && newStatus !== oldStatus) {
+        toast({
+          title: "Réservation mise à jour",
+          description: STATUS_LABELS[newStatus],
+          variant: newStatus === "cancelled" ? "error" : "success",
+        });
+      }
+    },
+  });
 
   const bookings = data ?? [];
   const active = bookings.filter((b) => !isTerminalStatus(b.status));
@@ -115,7 +132,7 @@ function MyBookingsPage() {
             </h2>
             <div className="space-y-4">
               {active.map((booking) => (
-                <BookingStatusCard key={booking.id} booking={booking} />
+                <BookingStatusCard key={booking.id} booking={booking} allowCancel />
               ))}
             </div>
           </section>

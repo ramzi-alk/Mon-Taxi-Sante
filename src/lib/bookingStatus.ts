@@ -49,6 +49,12 @@ export function isTerminalStatus(status: BookingStatus): boolean {
   return status === "completed" || status === "cancelled";
 }
 
+const CANCELLABLE_STATUSES: BookingStatus[] = ["pending", "confirmed", "available", "accepted"];
+
+export function isCancellable(status: BookingStatus): boolean {
+  return CANCELLABLE_STATUSES.includes(status);
+}
+
 export function getStatusStepState(
   step: BookingStatus,
   currentStatus: BookingStatus

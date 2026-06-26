@@ -23,26 +23,56 @@ export type MyBookingRow = Pick<
   | "estimated_price"
   | "status"
   | "created_at"
->;
+  | "patient_full_name"
+  | "cpam_status"
+> & {
+  driver_full_name: string | null;
+  driver_phone: string | null;
+  vehicle_brand: string | null;
+  vehicle_model: string | null;
+  vehicle_registration: string | null;
+};
 
 /**
  * Bookings for the current session's patient (RLS-scoped — anonymous
  * booking sessions persist per browser, so this returns every reservation
  * made from this device/browser, not a cross-device account history).
+ * Driver display info (name, phone, vehicle) is joined in server-side once
+ * a driver is assigned, since patients have no direct RLS access to other
+ * users' profile rows.
  */
 export async function fetchMyBookings(client: SupabaseClient): Promise<MyBookingRow[]> {
-  const { data, error } = await client
-    .from("bookings")
-    .select(
-      "id, reference_code, pickup_address, dropoff_address, pickup_datetime, return_datetime, vehicle_type, trip_type, estimated_price, status, created_at"
-    )
-    .order("created_at", { ascending: false });
+  const { data, error } = await client.rpc("get_my_bookings");
 
   if (error) {
     logger.error("bookings.fetchMyBookings failed", { error: error.message });
     throw new Error(error.message);
   }
   return data ?? [];
+}
+
+/**
+ * Patient self-service cancellation. The only way a patient can change
+ * their own booking's status — direct UPDATE on `bookings` is no longer
+ * granted to patients (see migration 009).
+ */
+export async function cancelBooking(
+  client: SupabaseClient,
+  bookingId: string,
+  reason?: string
+): Promise<void> {
+  const { error } = await client.rpc("cancel_booking", {
+    p_booking_id: bookingId,
+    p_reason: reason ?? null,
+  });
+
+  if (error) {
+    if (error.message.includes("booking_not_cancellable")) {
+      throw new Error("Cette réservation ne peut plus être annulée (course déjà en cours ou terminée).");
+    }
+    logger.error("bookings.cancelBooking failed", { error: error.message, bookingId });
+    throw new Error(error.message);
+  }
 }
 
 /**

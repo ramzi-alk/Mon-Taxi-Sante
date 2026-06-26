@@ -8,6 +8,7 @@ import { logger } from "~/lib/logger";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
 import { useRealtime } from "~/hooks/useRealtime";
 import { STATUS_LABELS, STATUS_BADGE_CLASSES, type BookingStatus } from "~/lib/bookingStatus";
+import { CPAM_LABELS } from "~/lib/cpam";
 
 const confirmationSearchSchema = z.object({
   id: z.string(),
@@ -23,14 +24,6 @@ export const Route = createFileRoute("/reservation/confirmation")({
   }),
   component: ConfirmationPage,
 });
-
-const cpamLabels: Record<string, string> = {
-  ald: "ALD — 100% Sécurité Sociale",
-  cmu: "CMU-C — Prise en charge totale",
-  css: "CSS — Prise en charge totale",
-  standard: "Assuré standard (65% SS)",
-  none: "Frais personnels",
-};
 
 async function fetchBooking(id: string) {
   const { data, error } = await supabase
@@ -138,7 +131,7 @@ function ConfirmationPage() {
                 <div className="flex-1 min-w-0">
                   <p className="text-xs text-muted-foreground">Prise en charge</p>
                   <p className="font-medium text-gray-900 mt-0.5">
-                    {cpamLabels[booking.cpam_status] ?? booking.cpam_status}
+                    {CPAM_LABELS[booking.cpam_status] ?? booking.cpam_status}
                   </p>
                 </div>
               </div>
