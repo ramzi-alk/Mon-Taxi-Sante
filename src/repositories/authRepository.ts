@@ -26,3 +26,11 @@ export function signUp(
 export function signInAnonymously(client: SupabaseClient, metadata: Record<string, unknown>) {
   return client.auth.signInAnonymously({ options: { data: metadata } });
 }
+
+export function resetPasswordForEmail(client: SupabaseClient, email: string, redirectTo: string) {
+  return client.auth.resetPasswordForEmail(email, { redirectTo });
+}
+
+export function updatePassword(client: SupabaseClient, password: string) {
+  return client.auth.updateUser({ password });
+}
