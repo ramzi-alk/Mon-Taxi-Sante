@@ -32,6 +32,8 @@ export type MyBookingRow = Pick<
   | "status"
   | "created_at"
   | "patient_full_name"
+  | "patient_phone"
+  | "patient_birth_date"
   | "cpam_status"
   | "mutual_name"
   | "medical_notes"

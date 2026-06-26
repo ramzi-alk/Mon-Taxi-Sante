@@ -30,6 +30,8 @@ interface MyBookingFunctionRow {
   status: "draft" | "pending" | "confirmed" | "available" | "accepted" | "in_progress" | "completed" | "cancelled";
   created_at: string;
   patient_full_name: string;
+  patient_phone: string;
+  patient_birth_date: string | null;
   cpam_status: "ald" | "cmu" | "css" | "standard" | "none";
   mutual_name: string | null;
   medical_notes: string | null;
