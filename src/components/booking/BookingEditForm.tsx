@@ -202,7 +202,7 @@ export function BookingEditForm({ booking, lookupCredentials, onClose, onSaved }
       </div>
 
       {/* Date / time */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="space-y-1">
           <label htmlFor="edit_pickup_date" className="text-xs font-semibold text-gray-700">
             Date
@@ -237,7 +237,7 @@ export function BookingEditForm({ booking, lookupCredentials, onClose, onSaved }
       </label>
 
       {isReturnTrip && (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="space-y-1">
             <label htmlFor="edit_return_date" className="text-xs font-semibold text-gray-700">
               Date de retour
@@ -268,7 +268,7 @@ export function BookingEditForm({ booking, lookupCredentials, onClose, onSaved }
       )}
 
       {/* Vehicle / trip type / cpam */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="space-y-1">
           <label htmlFor="edit_vehicle_type" className="text-xs font-semibold text-gray-700">
             Véhicule
@@ -326,7 +326,7 @@ export function BookingEditForm({ booking, lookupCredentials, onClose, onSaved }
       </div>
 
       {/* CPAM / mutuelle */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="space-y-1">
           <label htmlFor="edit_cpam_status" className="text-xs font-semibold text-gray-700">
             Prise en charge
