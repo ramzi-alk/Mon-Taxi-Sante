@@ -43,6 +43,11 @@ export type MyBookingRow = Pick<
   vehicle_registration: string | null;
 };
 
+export interface LookupCredentials {
+  referenceCode: string;
+  phone: string;
+}
+
 export interface UpdateBookingPayload {
   pickup_address: string;
   pickup_lat: number | null;
@@ -142,6 +147,88 @@ export async function updateBooking(
     }
     logger.error("bookings.updateBooking failed", { error: error.message, bookingId });
     throw new Error(error.message);
+  }
+}
+
+/**
+ * Same as cancelBooking, but proves ownership via reference_code + phone
+ * instead of the live auth.uid() session — for the lost-session recovery
+ * flow (see lookupBookingByReference). Shares its rate-limit lockout.
+ */
+export async function cancelBookingByReference(
+  client: SupabaseClient,
+  referenceCode: string,
+  phone: string,
+  reason?: string
+): Promise<void> {
+  const { data, error } = await client.rpc("cancel_booking_by_reference", {
+    p_reference_code: referenceCode,
+    p_phone: phone,
+    p_reason: reason ?? null,
+  });
+
+  if (error) {
+    if (error.message.includes("too_many_attempts")) {
+      throw new Error("Trop de tentatives pour cette référence. Réessayez dans 15 minutes ou contactez-nous directement.");
+    }
+    logger.error("bookings.cancelBookingByReference failed", { error: error.message });
+    throw new Error(error.message);
+  }
+
+  if (data === "booking_not_found") {
+    throw new Error("Réservation introuvable pour cette référence et ce numéro.");
+  }
+  if (data === "booking_not_cancellable") {
+    throw new Error("Cette réservation ne peut plus être annulée (course déjà en cours ou terminée).");
+  }
+}
+
+/**
+ * Same as updateBooking, but proves ownership via reference_code + phone
+ * instead of the live auth.uid() session — for the lost-session recovery
+ * flow (see lookupBookingByReference). Shares its rate-limit lockout.
+ */
+export async function updateBookingByReference(
+  client: SupabaseClient,
+  referenceCode: string,
+  phone: string,
+  payload: UpdateBookingPayload
+): Promise<void> {
+  const { data, error } = await client.rpc("update_booking_by_reference", {
+    p_reference_code: referenceCode,
+    p_phone: phone,
+    p_pickup_address: payload.pickup_address,
+    p_pickup_lat: payload.pickup_lat,
+    p_pickup_lng: payload.pickup_lng,
+    p_dropoff_address: payload.dropoff_address,
+    p_dropoff_lat: payload.dropoff_lat,
+    p_dropoff_lng: payload.dropoff_lng,
+    p_pickup_datetime: payload.pickup_datetime,
+    p_return_datetime: payload.return_datetime,
+    p_vehicle_type: payload.vehicle_type,
+    p_trip_type: payload.trip_type,
+    p_requires_wheelchair: payload.requires_wheelchair,
+    p_requires_stretcher: payload.requires_stretcher,
+    p_requires_oxygen: payload.requires_oxygen,
+    p_passenger_count: payload.passenger_count,
+    p_cpam_status: payload.cpam_status,
+    p_mutual_name: payload.mutual_name,
+    p_medical_notes: payload.medical_notes,
+  });
+
+  if (error) {
+    if (error.message.includes("too_many_attempts")) {
+      throw new Error("Trop de tentatives pour cette référence. Réessayez dans 15 minutes ou contactez-nous directement.");
+    }
+    logger.error("bookings.updateBookingByReference failed", { error: error.message });
+    throw new Error(error.message);
+  }
+
+  if (data === "booking_not_found") {
+    throw new Error("Réservation introuvable pour cette référence et ce numéro.");
+  }
+  if (data === "booking_not_editable") {
+    throw new Error("Cette réservation ne peut plus être modifiée (déjà en cours de traitement). Annulez-la et créez-en une nouvelle si besoin.");
   }
 }
 

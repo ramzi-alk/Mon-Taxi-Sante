@@ -91,6 +91,7 @@ export function BookingLookupForm() {
 
   const { containerRef, token, reset } = useTurnstile(TURNSTILE_SITE_KEY);
   const [captchaRequired, setCaptchaRequired] = useState(false);
+  const [credentials, setCredentials] = useState<{ referenceCode: string; phone: string } | null>(null);
 
   const { mutate, data: found, isPending, isSuccess, error } = useMutation({
     mutationFn: lookupBooking,
@@ -106,6 +107,8 @@ export function BookingLookupForm() {
       return;
     }
     setCaptchaRequired(false);
+    const referenceCode = data.reference_code.replace(/-/g, "").toUpperCase();
+    setCredentials({ referenceCode, phone: data.phone });
     mutate({ ...data, turnstileToken: token });
   };
 
@@ -204,9 +207,14 @@ export function BookingLookupForm() {
         </div>
       )}
 
-      {found && (
+      {found && credentials && (
         <div className="mt-4">
-          <BookingStatusCard booking={found} />
+          <BookingStatusCard
+            booking={found}
+            allowCancel
+            allowEdit
+            lookupCredentials={credentials}
+          />
         </div>
       )}
     </div>

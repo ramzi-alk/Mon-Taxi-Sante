@@ -156,6 +156,34 @@ export interface Database {
         };
         Returns: undefined;
       };
+      cancel_booking_by_reference: {
+        Args: { p_reference_code: string; p_phone: string; p_reason?: string | null };
+        Returns: string;
+      };
+      update_booking_by_reference: {
+        Args: {
+          p_reference_code: string;
+          p_phone: string;
+          p_pickup_address: string;
+          p_pickup_lat: number | null;
+          p_pickup_lng: number | null;
+          p_dropoff_address: string;
+          p_dropoff_lat: number | null;
+          p_dropoff_lng: number | null;
+          p_pickup_datetime: string;
+          p_return_datetime: string | null;
+          p_vehicle_type: "taxi" | "vsl" | "pmr";
+          p_trip_type: "aller_simple" | "aller_retour" | "multiple";
+          p_requires_wheelchair: boolean;
+          p_requires_stretcher: boolean;
+          p_requires_oxygen: boolean;
+          p_passenger_count: number;
+          p_cpam_status: "ald" | "cmu" | "css" | "standard" | "none";
+          p_mutual_name: string | null;
+          p_medical_notes: string | null;
+        };
+        Returns: string;
+      };
     };
     Enums: {
       user_role: "patient" | "driver" | "admin";

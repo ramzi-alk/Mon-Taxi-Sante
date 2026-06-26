@@ -7,11 +7,14 @@ import { AddressAutocomplete } from "./AddressAutocomplete";
 import { supabase } from "~/lib/supabase";
 import { useToast } from "~/components/ui/toast";
 import * as bookingsRepository from "~/repositories/bookingsRepository";
-import type { MyBookingRow } from "~/repositories/bookingsRepository";
+import type { MyBookingRow, UpdateBookingPayload, LookupCredentials } from "~/repositories/bookingsRepository";
 
 interface BookingEditFormProps {
   booking: MyBookingRow;
+  /** When set, the edit proves ownership via reference_code + phone (lost-session recovery flow) instead of the live auth.uid() session. */
+  lookupCredentials?: LookupCredentials;
   onClose: () => void;
+  onSaved?: (payload: UpdateBookingPayload) => void;
 }
 
 function pad(n: number) {
@@ -56,7 +59,7 @@ function defaultValuesFromBooking(booking: MyBookingRow): EditBookingSchema {
 const inputClass =
   "w-full rounded-xl border border-input bg-white px-4 py-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
-export function BookingEditForm({ booking, onClose }: BookingEditFormProps) {
+export function BookingEditForm({ booking, lookupCredentials, onClose, onSaved }: BookingEditFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -80,8 +83,8 @@ export function BookingEditForm({ booking, onClose }: BookingEditFormProps) {
   const isReturnTrip = hasReturn || tripType === "aller_retour";
 
   const updateMutation = useMutation({
-    mutationFn: (data: EditBookingSchema) =>
-      bookingsRepository.updateBooking(supabase, booking.id, {
+    mutationFn: (data: EditBookingSchema) => {
+      const payload: UpdateBookingPayload = {
         pickup_address: data.pickup_address,
         pickup_lat: data.pickup_lat,
         pickup_lng: data.pickup_lng,
@@ -102,10 +105,20 @@ export function BookingEditForm({ booking, onClose }: BookingEditFormProps) {
         cpam_status: data.cpam_status,
         mutual_name: data.mutual_name || null,
         medical_notes: data.medical_notes || null,
-      }),
-    onSuccess: () => {
+      };
+      return lookupCredentials
+        ? bookingsRepository.updateBookingByReference(
+            supabase,
+            lookupCredentials.referenceCode,
+            lookupCredentials.phone,
+            payload
+          ).then(() => payload)
+        : bookingsRepository.updateBooking(supabase, booking.id, payload).then(() => payload);
+    },
+    onSuccess: (payload) => {
       toast({ title: "Réservation modifiée", variant: "success" });
       queryClient.invalidateQueries({ queryKey: ["my-bookings"] });
+      onSaved?.(payload);
       onClose();
     },
     onError: (err: Error) => {
