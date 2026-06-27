@@ -29,10 +29,7 @@ export async function sendBookingConfirmationEmail(params: {
       html,
     });
     if (error) {
-      logger.error("email.sendBookingConfirmationEmail failed", {
-        error: error.message,
-        referenceCode: params.referenceCode,
-      });
+      throw new Error(error.message);
     }
   } catch (error) {
     logger.error("email.sendBookingConfirmationEmail failed", {
@@ -70,10 +67,7 @@ export const notifyBookingCancelledServerFn = createServerFn({ method: "POST" })
         html,
       });
       if (sendApiError) {
-        logger.error("email.notifyBookingCancelled failed", {
-          error: sendApiError.message,
-          bookingId: data.bookingId,
-        });
+        throw new Error(sendApiError.message);
       }
     } catch (sendError) {
       logger.error("email.notifyBookingCancelled failed", {
@@ -112,10 +106,7 @@ export const notifyDriverApprovedServerFn = createServerFn({ method: "POST" })
         html,
       });
       if (sendApiError) {
-        logger.error("email.notifyDriverApproved failed", {
-          error: sendApiError.message,
-          driverDetailsId: input.driverDetailsId,
-        });
+        throw new Error(sendApiError.message);
       }
     } catch (sendError) {
       logger.error("email.notifyDriverApproved failed", {
