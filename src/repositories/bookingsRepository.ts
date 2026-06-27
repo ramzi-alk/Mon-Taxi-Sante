@@ -380,6 +380,24 @@ export async function completeRide(client: SupabaseClient, rideId: string): Prom
   }
 }
 
+/**
+ * Flips a freshly inserted booking from pending to available, putting it in
+ * the driver pool — see migration 019. Called once, right after insertBooking
+ * succeeds, since the patient insert RLS policy only allows status='pending'
+ * on INSERT.
+ */
+export async function publishBooking(client: SupabaseClient, bookingId: string): Promise<void> {
+  const { error } = await client.rpc("publish_booking", { p_booking_id: bookingId });
+
+  if (error) {
+    if (error.message.includes("booking_not_publishable")) {
+      throw new Error("Impossible de publier la réservation auprès des chauffeurs.");
+    }
+    logger.error("bookings.publishBooking failed", { error: error.message, bookingId });
+    throw new Error(error.message);
+  }
+}
+
 export async function insertBooking(
   client: SupabaseClient,
   payload: BookingInsert

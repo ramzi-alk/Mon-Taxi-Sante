@@ -489,6 +489,7 @@ export type Database = {
           vehicle_type: Database["public"]["Enums"]["booking_vehicle_type"]
         }[]
       }
+      publish_booking: { Args: { p_booking_id: string }; Returns: undefined }
       record_lookup_result: {
         Args: { p_found: boolean; p_reference_code: string }
         Returns: undefined

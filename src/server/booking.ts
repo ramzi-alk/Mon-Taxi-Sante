@@ -62,6 +62,7 @@ export const submitBookingServerFn = createServerFn({ method: "POST" })
     }
 
     const booking = await bookingsRepository.insertBooking(supabase, data.payload);
+    await bookingsRepository.publishBooking(supabase, booking.id);
 
     await sendBookingConfirmationEmail({
       to: data.payload.patient_email,
