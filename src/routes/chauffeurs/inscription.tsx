@@ -8,8 +8,7 @@ import { z } from "zod";
 import { supabase } from "~/lib/supabase";
 import { logger } from "~/lib/logger";
 import * as authRepository from "~/repositories/authRepository";
-import * as driversRepository from "~/repositories/driversRepository";
-import { notifyAdminNewDriverApplicationServerFn } from "~/server/email";
+import { submitDriverApplicationServerFn } from "~/server/drivers";
 import { SiretAutocomplete } from "~/components/chauffeurs/SiretAutocomplete";
 import { Input } from "~/components/ui/input";
 import type { CompanySuggestion } from "~/lib/siren";
@@ -61,21 +60,16 @@ async function registerDriver(data: InscriptionSchema, company: CompanySuggestio
     );
   }
 
-  const driverDetails = await driversRepository.insertDriverDetails(supabase, {
-    profile_id: userId,
-    siret: company.siret,
-    company_name: company.name,
-    convention_cpam: false,
-    convention_number: null,
-    vehicle_type: data.vehicle_type,
-    vehicle_registration: data.vehicle_registration,
-    pmr_equipped: data.pmr_equipped,
-    subscription_status: "trial",
-    subscription_ends_at: null,
-    approved_at: null,
+  await submitDriverApplicationServerFn({
+    data: {
+      profile_id: userId,
+      siret: company.siret,
+      company_name: company.name,
+      vehicle_type: data.vehicle_type,
+      vehicle_registration: data.vehicle_registration,
+      pmr_equipped: data.pmr_equipped,
+    },
   });
-
-  await notifyAdminNewDriverApplicationServerFn({ data: { driverDetailsId: driverDetails.id } });
 }
 
 function InscriptionChauffeurPage() {
