@@ -7,10 +7,10 @@ import {
 } from "@tanstack/react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { Navbar } from "~/components/Navbar";
 import { Footer } from "~/components/Footer";
-import { ToastProvider } from "~/components/ui/toast";
+import { ToastProvider, useToast } from "~/components/ui/toast";
 import { logger } from "~/lib/logger";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
 import appCss from "~/styles/app.css?url";
@@ -58,6 +58,55 @@ function RouteError({ error, reset }: ErrorComponentProps) {
   );
 }
 
+/**
+ * Supabase Auth (GoTrue) redirects here after /auth/v1/verify with the
+ * outcome appended as a URL hash fragment (#access_token=... on success,
+ * #error=...&error_code=...&error_description=... on failure). Without
+ * this, a successful confirmation looks identical to a plain page load,
+ * so users re-click the (now consumed, single-use) link and hit
+ * otp_expired. This surfaces a clear message and strips the hash.
+ */
+function AuthRedirectListener() {
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (!hash || hash.length < 2) return;
+
+    const params = new URLSearchParams(hash.slice(1));
+    const errorCode = params.get("error_code");
+    const accessToken = params.get("access_token");
+    const type = params.get("type");
+
+    if (errorCode) {
+      toast({
+        title:
+          errorCode === "otp_expired"
+            ? "Ce lien a déjà été utilisé"
+            : "Erreur de confirmation",
+        description:
+          errorCode === "otp_expired"
+            ? "Ce lien de confirmation est à usage unique et a déjà été utilisé. Si vous l'avez déjà cliqué une première fois, votre compte est probablement déjà confirmé : essayez de vous connecter. Sinon, demandez un nouvel e-mail."
+            : "Une erreur est survenue lors de la confirmation. Réessayez ou demandez un nouvel e-mail.",
+        variant: "error",
+      });
+      window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    } else if (accessToken) {
+      toast({
+        title: type === "recovery" ? "Vous pouvez réinitialiser votre mot de passe" : "Compte confirmé !",
+        description:
+          type === "recovery"
+            ? undefined
+            : "Votre adresse e-mail a été confirmée avec succès. Vous pouvez désormais vous connecter.",
+        variant: "success",
+      });
+      window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    }
+  }, [toast]);
+
+  return null;
+}
+
 export const Route = createRootRouteWithContext<RouterContext>()({
   head: () => ({
     meta: [
@@ -100,6 +149,7 @@ function RootDocument({ children }: { children: ReactNode }) {
       <body className="min-h-screen bg-background font-sans antialiased">
         <QueryClientProvider client={queryClient}>
           <ToastProvider>
+            <AuthRedirectListener />
             <Navbar />
             <main id="main-content">{children}</main>
             <Footer />
