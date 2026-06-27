@@ -205,14 +205,14 @@ function DriverDashboard() {
       {/* Header */}
       <div className="bg-brand-blue-700 text-white">
         <div className="container py-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="text-2xl font-bold">Tableau de bord chauffeur</h1>
               <p className="text-blue-200 text-sm mt-0.5">
                 Bienvenue — Mon Taxi Santé
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <div
                 role="radiogroup"
                 aria-label="Disponibilité"

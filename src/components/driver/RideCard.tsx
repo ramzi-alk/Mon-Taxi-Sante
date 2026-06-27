@@ -163,7 +163,7 @@ export function RideCard({
         </div>
 
         {/* Price + CTA */}
-        <div className="flex items-center justify-between pt-2 border-t border-gray-100 gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-2 border-t border-gray-100">
           <div>
             <p className="text-xs text-muted-foreground">Estimation</p>
             <p className="text-xl font-black text-brand-blue-700">
@@ -181,7 +181,7 @@ export function RideCard({
               aria-label={`Accepter la course — ${ride.pickup_address} vers ${ride.dropoff_address}`}
               aria-busy={isAccepting}
               className={cn(
-                "flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                "flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 w-full sm:w-auto",
                 isAccepting
                   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-brand-green-600 hover:bg-brand-green-700 shadow-md shadow-brand-green-600/20 active:scale-95"
@@ -208,7 +208,7 @@ export function RideCard({
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Naviguer vers le point de départ"
-                className="flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                className="flex items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors shrink-0"
               >
                 <Navigation className="h-4 w-4" aria-hidden="true" />
               </a>
@@ -218,7 +218,7 @@ export function RideCard({
                 disabled={isStarting}
                 aria-busy={isStarting}
                 className={cn(
-                  "flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                  "flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 flex-1 sm:flex-initial",
                   isStarting
                     ? "bg-gray-400 cursor-not-allowed"
                     : "bg-brand-blue-600 hover:bg-brand-blue-700 shadow-md shadow-brand-blue-600/20 active:scale-95"
@@ -241,7 +241,7 @@ export function RideCard({
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Naviguer vers la destination"
-                className="flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                className="flex items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors shrink-0"
               >
                 <Navigation className="h-4 w-4" aria-hidden="true" />
               </a>
@@ -251,7 +251,7 @@ export function RideCard({
                 disabled={isCompleting}
                 aria-busy={isCompleting}
                 className={cn(
-                  "flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                  "flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 flex-1 sm:flex-initial",
                   isCompleting
                     ? "bg-gray-400 cursor-not-allowed"
                     : "bg-brand-green-600 hover:bg-brand-green-700 shadow-md shadow-brand-green-600/20 active:scale-95"
