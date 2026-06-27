@@ -78,6 +78,35 @@ export function bookingCancellationEmail(params: {
   };
 }
 
+export function adminNewDriverApplicationEmail(params: {
+  driverFullName: string;
+  driverEmail: string;
+  driverPhone: string | null;
+  vehicleType: string;
+  vehicleRegistration: string;
+  siret: string;
+  companyName: string | null;
+}): EmailContent {
+  const { driverFullName, driverEmail, driverPhone, vehicleType, vehicleRegistration, siret, companyName } = params;
+  return {
+    subject: `Nouvelle candidature chauffeur — ${driverFullName}`,
+    html: layout(
+      "Nouvelle candidature chauffeur",
+      `
+        <p>Une nouvelle candidature chauffeur vient d'être soumise et attend votre validation.</p>
+        <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px;">
+          <tr><td style="padding: 6px 0; color: #6b7280;">Nom</td><td style="padding: 6px 0; font-weight: 600;">${driverFullName}</td></tr>
+          <tr><td style="padding: 6px 0; color: #6b7280;">Email</td><td style="padding: 6px 0; font-weight: 600;">${driverEmail}</td></tr>
+          ${driverPhone ? `<tr><td style="padding: 6px 0; color: #6b7280;">Téléphone</td><td style="padding: 6px 0; font-weight: 600;">${driverPhone}</td></tr>` : ""}
+          <tr><td style="padding: 6px 0; color: #6b7280;">Véhicule</td><td style="padding: 6px 0; font-weight: 600;">${vehicleType} — ${vehicleRegistration}</td></tr>
+          <tr><td style="padding: 6px 0; color: #6b7280;">SIRET</td><td style="padding: 6px 0; font-weight: 600;">${siret}${companyName ? ` (${companyName})` : ""}</td></tr>
+        </table>
+        <p>Connectez-vous au tableau de bord administrateur pour examiner le dossier et l'approuver.</p>
+      `
+    ),
+  };
+}
+
 export function driverApprovedEmail(params: { driverFullName: string }): EmailContent {
   const { driverFullName } = params;
   return {
