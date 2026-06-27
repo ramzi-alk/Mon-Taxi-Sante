@@ -22,7 +22,18 @@ export async function sendBookingConfirmationEmail(params: {
 }): Promise<void> {
   try {
     const { subject, html } = bookingConfirmationEmail(params);
-    await getResendClient().emails.send({ from: EMAIL_FROM, to: params.to, subject, html });
+    const { error } = await getResendClient().emails.send({
+      from: EMAIL_FROM,
+      to: params.to,
+      subject,
+      html,
+    });
+    if (error) {
+      logger.error("email.sendBookingConfirmationEmail failed", {
+        error: error.message,
+        referenceCode: params.referenceCode,
+      });
+    }
   } catch (error) {
     logger.error("email.sendBookingConfirmationEmail failed", {
       error: error instanceof Error ? error.message : String(error),
@@ -52,12 +63,18 @@ export const notifyBookingCancelledServerFn = createServerFn({ method: "POST" })
         pickupDatetime: booking.pickup_datetime,
         cancellationReason: booking.cancellation_reason,
       });
-      await getResendClient().emails.send({
+      const { error: sendApiError } = await getResendClient().emails.send({
         from: EMAIL_FROM,
         to: booking.patient_email,
         subject,
         html,
       });
+      if (sendApiError) {
+        logger.error("email.notifyBookingCancelled failed", {
+          error: sendApiError.message,
+          bookingId: data.bookingId,
+        });
+      }
     } catch (sendError) {
       logger.error("email.notifyBookingCancelled failed", {
         error: sendError instanceof Error ? sendError.message : String(sendError),
@@ -88,12 +105,18 @@ export const notifyDriverApprovedServerFn = createServerFn({ method: "POST" })
 
     try {
       const { subject, html } = driverApprovedEmail({ driverFullName: profile.full_name });
-      await getResendClient().emails.send({
+      const { error: sendApiError } = await getResendClient().emails.send({
         from: EMAIL_FROM,
         to: profile.email,
         subject,
         html,
       });
+      if (sendApiError) {
+        logger.error("email.notifyDriverApproved failed", {
+          error: sendApiError.message,
+          driverDetailsId: input.driverDetailsId,
+        });
+      }
     } catch (sendError) {
       logger.error("email.notifyDriverApproved failed", {
         error: sendError instanceof Error ? sendError.message : String(sendError),
