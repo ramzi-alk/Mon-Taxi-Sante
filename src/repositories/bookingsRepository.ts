@@ -101,7 +101,7 @@ export async function cancelBooking(
 ): Promise<void> {
   const { error } = await client.rpc("cancel_booking", {
     p_booking_id: bookingId,
-    p_reason: reason ?? null,
+    p_reason: reason,
   });
 
   if (error) {
@@ -123,6 +123,9 @@ export async function updateBooking(
   bookingId: string,
   payload: UpdateBookingPayload
 ): Promise<void> {
+  // Cast: the generated Args type marks defaultless plpgsql params as
+  // non-null (Postgres doesn't expose per-arg nullability), but the RPC
+  // genuinely accepts NULL for these optional booking fields.
   const { error } = await client.rpc("update_booking", {
     p_booking_id: bookingId,
     p_pickup_address: payload.pickup_address,
@@ -142,7 +145,7 @@ export async function updateBooking(
     p_cpam_status: payload.cpam_status,
     p_mutual_name: payload.mutual_name,
     p_medical_notes: payload.medical_notes,
-  });
+  } as Database["public"]["Functions"]["update_booking"]["Args"]);
 
   if (error) {
     if (error.message.includes("booking_not_editable")) {
@@ -167,7 +170,7 @@ export async function cancelBookingByReference(
   const { data, error } = await client.rpc("cancel_booking_by_reference", {
     p_reference_code: referenceCode,
     p_phone: phone,
-    p_reason: reason ?? null,
+    p_reason: reason,
   });
 
   if (error) {
@@ -197,6 +200,7 @@ export async function updateBookingByReference(
   phone: string,
   payload: UpdateBookingPayload
 ): Promise<void> {
+  // See update_booking's cast comment above — same plpgsql nullability quirk.
   const { data, error } = await client.rpc("update_booking_by_reference", {
     p_reference_code: referenceCode,
     p_phone: phone,
@@ -217,7 +221,7 @@ export async function updateBookingByReference(
     p_cpam_status: payload.cpam_status,
     p_mutual_name: payload.mutual_name,
     p_medical_notes: payload.medical_notes,
-  });
+  } as Database["public"]["Functions"]["update_booking_by_reference"]["Args"]);
 
   if (error) {
     if (error.message.includes("too_many_attempts")) {
@@ -310,20 +314,69 @@ export async function fetchDriverRides(
   return (data ?? []) as unknown as DriverRideRow[];
 }
 
-export async function acceptRide(
-  client: SupabaseClient,
-  rideId: string,
-  driverId: string
-): Promise<void> {
-  const { error } = await client
-    .from("bookings")
-    .update({ driver_id: driverId, status: "accepted" })
-    .eq("id", rideId)
-    .eq("status", "available"); // optimistic lock — only update if still available
+function mapRideLifecycleError(error: { message: string }, rideId: string, action: string): Error {
+  if (error.message.includes("vehicle_not_compatible")) {
+    return new Error("Votre véhicule n'est pas équipé pour cette course (fauteuil/brancard/oxygène).");
+  }
+  if (error.message.includes("booking_already_taken")) {
+    return new Error("Cette course vient d'être acceptée par un autre chauffeur.");
+  }
+  if (error.message.includes("booking_not_available")) {
+    return new Error("Cette course n'est plus disponible.");
+  }
+  if (error.message.includes("driver_profile_incomplete")) {
+    return new Error("Votre profil chauffeur est incomplet (véhicule non renseigné).");
+  }
+  if (error.message.includes("not_a_driver")) {
+    return new Error("Action réservée aux chauffeurs.");
+  }
+  if (error.message.includes("booking_not_startable")) {
+    return new Error("Cette course ne peut pas être démarrée (elle n'est pas/plus acceptée).");
+  }
+  if (error.message.includes("booking_not_completable")) {
+    return new Error("Cette course ne peut pas être terminée (elle n'est pas/plus en cours).");
+  }
+  if (error.message.includes("booking_not_found")) {
+    return new Error("Course introuvable.");
+  }
+  logger.error(`bookings.${action} failed`, { error: error.message, rideId });
+  return new Error(error.message);
+}
+
+/**
+ * Driver acceptance of a pool ride, via the accept_ride RPC (see migration
+ * 018) — direct UPDATE is no longer granted to drivers, the RPC re-checks
+ * vehicle/equipment compatibility server-side before locking the ride.
+ */
+export async function acceptRide(client: SupabaseClient, rideId: string): Promise<void> {
+  const { error } = await client.rpc("accept_ride", { p_booking_id: rideId });
 
   if (error) {
-    logger.error("bookings.acceptRide failed", { error: error.message, rideId });
-    throw new Error(error.message);
+    throw mapRideLifecycleError(error, rideId, "acceptRide");
+  }
+}
+
+/**
+ * Driver marks their own accepted ride as started (status -> in_progress,
+ * picked_up_at stamped). See migration 018's start_ride RPC.
+ */
+export async function startRide(client: SupabaseClient, rideId: string): Promise<void> {
+  const { error } = await client.rpc("start_ride", { p_booking_id: rideId });
+
+  if (error) {
+    throw mapRideLifecycleError(error, rideId, "startRide");
+  }
+}
+
+/**
+ * Driver marks their own in_progress ride as completed (status ->
+ * completed, completed_at stamped). See migration 018's complete_ride RPC.
+ */
+export async function completeRide(client: SupabaseClient, rideId: string): Promise<void> {
+  const { error } = await client.rpc("complete_ride", { p_booking_id: rideId });
+
+  if (error) {
+    throw mapRideLifecycleError(error, rideId, "completeRide");
   }
 }
 

@@ -8,13 +8,21 @@ import {
   RefreshCw,
   Bell,
   BellOff,
+  Circle,
+  Pause,
+  PowerOff,
 } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "~/lib/supabase";
+import { cn } from "~/lib/utils";
 import { useRealtime } from "~/hooks/useRealtime";
 import { RideCard, type PoolRide } from "~/components/driver/RideCard";
 import * as authRepository from "~/repositories/authRepository";
 import * as bookingsRepository from "~/repositories/bookingsRepository";
+import * as driversRepository from "~/repositories/driversRepository";
+import type { Database } from "~/lib/database.types";
+
+type DriverAvailability = Database["public"]["Enums"]["driver_availability"];
 
 export const Route = createFileRoute("/tableau-de-bord/chauffeur")({
   head: () => ({
@@ -46,9 +54,27 @@ async function fetchMyRides(): Promise<PoolRide[]> {
 }
 
 async function acceptRide(rideId: string): Promise<void> {
+  await bookingsRepository.acceptRide(supabase, rideId);
+}
+
+async function startRide(rideId: string): Promise<void> {
+  await bookingsRepository.startRide(supabase, rideId);
+}
+
+async function completeRide(rideId: string): Promise<void> {
+  await bookingsRepository.completeRide(supabase, rideId);
+}
+
+async function fetchMyAvailability(): Promise<driversRepository.MyDriverDetails | null> {
+  const user = await authRepository.getCurrentUser(supabase);
+  if (!user) return null;
+  return driversRepository.fetchMyAvailability(supabase, user.id);
+}
+
+async function setAvailability(availability: DriverAvailability): Promise<void> {
   const user = await authRepository.getCurrentUser(supabase);
   if (!user) throw new Error("Non authentifié");
-  await bookingsRepository.acceptRide(supabase, rideId, user.id);
+  await driversRepository.setAvailability(supabase, user.id, availability);
 }
 
 // ─── Stats card ─────────────────────────────────────────────────────────────
@@ -82,8 +108,29 @@ function StatCard({
 function DriverDashboard() {
   const queryClient = useQueryClient();
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
+  const [startingId, setStartingId] = useState<string | null>(null);
+  const [completingId, setCompletingId] = useState<string | null>(null);
   const [realtimeEnabled, setRealtimeEnabled] = useState(true);
   const [tab, setTab] = useState<"pool" | "my_rides">("pool");
+
+  // Driver's own online/paused/offline status — the pool only shows rides
+  // to drivers who are "online" (see migration 018).
+  const availabilityQuery = useQuery({
+    queryKey: ["my-availability"],
+    queryFn: fetchMyAvailability,
+  });
+  const availability = availabilityQuery.data?.availability ?? "offline";
+
+  const availabilityMutation = useMutation({
+    mutationFn: setAvailability,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-availability"] });
+      queryClient.invalidateQueries({ queryKey: ["ride-pool"] });
+    },
+    onError: (error) => {
+      alert(`Erreur : ${error.message}`);
+    },
+  });
 
   // Pool query
   const poolQuery = useQuery({
@@ -126,6 +173,26 @@ function DriverDashboard() {
     },
   });
 
+  const startMutation = useMutation({
+    mutationFn: startRide,
+    onMutate: (rideId) => setStartingId(rideId),
+    onSettled: () => {
+      setStartingId(null);
+      queryClient.invalidateQueries({ queryKey: ["my-rides"] });
+    },
+    onError: (error) => alert(`Erreur : ${error.message}`),
+  });
+
+  const completeMutation = useMutation({
+    mutationFn: completeRide,
+    onMutate: (rideId) => setCompletingId(rideId),
+    onSettled: () => {
+      setCompletingId(null);
+      queryClient.invalidateQueries({ queryKey: ["my-rides"] });
+    },
+    onError: (error) => alert(`Erreur : ${error.message}`),
+  });
+
   const poolRides = poolQuery.data ?? [];
   const myRides = myRidesQuery.data ?? [];
   const todayRides = myRides.filter(
@@ -145,29 +212,67 @@ function DriverDashboard() {
                 Bienvenue — Mon Taxi Santé
               </p>
             </div>
-            <button
-              onClick={() => setRealtimeEnabled(!realtimeEnabled)}
-              className="flex items-center gap-2 rounded-xl bg-white/10 border border-white/20 px-4 py-2 text-sm font-medium hover:bg-white/20 transition-colors"
-              aria-pressed={realtimeEnabled}
-              aria-label={
-                realtimeEnabled
-                  ? "Désactiver les mises à jour en temps réel"
-                  : "Activer les mises à jour en temps réel"
-              }
-            >
-              {realtimeEnabled ? (
-                <>
-                  <Bell className="h-4 w-4" aria-hidden="true" />
-                  <span className="h-2 w-2 rounded-full bg-brand-green-400 animate-pulse" aria-hidden="true" />
-                  Temps réel actif
-                </>
-              ) : (
-                <>
-                  <BellOff className="h-4 w-4" aria-hidden="true" />
-                  Temps réel désactivé
-                </>
-              )}
-            </button>
+            <div className="flex items-center gap-2">
+              <div
+                role="radiogroup"
+                aria-label="Disponibilité"
+                className="flex items-center gap-1 rounded-xl bg-white/10 border border-white/20 p-1"
+              >
+                {(
+                  [
+                    { value: "online" as const, label: "En ligne", icon: Circle },
+                    { value: "paused" as const, label: "Pause", icon: Pause },
+                    { value: "offline" as const, label: "Hors ligne", icon: PowerOff },
+                  ]
+                ).map(({ value, label, icon: Icon }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    role="radio"
+                    aria-checked={availability === value}
+                    disabled={availabilityMutation.isPending}
+                    onClick={() => availabilityMutation.mutate(value)}
+                    className={cn(
+                      "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors",
+                      availability === value
+                        ? value === "online"
+                          ? "bg-brand-green-500 text-white"
+                          : "bg-white text-gray-900"
+                        : "text-blue-100 hover:bg-white/10"
+                    )}
+                  >
+                    <Icon
+                      className={cn("h-3.5 w-3.5", availability === "online" && value === "online" && "fill-current")}
+                      aria-hidden="true"
+                    />
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => setRealtimeEnabled(!realtimeEnabled)}
+                className="flex items-center gap-2 rounded-xl bg-white/10 border border-white/20 px-4 py-2 text-sm font-medium hover:bg-white/20 transition-colors"
+                aria-pressed={realtimeEnabled}
+                aria-label={
+                  realtimeEnabled
+                    ? "Désactiver les mises à jour en temps réel"
+                    : "Activer les mises à jour en temps réel"
+                }
+              >
+                {realtimeEnabled ? (
+                  <>
+                    <Bell className="h-4 w-4" aria-hidden="true" />
+                    <span className="h-2 w-2 rounded-full bg-brand-green-400 animate-pulse" aria-hidden="true" />
+                    Temps réel actif
+                  </>
+                ) : (
+                  <>
+                    <BellOff className="h-4 w-4" aria-hidden="true" />
+                    Temps réel désactivé
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -276,6 +381,17 @@ function DriverDashboard() {
                 <p className="font-semibold">Impossible de charger le pool</p>
                 <p className="text-sm mt-1">{poolQuery.error?.message}</p>
               </div>
+            ) : availability !== "online" ? (
+              <div className="rounded-2xl bg-amber-50 border border-amber-200 p-12 text-center">
+                <PowerOff className="h-12 w-12 text-amber-300 mx-auto mb-3" aria-hidden="true" />
+                <p className="text-lg font-semibold text-amber-800">
+                  Vous êtes {availability === "paused" ? "en pause" : "hors ligne"}
+                </p>
+                <p className="text-sm text-amber-700 mt-1">
+                  Passez « En ligne » en haut de la page pour voir les courses
+                  disponibles.
+                </p>
+              </div>
             ) : poolRides.length === 0 ? (
               <div className="rounded-2xl bg-white shadow-sm ring-1 ring-gray-100 p-12 text-center">
                 <Car className="h-12 w-12 text-gray-300 mx-auto mb-3" aria-hidden="true" />
@@ -335,6 +451,10 @@ function DriverDashboard() {
                       ride={ride}
                       onAccept={() => {}}
                       isAccepting={false}
+                      onStart={(id) => startMutation.mutate(id)}
+                      isStarting={startingId === ride.id && startMutation.isPending}
+                      onComplete={(id) => completeMutation.mutate(id)}
+                      isCompleting={completingId === ride.id && completeMutation.isPending}
                     />
                   </li>
                 ))}

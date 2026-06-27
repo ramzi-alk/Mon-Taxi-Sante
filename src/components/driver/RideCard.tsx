@@ -1,4 +1,4 @@
-import { MapPin, Clock, Car, Users, Navigation, Loader2 } from "lucide-react";
+import { MapPin, Clock, Car, Users, Navigation, Loader2, PlayCircle, FlagTriangleRight } from "lucide-react";
 import { formatDateFr, formatTimeFr, formatPrice } from "~/lib/utils";
 import { cn } from "~/lib/utils";
 
@@ -32,6 +32,10 @@ interface RideCardProps {
   ride: PoolRide;
   onAccept: (rideId: string) => void;
   isAccepting: boolean;
+  onStart?: (rideId: string) => void;
+  isStarting?: boolean;
+  onComplete?: (rideId: string) => void;
+  isCompleting?: boolean;
 }
 
 const vehicleIcons: Record<string, string> = {
@@ -40,7 +44,26 @@ const vehicleIcons: Record<string, string> = {
   pmr: "♿",
 };
 
-export function RideCard({ ride, onAccept, isAccepting }: RideCardProps) {
+const statusLabels: Record<string, string> = {
+  accepted: "Acceptée",
+  in_progress: "En cours",
+  completed: "Terminée",
+};
+
+function buildMapsUrl(address: string, lat: number | null, lng: number | null): string {
+  const destination = lat != null && lng != null ? `${lat},${lng}` : address;
+  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`;
+}
+
+export function RideCard({
+  ride,
+  onAccept,
+  isAccepting,
+  onStart,
+  isStarting,
+  onComplete,
+  isCompleting,
+}: RideCardProps) {
   const pickupDate = formatDateFr(ride.pickup_datetime);
   const pickupTime = formatTimeFr(ride.pickup_datetime);
   const isToday = new Date(ride.pickup_datetime).toDateString() === new Date().toDateString();
@@ -69,9 +92,16 @@ export function RideCard({ ride, onAccept, isAccepting }: RideCardProps) {
             {dayLabel} à {pickupTime}
           </time>
         </span>
-        <span className="flex items-center gap-1 text-xs font-medium text-gray-500">
-          <span aria-hidden="true">{vehicleIcons[ride.vehicle_type]}</span>
-          {ride.vehicle_type.toUpperCase()}
+        <span className="flex items-center gap-2">
+          {statusLabels[ride.status] && (
+            <span className="rounded-full bg-brand-blue-100 text-brand-blue-700 px-2 py-0.5 text-xs font-semibold">
+              {statusLabels[ride.status]}
+            </span>
+          )}
+          <span className="flex items-center gap-1 text-xs font-medium text-gray-500">
+            <span aria-hidden="true">{vehicleIcons[ride.vehicle_type]}</span>
+            {ride.vehicle_type.toUpperCase()}
+          </span>
         </span>
       </div>
 
@@ -133,7 +163,7 @@ export function RideCard({ ride, onAccept, isAccepting }: RideCardProps) {
         </div>
 
         {/* Price + CTA */}
-        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+        <div className="flex items-center justify-between pt-2 border-t border-gray-100 gap-3">
           <div>
             <p className="text-xs text-muted-foreground">Estimation</p>
             <p className="text-xl font-black text-brand-blue-700">
@@ -142,31 +172,106 @@ export function RideCard({ ride, onAccept, isAccepting }: RideCardProps) {
                 : "Sur devis"}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={() => onAccept(ride.id)}
-            disabled={isAccepting}
-            aria-label={`Accepter la course — ${ride.pickup_address} vers ${ride.dropoff_address}`}
-            aria-busy={isAccepting}
-            className={cn(
-              "flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-              isAccepting
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-brand-green-600 hover:bg-brand-green-700 shadow-md shadow-brand-green-600/20 active:scale-95"
-            )}
-          >
-            {isAccepting ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                En cours…
-              </>
-            ) : (
-              <>
-                <Car className="h-4 w-4" aria-hidden="true" />
-                Accepter
-              </>
-            )}
-          </button>
+
+          {ride.status === "available" && (
+            <button
+              type="button"
+              onClick={() => onAccept(ride.id)}
+              disabled={isAccepting}
+              aria-label={`Accepter la course — ${ride.pickup_address} vers ${ride.dropoff_address}`}
+              aria-busy={isAccepting}
+              className={cn(
+                "flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                isAccepting
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-brand-green-600 hover:bg-brand-green-700 shadow-md shadow-brand-green-600/20 active:scale-95"
+              )}
+            >
+              {isAccepting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                  En cours…
+                </>
+              ) : (
+                <>
+                  <Car className="h-4 w-4" aria-hidden="true" />
+                  Accepter
+                </>
+              )}
+            </button>
+          )}
+
+          {ride.status === "accepted" && (
+            <div className="flex items-center gap-2">
+              <a
+                href={buildMapsUrl(ride.pickup_address, ride.pickup_lat, ride.pickup_lng)}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Naviguer vers le point de départ"
+                className="flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                <Navigation className="h-4 w-4" aria-hidden="true" />
+              </a>
+              <button
+                type="button"
+                onClick={() => onStart?.(ride.id)}
+                disabled={isStarting}
+                aria-busy={isStarting}
+                className={cn(
+                  "flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                  isStarting
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-brand-blue-600 hover:bg-brand-blue-700 shadow-md shadow-brand-blue-600/20 active:scale-95"
+                )}
+              >
+                {isStarting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                ) : (
+                  <PlayCircle className="h-4 w-4" aria-hidden="true" />
+                )}
+                Démarrer la course
+              </button>
+            </div>
+          )}
+
+          {ride.status === "in_progress" && (
+            <div className="flex items-center gap-2">
+              <a
+                href={buildMapsUrl(ride.dropoff_address, ride.dropoff_lat, ride.dropoff_lng)}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Naviguer vers la destination"
+                className="flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                <Navigation className="h-4 w-4" aria-hidden="true" />
+              </a>
+              <button
+                type="button"
+                onClick={() => onComplete?.(ride.id)}
+                disabled={isCompleting}
+                aria-busy={isCompleting}
+                className={cn(
+                  "flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                  isCompleting
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-brand-green-600 hover:bg-brand-green-700 shadow-md shadow-brand-green-600/20 active:scale-95"
+                )}
+              >
+                {isCompleting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                ) : (
+                  <FlagTriangleRight className="h-4 w-4" aria-hidden="true" />
+                )}
+                Terminer la course
+              </button>
+            </div>
+          )}
+
+          {ride.status === "completed" && (
+            <span className="rounded-full bg-gray-100 text-gray-600 px-3 py-1.5 text-xs font-semibold">
+              {statusLabels.completed}
+            </span>
+          )}
         </div>
       </div>
     </article>
