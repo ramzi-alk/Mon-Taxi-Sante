@@ -5,6 +5,8 @@ import * as driversRepository from "~/repositories/driversRepository";
 import { logger } from "~/lib/logger";
 import { notifyAdminNewDriverApplicationServerFn } from "./email";
 
+type SupabaseAdminClient = ReturnType<typeof getSupabaseAdminClient>;
+
 const siretRegex = /^\d{14}$/;
 
 const submitDriverApplicationSchema = z.object({
@@ -16,6 +18,50 @@ const submitDriverApplicationSchema = z.object({
   pmr_equipped: z.boolean(),
 });
 
+// The DB trigger that creates a profiles row from auth.users normally
+// covers this, but signups have occasionally landed without one (no logged
+// trigger failure — root cause unconfirmed). Self-heal here instead of
+// trusting the trigger as the only path: read the source of truth
+// (auth.users) and upsert the profile before continuing.
+async function ensureProfile(admin: SupabaseAdminClient, profileId: string) {
+  const { data: existing } = await admin
+    .from("profiles")
+    .select("id, role")
+    .eq("id", profileId)
+    .maybeSingle();
+
+  if (existing) return existing;
+
+  const { data: authUser, error: authUserError } = await admin.auth.admin.getUserById(profileId);
+  if (authUserError || !authUser.user) {
+    logger.error("drivers.ensureProfile auth user not found", {
+      profileId,
+      error: authUserError?.message,
+    });
+    return null;
+  }
+
+  const metadata = authUser.user.user_metadata ?? {};
+  const role = metadata.role === "driver" || metadata.role === "admin" ? metadata.role : "patient";
+  const fullName =
+    typeof metadata.full_name === "string" && metadata.full_name.length >= 2
+      ? metadata.full_name
+      : authUser.user.email?.split("@")[0] ?? "Patient";
+
+  const { data: created, error: insertError } = await admin
+    .from("profiles")
+    .upsert({ id: profileId, email: authUser.user.email ?? null, full_name: fullName, role })
+    .select("id, role")
+    .single();
+
+  if (insertError) {
+    logger.error("drivers.ensureProfile upsert failed", { profileId, error: insertError.message });
+    return null;
+  }
+
+  return created;
+}
+
 // Runs server-side with the service role client so the insert never depends
 // on the caller's client-side auth session — right after signUp() the
 // browser may not have one yet (e.g. when email confirmation is required).
@@ -26,16 +72,12 @@ export const submitDriverApplicationServerFn = createServerFn({ method: "POST" }
   .handler(async ({ data }) => {
     const admin = getSupabaseAdminClient();
 
-    const { data: profile, error: profileError } = await admin
-      .from("profiles")
-      .select("id, role")
-      .eq("id", data.profile_id)
-      .single();
+    const profile = await ensureProfile(admin, data.profile_id);
 
-    if (profileError || !profile || profile.role !== "driver") {
+    if (!profile || profile.role !== "driver") {
       logger.error("drivers.submitDriverApplication invalid profile", {
         profileId: data.profile_id,
-        error: profileError?.message,
+        role: profile?.role,
       });
       throw new Error("Profil chauffeur introuvable.");
     }
