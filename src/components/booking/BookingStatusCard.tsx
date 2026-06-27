@@ -22,6 +22,7 @@ import * as bookingsRepository from "~/repositories/bookingsRepository";
 import type { MyBookingRow, UpdateBookingPayload, LookupCredentials } from "~/repositories/bookingsRepository";
 import { BookingEditForm } from "./BookingEditForm";
 import { notifyBookingCancelledServerFn } from "~/server/email";
+import { logger } from "~/lib/logger";
 
 interface BookingStatusCardProps {
   booking: MyBookingRow;
@@ -71,7 +72,12 @@ export function BookingStatusCard({
       toast({ title: "Réservation annulée", variant: "success" });
       setDisplayBooking((prev) => ({ ...prev, status: "cancelled" }));
       queryClient.invalidateQueries({ queryKey: ["my-bookings"] });
-      notifyBookingCancelledServerFn({ data: { bookingId: displayBooking.id } });
+      notifyBookingCancelledServerFn({ data: { bookingId: displayBooking.id } }).catch((err) => {
+        logger.error("email.notifyBookingCancelled call failed", {
+          error: err instanceof Error ? err.message : String(err),
+          bookingId: displayBooking.id,
+        });
+      });
     },
     onError: (err: Error) => {
       setConfirmingCancel(false);

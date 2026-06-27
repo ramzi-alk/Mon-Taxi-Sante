@@ -9,6 +9,7 @@ import { supabase } from "~/lib/supabase";
 import { logger } from "~/lib/logger";
 import * as authRepository from "~/repositories/authRepository";
 import * as driversRepository from "~/repositories/driversRepository";
+import { notifyAdminNewDriverApplicationServerFn } from "~/server/email";
 import { SiretAutocomplete } from "~/components/chauffeurs/SiretAutocomplete";
 import { Input } from "~/components/ui/input";
 import type { CompanySuggestion } from "~/lib/siren";
@@ -60,7 +61,7 @@ async function registerDriver(data: InscriptionSchema, company: CompanySuggestio
     );
   }
 
-  await driversRepository.insertDriverDetails(supabase, {
+  const driverDetails = await driversRepository.insertDriverDetails(supabase, {
     profile_id: userId,
     siret: company.siret,
     company_name: company.name,
@@ -73,6 +74,8 @@ async function registerDriver(data: InscriptionSchema, company: CompanySuggestio
     subscription_ends_at: null,
     approved_at: null,
   });
+
+  await notifyAdminNewDriverApplicationServerFn({ data: { driverDetailsId: driverDetails.id } });
 }
 
 function InscriptionChauffeurPage() {

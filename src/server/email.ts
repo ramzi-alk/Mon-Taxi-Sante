@@ -1,11 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getResendClient, EMAIL_FROM } from "~/lib/resend";
+import { getResendClient, EMAIL_FROM, ADMIN_NOTIFICATION_EMAIL } from "~/lib/resend";
 import { getSupabaseAdminClient } from "~/lib/supabaseAdmin";
 import { logger } from "~/lib/logger";
 import {
   bookingConfirmationEmail,
   bookingCancellationEmail,
   driverApprovedEmail,
+  adminNewDriverApplicationEmail,
 } from "./emailTemplates";
 
 // All sends here are best-effort: a Resend failure must never break the
@@ -22,7 +23,15 @@ export async function sendBookingConfirmationEmail(params: {
 }): Promise<void> {
   try {
     const { subject, html } = bookingConfirmationEmail(params);
-    await getResendClient().emails.send({ from: EMAIL_FROM, to: params.to, subject, html });
+    const { error } = await getResendClient().emails.send({
+      from: EMAIL_FROM,
+      to: params.to,
+      subject,
+      html,
+    });
+    if (error) {
+      throw new Error(error.message);
+    }
   } catch (error) {
     logger.error("email.sendBookingConfirmationEmail failed", {
       error: error instanceof Error ? error.message : String(error),
@@ -52,16 +61,68 @@ export const notifyBookingCancelledServerFn = createServerFn({ method: "POST" })
         pickupDatetime: booking.pickup_datetime,
         cancellationReason: booking.cancellation_reason,
       });
-      await getResendClient().emails.send({
+      const { error: sendApiError } = await getResendClient().emails.send({
         from: EMAIL_FROM,
         to: booking.patient_email,
         subject,
         html,
       });
+      if (sendApiError) {
+        throw new Error(sendApiError.message);
+      }
     } catch (sendError) {
       logger.error("email.notifyBookingCancelled failed", {
         error: sendError instanceof Error ? sendError.message : String(sendError),
         bookingId: data.bookingId,
+      });
+    }
+  });
+
+export const notifyAdminNewDriverApplicationServerFn = createServerFn({ method: "POST" })
+  .validator((input: { driverDetailsId: string }) => input)
+  .handler(async ({ data: input }) => {
+    const admin = getSupabaseAdminClient();
+    const { data, error } = await admin
+      .from("drivers_details")
+      .select("vehicle_type, vehicle_registration, siret, company_name, profiles:profile_id(full_name, email, phone)")
+      .eq("id", input.driverDetailsId)
+      .single();
+
+    const driver = data as unknown as {
+      vehicle_type: string;
+      vehicle_registration: string;
+      siret: string;
+      company_name: string | null;
+      profiles: { full_name: string; email: string | null; phone: string | null } | null;
+    } | null;
+
+    if (error || !driver || !driver.profiles?.email) {
+      return;
+    }
+
+    try {
+      const { subject, html } = adminNewDriverApplicationEmail({
+        driverFullName: driver.profiles.full_name,
+        driverEmail: driver.profiles.email,
+        driverPhone: driver.profiles.phone,
+        vehicleType: driver.vehicle_type,
+        vehicleRegistration: driver.vehicle_registration,
+        siret: driver.siret,
+        companyName: driver.company_name,
+      });
+      const { error: sendApiError } = await getResendClient().emails.send({
+        from: EMAIL_FROM,
+        to: ADMIN_NOTIFICATION_EMAIL,
+        subject,
+        html,
+      });
+      if (sendApiError) {
+        throw new Error(sendApiError.message);
+      }
+    } catch (sendError) {
+      logger.error("email.notifyAdminNewDriverApplication failed", {
+        error: sendError instanceof Error ? sendError.message : String(sendError),
+        driverDetailsId: input.driverDetailsId,
       });
     }
   });
@@ -88,12 +149,15 @@ export const notifyDriverApprovedServerFn = createServerFn({ method: "POST" })
 
     try {
       const { subject, html } = driverApprovedEmail({ driverFullName: profile.full_name });
-      await getResendClient().emails.send({
+      const { error: sendApiError } = await getResendClient().emails.send({
         from: EMAIL_FROM,
         to: profile.email,
         subject,
         html,
       });
+      if (sendApiError) {
+        throw new Error(sendApiError.message);
+      }
     } catch (sendError) {
       logger.error("email.notifyDriverApproved failed", {
         error: sendError instanceof Error ? sendError.message : String(sendError),

@@ -24,9 +24,9 @@ function ConfidentialitePage() {
       <h2>Responsable du traitement</h2>
       <p>
         Mon Taxi Santé SAS est responsable du traitement des données
-        collectées via le site mon-taxi-sante.fr. Pour toute question,
+        collectées via le site mon-taxi-sante.com. Pour toute question,
         contactez notre Délégué à la Protection des Données à l'adresse{" "}
-        <a href="mailto:dpo@mon-taxi-sante.fr">dpo@mon-taxi-sante.fr</a>.
+        <a href="mailto:dpo@mon-taxi-sante.com">dpo@mon-taxi-sante.com</a>.
       </p>
 
       <h2>Données collectées</h2>
@@ -86,7 +86,7 @@ function ConfidentialitePage() {
         limitation, d'opposition et de portabilité de vos données, ainsi que
         du droit de retirer votre consentement à tout moment. Pour exercer
         ces droits, écrivez-nous à{" "}
-        <a href="mailto:dpo@mon-taxi-sante.fr">dpo@mon-taxi-sante.fr</a>. Vous
+        <a href="mailto:dpo@mon-taxi-sante.com">dpo@mon-taxi-sante.com</a>. Vous
         pouvez également introduire une réclamation auprès de la CNIL
         (cnil.fr).
       </p>

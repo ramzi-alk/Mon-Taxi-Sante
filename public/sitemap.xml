@@ -1,107 +1,107 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://mon-taxi-sante.fr/</loc>
+    <loc>https://mon-taxi-sante.com/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://mon-taxi-sante.fr/comment-ca-marche</loc>
+    <loc>https://mon-taxi-sante.com/comment-ca-marche</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://mon-taxi-sante.fr/tarifs-cpam</loc>
+    <loc>https://mon-taxi-sante.com/tarifs-cpam</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://mon-taxi-sante.fr/faq</loc>
+    <loc>https://mon-taxi-sante.com/faq</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://mon-taxi-sante.fr/chauffeurs/inscription</loc>
+    <loc>https://mon-taxi-sante.com/chauffeurs/inscription</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://mon-taxi-sante.fr/chauffeurs/tarifs</loc>
+    <loc>https://mon-taxi-sante.com/chauffeurs/tarifs</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://mon-taxi-sante.fr/blog</loc>
+    <loc>https://mon-taxi-sante.com/blog</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://mon-taxi-sante.fr/blog/transport-cpam</loc>
+    <loc>https://mon-taxi-sante.com/blog/transport-cpam</loc>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://mon-taxi-sante.fr/blog/pmt-prescription</loc>
+    <loc>https://mon-taxi-sante.com/blog/pmt-prescription</loc>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://mon-taxi-sante.fr/blog/ald-transport</loc>
+    <loc>https://mon-taxi-sante.com/blog/ald-transport</loc>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://mon-taxi-sante.fr/paris/paris</loc>
+    <loc>https://mon-taxi-sante.com/paris/paris</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://mon-taxi-sante.fr/rhone/lyon</loc>
+    <loc>https://mon-taxi-sante.com/rhone/lyon</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://mon-taxi-sante.fr/bouches-du-rhone/marseille</loc>
+    <loc>https://mon-taxi-sante.com/bouches-du-rhone/marseille</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://mon-taxi-sante.fr/gironde/bordeaux</loc>
+    <loc>https://mon-taxi-sante.com/gironde/bordeaux</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://mon-taxi-sante.fr/haute-garonne/toulouse</loc>
+    <loc>https://mon-taxi-sante.com/haute-garonne/toulouse</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://mon-taxi-sante.fr/alpes-maritimes/nice</loc>
+    <loc>https://mon-taxi-sante.com/alpes-maritimes/nice</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://mon-taxi-sante.fr/loire-atlantique/nantes</loc>
+    <loc>https://mon-taxi-sante.com/loire-atlantique/nantes</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://mon-taxi-sante.fr/bas-rhin/strasbourg</loc>
+    <loc>https://mon-taxi-sante.com/bas-rhin/strasbourg</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://mon-taxi-sante.fr/cgv</loc>
+    <loc>https://mon-taxi-sante.com/cgv</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://mon-taxi-sante.fr/confidentialite</loc>
+    <loc>https://mon-taxi-sante.com/confidentialite</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://mon-taxi-sante.fr/mentions-legales</loc>
+    <loc>https://mon-taxi-sante.com/mentions-legales</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>

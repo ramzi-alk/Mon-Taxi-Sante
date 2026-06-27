@@ -83,7 +83,7 @@ export const Route = createFileRoute("/$department/$city")({
         { property: "og:type", content: "website" },
         {
           property: "og:url",
-          content: `https://mon-taxi-sante.fr/${params.department}/${params.city}`,
+          content: `https://mon-taxi-sante.com/${params.department}/${params.city}`,
         },
         {
           name: "geo.region",
@@ -97,7 +97,7 @@ export const Route = createFileRoute("/$department/$city")({
       links: [
         {
           rel: "canonical",
-          href: `https://mon-taxi-sante.fr/${params.department}/${params.city}`,
+          href: `https://mon-taxi-sante.com/${params.department}/${params.city}`,
         },
       ],
     };
@@ -123,13 +123,13 @@ function LocalBusinessSchema({
   const schema = {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
-    "@id": `https://mon-taxi-sante.fr/${deptName.toLowerCase().replace(/ /g, "-")}/${cityName.toLowerCase().replace(/ /g, "-")}#business`,
+    "@id": `https://mon-taxi-sante.com/${deptName.toLowerCase().replace(/ /g, "-")}/${cityName.toLowerCase().replace(/ /g, "-")}#business`,
     name: `Mon Taxi Santé — ${cityName}`,
     description: `Service de taxi médical conventionné Assurance Maladie à ${cityName} (${deptCode}). Transport pour dialyse, chimiothérapie, ALD. Tiers-Payant.`,
-    url: "https://mon-taxi-sante.fr",
+    url: "https://mon-taxi-sante.com",
     telephone: CONTACT_PHONE_TEL,
     priceRange: "Pris en charge Assurance Maladie",
-    image: "https://mon-taxi-sante.fr/og-image.jpg",
+    image: "https://mon-taxi-sante.com/og-image.jpg",
     address: {
       "@type": "PostalAddress",
       addressLocality: cityName,

@@ -19,8 +19,12 @@ export interface PendingDriver {
 export async function insertDriverDetails(
   client: SupabaseClient,
   details: DriverDetailsInsert
-): Promise<void> {
-  const { error } = await client.from("drivers_details").insert(details);
+): Promise<{ id: string }> {
+  const { data, error } = await client
+    .from("drivers_details")
+    .insert(details)
+    .select("id")
+    .single();
   if (error) {
     logger.error("drivers.insertDriverDetails failed", {
       error: error.message,
@@ -28,6 +32,7 @@ export async function insertDriverDetails(
     });
     throw new Error(error.message);
   }
+  return data;
 }
 
 export async function fetchPendingDrivers(client: SupabaseClient): Promise<PendingDriver[]> {

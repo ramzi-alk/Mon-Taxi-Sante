@@ -6,24 +6,24 @@ Le remboursement dépend du statut de l'assuré : prise en charge à 100 % pour 
 
 ## Pages principales
 
-- [Accueil](https://mon-taxi-sante.fr/): présentation du service, types de véhicules (taxi conventionné, VSL, PMR) et garanties.
-- [Comment ça marche](https://mon-taxi-sante.fr/comment-ca-marche): étapes du parcours de réservation.
-- [Tarifs et prise en charge CPAM](https://mon-taxi-sante.fr/tarifs-cpam): règles de remboursement Assurance Maladie par statut d'assuré.
-- [FAQ](https://mon-taxi-sante.fr/faq): questions fréquentes sur la réservation, le Tiers-Payant et la PMT.
+- [Accueil](https://mon-taxi-sante.com/): présentation du service, types de véhicules (taxi conventionné, VSL, PMR) et garanties.
+- [Comment ça marche](https://mon-taxi-sante.com/comment-ca-marche): étapes du parcours de réservation.
+- [Tarifs et prise en charge CPAM](https://mon-taxi-sante.com/tarifs-cpam): règles de remboursement Assurance Maladie par statut d'assuré.
+- [FAQ](https://mon-taxi-sante.com/faq): questions fréquentes sur la réservation, le Tiers-Payant et la PMT.
 
 ## Chauffeurs
 
-- [Devenir chauffeur conventionné](https://mon-taxi-sante.fr/chauffeurs/inscription): inscription pour les chauffeurs conventionnés CPAM.
-- [Tarifs abonnement chauffeur](https://mon-taxi-sante.fr/chauffeurs/tarifs): grille tarifaire de l'abonnement plateforme.
+- [Devenir chauffeur conventionné](https://mon-taxi-sante.com/chauffeurs/inscription): inscription pour les chauffeurs conventionnés CPAM.
+- [Tarifs abonnement chauffeur](https://mon-taxi-sante.com/chauffeurs/tarifs): grille tarifaire de l'abonnement plateforme.
 
 ## Blog
 
-- [Transport pris en charge Assurance Maladie](https://mon-taxi-sante.fr/blog/transport-cpam)
-- [Prescription médicale de transport (PMT)](https://mon-taxi-sante.fr/blog/pmt-prescription)
-- [Transport ALD](https://mon-taxi-sante.fr/blog/ald-transport)
+- [Transport pris en charge Assurance Maladie](https://mon-taxi-sante.com/blog/transport-cpam)
+- [Prescription médicale de transport (PMT)](https://mon-taxi-sante.com/blog/pmt-prescription)
+- [Transport ALD](https://mon-taxi-sante.com/blog/ald-transport)
 
 ## Informations légales
 
-- [CGV](https://mon-taxi-sante.fr/cgv)
-- [Politique de confidentialité](https://mon-taxi-sante.fr/confidentialite)
-- [Mentions légales](https://mon-taxi-sante.fr/mentions-legales)
+- [CGV](https://mon-taxi-sante.com/cgv)
+- [Politique de confidentialité](https://mon-taxi-sante.com/confidentialite)
+- [Mentions légales](https://mon-taxi-sante.com/mentions-legales)
