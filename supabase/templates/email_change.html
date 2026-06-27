@@ -8,37 +8,48 @@
   <body style="margin:0;padding:24px 16px;background:#F7F8FC;font-family:-apple-system,Helvetica,Arial,sans-serif;color:#0B0F1C;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;margin:0 auto;border-collapse:collapse;">
       <tr>
-        <td style="background:#1244E8;color:#fff;padding:24px;border-radius:12px 12px 0 0;">
-          <p style="margin:0;font-size:13px;opacity:0.85;">Mon Taxi Santé</p>
-          <h1 style="margin:4px 0 0;font-size:20px;">Confirmez votre nouvelle adresse e-mail</h1>
+        <td style="background:#1244E8;color:#fff;padding:28px 24px;border-radius:14px 14px 0 0;">
+          <p style="margin:0;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;opacity:0.85;">Mon Taxi Santé</p>
+          <h1 style="margin:10px 0 0;font-size:21px;line-height:1.35;">
+            <span style="font-size:20px;vertical-align:-2px;">📧</span>&nbsp; Confirmez votre nouvelle adresse e-mail
+          </h1>
         </td>
       </tr>
       <tr>
-        <td style="border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px;padding:24px;">
-          <p style="margin:0 0 16px;">Bonjour,</p>
-          <p style="margin:0 0 16px;">
+        <td style="background:#fff;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 14px 14px;padding:28px 24px;">
+          <span style="display:inline-block;background:#EFF4FF;color:#1244E8;font-size:12px;font-weight:700;padding:5px 12px;border-radius:999px;margin-bottom:16px;">Action requise</span>
+          <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour,</p>
+          <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">
             Vous avez demandé à remplacer l'adresse e-mail de votre compte
             Mon Taxi Santé par
             <strong>{{ .NewEmail }}</strong>. Confirmez ce changement en
             cliquant sur le bouton ci-dessous.
           </p>
-          <p style="text-align:center;margin:32px 0;">
-            <a
-              href="{{ .ConfirmationURL }}"
-              style="background:#1244E8;color:#fff;text-decoration:none;font-weight:600;padding:14px 28px;border-radius:10px;display:inline-block;"
-              >Confirmer la nouvelle adresse</a
-            >
-          </p>
-          <p style="margin:0 0 16px;font-size:13px;color:#6b7280;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:28px 0;">
+            <tr>
+              <td align="center">
+                <a
+                  href="{{ .ConfirmationURL }}"
+                  style="background:#1244E8;color:#fff;text-decoration:none;font-weight:700;font-size:15px;padding:14px 32px;border-radius:10px;display:inline-block;"
+                  >Confirmer la nouvelle adresse</a
+                >
+              </td>
+            </tr>
+          </table>
+          <p style="margin:0;font-size:13px;color:#6b7280;line-height:1.5;">
             Si vous n'êtes pas à l'origine de cette demande, vous pouvez
             ignorer cet e-mail — votre adresse actuelle restera inchangée.
           </p>
-          <p style="margin-top:28px;font-size:13px;color:#6b7280;">
-            Une question ? Appelez le
-            <a href="tel:+33602121907" style="color:#1244E8;font-weight:600;">06 02 12 19 07</a>
-            ou écrivez à
-            <a href="mailto:contact@mon-taxi-sante.com" style="color:#1244E8;font-weight:600;">contact@mon-taxi-sante.com</a>.
-          </p>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:28px;border-top:1px solid #f1f2f6;">
+            <tr>
+              <td style="padding-top:18px;font-size:13px;color:#6b7280;line-height:1.6;">
+                Une question ? Appelez le
+                <a href="tel:+33602121907" style="color:#1244E8;font-weight:600;text-decoration:none;">06 02 12 19 07</a>
+                ou écrivez à
+                <a href="mailto:contact@mon-taxi-sante.com" style="color:#1244E8;font-weight:600;text-decoration:none;">contact@mon-taxi-sante.com</a>.
+              </td>
+            </tr>
+          </table>
         </td>
       </tr>
     </table>
