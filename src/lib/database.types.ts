@@ -454,6 +454,7 @@ export type Database = {
           mutual_name: string
           passenger_count: number
           patient_birth_date: string
+          patient_email: string
           patient_full_name: string
           patient_phone: string
           pickup_address: string
@@ -491,6 +492,7 @@ export type Database = {
           mutual_name: string
           passenger_count: number
           patient_birth_date: string
+          patient_email: string
           patient_full_name: string
           patient_phone: string
           pickup_address: string

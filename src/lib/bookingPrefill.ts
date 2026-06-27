@@ -7,6 +7,7 @@ export type BookingPrefillData = Pick<
   BookingSchema,
   | "patient_full_name"
   | "patient_phone"
+  | "patient_email"
   | "patient_birth_date"
   | "pickup_address"
   | "pickup_lat"
@@ -28,6 +29,7 @@ export function bookingToPrefillData(booking: MyBookingRow): BookingPrefillData 
   return {
     patient_full_name: booking.patient_full_name,
     patient_phone: booking.patient_phone,
+    patient_email: booking.patient_email ?? "",
     patient_birth_date: booking.patient_birth_date ?? "",
     pickup_address: booking.pickup_address,
     pickup_lat: booking.pickup_lat,
