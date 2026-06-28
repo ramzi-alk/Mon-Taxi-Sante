@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Activity,
@@ -14,6 +14,7 @@ import {
   Gauge,
   Wallet,
   MapPin,
+  UserCog,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "~/lib/supabase";
@@ -324,6 +325,13 @@ function DriverDashboard() {
                   </button>
                 ))}
               </div>
+              <Link
+                to="/tableau-de-bord/chauffeur/compte"
+                className="flex items-center gap-2 rounded-xl bg-white/10 border border-white/20 px-4 py-2 text-sm font-medium hover:bg-white/20 transition-colors"
+              >
+                <UserCog className="h-4 w-4" aria-hidden="true" />
+                Mon compte
+              </Link>
               <button
                 onClick={() => setRealtimeEnabled(!realtimeEnabled)}
                 className="flex items-center gap-2 rounded-xl bg-white/10 border border-white/20 px-4 py-2 text-sm font-medium hover:bg-white/20 transition-colors"

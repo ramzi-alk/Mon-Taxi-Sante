@@ -15,6 +15,24 @@ export interface MyDriverDetails {
   acceptance_radius_km: number | null;
 }
 
+export interface MyDriverAccount {
+  vehicle_type: Database["public"]["Enums"]["vehicle_type"];
+  vehicle_registration: string;
+  vehicle_brand: string | null;
+  vehicle_model: string | null;
+  vehicle_year: number | null;
+  pmr_equipped: boolean;
+  stretcher_equipped: boolean;
+  oxygen_equipped: boolean;
+  parking_municipality: string | null;
+  parking_lat: number | null;
+  parking_lng: number | null;
+  siret: string;
+  company_name: string | null;
+  subscription_status: Database["public"]["Enums"]["subscription_status"];
+  subscription_ends_at: string | null;
+}
+
 export interface MyDriverStats {
   rides_completed: number;
   total_km: number;
@@ -149,6 +167,60 @@ export async function setAcceptanceRadius(
 
   if (error) {
     logger.error("drivers.setAcceptanceRadius failed", { error: error.message, profileId, radiusKm });
+    throw new Error(error.message);
+  }
+}
+
+/**
+ * Reads the calling driver's full editable account record (vehicle,
+ * equipment, parking, company/subscription) for the "Mon compte" page.
+ * Scoped by RLS, same as fetchMyAvailability.
+ */
+export async function fetchMyAccountDetails(
+  client: SupabaseClient,
+  profileId: string
+): Promise<MyDriverAccount | null> {
+  const { data, error } = await client
+    .from("drivers_details")
+    .select(
+      "vehicle_type, vehicle_registration, vehicle_brand, vehicle_model, vehicle_year, pmr_equipped, stretcher_equipped, oxygen_equipped, parking_municipality, parking_lat, parking_lng, siret, company_name, subscription_status, subscription_ends_at"
+    )
+    .eq("profile_id", profileId)
+    .maybeSingle();
+
+  if (error) {
+    logger.error("drivers.fetchMyAccountDetails failed", { error: error.message, profileId });
+    throw new Error(error.message);
+  }
+  return data;
+}
+
+/**
+ * Driver-controlled vehicle/equipment and parking address update. Direct
+ * UPDATE is fine — RLS already scopes this to the driver's own row.
+ * siret/company_name/subscription fields are deliberately not editable here.
+ */
+export async function updateMyAccountDetails(
+  client: SupabaseClient,
+  profileId: string,
+  fields: Partial<{
+    vehicle_type: Database["public"]["Enums"]["vehicle_type"];
+    vehicle_registration: string;
+    vehicle_brand: string | null;
+    vehicle_model: string | null;
+    vehicle_year: number | null;
+    pmr_equipped: boolean;
+    stretcher_equipped: boolean;
+    oxygen_equipped: boolean;
+    parking_municipality: string;
+    parking_lat: number | null;
+    parking_lng: number | null;
+  }>
+): Promise<void> {
+  const { error } = await client.from("drivers_details").update(fields).eq("profile_id", profileId);
+
+  if (error) {
+    logger.error("drivers.updateMyAccountDetails failed", { error: error.message, profileId });
     throw new Error(error.message);
   }
 }
