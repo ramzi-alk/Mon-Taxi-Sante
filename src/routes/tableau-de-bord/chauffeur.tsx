@@ -120,7 +120,7 @@ function StatCard({
       </div>
       <div className="min-w-0">
         <p className="text-lg font-black text-gray-900 leading-tight sm:text-2xl">{value}</p>
-        <p className="truncate text-xs text-muted-foreground sm:text-sm">{label}</p>
+        <p className="text-xs leading-snug text-muted-foreground sm:text-sm">{label}</p>
       </div>
     </div>
   );

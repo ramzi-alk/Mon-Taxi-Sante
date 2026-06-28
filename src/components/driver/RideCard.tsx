@@ -70,7 +70,47 @@ function buildNavigationLinks(address: string, lat: number | null, lng: number |
   };
 }
 
-function NavigationMenu({
+function NavigationOptions({
+  address,
+  lat,
+  lng,
+}: {
+  address: string;
+  lat: number | null;
+  lng: number | null;
+}) {
+  const links = buildNavigationLinks(address, lat, lng);
+  return (
+    <>
+      <a
+        href={links.googleMaps}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+      >
+        Google Maps
+      </a>
+      <a
+        href={links.waze}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+      >
+        Waze
+      </a>
+      <a
+        href={links.appleMaps}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+      >
+        Apple Plans
+      </a>
+    </>
+  );
+}
+
+function NavigationButton({
   address,
   lat,
   lng,
@@ -81,7 +121,6 @@ function NavigationMenu({
   lng: number | null;
   label: string;
 }) {
-  const links = buildNavigationLinks(address, lat, lng);
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -94,30 +133,38 @@ function NavigationMenu({
         </button>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-48 p-1.5">
-        <a
-          href={links.googleMaps}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+        <NavigationOptions address={address} lat={lat} lng={lng} />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function AddressLink({
+  address,
+  lat,
+  lng,
+  className,
+}: {
+  address: string;
+  lat: number | null;
+  lng: number | null;
+  className?: string;
+}) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className={cn(
+            "text-left underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded",
+            className
+          )}
         >
-          Google Maps
-        </a>
-        <a
-          href={links.waze}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-        >
-          Waze
-        </a>
-        <a
-          href={links.appleMaps}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-        >
-          Apple Plans
-        </a>
+          {address}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-48 p-1.5">
+        <NavigationOptions address={address} lat={lat} lng={lng} />
       </PopoverContent>
     </Popover>
   );
@@ -195,9 +242,12 @@ export function RideCard({
               ) : (
                 <p className="text-xs text-muted-foreground">Départ</p>
               )}
-              <p className="text-sm font-medium text-gray-900 leading-snug">
-                {ride.pickup_address}
-              </p>
+              <AddressLink
+                address={ride.pickup_address}
+                lat={ride.pickup_lat}
+                lng={ride.pickup_lng}
+                className="text-sm font-medium text-gray-900 leading-snug"
+              />
             </div>
           </div>
           <div className="flex items-start gap-2.5">
@@ -216,9 +266,12 @@ export function RideCard({
               ) : (
                 <p className="text-xs text-muted-foreground">Destination</p>
               )}
-              <p className="text-sm font-medium text-gray-900 leading-snug">
-                {ride.dropoff_address}
-              </p>
+              <AddressLink
+                address={ride.dropoff_address}
+                lat={ride.dropoff_lat}
+                lng={ride.dropoff_lng}
+                className="text-sm font-medium text-gray-900 leading-snug"
+              />
             </div>
           </div>
         </div>
@@ -294,7 +347,7 @@ export function RideCard({
 
           {ride.status === "accepted" && (
             <div className="flex items-center gap-2">
-              <NavigationMenu
+              <NavigationButton
                 address={ride.pickup_address}
                 lat={ride.pickup_lat}
                 lng={ride.pickup_lng}
@@ -360,7 +413,7 @@ export function RideCard({
 
           {ride.status === "in_progress" && (
             <div className="flex items-center gap-2">
-              <NavigationMenu
+              <NavigationButton
                 address={ride.dropoff_address}
                 lat={ride.dropoff_lat}
                 lng={ride.dropoff_lng}
