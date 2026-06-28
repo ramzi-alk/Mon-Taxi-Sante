@@ -4,12 +4,52 @@ import { logger } from "~/lib/logger";
 
 type ProfileRole = Database["public"]["Tables"]["profiles"]["Row"]["role"];
 
+export interface MyProfile {
+  full_name: string;
+  email: string | null;
+  phone: string | null;
+}
+
 export async function getProfileRole(
   client: SupabaseClient,
   userId: string
 ): Promise<ProfileRole | null> {
   const { data } = await client.from("profiles").select("role").eq("id", userId).single();
   return data?.role ?? null;
+}
+
+export async function fetchMyProfile(
+  client: SupabaseClient,
+  profileId: string
+): Promise<MyProfile | null> {
+  const { data, error } = await client
+    .from("profiles")
+    .select("full_name, email, phone")
+    .eq("id", profileId)
+    .maybeSingle();
+
+  if (error) {
+    logger.error("profiles.fetchMyProfile failed", { error: error.message, profileId });
+    throw new Error(error.message);
+  }
+  return data;
+}
+
+/**
+ * Direct UPDATE on the caller's own row — RLS ("profiles: own update") scopes
+ * it to auth.uid() = id and forbids touching role (no escalation).
+ */
+export async function updateMyProfile(
+  client: SupabaseClient,
+  profileId: string,
+  fields: { full_name: string; phone: string | null }
+): Promise<void> {
+  const { error } = await client.from("profiles").update(fields).eq("id", profileId);
+
+  if (error) {
+    logger.error("profiles.updateMyProfile failed", { error: error.message, profileId });
+    throw new Error(error.message);
+  }
 }
 
 /**

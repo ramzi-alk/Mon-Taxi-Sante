@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { MapPin, Clock, Car, Users, Navigation, Loader2, PlayCircle, FlagTriangleRight, XCircle, User, Phone } from "lucide-react";
-import { formatDateFr, formatTimeFr, formatPrice } from "~/lib/utils";
+import { MapPin, Clock, Car, Users, Navigation, Loader2, PlayCircle, FlagTriangleRight, XCircle, User, Phone, CalendarPlus } from "lucide-react";
+import { formatDateFr, formatTimeFr } from "~/lib/utils";
 import { cn } from "~/lib/utils";
+import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
 
 // Mirrors bookings_pool_for_drivers view — no medical fields. patient_full_name
 // is only ever populated for "my rides" (accepted/in_progress/completed, see
@@ -30,6 +31,7 @@ export interface PoolRide {
   estimated_price: number | null;
   status: string;
   created_at: string;
+  distance_to_driver_km?: number | null;
 }
 
 interface RideCardProps {
@@ -56,9 +58,221 @@ const statusLabels: Record<string, string> = {
   completed: "Terminée",
 };
 
-function buildMapsUrl(address: string, lat: number | null, lng: number | null): string {
-  const destination = lat != null && lng != null ? `${lat},${lng}` : address;
-  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`;
+function buildNavigationLinks(address: string, lat: number | null, lng: number | null) {
+  const hasCoords = lat != null && lng != null;
+  const destination = hasCoords ? `${lat},${lng}` : address;
+  return {
+    googleMaps: `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`,
+    waze: hasCoords
+      ? `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`
+      : `https://waze.com/ul?q=${encodeURIComponent(address)}&navigate=yes`,
+    appleMaps: `https://maps.apple.com/?daddr=${encodeURIComponent(destination)}`,
+  };
+}
+
+function NavigationOptions({
+  address,
+  lat,
+  lng,
+}: {
+  address: string;
+  lat: number | null;
+  lng: number | null;
+}) {
+  const links = buildNavigationLinks(address, lat, lng);
+  return (
+    <>
+      <a
+        href={links.googleMaps}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+      >
+        Google Maps
+      </a>
+      <a
+        href={links.waze}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+      >
+        Waze
+      </a>
+      <a
+        href={links.appleMaps}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+      >
+        Apple Plans
+      </a>
+    </>
+  );
+}
+
+function NavigationButton({
+  address,
+  lat,
+  lng,
+  label,
+}: {
+  address: string;
+  lat: number | null;
+  lng: number | null;
+  label: string;
+}) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          aria-label={label}
+          className="flex items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors shrink-0"
+        >
+          <Navigation className="h-4 w-4" aria-hidden="true" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-48 p-1.5">
+        <NavigationOptions address={address} lat={lat} lng={lng} />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function AddressLink({
+  address,
+  lat,
+  lng,
+  className,
+}: {
+  address: string;
+  lat: number | null;
+  lng: number | null;
+  className?: string;
+}) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className={cn(
+            "text-left underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded",
+            className
+          )}
+        >
+          {address}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-48 p-1.5">
+        <NavigationOptions address={address} lat={lat} lng={lng} />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function formatICSDate(date: Date) {
+  return date.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+}
+
+function buildCalendarLinks(ride: PoolRide) {
+  const start = new Date(ride.pickup_datetime);
+  const end = ride.return_datetime
+    ? new Date(ride.return_datetime)
+    : new Date(start.getTime() + 60 * 60 * 1000);
+
+  const title = `Course — ${ride.patient_full_name ?? ride.patient_first_name}`;
+  const details = [
+    `Destination : ${ride.dropoff_address}`,
+    ride.patient_phone ? `Téléphone patient : ${ride.patient_phone}` : null,
+    `Véhicule : ${ride.vehicle_type.toUpperCase()}`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const startICS = formatICSDate(start);
+  const endICS = formatICSDate(end);
+
+  const googleCalendar = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
+    title
+  )}&dates=${startICS}/${endICS}&details=${encodeURIComponent(details)}&location=${encodeURIComponent(
+    ride.pickup_address
+  )}`;
+
+  const outlookCalendar = `https://outlook.live.com/calendar/0/deeplink/compose?path=/calendar/action/compose&rru=addevent&subject=${encodeURIComponent(
+    title
+  )}&startdt=${encodeURIComponent(start.toISOString())}&enddt=${encodeURIComponent(
+    end.toISOString()
+  )}&body=${encodeURIComponent(details)}&location=${encodeURIComponent(ride.pickup_address)}`;
+
+  const icsContent = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Mon Taxi Sante//FR",
+    "BEGIN:VEVENT",
+    `UID:${ride.id}@mon-taxi-sante`,
+    `DTSTAMP:${formatICSDate(new Date())}`,
+    `DTSTART:${startICS}`,
+    `DTEND:${endICS}`,
+    `SUMMARY:${title}`,
+    `DESCRIPTION:${details.replace(/\n/g, "\\n")}`,
+    `LOCATION:${ride.pickup_address}`,
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ].join("\r\n");
+
+  const appleCalendar = `data:text/calendar;charset=utf-8,${encodeURIComponent(icsContent)}`;
+
+  return { googleCalendar, outlookCalendar, appleCalendar };
+}
+
+function CalendarOptions({ ride }: { ride: PoolRide }) {
+  const links = buildCalendarLinks(ride);
+  return (
+    <>
+      <a
+        href={links.googleCalendar}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+      >
+        Google Agenda
+      </a>
+      <a
+        href={links.appleCalendar}
+        download={`course-${ride.id}.ics`}
+        className="block rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+      >
+        Apple Calendrier (.ics)
+      </a>
+      <a
+        href={links.outlookCalendar}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+      >
+        Outlook
+      </a>
+    </>
+  );
+}
+
+function CalendarButton({ ride, children }: { ride: PoolRide; children: React.ReactNode }) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          aria-label="Ajouter au calendrier"
+          className="flex items-center gap-1.5 text-left underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+        >
+          {children}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-56 p-1.5">
+        <CalendarOptions ride={ride} />
+      </PopoverContent>
+    </Popover>
+  );
 }
 
 export function RideCard({
@@ -96,10 +310,19 @@ export function RideCard({
       {/* Header strip */}
       <div className="flex items-center justify-between bg-gray-50 border-b px-4 py-2">
         <span className="flex items-center gap-1.5 text-sm font-semibold text-gray-700">
-          <Clock className="h-4 w-4 text-brand-blue-500" aria-hidden="true" />
-          <time dateTime={ride.pickup_datetime}>
-            {dayLabel} à {pickupTime}
-          </time>
+          <Clock className="h-4 w-4 text-brand-blue-500 shrink-0" aria-hidden="true" />
+          {ride.status === "accepted" ? (
+            <CalendarButton ride={ride}>
+              <time dateTime={ride.pickup_datetime}>
+                {dayLabel} à {pickupTime}
+              </time>
+              <CalendarPlus className="h-3.5 w-3.5 text-gray-400" aria-hidden="true" />
+            </CalendarButton>
+          ) : (
+            <time dateTime={ride.pickup_datetime}>
+              {dayLabel} à {pickupTime}
+            </time>
+          )}
         </span>
         <span className="flex items-center gap-2">
           {statusLabels[ride.status] && (
@@ -116,25 +339,30 @@ export function RideCard({
 
       <div className="p-5 space-y-4">
         {/* Route */}
-        <div className="space-y-2">
+        <div className="space-y-3">
           <div className="flex items-start gap-2.5">
             <Navigation
               className="h-4 w-4 text-brand-blue-500 shrink-0 mt-0.5"
               aria-hidden="true"
             />
             <div>
-              <p className="text-xs text-muted-foreground">Départ</p>
-              <p className="text-sm font-medium text-gray-900 leading-snug">
-                {ride.pickup_address}
-              </p>
+              {ride.distance_to_driver_km != null ? (
+                <p className="text-sm font-bold text-gray-900 leading-snug">
+                  {ride.distance_to_driver_km} km{" "}
+                  <span className="font-normal text-gray-400">
+                    jusqu'à la prise en charge
+                  </span>
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">Départ</p>
+              )}
+              <AddressLink
+                address={ride.pickup_address}
+                lat={ride.pickup_lat}
+                lng={ride.pickup_lng}
+                className="text-sm font-medium text-gray-900 leading-snug"
+              />
             </div>
-          </div>
-          <div className="ml-2 border-l-2 border-dashed border-gray-200 pl-3 py-0.5">
-            {ride.distance_km && (
-              <span className="text-xs text-muted-foreground">
-                ~{ride.distance_km} km
-              </span>
-            )}
           </div>
           <div className="flex items-start gap-2.5">
             <MapPin
@@ -142,10 +370,22 @@ export function RideCard({
               aria-hidden="true"
             />
             <div>
-              <p className="text-xs text-muted-foreground">Destination</p>
-              <p className="text-sm font-medium text-gray-900 leading-snug">
-                {ride.dropoff_address}
-              </p>
+              {ride.distance_km != null ? (
+                <p className="text-sm font-bold text-gray-900 leading-snug">
+                  {ride.distance_km} km{" "}
+                  <span className="font-normal text-gray-400">
+                    jusqu'à la destination
+                  </span>
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">Destination</p>
+              )}
+              <AddressLink
+                address={ride.dropoff_address}
+                lat={ride.dropoff_lat}
+                lng={ride.dropoff_lng}
+                className="text-sm font-medium text-gray-900 leading-snug"
+              />
             </div>
           </div>
         </div>
@@ -189,17 +429,8 @@ export function RideCard({
           </div>
         )}
 
-        {/* Price + CTA */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-2 border-t border-gray-100">
-          <div>
-            <p className="text-xs text-muted-foreground">Estimation</p>
-            <p className="text-xl font-black text-brand-blue-700">
-              {ride.estimated_price
-                ? formatPrice(ride.estimated_price)
-                : "Sur devis"}
-            </p>
-          </div>
-
+        {/* CTA */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end pt-2 border-t border-gray-100">
           {ride.status === "available" && (
             <button
               type="button"
@@ -230,15 +461,12 @@ export function RideCard({
 
           {ride.status === "accepted" && (
             <div className="flex items-center gap-2">
-              <a
-                href={buildMapsUrl(ride.pickup_address, ride.pickup_lat, ride.pickup_lng)}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Naviguer vers le point de départ"
-                className="flex items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors shrink-0"
-              >
-                <Navigation className="h-4 w-4" aria-hidden="true" />
-              </a>
+              <NavigationButton
+                address={ride.pickup_address}
+                lat={ride.pickup_lat}
+                lng={ride.pickup_lng}
+                label="Naviguer vers le point de départ"
+              />
               <button
                 type="button"
                 onClick={() => onStart?.(ride.id)}
@@ -299,15 +527,12 @@ export function RideCard({
 
           {ride.status === "in_progress" && (
             <div className="flex items-center gap-2">
-              <a
-                href={buildMapsUrl(ride.dropoff_address, ride.dropoff_lat, ride.dropoff_lng)}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Naviguer vers la destination"
-                className="flex items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors shrink-0"
-              >
-                <Navigation className="h-4 w-4" aria-hidden="true" />
-              </a>
+              <NavigationButton
+                address={ride.dropoff_address}
+                lat={ride.dropoff_lat}
+                lng={ride.dropoff_lng}
+                label="Naviguer vers la destination"
+              />
               <button
                 type="button"
                 onClick={() => onComplete?.(ride.id)}

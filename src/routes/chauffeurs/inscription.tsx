@@ -3,13 +3,14 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
-import { AlertCircle, CheckCircle2, User, Mail, Lock, Phone, Car } from "lucide-react";
+import { AlertCircle, CheckCircle2, User, Mail, Lock, Phone, Car, MapPin } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "~/lib/supabase";
 import { logger } from "~/lib/logger";
 import * as authRepository from "~/repositories/authRepository";
 import { submitDriverApplicationServerFn } from "~/server/drivers";
 import { SiretAutocomplete } from "~/components/chauffeurs/SiretAutocomplete";
+import { AddressAutocomplete } from "~/components/booking/AddressAutocomplete";
 import { Input } from "~/components/ui/input";
 import type { CompanySuggestion } from "~/lib/siren";
 
@@ -37,6 +38,9 @@ const inscriptionSchema = z.object({
   vehicle_type: z.enum(["taxi", "vsl", "ambulance"]),
   vehicle_registration: z.string().min(4, "Plaque d'immatriculation requise"),
   pmr_equipped: z.boolean(),
+  parking_municipality: z.string().min(2, "Veuillez indiquer votre commune de stationnement"),
+  parking_lat: z.number().nullable(),
+  parking_lng: z.number().nullable(),
 });
 
 type InscriptionSchema = z.infer<typeof inscriptionSchema>;
@@ -68,6 +72,9 @@ async function registerDriver(data: InscriptionSchema, company: CompanySuggestio
       vehicle_type: data.vehicle_type,
       vehicle_registration: data.vehicle_registration,
       pmr_equipped: data.pmr_equipped,
+      parking_municipality: data.parking_municipality,
+      parking_lat: data.parking_lat,
+      parking_lng: data.parking_lng,
     },
   });
 }
@@ -80,11 +87,21 @@ function InscriptionChauffeurPage() {
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
+    trigger,
     formState: { errors },
   } = useForm<InscriptionSchema>({
     resolver: zodResolver(inscriptionSchema),
-    defaultValues: { vehicle_type: "taxi", pmr_equipped: false },
+    defaultValues: {
+      vehicle_type: "taxi",
+      pmr_equipped: false,
+      parking_municipality: "",
+      parking_lat: null,
+      parking_lng: null,
+    },
   });
+  const parkingMunicipality = watch("parking_municipality");
 
   const { mutate, isPending, isSuccess } = useMutation({
     mutationFn: (data: InscriptionSchema) => registerDriver(data, company as CompanySuggestion),
@@ -307,6 +324,32 @@ function InscriptionChauffeurPage() {
               />
               {errors.vehicle_registration && (
                 <p role="alert" className="text-sm text-red-600">{errors.vehicle_registration.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-1.5">
+              <label htmlFor="parking_municipality" className="block text-sm font-semibold text-gray-700">
+                Commune de stationnement <span className="text-red-500" aria-hidden="true">*</span>
+              </label>
+              <AddressAutocomplete
+                id="parking_municipality"
+                type="municipality"
+                value={parkingMunicipality}
+                onChange={(val) => setValue("parking_municipality", val)}
+                onSelect={(suggestion) => {
+                  setValue("parking_municipality", suggestion.label);
+                  setValue("parking_lat", suggestion.lat);
+                  setValue("parking_lng", suggestion.lng);
+                  trigger("parking_municipality");
+                }}
+                onBlur={() => trigger("parking_municipality")}
+                placeholder="Ex : Lyon"
+                icon={<MapPin className="h-5 w-5" aria-hidden="true" />}
+                ariaInvalid={!!errors.parking_municipality}
+                ariaRequired
+              />
+              {errors.parking_municipality && (
+                <p role="alert" className="text-sm text-red-600">{errors.parking_municipality.message}</p>
               )}
             </div>
 

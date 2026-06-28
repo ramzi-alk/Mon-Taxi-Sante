@@ -74,6 +74,20 @@ export type Database = {
             referencedRelation: "bookings"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "booking_reminder_tokens_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings_active_for_driver"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_reminder_tokens_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings_pool_for_drivers"
+            referencedColumns: ["id"]
+          },
         ]
       }
       bookings: {
@@ -260,6 +274,7 @@ export type Database = {
       }
       drivers_details: {
         Row: {
+          acceptance_radius_km: number | null
           approved_at: string | null
           approved_by: string | null
           availability: Database["public"]["Enums"]["driver_availability"]
@@ -273,6 +288,9 @@ export type Database = {
           id: string
           insurance_url: string | null
           oxygen_equipped: boolean
+          parking_lat: number | null
+          parking_lng: number | null
+          parking_municipality: string | null
           pmr_equipped: boolean
           profile_id: string
           siret: string
@@ -287,6 +305,7 @@ export type Database = {
           vehicle_year: number | null
         }
         Insert: {
+          acceptance_radius_km?: number | null
           approved_at?: string | null
           approved_by?: string | null
           availability?: Database["public"]["Enums"]["driver_availability"]
@@ -300,6 +319,9 @@ export type Database = {
           id?: string
           insurance_url?: string | null
           oxygen_equipped?: boolean
+          parking_lat?: number | null
+          parking_lng?: number | null
+          parking_municipality?: string | null
           pmr_equipped?: boolean
           profile_id: string
           siret: string
@@ -314,6 +336,7 @@ export type Database = {
           vehicle_year?: number | null
         }
         Update: {
+          acceptance_radius_km?: number | null
           approved_at?: string | null
           approved_by?: string | null
           availability?: Database["public"]["Enums"]["driver_availability"]
@@ -327,6 +350,9 @@ export type Database = {
           id?: string
           insurance_url?: string | null
           oxygen_equipped?: boolean
+          parking_lat?: number | null
+          parking_lng?: number | null
+          parking_municipality?: string | null
           pmr_equipped?: boolean
           profile_id?: string
           siret?: string
@@ -392,10 +418,49 @@ export type Database = {
       }
     }
     Views: {
+      bookings_active_for_driver: {
+        Row: {
+          created_at: string | null
+          distance_km: number | null
+          distance_to_driver_km: number | null
+          driver_id: string | null
+          dropoff_address: string | null
+          dropoff_lat: number | null
+          dropoff_lng: number | null
+          estimated_price: number | null
+          id: string | null
+          passenger_count: number | null
+          patient_full_name: string | null
+          patient_phone: string | null
+          pickup_address: string | null
+          pickup_datetime: string | null
+          pickup_lat: number | null
+          pickup_lng: number | null
+          requires_oxygen: boolean | null
+          requires_stretcher: boolean | null
+          requires_wheelchair: boolean | null
+          return_datetime: string | null
+          status: Database["public"]["Enums"]["booking_status"] | null
+          trip_type: Database["public"]["Enums"]["trip_type"] | null
+          vehicle_type:
+            | Database["public"]["Enums"]["booking_vehicle_type"]
+            | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bookings_pool_for_drivers: {
         Row: {
           created_at: string | null
           distance_km: number | null
+          distance_to_driver_km: number | null
           driver_id: string | null
           dropoff_address: string | null
           dropoff_lat: number | null
@@ -450,6 +515,15 @@ export type Database = {
       }
       cancel_via_reminder: { Args: { p_token: string }; Returns: string }
       complete_ride: { Args: { p_booking_id: string }; Returns: undefined }
+      compute_booking_price: {
+        Args: {
+          p_distance_km: number
+          p_requires_wheelchair: boolean
+          p_trip_type: Database["public"]["Enums"]["trip_type"]
+          p_vehicle_type: Database["public"]["Enums"]["booking_vehicle_type"]
+        }
+        Returns: number
+      }
       confirm_reminder: { Args: { p_token: string }; Returns: undefined }
       driver_matches_booking: {
         Args: {
@@ -500,6 +574,20 @@ export type Database = {
           vehicle_registration: string
           vehicle_type: Database["public"]["Enums"]["booking_vehicle_type"]
         }[]
+      }
+      get_my_driver_stats: {
+        Args: never
+        Returns: {
+          earnings_today: number
+          rides_completed: number
+          rides_today: number
+          total_earnings: number
+          total_km: number
+        }[]
+      }
+      haversine_km: {
+        Args: { p_lat1: number; p_lat2: number; p_lng1: number; p_lng2: number }
+        Returns: number
       }
       is_admin: { Args: never; Returns: boolean }
       is_driver: { Args: never; Returns: boolean }

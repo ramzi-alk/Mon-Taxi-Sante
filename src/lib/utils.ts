@@ -29,11 +29,11 @@ export function formatTimeFr(dateStr: string): string {
   }).format(new Date(dateStr));
 }
 
-export function formatPrice(cents: number): string {
+export function formatPrice(amount: number): string {
   return new Intl.NumberFormat("fr-FR", {
     style: "currency",
     currency: "EUR",
-  }).format(cents / 100);
+  }).format(amount);
 }
 
 export function formatReferenceCode(code: string): string {

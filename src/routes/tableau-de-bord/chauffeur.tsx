@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Activity,
@@ -11,12 +11,17 @@ import {
   Circle,
   Pause,
   PowerOff,
+  Gauge,
+  Wallet,
+  MapPin,
+  UserCog,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "~/lib/supabase";
-import { cn } from "~/lib/utils";
+import { cn, formatPrice } from "~/lib/utils";
 import { useRealtime } from "~/hooks/useRealtime";
 import { RideCard, type PoolRide } from "~/components/driver/RideCard";
+import { Input } from "~/components/ui/input";
 import * as authRepository from "~/repositories/authRepository";
 import * as bookingsRepository from "~/repositories/bookingsRepository";
 import * as driversRepository from "~/repositories/driversRepository";
@@ -83,6 +88,16 @@ async function setAvailability(availability: DriverAvailability): Promise<void> 
   await driversRepository.setAvailability(supabase, user.id, availability);
 }
 
+async function fetchMyDriverStats(): Promise<driversRepository.MyDriverStats | null> {
+  return driversRepository.fetchMyDriverStats(supabase);
+}
+
+async function setAcceptanceRadius(radiusKm: number | null): Promise<void> {
+  const user = await authRepository.getCurrentUser(supabase);
+  if (!user) throw new Error("Non authentifié");
+  await driversRepository.setAcceptanceRadius(supabase, user.id, radiusKm);
+}
+
 // ─── Stats card ─────────────────────────────────────────────────────────────
 
 function StatCard({
@@ -97,13 +112,15 @@ function StatCard({
   color: string;
 }) {
   return (
-    <div className="flex items-center gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-100">
-      <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${color}`}>
-        <Icon className="h-6 w-6" aria-hidden="true" />
+    <div className="flex items-center gap-2.5 rounded-xl bg-white p-3 shadow-sm ring-1 ring-gray-100 sm:gap-4 sm:rounded-2xl sm:p-5">
+      <div
+        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg sm:h-12 sm:w-12 sm:rounded-xl ${color}`}
+      >
+        <Icon className="h-5 w-5 sm:h-6 sm:w-6" aria-hidden="true" />
       </div>
-      <div>
-        <p className="text-2xl font-black text-gray-900">{value}</p>
-        <p className="text-sm text-muted-foreground">{label}</p>
+      <div className="min-w-0">
+        <p className="text-lg font-black text-gray-900 leading-tight sm:text-2xl">{value}</p>
+        <p className="text-xs leading-snug text-muted-foreground sm:text-sm">{label}</p>
       </div>
     </div>
   );
@@ -127,6 +144,28 @@ function DriverDashboard() {
     queryFn: fetchMyAvailability,
   });
   const availability = availabilityQuery.data?.availability ?? "offline";
+
+  const statsQuery = useQuery({
+    queryKey: ["my-driver-stats"],
+    queryFn: fetchMyDriverStats,
+  });
+
+  const [radiusInput, setRadiusInput] = useState("");
+  useEffect(() => {
+    setRadiusInput(availabilityQuery.data?.acceptance_radius_km?.toString() ?? "");
+  }, [availabilityQuery.data?.acceptance_radius_km]);
+
+  const radiusMutation = useMutation({
+    mutationFn: setAcceptanceRadius,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-availability"] });
+      queryClient.invalidateQueries({ queryKey: ["ride-pool"] });
+    },
+    onError: (error) => {
+      logger.error("driver.setAcceptanceRadius failed", { error: error.message });
+      alert(`Erreur : ${error.message}`);
+    },
+  });
 
   const availabilityMutation = useMutation({
     mutationFn: setAvailability,
@@ -288,6 +327,13 @@ function DriverDashboard() {
                   </button>
                 ))}
               </div>
+              <Link
+                to="/tableau-de-bord/chauffeur/compte"
+                className="flex items-center gap-2 rounded-xl bg-white/10 border border-white/20 px-4 py-2 text-sm font-medium hover:bg-white/20 transition-colors"
+              >
+                <UserCog className="h-4 w-4" aria-hidden="true" />
+                Mon compte
+              </Link>
               <button
                 onClick={() => setRealtimeEnabled(!realtimeEnabled)}
                 className="flex items-center gap-2 rounded-xl bg-white/10 border border-white/20 px-4 py-2 text-sm font-medium hover:bg-white/20 transition-colors"
@@ -322,7 +368,7 @@ function DriverDashboard() {
           <h2 id="stats-heading" className="sr-only">
             Statistiques du jour
           </h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4">
             <StatCard
               icon={Activity}
               label="Courses disponibles"
@@ -338,7 +384,7 @@ function DriverDashboard() {
             <StatCard
               icon={CheckCircle2}
               label="Courses terminées (total)"
-              value={myRides.filter((r) => r.status === "completed").length}
+              value={statsQuery.data?.rides_completed ?? 0}
               color="bg-purple-50 text-purple-600"
             />
             <StatCard
@@ -353,6 +399,77 @@ function DriverDashboard() {
               }
               color="bg-amber-50 text-amber-600"
             />
+          </div>
+        </section>
+
+        {/* Earnings */}
+        <section aria-labelledby="earnings-heading">
+          <h2 id="earnings-heading" className="sr-only">
+            Kilomètres et gains
+          </h2>
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-3">
+            <StatCard
+              icon={Gauge}
+              label="Km parcourus (total)"
+              value={`${statsQuery.data?.total_km ?? 0} km`}
+              color="bg-indigo-50 text-indigo-600"
+            />
+            <StatCard
+              icon={Wallet}
+              label="Gains totaux"
+              value={formatPrice(statsQuery.data?.total_earnings ?? 0)}
+              color="bg-brand-green-50 text-brand-green-600"
+            />
+            <StatCard
+              icon={Wallet}
+              label="Gains aujourd'hui"
+              value={formatPrice(statsQuery.data?.earnings_today ?? 0)}
+              color="bg-brand-blue-50 text-brand-blue-600"
+            />
+          </div>
+        </section>
+
+        {/* Acceptance radius setting */}
+        <section aria-labelledby="radius-heading">
+          <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-100">
+            <div className="flex items-center gap-2 mb-1">
+              <MapPin className="h-4 w-4 text-brand-blue-500" aria-hidden="true" />
+              <h2 id="radius-heading" className="text-sm font-bold text-gray-900">
+                Rayon d'acceptation
+              </h2>
+            </div>
+            <p className="text-sm text-muted-foreground mb-3">
+              Distance maximale (km) entre votre commune de stationnement et le
+              point de départ d'une course pour qu'elle apparaisse dans votre
+              pool. Laissez vide pour aucune limite.
+            </p>
+            <form
+              className="flex flex-wrap items-center gap-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const trimmed = radiusInput.trim();
+                radiusMutation.mutate(trimmed === "" ? null : Number(trimmed));
+              }}
+            >
+              <Input
+                type="number"
+                min={0}
+                step="0.1"
+                inputMode="decimal"
+                value={radiusInput}
+                onChange={(e) => setRadiusInput(e.target.value)}
+                placeholder="Aucune limite"
+                aria-label="Rayon d'acceptation en kilomètres"
+                className="max-w-[160px]"
+              />
+              <button
+                type="submit"
+                disabled={radiusMutation.isPending}
+                className="rounded-xl bg-brand-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-blue-700 disabled:opacity-60 transition-colors"
+              >
+                {radiusMutation.isPending ? "Enregistrement…" : "Enregistrer"}
+              </button>
+            </form>
           </div>
         </section>
 
