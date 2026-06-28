@@ -1,5 +1,5 @@
 import { UseFormReturn } from "react-hook-form";
-import { ArrowRight, RefreshCw, Route } from "lucide-react";
+import { ArrowRight, RefreshCw, Route, Hospital } from "lucide-react";
 import { cn } from "~/lib/utils";
 import type { BookingSchema } from "../schema";
 
@@ -31,8 +31,19 @@ const tripOptions = [
 ];
 
 export function Step5TripType({ form }: StepProps) {
-  const { watch, setValue, formState: { errors } } = form;
+  const { watch, setValue, register, formState: { errors } } = form;
   const selected = watch("trip_type");
+  const isHospitalization = watch("is_hospitalization");
+
+  // Les soins répétés sont automatiquement considérés comme hospitalisations
+  function handleTripTypeChange(value: typeof selected) {
+    setValue("trip_type", value);
+    if (value === "aller_retour") setValue("has_return", true);
+    if (value === "aller_simple") setValue("has_return", false);
+    // Soins en série → retour à vide automatique
+    if (value === "multiple") setValue("is_hospitalization", true);
+    if (value === "aller_retour") setValue("is_hospitalization", false);
+  }
 
   return (
     <div className="space-y-6">
@@ -64,11 +75,7 @@ export function Step5TripType({ form }: StepProps) {
                   id={`trip-${value}`}
                   value={value}
                   checked={isSelected}
-                  onChange={() => {
-                    setValue("trip_type", value);
-                    if (value === "aller_retour") setValue("has_return", true);
-                    if (value === "aller_simple") setValue("has_return", false);
-                  }}
+                  onChange={() => handleTripTypeChange(value)}
                   className="sr-only"
                 />
                 <div
@@ -104,9 +111,36 @@ export function Step5TripType({ form }: StepProps) {
         </div>
       </fieldset>
 
+      {/* Question hospitalisation — visible uniquement pour aller simple */}
+      {selected === "aller_simple" && (
+        <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              {...register("is_hospitalization")}
+              id="is_hospitalization"
+              className="mt-0.5 h-5 w-5 rounded border-gray-300 text-brand-blue-600 focus:ring-brand-blue-500 cursor-pointer"
+              aria-describedby="hospit-hint"
+            />
+            <div>
+              <div className="flex items-center gap-2">
+                <Hospital className="h-4 w-4 text-brand-blue-600 shrink-0" aria-hidden="true" />
+                <span className="font-semibold text-gray-800 text-sm">
+                  Le patient sera hospitalisé (ne rentre pas le jour même)
+                </span>
+              </div>
+              <p id="hospit-hint" className="text-xs text-muted-foreground mt-1">
+                Cochez cette case si le patient est admis et reste à l&apos;hôpital à l&apos;issue du transport.
+              </p>
+            </div>
+          </label>
+        </div>
+      )}
+
       {errors.trip_type && (
         <p role="alert" className="text-sm text-red-600">{errors.trip_type.message}</p>
       )}
+
     </div>
   );
 }
