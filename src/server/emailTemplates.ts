@@ -50,6 +50,15 @@ function trackingUrl(referenceCode: string): string {
   return `${appUrl}/mes-reservations?ref=${encodeURIComponent(formatReferenceCode(referenceCode))}`;
 }
 
+// The day-before reminder token is the sole proof of ownership for
+// /confirmer-trajet (no second factor like phone) — single-use, expiring,
+// and hashed at rest server-side (see migration 020). The raw token only
+// ever exists here, in this one email.
+function reminderUrl(token: string): string {
+  const appUrl = (import.meta.env.VITE_APP_URL as string | undefined) ?? "https://mon-taxi-sante.com";
+  return `${appUrl}/confirmer-trajet?token=${encodeURIComponent(token)}`;
+}
+
 function ctaButton(label: string, href: string): string {
   return `
     <table role="presentation" cellpadding="0" cellspacing="0" style="margin:20px 0;">
@@ -62,11 +71,12 @@ function ctaButton(label: string, href: string): string {
   `;
 }
 
-function badge(label: string, color: "green" | "red" | "blue"): string {
+function badge(label: string, color: "green" | "red" | "blue" | "amber"): string {
   const palette = {
     green: { bg: "#ECFDF5", fg: "#059669" },
     red: { bg: "#FEF2F2", fg: "#DC2626" },
     blue: { bg: "#EFF4FF", fg: "#1244E8" },
+    amber: { bg: "#FFFBEB", fg: "#D97706" },
   }[color];
   return `<span style="display:inline-block;background:${palette.bg};color:${palette.fg};font-size:12px;font-weight:700;padding:5px 12px;border-radius:999px;margin-bottom:16px;">${label}</span>`;
 }
@@ -113,6 +123,56 @@ export function bookingConfirmationEmail(params: {
         ])}
         ${ctaButton("Suivre ma réservation", trackingUrl(referenceCode))}
         <p style="margin:0;font-size:14px;color:#6b7280;line-height:1.5;">Ce lien ouvre la page de suivi avec votre référence déjà renseignée. Pour des raisons de sécurité, vous devrez confirmer votre numéro de téléphone pour accéder aux détails.</p>
+      `,
+    }),
+  };
+}
+
+export function bookingAcceptedEmail(params: {
+  patientFullName: string;
+  referenceCode: string;
+  pickupAddress: string;
+  dropoffAddress: string;
+  pickupDatetime: string;
+  driverFullName: string;
+  driverPhone: string | null;
+  vehicleBrand: string | null;
+  vehicleModel: string | null;
+  vehicleRegistration: string | null;
+}): EmailContent {
+  const {
+    patientFullName,
+    referenceCode,
+    pickupAddress,
+    dropoffAddress,
+    pickupDatetime,
+    driverFullName,
+    driverPhone,
+    vehicleBrand,
+    vehicleModel,
+    vehicleRegistration,
+  } = params;
+  const vehicleLabel = [vehicleBrand, vehicleModel].filter(Boolean).join(" ");
+  return {
+    subject: `Chauffeur affecté — Réf. ${formatReferenceCode(referenceCode)}`,
+    html: layout({
+      title: "Chauffeur affecté",
+      icon: "🚗",
+      bodyHtml: `
+        ${badge("Chauffeur affecté", "blue")}
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${patientFullName},</p>
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Un chauffeur conventionné Assurance Maladie a accepté de prendre en charge votre course.</p>
+        ${detailsCard([
+          { label: "Référence", value: formatReferenceCode(referenceCode) },
+          { label: "Chauffeur", value: driverFullName },
+          ...(driverPhone ? [{ label: "Téléphone", value: driverPhone }] : []),
+          ...(vehicleLabel ? [{ label: "Véhicule", value: vehicleLabel }] : []),
+          ...(vehicleRegistration ? [{ label: "Immatriculation", value: vehicleRegistration }] : []),
+          { label: "Départ", value: pickupAddress },
+          { label: "Destination", value: dropoffAddress },
+          { label: "Date", value: `${formatDateFr(pickupDatetime)} à ${formatTimeFr(pickupDatetime)}` },
+        ])}
+        ${ctaButton("Suivre ma réservation", trackingUrl(referenceCode))}
       `,
     }),
   };
@@ -188,6 +248,107 @@ export function driverApprovedEmail(params: { driverFullName: string }): EmailCo
         ${badge("Compte activé", "green")}
         <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${driverFullName},</p>
         <p style="margin:0;font-size:15px;line-height:1.5;">Bonne nouvelle : votre candidature chauffeur a été validée par notre équipe. Vous pouvez désormais accéder à votre tableau de bord et accepter des courses disponibles dans la file d'attente.</p>
+      `,
+    }),
+  };
+}
+
+export function bookingReminderEmail(params: {
+  patientFullName: string;
+  referenceCode: string;
+  pickupAddress: string;
+  dropoffAddress: string;
+  pickupDatetime: string;
+  token: string;
+}): EmailContent {
+  const { patientFullName, referenceCode, pickupAddress, dropoffAddress, pickupDatetime, token } = params;
+  return {
+    subject: `Rappel — votre course de demain (Réf. ${formatReferenceCode(referenceCode)})`,
+    html: layout({
+      title: "Votre course est demain",
+      icon: "📅",
+      bodyHtml: `
+        ${badge("Confirmation requise", "blue")}
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${patientFullName},</p>
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Pour rappel, vous avez une course prévue demain. Merci de confirmer ou d'annuler ce trajet ci-dessous.</p>
+        ${detailsCard([
+          { label: "Référence", value: formatReferenceCode(referenceCode) },
+          { label: "Départ", value: pickupAddress },
+          { label: "Destination", value: dropoffAddress },
+          { label: "Date", value: `${formatDateFr(pickupDatetime)} à ${formatTimeFr(pickupDatetime)}` },
+        ])}
+        ${ctaButton("Confirmer ou annuler ce trajet", reminderUrl(token))}
+        <p style="margin:0;font-size:14px;color:#6b7280;line-height:1.5;">Ce lien est à usage unique et n'est valable que jusqu'au jour de votre course.</p>
+      `,
+    }),
+  };
+}
+
+export function bookingUpdatedDriverEmail(params: {
+  driverFullName: string;
+  referenceCode: string;
+  pickupAddress: string;
+  dropoffAddress: string;
+  pickupDatetime: string;
+}): EmailContent {
+  const { driverFullName, referenceCode, pickupAddress, dropoffAddress, pickupDatetime } = params;
+  return {
+    subject: `Détails modifiés — Réf. ${formatReferenceCode(referenceCode)}`,
+    html: layout({
+      title: "Détails de la course modifiés",
+      icon: "✏️",
+      bodyHtml: `
+        ${badge("Mise à jour", "blue")}
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${driverFullName},</p>
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Le patient a modifié les détails d'une course que vous avez acceptée.</p>
+        ${detailsCard([
+          { label: "Référence", value: formatReferenceCode(referenceCode) },
+          { label: "Départ", value: pickupAddress },
+          { label: "Destination", value: dropoffAddress },
+          { label: "Nouvelle date", value: `${formatDateFr(pickupDatetime)} à ${formatTimeFr(pickupDatetime)}` },
+        ])}
+        <p style="margin:0;font-size:14px;color:#6b7280;line-height:1.5;">Consultez votre tableau de bord chauffeur pour voir le détail complet de la course.</p>
+      `,
+    }),
+  };
+}
+
+export function rideUnassignedByDriverEmail(params: {
+  patientFullName: string;
+  referenceCode: string;
+  pickupDatetime: string;
+}): EmailContent {
+  const { patientFullName, referenceCode, pickupDatetime } = params;
+  return {
+    subject: `Recherche d'un nouveau chauffeur — Réf. ${formatReferenceCode(referenceCode)}`,
+    html: layout({
+      title: "Recherche d'un nouveau chauffeur",
+      icon: "🔄",
+      bodyHtml: `
+        ${badge("Nouvelle recherche en cours", "amber")}
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${patientFullName},</p>
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Le chauffeur initialement affecté à votre course du <strong>${formatDateFr(pickupDatetime)} à ${formatTimeFr(pickupDatetime)}</strong> (réf. ${formatReferenceCode(referenceCode)}) n'est finalement plus disponible. Votre réservation est de nouveau proposée à notre réseau de chauffeurs conventionnés ; vous serez averti dès qu'un nouveau chauffeur l'accepte.</p>
+        ${ctaButton("Suivre ma réservation", trackingUrl(referenceCode))}
+      `,
+    }),
+  };
+}
+
+export function bookingCancelledDriverEmail(params: {
+  driverFullName: string;
+  referenceCode: string;
+  pickupDatetime: string;
+}): EmailContent {
+  const { driverFullName, referenceCode, pickupDatetime } = params;
+  return {
+    subject: `Course annulée par le patient — Réf. ${formatReferenceCode(referenceCode)}`,
+    html: layout({
+      title: "Course annulée",
+      icon: "🚫",
+      bodyHtml: `
+        ${badge("Annulée", "red")}
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${driverFullName},</p>
+        <p style="margin:0;font-size:15px;line-height:1.5;">Le patient a annulé la course prévue le <strong>${formatDateFr(pickupDatetime)} à ${formatTimeFr(pickupDatetime)}</strong> (réf. ${formatReferenceCode(referenceCode)}) que vous aviez acceptée. Elle n'apparaîtra plus dans votre tableau de bord.</p>
       `,
     }),
   };

@@ -339,6 +339,9 @@ function mapRideLifecycleError(error: { message: string }, rideId: string, actio
   if (error.message.includes("booking_not_found")) {
     return new Error("Course introuvable.");
   }
+  if (error.message.includes("booking_not_cancellable_by_driver")) {
+    return new Error("Cette course ne peut pas être annulée (elle n'est pas/plus affectée).");
+  }
   logger.error(`bookings.${action} failed`, { error: error.message, rideId });
   return new Error(error.message);
 }
@@ -396,6 +399,80 @@ export async function publishBooking(client: SupabaseClient, bookingId: string):
     logger.error("bookings.publishBooking failed", { error: error.message, bookingId });
     throw new Error(error.message);
   }
+}
+
+/**
+ * Driver backs out of their own accepted ride, via cancel_ride_by_driver
+ * (see migration 020) — returns it to the pool (available, driver_id
+ * cleared) rather than cancelling the patient's reservation outright.
+ */
+export async function cancelRideByDriver(client: SupabaseClient, rideId: string): Promise<void> {
+  const { error } = await client.rpc("cancel_ride_by_driver", { p_booking_id: rideId });
+
+  if (error) {
+    throw mapRideLifecycleError(error, rideId, "cancelRideByDriver");
+  }
+}
+
+export type ReminderTokenBooking = Database["public"]["Functions"]["resolve_reminder_token"]["Returns"][number];
+
+/**
+ * Read-only resolution of a day-before reminder token for the
+ * /confirmer-trajet page (see migration 020's resolve_reminder_token).
+ * Single-use, high-entropy token — the only proof of ownership needed here,
+ * deliberately separate from the lower-entropy reference_code + phone flow.
+ */
+export async function resolveReminderToken(
+  client: SupabaseClient,
+  token: string
+): Promise<ReminderTokenBooking | null> {
+  const { data, error } = await client.rpc("resolve_reminder_token", { p_token: token });
+
+  if (error) {
+    if (error.message.includes("token_invalid")) {
+      return null;
+    }
+    logger.error("bookings.resolveReminderToken failed", { error: error.message });
+    throw new Error(error.message);
+  }
+  return data?.[0] ?? null;
+}
+
+/**
+ * Patient explicit confirmation from /confirmer-trajet — marks the token
+ * used, stamps reminder_confirmed_at. Does not touch booking status.
+ */
+export async function confirmReminderToken(client: SupabaseClient, token: string): Promise<void> {
+  const { error } = await client.rpc("confirm_reminder", { p_token: token });
+
+  if (error) {
+    if (error.message.includes("token_invalid")) {
+      throw new Error("Ce lien de confirmation n'est plus valide.");
+    }
+    logger.error("bookings.confirmReminderToken failed", { error: error.message });
+    throw new Error(error.message);
+  }
+}
+
+/**
+ * Patient explicit cancellation from /confirmer-trajet (double-confirmation
+ * already happened client-side). Returns the booking_id so the caller can
+ * trigger notifyBookingCancelledServerFn (also emails the assigned driver).
+ */
+export async function cancelBookingViaReminder(client: SupabaseClient, token: string): Promise<string> {
+  const { data, error } = await client.rpc("cancel_via_reminder", { p_token: token });
+
+  if (error) {
+    if (error.message.includes("token_invalid")) {
+      throw new Error("Ce lien de confirmation n'est plus valide.");
+    }
+    if (error.message.includes("booking_not_cancellable")) {
+      throw new Error("Cette réservation ne peut plus être annulée (course déjà en cours ou terminée).");
+    }
+    logger.error("bookings.cancelBookingViaReminder failed", { error: error.message });
+    throw new Error(error.message);
+  }
+  return data;
 }
 
 export async function insertBooking(

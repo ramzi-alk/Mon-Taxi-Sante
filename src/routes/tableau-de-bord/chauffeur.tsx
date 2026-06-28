@@ -20,6 +20,7 @@ import { RideCard, type PoolRide } from "~/components/driver/RideCard";
 import * as authRepository from "~/repositories/authRepository";
 import * as bookingsRepository from "~/repositories/bookingsRepository";
 import * as driversRepository from "~/repositories/driversRepository";
+import { notifyBookingAcceptedServerFn, notifyRideUnassignedServerFn } from "~/server/email";
 import { logger } from "~/lib/logger";
 import type { Database } from "~/lib/database.types";
 
@@ -64,6 +65,10 @@ async function startRide(rideId: string): Promise<void> {
 
 async function completeRide(rideId: string): Promise<void> {
   await bookingsRepository.completeRide(supabase, rideId);
+}
+
+async function cancelRideByDriver(rideId: string): Promise<void> {
+  await bookingsRepository.cancelRideByDriver(supabase, rideId);
 }
 
 async function fetchMyAvailability(): Promise<driversRepository.MyDriverDetails | null> {
@@ -111,6 +116,7 @@ function DriverDashboard() {
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
   const [startingId, setStartingId] = useState<string | null>(null);
   const [completingId, setCompletingId] = useState<string | null>(null);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [realtimeEnabled, setRealtimeEnabled] = useState(true);
   const [tab, setTab] = useState<"pool" | "my_rides">("pool");
 
@@ -165,6 +171,11 @@ function DriverDashboard() {
   const acceptMutation = useMutation({
     mutationFn: acceptRide,
     onMutate: (rideId) => setAcceptingId(rideId),
+    onSuccess: (_, rideId) => {
+      notifyBookingAcceptedServerFn({ data: { bookingId: rideId } }).catch((err) => {
+        logger.warn("email.notifyBookingAccepted failed", { error: err.message, rideId });
+      });
+    },
     onSettled: () => {
       setAcceptingId(null);
       queryClient.invalidateQueries({ queryKey: ["ride-pool"] });
@@ -198,6 +209,25 @@ function DriverDashboard() {
     },
     onError: (error, rideId) => {
       logger.error("driver.completeRide failed", { error: error.message, rideId });
+      alert(`Erreur : ${error.message}`);
+    },
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: cancelRideByDriver,
+    onMutate: (rideId) => setCancellingId(rideId),
+    onSuccess: (_, rideId) => {
+      notifyRideUnassignedServerFn({ data: { bookingId: rideId } }).catch((err) => {
+        logger.warn("email.notifyRideUnassigned failed", { error: err.message, rideId });
+      });
+    },
+    onSettled: () => {
+      setCancellingId(null);
+      queryClient.invalidateQueries({ queryKey: ["ride-pool"] });
+      queryClient.invalidateQueries({ queryKey: ["my-rides"] });
+    },
+    onError: (error, rideId) => {
+      logger.error("driver.cancelRideByDriver failed", { error: error.message, rideId });
       alert(`Erreur : ${error.message}`);
     },
   });
@@ -464,6 +494,8 @@ function DriverDashboard() {
                       isStarting={startingId === ride.id && startMutation.isPending}
                       onComplete={(id) => completeMutation.mutate(id)}
                       isCompleting={completingId === ride.id && completeMutation.isPending}
+                      onCancel={(id) => cancelMutation.mutate(id)}
+                      isCancelling={cancellingId === ride.id && cancelMutation.isPending}
                     />
                   </li>
                 ))}

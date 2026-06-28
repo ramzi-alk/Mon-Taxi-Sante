@@ -1,4 +1,5 @@
-import { MapPin, Clock, Car, Users, Navigation, Loader2, PlayCircle, FlagTriangleRight } from "lucide-react";
+import { useState } from "react";
+import { MapPin, Clock, Car, Users, Navigation, Loader2, PlayCircle, FlagTriangleRight, XCircle } from "lucide-react";
 import { formatDateFr, formatTimeFr, formatPrice } from "~/lib/utils";
 import { cn } from "~/lib/utils";
 
@@ -36,6 +37,8 @@ interface RideCardProps {
   isStarting?: boolean;
   onComplete?: (rideId: string) => void;
   isCompleting?: boolean;
+  onCancel?: (rideId: string) => void;
+  isCancelling?: boolean;
 }
 
 const vehicleIcons: Record<string, string> = {
@@ -63,7 +66,10 @@ export function RideCard({
   isStarting,
   onComplete,
   isCompleting,
+  onCancel,
+  isCancelling,
 }: RideCardProps) {
+  const [confirmingCancel, setConfirmingCancel] = useState(false);
   const pickupDate = formatDateFr(ride.pickup_datetime);
   const pickupTime = formatTimeFr(ride.pickup_datetime);
   const isToday = new Date(ride.pickup_datetime).toDateString() === new Date().toDateString();
@@ -231,6 +237,42 @@ export function RideCard({
                 )}
                 Démarrer la course
               </button>
+            </div>
+          )}
+
+          {ride.status === "accepted" && onCancel && (
+            <div className="w-full">
+              {confirmingCancel ? (
+                <div className="flex items-center gap-3 text-sm pt-2">
+                  <span className="text-gray-700">Annuler cette course ?</span>
+                  <button
+                    type="button"
+                    onClick={() => onCancel(ride.id)}
+                    disabled={isCancelling}
+                    className="font-bold text-red-600 hover:underline disabled:opacity-60 flex items-center gap-1.5"
+                  >
+                    {isCancelling && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
+                    Oui, annuler
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmingCancel(false)}
+                    disabled={isCancelling}
+                    className="text-gray-500 hover:underline"
+                  >
+                    Non
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setConfirmingCancel(true)}
+                  className="flex items-center gap-1.5 text-xs font-semibold text-red-600 hover:underline pt-2"
+                >
+                  <XCircle className="h-3.5 w-3.5" aria-hidden="true" />
+                  Me désister de cette course
+                </button>
+              )}
             </div>
           )}
 
