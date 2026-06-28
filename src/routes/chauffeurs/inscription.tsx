@@ -39,6 +39,8 @@ const inscriptionSchema = z.object({
   vehicle_registration: z.string().min(4, "Plaque d'immatriculation requise"),
   pmr_equipped: z.boolean(),
   parking_municipality: z.string().min(2, "Veuillez indiquer votre commune de stationnement"),
+  parking_lat: z.number().nullable(),
+  parking_lng: z.number().nullable(),
 });
 
 type InscriptionSchema = z.infer<typeof inscriptionSchema>;
@@ -71,6 +73,8 @@ async function registerDriver(data: InscriptionSchema, company: CompanySuggestio
       vehicle_registration: data.vehicle_registration,
       pmr_equipped: data.pmr_equipped,
       parking_municipality: data.parking_municipality,
+      parking_lat: data.parking_lat,
+      parking_lng: data.parking_lng,
     },
   });
 }
@@ -89,7 +93,13 @@ function InscriptionChauffeurPage() {
     formState: { errors },
   } = useForm<InscriptionSchema>({
     resolver: zodResolver(inscriptionSchema),
-    defaultValues: { vehicle_type: "taxi", pmr_equipped: false, parking_municipality: "" },
+    defaultValues: {
+      vehicle_type: "taxi",
+      pmr_equipped: false,
+      parking_municipality: "",
+      parking_lat: null,
+      parking_lng: null,
+    },
   });
   const parkingMunicipality = watch("parking_municipality");
 
@@ -328,6 +338,8 @@ function InscriptionChauffeurPage() {
                 onChange={(val) => setValue("parking_municipality", val)}
                 onSelect={(suggestion) => {
                   setValue("parking_municipality", suggestion.label);
+                  setValue("parking_lat", suggestion.lat);
+                  setValue("parking_lng", suggestion.lng);
                   trigger("parking_municipality");
                 }}
                 onBlur={() => trigger("parking_municipality")}

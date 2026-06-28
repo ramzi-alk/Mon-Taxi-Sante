@@ -11,6 +11,16 @@ export interface MyDriverDetails {
   pmr_equipped: boolean;
   stretcher_equipped: boolean;
   oxygen_equipped: boolean;
+  parking_municipality: string | null;
+  acceptance_radius_km: number | null;
+}
+
+export interface MyDriverStats {
+  rides_completed: number;
+  total_km: number;
+  total_earnings: number;
+  rides_today: number;
+  earnings_today: number;
 }
 
 export interface PendingDriver {
@@ -88,7 +98,9 @@ export async function fetchMyAvailability(
 ): Promise<MyDriverDetails | null> {
   const { data, error } = await client
     .from("drivers_details")
-    .select("availability, vehicle_type, pmr_equipped, stretcher_equipped, oxygen_equipped")
+    .select(
+      "availability, vehicle_type, pmr_equipped, stretcher_equipped, oxygen_equipped, parking_municipality, acceptance_radius_km"
+    )
     .eq("profile_id", profileId)
     .maybeSingle();
 
@@ -117,4 +129,41 @@ export async function setAvailability(
     logger.error("drivers.setAvailability failed", { error: error.message, profileId, availability });
     throw new Error(error.message);
   }
+}
+
+/**
+ * Driver-controlled radius (km) around their parking position beyond which
+ * pool rides are hidden (see bookings_pool_for_drivers). Direct UPDATE is
+ * fine — RLS already scopes this to the driver's own row. NULL clears the
+ * limit (pool shows every compatible ride regardless of distance).
+ */
+export async function setAcceptanceRadius(
+  client: SupabaseClient,
+  profileId: string,
+  radiusKm: number | null
+): Promise<void> {
+  const { error } = await client
+    .from("drivers_details")
+    .update({ acceptance_radius_km: radiusKm })
+    .eq("profile_id", profileId);
+
+  if (error) {
+    logger.error("drivers.setAcceptanceRadius failed", { error: error.message, profileId, radiusKm });
+    throw new Error(error.message);
+  }
+}
+
+/**
+ * Stats for the connected driver's dashboard (completed rides, cumulative
+ * km/earnings, and today's figures) via the get_my_driver_stats RPC — see
+ * migration 022.
+ */
+export async function fetchMyDriverStats(client: SupabaseClient): Promise<MyDriverStats | null> {
+  const { data, error } = await client.rpc("get_my_driver_stats");
+
+  if (error) {
+    logger.error("drivers.fetchMyDriverStats failed", { error: error.message });
+    throw new Error(error.message);
+  }
+  return data?.[0] ?? null;
 }

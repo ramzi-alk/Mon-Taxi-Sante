@@ -11,12 +11,16 @@ import {
   Circle,
   Pause,
   PowerOff,
+  Gauge,
+  Wallet,
+  MapPin,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "~/lib/supabase";
-import { cn } from "~/lib/utils";
+import { cn, formatPrice } from "~/lib/utils";
 import { useRealtime } from "~/hooks/useRealtime";
 import { RideCard, type PoolRide } from "~/components/driver/RideCard";
+import { Input } from "~/components/ui/input";
 import * as authRepository from "~/repositories/authRepository";
 import * as bookingsRepository from "~/repositories/bookingsRepository";
 import * as driversRepository from "~/repositories/driversRepository";
@@ -83,6 +87,16 @@ async function setAvailability(availability: DriverAvailability): Promise<void> 
   await driversRepository.setAvailability(supabase, user.id, availability);
 }
 
+async function fetchMyDriverStats(): Promise<driversRepository.MyDriverStats | null> {
+  return driversRepository.fetchMyDriverStats(supabase);
+}
+
+async function setAcceptanceRadius(radiusKm: number | null): Promise<void> {
+  const user = await authRepository.getCurrentUser(supabase);
+  if (!user) throw new Error("Non authentifié");
+  await driversRepository.setAcceptanceRadius(supabase, user.id, radiusKm);
+}
+
 // ─── Stats card ─────────────────────────────────────────────────────────────
 
 function StatCard({
@@ -127,6 +141,28 @@ function DriverDashboard() {
     queryFn: fetchMyAvailability,
   });
   const availability = availabilityQuery.data?.availability ?? "offline";
+
+  const statsQuery = useQuery({
+    queryKey: ["my-driver-stats"],
+    queryFn: fetchMyDriverStats,
+  });
+
+  const [radiusInput, setRadiusInput] = useState("");
+  useEffect(() => {
+    setRadiusInput(availabilityQuery.data?.acceptance_radius_km?.toString() ?? "");
+  }, [availabilityQuery.data?.acceptance_radius_km]);
+
+  const radiusMutation = useMutation({
+    mutationFn: setAcceptanceRadius,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-availability"] });
+      queryClient.invalidateQueries({ queryKey: ["ride-pool"] });
+    },
+    onError: (error) => {
+      logger.error("driver.setAcceptanceRadius failed", { error: error.message });
+      alert(`Erreur : ${error.message}`);
+    },
+  });
 
   const availabilityMutation = useMutation({
     mutationFn: setAvailability,
@@ -338,7 +374,7 @@ function DriverDashboard() {
             <StatCard
               icon={CheckCircle2}
               label="Courses terminées (total)"
-              value={myRides.filter((r) => r.status === "completed").length}
+              value={statsQuery.data?.rides_completed ?? 0}
               color="bg-purple-50 text-purple-600"
             />
             <StatCard
@@ -353,6 +389,77 @@ function DriverDashboard() {
               }
               color="bg-amber-50 text-amber-600"
             />
+          </div>
+        </section>
+
+        {/* Earnings */}
+        <section aria-labelledby="earnings-heading">
+          <h2 id="earnings-heading" className="sr-only">
+            Kilomètres et gains
+          </h2>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <StatCard
+              icon={Gauge}
+              label="Km parcourus (total)"
+              value={`${statsQuery.data?.total_km ?? 0} km`}
+              color="bg-indigo-50 text-indigo-600"
+            />
+            <StatCard
+              icon={Wallet}
+              label="Gains totaux"
+              value={formatPrice(statsQuery.data?.total_earnings ?? 0)}
+              color="bg-brand-green-50 text-brand-green-600"
+            />
+            <StatCard
+              icon={Wallet}
+              label="Gains aujourd'hui"
+              value={formatPrice(statsQuery.data?.earnings_today ?? 0)}
+              color="bg-brand-blue-50 text-brand-blue-600"
+            />
+          </div>
+        </section>
+
+        {/* Acceptance radius setting */}
+        <section aria-labelledby="radius-heading">
+          <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-100">
+            <div className="flex items-center gap-2 mb-1">
+              <MapPin className="h-4 w-4 text-brand-blue-500" aria-hidden="true" />
+              <h2 id="radius-heading" className="text-sm font-bold text-gray-900">
+                Rayon d'acceptation
+              </h2>
+            </div>
+            <p className="text-sm text-muted-foreground mb-3">
+              Distance maximale (km) entre votre commune de stationnement et le
+              point de départ d'une course pour qu'elle apparaisse dans votre
+              pool. Laissez vide pour aucune limite.
+            </p>
+            <form
+              className="flex flex-wrap items-center gap-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const trimmed = radiusInput.trim();
+                radiusMutation.mutate(trimmed === "" ? null : Number(trimmed));
+              }}
+            >
+              <Input
+                type="number"
+                min={0}
+                step="0.1"
+                inputMode="decimal"
+                value={radiusInput}
+                onChange={(e) => setRadiusInput(e.target.value)}
+                placeholder="Aucune limite"
+                aria-label="Rayon d'acceptation en kilomètres"
+                className="max-w-[160px]"
+              />
+              <button
+                type="submit"
+                disabled={radiusMutation.isPending}
+                className="rounded-xl bg-brand-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-blue-700 disabled:opacity-60 transition-colors"
+              >
+                {radiusMutation.isPending ? "Enregistrement…" : "Enregistrer"}
+              </button>
+            </form>
           </div>
         </section>
 

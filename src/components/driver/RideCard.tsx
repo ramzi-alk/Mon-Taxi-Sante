@@ -30,6 +30,7 @@ export interface PoolRide {
   estimated_price: number | null;
   status: string;
   created_at: string;
+  distance_to_driver_km?: number | null;
 }
 
 interface RideCardProps {
@@ -105,6 +106,12 @@ export function RideCard({
           {statusLabels[ride.status] && (
             <span className="rounded-full bg-brand-blue-100 text-brand-blue-700 px-2 py-0.5 text-xs font-semibold">
               {statusLabels[ride.status]}
+            </span>
+          )}
+          {ride.distance_to_driver_km != null && (
+            <span className="flex items-center gap-1 rounded-full bg-brand-blue-50 text-brand-blue-700 px-2 py-0.5 text-xs font-semibold">
+              <Navigation className="h-3 w-3" aria-hidden="true" />
+              {ride.distance_to_driver_km} km de vous
             </span>
           )}
           <span className="flex items-center gap-1 text-xs font-medium text-gray-500">
