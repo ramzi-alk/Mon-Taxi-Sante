@@ -34,25 +34,50 @@ notation, pas de profil/documents chauffeur, pas de bouton d'urgence.
 
 ---
 
-## Sprint 1 — Cycle de vie de la course & disponibilité (bloquant)
+## Sprint 1 — Cycle de vie de la course & disponibilité (bloquant) ✅ Livré
 
 Sans ça, le chauffeur ne peut pas réellement piloter sa journée depuis l'app.
 
-- [ ] **Transitions de statut de course** : `accepted` → `in_progress` →
-      `completed`, avec boutons contextuels sur `RideCard` ("Je suis arrivé",
-      "Démarrer la course", "Terminer la course"). RPC Supabase dédiée
-      (sur le modèle de `cancel_booking`/`update_booking`) + horodatage
-      (`picked_up_at`, `completed_at`).
-- [ ] **Statut en ligne / pause / hors ligne** du chauffeur, stocké sur la
-      table `drivers`. Le pool ne doit montrer des courses qu'aux chauffeurs
-      "en ligne".
-- [ ] **Navigation intégrée** : bouton "Naviguer" en deep-link vers Google
-      Maps/Waze à partir de `pickup_lat/lng` et `dropoff_lat/lng` (déjà
-      présents dans le modèle `PoolRide`).
-- [ ] **Filtrage du pool par compatibilité véhicule réelle** (fauteuil /
-      brancard / oxygène) plutôt qu'un simple badge informatif — éviter
-      qu'un chauffeur non équipé accepte puis annule sur place une course
-      PMR/brancard.
+- [x] **Transitions de statut de course** : `accepted` → `in_progress` →
+      `completed`, avec boutons contextuels sur `RideCard` ("Démarrer la
+      course", "Terminer la course"). RPC Supabase dédiées `start_ride` /
+      `complete_ride` (sur le modèle de `cancel_booking`/`update_booking`) +
+      horodatage (`picked_up_at`, `completed_at`). Voir migration
+      `018_driver_ride_lifecycle.sql`.
+- [x] **Statut en ligne / pause / hors ligne** du chauffeur, stocké sur la
+      table `drivers` (`is_online`). Le pool ne montre des courses qu'aux
+      chauffeurs "en ligne" (`driversRepository.ts`, toggle dans
+      `tableau-de-bord/chauffeur.tsx`).
+- [x] **Navigation intégrée** : bouton "Naviguer" en deep-link vers Google
+      Maps à partir de `pickup_lat/lng` et `dropoff_lat/lng` (`RideCard.tsx`).
+- [x] **Filtrage du pool par compatibilité véhicule réelle** (fauteuil /
+      brancard / oxygène) — `driver_matches_booking()` côté SQL, vérifié à
+      nouveau dans `accept_ride` (erreur `vehicle_not_compatible`) pour
+      éviter qu'un chauffeur non équipé accepte une course PMR/brancard.
+
+## Correctifs post-Sprint 1
+
+Bugs bloquants découverts et corrigés après la livraison du Sprint 1.
+
+- [x] **Publication automatique des réservations dans le pool** : les
+      nouvelles courses restaient bloquées en `pending` indéfiniment — rien
+      ne les faisait passer à `available`, le statut filtré par le pool
+      chauffeurs (l'étape de confirmation admin prévue n'a jamais été
+      construite). RPC `publish_booking()` (`pending` → `available`, scopée
+      au patient) appelée juste après l'insertion (voir migration
+      `019_publish_booking_to_pool.sql`). Fenêtre d'édition patient
+      (`update_booking`/`update_booking_by_reference`) élargie en
+      conséquence à `pending` + `available`.
+- [x] **Auto-réparation des profils manquants** (`profilesRepository.ensureProfile`) :
+      le trigger `handle_new_user` ne crée pas toujours la ligne `profiles`
+      correspondante (sessions anonymes patient comme inscriptions
+      chauffeur), provoquant une violation de clé étrangère
+      `bookings_patient_id_fkey` à la réservation. Appelé avant toute
+      insertion dépendant de ce FK, dans `submitBookingServerFn` et
+      `submitDriverApplicationServerFn`.
+- [x] **Responsive du dashboard chauffeur** : en-tête (toggle disponibilité +
+      bouton temps réel) et ligne prix/CTA de `RideCard` empilés en colonne
+      sur petit écran au lieu de déborder.
 
 ## Sprint 2 — Revenus, notifications & confiance (high impact rétention)
 
