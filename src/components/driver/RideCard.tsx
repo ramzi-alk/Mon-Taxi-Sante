@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MapPin, Clock, Car, Users, Navigation, Loader2, PlayCircle, FlagTriangleRight, XCircle, User, Phone, CalendarPlus } from "lucide-react";
+import { MapPin, Clock, Car, Users, Navigation, Loader2, PlayCircle, FlagTriangleRight, XCircle, User, Phone, CalendarPlus, Banknote } from "lucide-react";
 import { formatDateFr, formatTimeFr } from "~/lib/utils";
 import { cn } from "~/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
@@ -327,6 +327,20 @@ export function RideCard({
           )}
         </span>
         <span className="flex items-center gap-2">
+          {ride.estimated_price != null && (
+            <span
+              className={cn(
+                "flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold",
+                ride.status === "completed"
+                  ? "bg-emerald-100 text-emerald-700"
+                  : "bg-amber-50 text-amber-700"
+              )}
+              title="Tarif estimé convention CPAM 2025 (distance Haversine — tarif réel légèrement supérieur)"
+            >
+              <Banknote className="h-3.5 w-3.5" aria-hidden="true" />
+              ~{ride.estimated_price.toFixed(2).replace(".", ",")} €
+            </span>
+          )}
           {statusLabels[ride.status] && (
             <span className="rounded-full bg-brand-blue-100 text-brand-blue-700 px-2 py-0.5 text-xs font-semibold">
               {statusLabels[ride.status]}
