@@ -1,12 +1,16 @@
-import { MapPin, Clock, Car, Users, Navigation, Loader2, PlayCircle, FlagTriangleRight } from "lucide-react";
+import { useState } from "react";
+import { MapPin, Clock, Car, Users, Navigation, Loader2, PlayCircle, FlagTriangleRight, XCircle, User, Phone } from "lucide-react";
 import { formatDateFr, formatTimeFr, formatPrice } from "~/lib/utils";
 import { cn } from "~/lib/utils";
 
-// Mirrors bookings_pool_for_drivers view — no medical fields
+// Mirrors bookings_pool_for_drivers view — no medical fields. patient_full_name
+// is only ever populated for "my rides" (accepted/in_progress/completed, see
+// fetchDriverRides) — the pool view only exposes the first name pre-acceptance.
 export interface PoolRide {
   id: string;
   driver_id: string | null;
   patient_first_name: string;
+  patient_full_name?: string;
   patient_phone: string;
   pickup_address: string;
   pickup_lat: number | null;
@@ -36,6 +40,8 @@ interface RideCardProps {
   isStarting?: boolean;
   onComplete?: (rideId: string) => void;
   isCompleting?: boolean;
+  onCancel?: (rideId: string) => void;
+  isCancelling?: boolean;
 }
 
 const vehicleIcons: Record<string, string> = {
@@ -63,7 +69,10 @@ export function RideCard({
   isStarting,
   onComplete,
   isCompleting,
+  onCancel,
+  isCancelling,
 }: RideCardProps) {
+  const [confirmingCancel, setConfirmingCancel] = useState(false);
   const pickupDate = formatDateFr(ride.pickup_datetime);
   const pickupTime = formatTimeFr(ride.pickup_datetime);
   const isToday = new Date(ride.pickup_datetime).toDateString() === new Date().toDateString();
@@ -162,6 +171,24 @@ export function RideCard({
           ))}
         </div>
 
+        {ride.status !== "available" && (ride.patient_full_name || ride.patient_first_name) && (
+          <div className="rounded-xl bg-brand-green-50/60 border border-brand-green-100 p-3 space-y-1.5">
+            <p className="flex items-center gap-2 text-sm font-semibold text-gray-900">
+              <User className="h-4 w-4 text-brand-green-600" aria-hidden="true" />
+              {ride.patient_full_name ?? ride.patient_first_name}
+            </p>
+            {ride.patient_phone && (
+              <a
+                href={`tel:${ride.patient_phone}`}
+                className="flex items-center gap-2 text-sm font-medium text-brand-green-700 hover:underline"
+              >
+                <Phone className="h-3.5 w-3.5" aria-hidden="true" />
+                {ride.patient_phone}
+              </a>
+            )}
+          </div>
+        )}
+
         {/* Price + CTA */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-2 border-t border-gray-100">
           <div>
@@ -231,6 +258,42 @@ export function RideCard({
                 )}
                 Démarrer la course
               </button>
+            </div>
+          )}
+
+          {ride.status === "accepted" && onCancel && (
+            <div className="w-full">
+              {confirmingCancel ? (
+                <div className="flex items-center gap-3 text-sm pt-2">
+                  <span className="text-gray-700">Annuler cette course ?</span>
+                  <button
+                    type="button"
+                    onClick={() => onCancel(ride.id)}
+                    disabled={isCancelling}
+                    className="font-bold text-red-600 hover:underline disabled:opacity-60 flex items-center gap-1.5"
+                  >
+                    {isCancelling && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
+                    Oui, annuler
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmingCancel(false)}
+                    disabled={isCancelling}
+                    className="text-gray-500 hover:underline"
+                  >
+                    Non
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setConfirmingCancel(true)}
+                  className="flex items-center gap-1.5 text-xs font-semibold text-red-600 hover:underline pt-2"
+                >
+                  <XCircle className="h-3.5 w-3.5" aria-hidden="true" />
+                  Me désister de cette course
+                </button>
+              )}
             </div>
           )}
 

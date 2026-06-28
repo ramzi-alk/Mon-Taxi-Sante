@@ -16,12 +16,13 @@ import {
   getStatusStepState,
   isCancellable,
   isEditable,
+  isEditableAuthenticated,
   type BookingStatus,
 } from "~/lib/bookingStatus";
 import * as bookingsRepository from "~/repositories/bookingsRepository";
 import type { MyBookingRow, UpdateBookingPayload, LookupCredentials } from "~/repositories/bookingsRepository";
 import { BookingEditForm } from "./BookingEditForm";
-import { notifyBookingCancelledServerFn } from "~/server/email";
+import { notifyBookingCancelledServerFn, notifyBookingUpdatedServerFn } from "~/server/email";
 import { logger } from "~/lib/logger";
 
 interface BookingStatusCardProps {
@@ -86,11 +87,19 @@ export function BookingStatusCard({
     },
   });
 
+  const hasDriver = !!displayBooking.driver_full_name;
+
   const handleSaved = (payload: UpdateBookingPayload) => {
     setDisplayBooking((prev) => ({ ...prev, ...payload }));
+    if (hasDriver) {
+      notifyBookingUpdatedServerFn({ data: { bookingId: displayBooking.id } }).catch((err) => {
+        logger.error("email.notifyBookingUpdated call failed", {
+          error: err instanceof Error ? err.message : String(err),
+          bookingId: displayBooking.id,
+        });
+      });
+    }
   };
-
-  const hasDriver = !!displayBooking.driver_full_name;
 
   return (
     <article
@@ -249,7 +258,7 @@ export function BookingStatusCard({
               </button>
             </div>
 
-            {allowEdit && isEditable(status) && (
+            {allowEdit && (lookupCredentials ? isEditable(status) : isEditableAuthenticated(status)) && (
               <div className="border-t pt-3">
                 <button
                   type="button"
@@ -262,7 +271,7 @@ export function BookingStatusCard({
               </div>
             )}
 
-            {allowEdit && !isEditable(status) && isCancellable(status) && (
+            {allowEdit && !(lookupCredentials ? isEditable(status) : isEditableAuthenticated(status)) && isCancellable(status) && (
               <div className="border-t pt-3 text-sm text-gray-500">
                 Cette réservation est déjà en cours de traitement et ne peut plus être
                 modifiée. Pour changer un détail important, annulez-la puis créez-en une

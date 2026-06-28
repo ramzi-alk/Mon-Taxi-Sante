@@ -64,6 +64,15 @@ export function isEditable(status: BookingStatus): boolean {
   return status === "pending" || status === "available";
 }
 
+// Widened for a real authenticated session (proven by auth.uid(), not just
+// reference_code + phone): editing after driver acceptance is safe because
+// the app notifies the assigned driver (see notifyBookingUpdatedServerFn).
+// update_booking_by_reference deliberately keeps the narrower isEditable
+// window — see migration 020.
+export function isEditableAuthenticated(status: BookingStatus): boolean {
+  return isEditable(status) || status === "accepted";
+}
+
 export function getStatusStepState(
   step: BookingStatus,
   currentStatus: BookingStatus

@@ -2,5 +2,11 @@
   "buildCommand": "pnpm build",
   "outputDirectory": ".vercel/output",
   "framework": null,
-  "installCommand": "pnpm install"
+  "installCommand": "pnpm install",
+  "crons": [
+    {
+      "path": "/api/cron/booking-reminders",
+      "schedule": "0 7 * * *"
+    }
+  ]
 }

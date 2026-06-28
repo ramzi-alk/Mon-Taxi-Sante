@@ -38,6 +38,44 @@ export type Database = {
         }
         Relationships: []
       }
+      booking_reminder_tokens: {
+        Row: {
+          booking_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          response: string | null
+          token_hash: string
+          used_at: string | null
+        }
+        Insert: {
+          booking_id: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          response?: string | null
+          token_hash: string
+          used_at?: string | null
+        }
+        Update: {
+          booking_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          response?: string | null
+          token_hash?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_reminder_tokens_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bookings: {
         Row: {
           cancellation_reason: string | null
@@ -68,6 +106,8 @@ export type Database = {
           pmt_declared: boolean
           pmt_file_url: string | null
           reference_code: string
+          reminder_confirmed_at: string | null
+          reminder_sent_at: string | null
           requires_oxygen: boolean
           requires_stretcher: boolean
           requires_wheelchair: boolean
@@ -106,6 +146,8 @@ export type Database = {
           pmt_declared?: boolean
           pmt_file_url?: string | null
           reference_code: string
+          reminder_confirmed_at?: string | null
+          reminder_sent_at?: string | null
           requires_oxygen?: boolean
           requires_stretcher?: boolean
           requires_wheelchair?: boolean
@@ -144,6 +186,8 @@ export type Database = {
           pmt_declared?: boolean
           pmt_file_url?: string | null
           reference_code?: string
+          reminder_confirmed_at?: string | null
+          reminder_sent_at?: string | null
           requires_oxygen?: boolean
           requires_stretcher?: boolean
           requires_wheelchair?: boolean
@@ -400,7 +444,13 @@ export type Database = {
         Args: { p_phone: string; p_reason?: string; p_reference_code: string }
         Returns: string
       }
+      cancel_ride_by_driver: {
+        Args: { p_booking_id: string }
+        Returns: undefined
+      }
+      cancel_via_reminder: { Args: { p_token: string }; Returns: string }
       complete_ride: { Args: { p_booking_id: string }; Returns: undefined }
+      confirm_reminder: { Args: { p_token: string }; Returns: undefined }
       driver_matches_booking: {
         Args: {
           p_booking_vehicle_type: Database["public"]["Enums"]["booking_vehicle_type"]
@@ -493,6 +543,17 @@ export type Database = {
       record_lookup_result: {
         Args: { p_found: boolean; p_reference_code: string }
         Returns: undefined
+      }
+      resolve_reminder_token: {
+        Args: { p_token: string }
+        Returns: {
+          booking_id: string
+          dropoff_address: string
+          pickup_address: string
+          pickup_datetime: string
+          reference_code: string
+          status: Database["public"]["Enums"]["booking_status"]
+        }[]
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }

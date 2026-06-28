@@ -8,6 +8,8 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
+import { createServerRootRoute } from '@tanstack/react-start/server'
+
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TarifsCpamRouteImport } from './routes/tarifs-cpam'
 import { Route as ReinitialiserMotDePasseRouteImport } from './routes/reinitialiser-mot-de-passe'
@@ -16,6 +18,7 @@ import { Route as MesReservationsRouteImport } from './routes/mes-reservations'
 import { Route as MentionsLegalesRouteImport } from './routes/mentions-legales'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as ConnexionRouteImport } from './routes/connexion'
+import { Route as ConfirmerTrajetRouteImport } from './routes/confirmer-trajet'
 import { Route as ConfidentialiteRouteImport } from './routes/confidentialite'
 import { Route as CommentCaMarcheRouteImport } from './routes/comment-ca-marche'
 import { Route as CgvRouteImport } from './routes/cgv'
@@ -31,6 +34,9 @@ import { Route as BlogTransportCpamRouteImport } from './routes/blog/transport-c
 import { Route as BlogPmtPrescriptionRouteImport } from './routes/blog/pmt-prescription'
 import { Route as BlogAldTransportRouteImport } from './routes/blog/ald-transport'
 import { Route as DepartmentCityRouteImport } from './routes/$department.$city'
+import { ServerRoute as ApiCronBookingRemindersServerRouteImport } from './routes/api/cron/booking-reminders'
+
+const rootServerRouteImport = createServerRootRoute()
 
 const TarifsCpamRoute = TarifsCpamRouteImport.update({
   id: '/tarifs-cpam',
@@ -65,6 +71,11 @@ const FaqRoute = FaqRouteImport.update({
 const ConnexionRoute = ConnexionRouteImport.update({
   id: '/connexion',
   path: '/connexion',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConfirmerTrajetRoute = ConfirmerTrajetRouteImport.update({
+  id: '/confirmer-trajet',
+  path: '/confirmer-trajet',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConfidentialiteRoute = ConfidentialiteRouteImport.update({
@@ -142,6 +153,12 @@ const DepartmentCityRoute = DepartmentCityRouteImport.update({
   path: '/$department/$city',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiCronBookingRemindersServerRoute =
+  ApiCronBookingRemindersServerRouteImport.update({
+    id: '/api/cron/booking-reminders',
+    path: '/api/cron/booking-reminders',
+    getParentRoute: () => rootServerRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -149,6 +166,7 @@ export interface FileRoutesByFullPath {
   '/cgv': typeof CgvRoute
   '/comment-ca-marche': typeof CommentCaMarcheRoute
   '/confidentialite': typeof ConfidentialiteRoute
+  '/confirmer-trajet': typeof ConfirmerTrajetRoute
   '/connexion': typeof ConnexionRoute
   '/faq': typeof FaqRoute
   '/mentions-legales': typeof MentionsLegalesRoute
@@ -173,6 +191,7 @@ export interface FileRoutesByTo {
   '/cgv': typeof CgvRoute
   '/comment-ca-marche': typeof CommentCaMarcheRoute
   '/confidentialite': typeof ConfidentialiteRoute
+  '/confirmer-trajet': typeof ConfirmerTrajetRoute
   '/connexion': typeof ConnexionRoute
   '/faq': typeof FaqRoute
   '/mentions-legales': typeof MentionsLegalesRoute
@@ -198,6 +217,7 @@ export interface FileRoutesById {
   '/cgv': typeof CgvRoute
   '/comment-ca-marche': typeof CommentCaMarcheRoute
   '/confidentialite': typeof ConfidentialiteRoute
+  '/confirmer-trajet': typeof ConfirmerTrajetRoute
   '/connexion': typeof ConnexionRoute
   '/faq': typeof FaqRoute
   '/mentions-legales': typeof MentionsLegalesRoute
@@ -224,6 +244,7 @@ export interface FileRouteTypes {
     | '/cgv'
     | '/comment-ca-marche'
     | '/confidentialite'
+    | '/confirmer-trajet'
     | '/connexion'
     | '/faq'
     | '/mentions-legales'
@@ -248,6 +269,7 @@ export interface FileRouteTypes {
     | '/cgv'
     | '/comment-ca-marche'
     | '/confidentialite'
+    | '/confirmer-trajet'
     | '/connexion'
     | '/faq'
     | '/mentions-legales'
@@ -272,6 +294,7 @@ export interface FileRouteTypes {
     | '/cgv'
     | '/comment-ca-marche'
     | '/confidentialite'
+    | '/confirmer-trajet'
     | '/connexion'
     | '/faq'
     | '/mentions-legales'
@@ -297,6 +320,7 @@ export interface RootRouteChildren {
   CgvRoute: typeof CgvRoute
   CommentCaMarcheRoute: typeof CommentCaMarcheRoute
   ConfidentialiteRoute: typeof ConfidentialiteRoute
+  ConfirmerTrajetRoute: typeof ConfirmerTrajetRoute
   ConnexionRoute: typeof ConnexionRoute
   FaqRoute: typeof FaqRoute
   MentionsLegalesRoute: typeof MentionsLegalesRoute
@@ -314,6 +338,27 @@ export interface RootRouteChildren {
   TableauDeBordChauffeurRoute: typeof TableauDeBordChauffeurRoute
   BlogIndexRoute: typeof BlogIndexRoute
   ReservationIndexRoute: typeof ReservationIndexRoute
+}
+export interface FileServerRoutesByFullPath {
+  '/api/cron/booking-reminders': typeof ApiCronBookingRemindersServerRoute
+}
+export interface FileServerRoutesByTo {
+  '/api/cron/booking-reminders': typeof ApiCronBookingRemindersServerRoute
+}
+export interface FileServerRoutesById {
+  __root__: typeof rootServerRouteImport
+  '/api/cron/booking-reminders': typeof ApiCronBookingRemindersServerRoute
+}
+export interface FileServerRouteTypes {
+  fileServerRoutesByFullPath: FileServerRoutesByFullPath
+  fullPaths: '/api/cron/booking-reminders'
+  fileServerRoutesByTo: FileServerRoutesByTo
+  to: '/api/cron/booking-reminders'
+  id: '__root__' | '/api/cron/booking-reminders'
+  fileServerRoutesById: FileServerRoutesById
+}
+export interface RootServerRouteChildren {
+  ApiCronBookingRemindersServerRoute: typeof ApiCronBookingRemindersServerRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -365,6 +410,13 @@ declare module '@tanstack/react-router' {
       path: '/connexion'
       fullPath: '/connexion'
       preLoaderRoute: typeof ConnexionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/confirmer-trajet': {
+      id: '/confirmer-trajet'
+      path: '/confirmer-trajet'
+      fullPath: '/confirmer-trajet'
+      preLoaderRoute: typeof ConfirmerTrajetRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/confidentialite': {
@@ -474,6 +526,17 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+declare module '@tanstack/react-start/server' {
+  interface ServerFileRoutesByPath {
+    '/api/cron/booking-reminders': {
+      id: '/api/cron/booking-reminders'
+      path: '/api/cron/booking-reminders'
+      fullPath: '/api/cron/booking-reminders'
+      preLoaderRoute: typeof ApiCronBookingRemindersServerRouteImport
+      parentRoute: typeof rootServerRouteImport
+    }
+  }
+}
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -481,6 +544,7 @@ const rootRouteChildren: RootRouteChildren = {
   CgvRoute: CgvRoute,
   CommentCaMarcheRoute: CommentCaMarcheRoute,
   ConfidentialiteRoute: ConfidentialiteRoute,
+  ConfirmerTrajetRoute: ConfirmerTrajetRoute,
   ConnexionRoute: ConnexionRoute,
   FaqRoute: FaqRoute,
   MentionsLegalesRoute: MentionsLegalesRoute,
@@ -502,3 +566,9 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+const rootServerRouteChildren: RootServerRouteChildren = {
+  ApiCronBookingRemindersServerRoute: ApiCronBookingRemindersServerRoute,
+}
+export const serverRouteTree = rootServerRouteImport
+  ._addFileChildren(rootServerRouteChildren)
+  ._addFileTypes<FileServerRouteTypes>()
