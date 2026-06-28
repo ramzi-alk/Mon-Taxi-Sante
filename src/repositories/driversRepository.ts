@@ -3,6 +3,15 @@ import { logger } from "~/lib/logger";
 import type { Database } from "~/lib/database.types";
 
 type DriverDetailsInsert = Database["public"]["Tables"]["drivers_details"]["Insert"];
+type DriverAvailability = Database["public"]["Enums"]["driver_availability"];
+
+export interface MyDriverDetails {
+  availability: DriverAvailability;
+  vehicle_type: Database["public"]["Enums"]["vehicle_type"];
+  pmr_equipped: boolean;
+  stretcher_equipped: boolean;
+  oxygen_equipped: boolean;
+}
 
 export interface PendingDriver {
   id: string;
@@ -63,6 +72,48 @@ export async function approveDriver(
 
   if (error) {
     logger.error("drivers.approveDriver failed", { error: error.message, driverDetailsId });
+    throw new Error(error.message);
+  }
+}
+
+/**
+ * Reads the calling driver's own availability + vehicle/equipment, scoped
+ * by RLS ("drivers: own read/write", profile_id = auth.uid()) — used to
+ * drive the online/pause/offline toggle on the dashboard.
+ */
+export async function fetchMyAvailability(
+  client: SupabaseClient,
+  profileId: string
+): Promise<MyDriverDetails | null> {
+  const { data, error } = await client
+    .from("drivers_details")
+    .select("availability, vehicle_type, pmr_equipped, stretcher_equipped, oxygen_equipped")
+    .eq("profile_id", profileId)
+    .maybeSingle();
+
+  if (error) {
+    logger.error("drivers.fetchMyAvailability failed", { error: error.message, profileId });
+    throw new Error(error.message);
+  }
+  return data;
+}
+
+/**
+ * Driver-controlled online/paused/offline toggle. Direct UPDATE is fine
+ * here (unlike bookings) — RLS already scopes this to the driver's own row.
+ */
+export async function setAvailability(
+  client: SupabaseClient,
+  profileId: string,
+  availability: DriverAvailability
+): Promise<void> {
+  const { error } = await client
+    .from("drivers_details")
+    .update({ availability, availability_changed_at: new Date().toISOString() })
+    .eq("profile_id", profileId);
+
+  if (error) {
+    logger.error("drivers.setAvailability failed", { error: error.message, profileId, availability });
     throw new Error(error.message);
   }
 }

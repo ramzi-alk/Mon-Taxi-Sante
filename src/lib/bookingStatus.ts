@@ -55,11 +55,13 @@ export function isCancellable(status: BookingStatus): boolean {
   return CANCELLABLE_STATUSES.includes(status);
 }
 
-// Editing is only safe before any confirmation/driver dispatch has started —
-// past `pending`, a change is no longer a small correction but a different
+// Editing is only safe before any driver dispatch has started — bookings now
+// leave `pending` for `available` almost immediately (auto-published to the
+// driver pool, see migration 019), so the edit window covers both. Past
+// `available`, a change is no longer a small correction but a different
 // request, so the patient is asked to cancel and rebook instead.
 export function isEditable(status: BookingStatus): boolean {
-  return status === "pending";
+  return status === "pending" || status === "available";
 }
 
 export function getStatusStepState(

@@ -2,6 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "~/lib/database.types";
 import * as bookingsRepository from "~/repositories/bookingsRepository";
+import * as profilesRepository from "~/repositories/profilesRepository";
+import { getSupabaseAdminClient } from "~/lib/supabaseAdmin";
 import { sendBookingConfirmationEmail } from "./email";
 
 interface SubmitBookingPayload {
@@ -49,7 +51,18 @@ export const submitBookingServerFn = createServerFn({ method: "POST" })
       auth: { persistSession: false },
     });
 
+    // bookings.patient_id is a NOT NULL FK to profiles — self-heal a missing
+    // profile row (same known trigger-reliability issue as driver signups,
+    // see migration 017) before inserting, instead of letting the FK
+    // violation surface to the patient mid-booking.
+    const admin = getSupabaseAdminClient();
+    const profile = await profilesRepository.ensureProfile(admin, data.payload.patient_id);
+    if (!profile) {
+      throw new Error("Impossible de finaliser la réservation (profil introuvable). Réessayez.");
+    }
+
     const booking = await bookingsRepository.insertBooking(supabase, data.payload);
+    await bookingsRepository.publishBooking(supabase, booking.id);
 
     await sendBookingConfirmationEmail({
       to: data.payload.patient_email,

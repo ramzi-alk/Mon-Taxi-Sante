@@ -41,6 +41,7 @@ export type Database = {
       bookings: {
         Row: {
           cancellation_reason: string | null
+          completed_at: string | null
           consent_accepted_at: string | null
           cpam_status: Database["public"]["Enums"]["cpam_status"]
           created_at: string
@@ -59,6 +60,7 @@ export type Database = {
           patient_full_name: string
           patient_id: string
           patient_phone: string
+          picked_up_at: string | null
           pickup_address: string
           pickup_datetime: string
           pickup_lat: number | null
@@ -77,6 +79,7 @@ export type Database = {
         }
         Insert: {
           cancellation_reason?: string | null
+          completed_at?: string | null
           consent_accepted_at?: string | null
           cpam_status?: Database["public"]["Enums"]["cpam_status"]
           created_at?: string
@@ -95,13 +98,14 @@ export type Database = {
           patient_full_name: string
           patient_id: string
           patient_phone: string
+          picked_up_at?: string | null
           pickup_address: string
           pickup_datetime: string
           pickup_lat?: number | null
           pickup_lng?: number | null
           pmt_declared?: boolean
           pmt_file_url?: string | null
-          reference_code?: string
+          reference_code: string
           requires_oxygen?: boolean
           requires_stretcher?: boolean
           requires_wheelchair?: boolean
@@ -113,6 +117,7 @@ export type Database = {
         }
         Update: {
           cancellation_reason?: string | null
+          completed_at?: string | null
           consent_accepted_at?: string | null
           cpam_status?: Database["public"]["Enums"]["cpam_status"]
           created_at?: string
@@ -131,6 +136,7 @@ export type Database = {
           patient_full_name?: string
           patient_id?: string
           patient_phone?: string
+          picked_up_at?: string | null
           pickup_address?: string
           pickup_datetime?: string
           pickup_lat?: number | null
@@ -212,6 +218,8 @@ export type Database = {
         Row: {
           approved_at: string | null
           approved_by: string | null
+          availability: Database["public"]["Enums"]["driver_availability"]
+          availability_changed_at: string
           company_name: string | null
           convention_cpam: boolean
           convention_number: string | null
@@ -220,9 +228,11 @@ export type Database = {
           driving_licence_url: string | null
           id: string
           insurance_url: string | null
+          oxygen_equipped: boolean
           pmr_equipped: boolean
           profile_id: string
           siret: string
+          stretcher_equipped: boolean
           stripe_customer_id: string | null
           subscription_ends_at: string | null
           subscription_status: Database["public"]["Enums"]["subscription_status"]
@@ -235,6 +245,8 @@ export type Database = {
         Insert: {
           approved_at?: string | null
           approved_by?: string | null
+          availability?: Database["public"]["Enums"]["driver_availability"]
+          availability_changed_at?: string
           company_name?: string | null
           convention_cpam?: boolean
           convention_number?: string | null
@@ -243,9 +255,11 @@ export type Database = {
           driving_licence_url?: string | null
           id?: string
           insurance_url?: string | null
+          oxygen_equipped?: boolean
           pmr_equipped?: boolean
           profile_id: string
           siret: string
+          stretcher_equipped?: boolean
           stripe_customer_id?: string | null
           subscription_ends_at?: string | null
           subscription_status?: Database["public"]["Enums"]["subscription_status"]
@@ -258,6 +272,8 @@ export type Database = {
         Update: {
           approved_at?: string | null
           approved_by?: string | null
+          availability?: Database["public"]["Enums"]["driver_availability"]
+          availability_changed_at?: string
           company_name?: string | null
           convention_cpam?: boolean
           convention_number?: string | null
@@ -266,9 +282,11 @@ export type Database = {
           driving_licence_url?: string | null
           id?: string
           insurance_url?: string | null
+          oxygen_equipped?: boolean
           pmr_equipped?: boolean
           profile_id?: string
           siret?: string
+          stretcher_equipped?: boolean
           stripe_customer_id?: string | null
           subscription_ends_at?: string | null
           subscription_status?: Database["public"]["Enums"]["subscription_status"]
@@ -357,58 +375,6 @@ export type Database = {
             | Database["public"]["Enums"]["booking_vehicle_type"]
             | null
         }
-        Insert: {
-          created_at?: string | null
-          distance_km?: number | null
-          driver_id?: string | null
-          dropoff_address?: string | null
-          dropoff_lat?: number | null
-          dropoff_lng?: number | null
-          estimated_price?: number | null
-          id?: string | null
-          passenger_count?: number | null
-          patient_first_name?: never
-          patient_phone?: string | null
-          pickup_address?: string | null
-          pickup_datetime?: string | null
-          pickup_lat?: number | null
-          pickup_lng?: number | null
-          requires_oxygen?: boolean | null
-          requires_stretcher?: boolean | null
-          requires_wheelchair?: boolean | null
-          return_datetime?: string | null
-          status?: Database["public"]["Enums"]["booking_status"] | null
-          trip_type?: Database["public"]["Enums"]["trip_type"] | null
-          vehicle_type?:
-            | Database["public"]["Enums"]["booking_vehicle_type"]
-            | null
-        }
-        Update: {
-          created_at?: string | null
-          distance_km?: number | null
-          driver_id?: string | null
-          dropoff_address?: string | null
-          dropoff_lat?: number | null
-          dropoff_lng?: number | null
-          estimated_price?: number | null
-          id?: string | null
-          passenger_count?: number | null
-          patient_first_name?: never
-          patient_phone?: string | null
-          pickup_address?: string | null
-          pickup_datetime?: string | null
-          pickup_lat?: number | null
-          pickup_lng?: number | null
-          requires_oxygen?: boolean | null
-          requires_stretcher?: boolean | null
-          requires_wheelchair?: boolean | null
-          return_datetime?: string | null
-          status?: Database["public"]["Enums"]["booking_status"] | null
-          trip_type?: Database["public"]["Enums"]["trip_type"] | null
-          vehicle_type?:
-            | Database["public"]["Enums"]["booking_vehicle_type"]
-            | null
-        }
         Relationships: [
           {
             foreignKeyName: "bookings_driver_id_fkey"
@@ -421,21 +387,32 @@ export type Database = {
       }
     }
     Functions: {
+      accept_ride: { Args: { p_booking_id: string }; Returns: undefined }
       assert_lookup_not_locked: {
         Args: { p_reference_code: string }
         Returns: undefined
       }
       cancel_booking: {
-        Args: { p_booking_id: string; p_reason?: string | null }
+        Args: { p_booking_id: string; p_reason?: string }
         Returns: undefined
       }
       cancel_booking_by_reference: {
-        Args: {
-          p_phone: string
-          p_reason?: string | null
-          p_reference_code: string
-        }
+        Args: { p_phone: string; p_reason?: string; p_reference_code: string }
         Returns: string
+      }
+      complete_ride: { Args: { p_booking_id: string }; Returns: undefined }
+      driver_matches_booking: {
+        Args: {
+          p_booking_vehicle_type: Database["public"]["Enums"]["booking_vehicle_type"]
+          p_driver_vehicle_type: Database["public"]["Enums"]["vehicle_type"]
+          p_oxygen_equipped: boolean
+          p_pmr_equipped: boolean
+          p_requires_oxygen: boolean
+          p_requires_stretcher: boolean
+          p_requires_wheelchair: boolean
+          p_stretcher_equipped: boolean
+        }
+        Returns: boolean
       }
       generate_booking_reference_code: { Args: never; Returns: string }
       get_my_bookings: {
@@ -512,30 +489,32 @@ export type Database = {
           vehicle_type: Database["public"]["Enums"]["booking_vehicle_type"]
         }[]
       }
+      publish_booking: { Args: { p_booking_id: string }; Returns: undefined }
       record_lookup_result: {
         Args: { p_found: boolean; p_reference_code: string }
         Returns: undefined
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
+      start_ride: { Args: { p_booking_id: string }; Returns: undefined }
       update_booking: {
         Args: {
           p_booking_id: string
           p_cpam_status: Database["public"]["Enums"]["cpam_status"]
           p_dropoff_address: string
-          p_dropoff_lat: number | null
-          p_dropoff_lng: number | null
-          p_medical_notes: string | null
-          p_mutual_name: string | null
+          p_dropoff_lat: number
+          p_dropoff_lng: number
+          p_medical_notes: string
+          p_mutual_name: string
           p_passenger_count: number
           p_pickup_address: string
           p_pickup_datetime: string
-          p_pickup_lat: number | null
-          p_pickup_lng: number | null
+          p_pickup_lat: number
+          p_pickup_lng: number
           p_requires_oxygen: boolean
           p_requires_stretcher: boolean
           p_requires_wheelchair: boolean
-          p_return_datetime: string | null
+          p_return_datetime: string
           p_trip_type: Database["public"]["Enums"]["trip_type"]
           p_vehicle_type: Database["public"]["Enums"]["booking_vehicle_type"]
         }
@@ -545,21 +524,21 @@ export type Database = {
         Args: {
           p_cpam_status: Database["public"]["Enums"]["cpam_status"]
           p_dropoff_address: string
-          p_dropoff_lat: number | null
-          p_dropoff_lng: number | null
-          p_medical_notes: string | null
-          p_mutual_name: string | null
+          p_dropoff_lat: number
+          p_dropoff_lng: number
+          p_medical_notes: string
+          p_mutual_name: string
           p_passenger_count: number
           p_phone: string
           p_pickup_address: string
           p_pickup_datetime: string
-          p_pickup_lat: number | null
-          p_pickup_lng: number | null
+          p_pickup_lat: number
+          p_pickup_lng: number
           p_reference_code: string
           p_requires_oxygen: boolean
           p_requires_stretcher: boolean
           p_requires_wheelchair: boolean
-          p_return_datetime: string | null
+          p_return_datetime: string
           p_trip_type: Database["public"]["Enums"]["trip_type"]
           p_vehicle_type: Database["public"]["Enums"]["booking_vehicle_type"]
         }
@@ -578,6 +557,7 @@ export type Database = {
         | "cancelled"
       booking_vehicle_type: "taxi" | "vsl" | "pmr"
       cpam_status: "ald" | "cmu" | "css" | "standard" | "none"
+      driver_availability: "online" | "paused" | "offline"
       subscription_status: "trial" | "active" | "past_due" | "cancelled"
       trip_type: "aller_simple" | "aller_retour" | "multiple"
       user_role: "patient" | "driver" | "admin"
@@ -721,6 +701,7 @@ export const Constants = {
       ],
       booking_vehicle_type: ["taxi", "vsl", "pmr"],
       cpam_status: ["ald", "cmu", "css", "standard", "none"],
+      driver_availability: ["online", "paused", "offline"],
       subscription_status: ["trial", "active", "past_due", "cancelled"],
       trip_type: ["aller_simple", "aller_retour", "multiple"],
       user_role: ["patient", "driver", "admin"],
