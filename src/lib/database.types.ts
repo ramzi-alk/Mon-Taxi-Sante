@@ -78,6 +78,13 @@ export type Database = {
             foreignKeyName: "booking_reminder_tokens_booking_id_fkey"
             columns: ["booking_id"]
             isOneToOne: false
+            referencedRelation: "bookings_active_for_driver"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_reminder_tokens_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
             referencedRelation: "bookings_pool_for_drivers"
             referencedColumns: ["id"]
           },
@@ -411,6 +418,44 @@ export type Database = {
       }
     }
     Views: {
+      bookings_active_for_driver: {
+        Row: {
+          created_at: string | null
+          distance_km: number | null
+          distance_to_driver_km: number | null
+          driver_id: string | null
+          dropoff_address: string | null
+          dropoff_lat: number | null
+          dropoff_lng: number | null
+          estimated_price: number | null
+          id: string | null
+          passenger_count: number | null
+          patient_full_name: string | null
+          patient_phone: string | null
+          pickup_address: string | null
+          pickup_datetime: string | null
+          pickup_lat: number | null
+          pickup_lng: number | null
+          requires_oxygen: boolean | null
+          requires_stretcher: boolean | null
+          requires_wheelchair: boolean | null
+          return_datetime: string | null
+          status: Database["public"]["Enums"]["booking_status"] | null
+          trip_type: Database["public"]["Enums"]["trip_type"] | null
+          vehicle_type:
+            | Database["public"]["Enums"]["booking_vehicle_type"]
+            | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bookings_pool_for_drivers: {
         Row: {
           created_at: string | null
