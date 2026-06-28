@@ -34,6 +34,7 @@
     "@tanstack/react-router": "alpha",
     "@tanstack/react-router-devtools": "alpha",
     "@tanstack/react-start": "alpha",
+    "@tanstack/react-virtual": "^3.14.4",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",

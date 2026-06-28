@@ -139,7 +139,9 @@ function NavigationButton({
   );
 }
 
-function AddressLink({
+export { vehicleIcons };
+
+export function AddressLink({
   address,
   lat,
   lng,

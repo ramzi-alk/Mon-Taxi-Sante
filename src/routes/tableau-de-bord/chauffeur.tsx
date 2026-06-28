@@ -21,6 +21,7 @@ import { supabase } from "~/lib/supabase";
 import { cn, formatPrice } from "~/lib/utils";
 import { useRealtime } from "~/hooks/useRealtime";
 import { RideCard, type PoolRide } from "~/components/driver/RideCard";
+import { PoolList } from "~/components/driver/PoolList";
 import { Input } from "~/components/ui/input";
 import * as authRepository from "~/repositories/authRepository";
 import * as bookingsRepository from "~/repositories/bookingsRepository";
@@ -560,20 +561,12 @@ function DriverDashboard() {
                 </p>
               </div>
             ) : (
-              <ul
-                className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 list-none"
-                aria-label="Liste des courses disponibles"
-              >
-                {poolRides.map((ride) => (
-                  <li key={ride.id}>
-                    <RideCard
-                      ride={ride}
-                      onAccept={(id) => acceptMutation.mutate(id)}
-                      isAccepting={acceptingId === ride.id && acceptMutation.isPending}
-                    />
-                  </li>
-                ))}
-              </ul>
+              <PoolList
+                rides={poolRides}
+                onAccept={(id) => acceptMutation.mutate(id)}
+                acceptingId={acceptingId}
+                isAccepting={acceptMutation.isPending}
+              />
             )}
           </section>
         )}
