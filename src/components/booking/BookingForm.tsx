@@ -209,6 +209,13 @@ export function BookingForm() {
         setCurrentStep(Math.min(...invalidSteps));
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
+      logger.warn("booking.submit validation failed", {
+        invalidFields,
+        invalidSteps,
+        errors: Object.fromEntries(
+          invalidFields.map((field) => [field, form.formState.errors[field]?.message])
+        ),
+      });
       toast({
         title: "Informations incomplètes",
         description: "Certaines informations sont manquantes ou invalides. Veuillez les corriger.",

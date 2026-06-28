@@ -20,6 +20,7 @@ import { RideCard, type PoolRide } from "~/components/driver/RideCard";
 import * as authRepository from "~/repositories/authRepository";
 import * as bookingsRepository from "~/repositories/bookingsRepository";
 import * as driversRepository from "~/repositories/driversRepository";
+import { logger } from "~/lib/logger";
 import type { Database } from "~/lib/database.types";
 
 type DriverAvailability = Database["public"]["Enums"]["driver_availability"];
@@ -128,6 +129,7 @@ function DriverDashboard() {
       queryClient.invalidateQueries({ queryKey: ["ride-pool"] });
     },
     onError: (error) => {
+      logger.error("driver.setAvailability failed", { error: error.message });
       alert(`Erreur : ${error.message}`);
     },
   });
@@ -168,7 +170,8 @@ function DriverDashboard() {
       queryClient.invalidateQueries({ queryKey: ["ride-pool"] });
       queryClient.invalidateQueries({ queryKey: ["my-rides"] });
     },
-    onError: (error) => {
+    onError: (error, rideId) => {
+      logger.error("driver.acceptRide failed", { error: error.message, rideId });
       alert(`Erreur : ${error.message}. La course a peut-être déjà été prise.`);
     },
   });
@@ -180,7 +183,10 @@ function DriverDashboard() {
       setStartingId(null);
       queryClient.invalidateQueries({ queryKey: ["my-rides"] });
     },
-    onError: (error) => alert(`Erreur : ${error.message}`),
+    onError: (error, rideId) => {
+      logger.error("driver.startRide failed", { error: error.message, rideId });
+      alert(`Erreur : ${error.message}`);
+    },
   });
 
   const completeMutation = useMutation({
@@ -190,7 +196,10 @@ function DriverDashboard() {
       setCompletingId(null);
       queryClient.invalidateQueries({ queryKey: ["my-rides"] });
     },
-    onError: (error) => alert(`Erreur : ${error.message}`),
+    onError: (error, rideId) => {
+      logger.error("driver.completeRide failed", { error: error.message, rideId });
+      alert(`Erreur : ${error.message}`);
+    },
   });
 
   const poolRides = poolQuery.data ?? [];

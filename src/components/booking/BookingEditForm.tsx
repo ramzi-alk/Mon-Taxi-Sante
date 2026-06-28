@@ -10,6 +10,7 @@ import { Checkbox } from "~/components/ui/checkbox";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "~/components/ui/select";
 import { supabase } from "~/lib/supabase";
 import { useToast } from "~/components/ui/toast";
+import { logger } from "~/lib/logger";
 import * as bookingsRepository from "~/repositories/bookingsRepository";
 import type { MyBookingRow, UpdateBookingPayload, LookupCredentials } from "~/repositories/bookingsRepository";
 
@@ -125,6 +126,7 @@ export function BookingEditForm({ booking, lookupCredentials, onClose, onSaved }
       onClose();
     },
     onError: (err: Error) => {
+      logger.error("booking.update failed", { error: err.message, bookingId: booking.id });
       toast({ title: "Impossible de modifier", description: err.message, variant: "error" });
     },
   });

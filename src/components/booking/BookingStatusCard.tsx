@@ -81,6 +81,7 @@ export function BookingStatusCard({
     },
     onError: (err: Error) => {
       setConfirmingCancel(false);
+      logger.error("booking.cancel failed", { error: err.message, bookingId: displayBooking.id });
       toast({ title: "Impossible d'annuler", description: err.message, variant: "error" });
     },
   });
