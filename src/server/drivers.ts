@@ -15,6 +15,7 @@ const submitDriverApplicationSchema = z.object({
   vehicle_type: z.enum(["taxi", "vsl", "ambulance"]),
   vehicle_registration: z.string().min(1),
   pmr_equipped: z.boolean(),
+  parking_municipality: z.string().min(2),
 });
 
 // Runs server-side with the service role client so the insert never depends
@@ -46,6 +47,7 @@ export const submitDriverApplicationServerFn = createServerFn({ method: "POST" }
       vehicle_type: data.vehicle_type,
       vehicle_registration: data.vehicle_registration,
       pmr_equipped: data.pmr_equipped,
+      parking_municipality: data.parking_municipality,
       subscription_status: "trial",
       subscription_ends_at: null,
       approved_at: null,

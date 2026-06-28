@@ -20,6 +20,8 @@ interface AddressAutocompleteProps {
   ariaDescribedBy?: string;
   ariaInvalid?: boolean;
   ariaRequired?: boolean;
+  /** Restreint les résultats de l'API BAN à un type donné (ex. "municipality" pour les communes). */
+  type?: "municipality";
 }
 
 const BAN_SEARCH_URL = "https://api-adresse.data.gouv.fr/search/";
@@ -42,6 +44,7 @@ export function AddressAutocomplete({
   ariaDescribedBy,
   ariaInvalid,
   ariaRequired,
+  type,
 }: AddressAutocompleteProps) {
   const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -63,7 +66,8 @@ export function AddressAutocomplete({
       abortRef.current = controller;
       setIsLoading(true);
       try {
-        const url = `${BAN_SEARCH_URL}?q=${encodeURIComponent(value)}&limit=5&autocomplete=1`;
+        const typeParam = type ? `&type=${type}` : "";
+        const url = `${BAN_SEARCH_URL}?q=${encodeURIComponent(value)}&limit=5&autocomplete=1${typeParam}`;
         const res = await fetch(url, { signal: controller.signal });
         if (!res.ok) throw new Error(`API Adresse a répondu ${res.status}`);
         const data: { features: BanFeature[] } = await res.json();
@@ -89,7 +93,7 @@ export function AddressAutocomplete({
     }, DEBOUNCE_MS);
 
     return () => clearTimeout(timer);
-  }, [value]);
+  }, [value, type]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {

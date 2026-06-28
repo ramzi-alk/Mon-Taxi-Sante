@@ -21,6 +21,7 @@ export interface PendingDriver {
   vehicle_type: string;
   vehicle_registration: string;
   pmr_equipped: boolean;
+  parking_municipality: string | null;
   created_at: string;
   profiles: { full_name: string; email: string; phone: string | null } | null;
 }
@@ -48,7 +49,7 @@ export async function fetchPendingDrivers(client: SupabaseClient): Promise<Pendi
   const { data, error } = await client
     .from("drivers_details")
     .select(
-      "id, profile_id, siret, company_name, vehicle_type, vehicle_registration, pmr_equipped, created_at, profiles:profile_id(full_name, email, phone)"
+      "id, profile_id, siret, company_name, vehicle_type, vehicle_registration, pmr_equipped, parking_municipality, created_at, profiles:profile_id(full_name, email, phone)"
     )
     .is("approved_at", null)
     .order("created_at", { ascending: true });

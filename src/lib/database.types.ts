@@ -273,6 +273,7 @@ export type Database = {
           id: string
           insurance_url: string | null
           oxygen_equipped: boolean
+          parking_municipality: string | null
           pmr_equipped: boolean
           profile_id: string
           siret: string
@@ -300,6 +301,7 @@ export type Database = {
           id?: string
           insurance_url?: string | null
           oxygen_equipped?: boolean
+          parking_municipality?: string | null
           pmr_equipped?: boolean
           profile_id: string
           siret: string
@@ -327,6 +329,7 @@ export type Database = {
           id?: string
           insurance_url?: string | null
           oxygen_equipped?: boolean
+          parking_municipality?: string | null
           pmr_equipped?: boolean
           profile_id?: string
           siret?: string

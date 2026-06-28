@@ -173,6 +173,9 @@ function AdminDashboard() {
                           : "Ambulance"}
                         {driver.pmr_equipped && " · PMR"}
                         <div className="text-xs text-gray-400">{driver.vehicle_registration}</div>
+                        {driver.parking_municipality && (
+                          <div className="text-xs text-gray-400">{driver.parking_municipality}</div>
+                        )}
                       </td>
                       <td className="px-5 py-4 text-gray-500">
                         {driver.siret}
