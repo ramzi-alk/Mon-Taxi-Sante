@@ -41,6 +41,27 @@ function layout(params: { title: string; icon: string; bodyHtml: string }): stri
   `;
 }
 
+// Links back to the app must only ever carry the public reference code —
+// never the phone number, which stays the second factor the patient must
+// type in by hand on /mes-reservations. That way a forwarded or leaked
+// email link is useless on its own for reading a booking.
+function trackingUrl(referenceCode: string): string {
+  const appUrl = (import.meta.env.VITE_APP_URL as string | undefined) ?? "https://mon-taxi-sante.com";
+  return `${appUrl}/mes-reservations?ref=${encodeURIComponent(formatReferenceCode(referenceCode))}`;
+}
+
+function ctaButton(label: string, href: string): string {
+  return `
+    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:20px 0;">
+      <tr>
+        <td style="border-radius:10px;background:#1244E8;">
+          <a href="${href}" style="display:inline-block;padding:12px 22px;font-size:14px;font-weight:700;color:#fff;text-decoration:none;border-radius:10px;">${label}</a>
+        </td>
+      </tr>
+    </table>
+  `;
+}
+
 function badge(label: string, color: "green" | "red" | "blue"): string {
   const palette = {
     green: { bg: "#ECFDF5", fg: "#059669" },
@@ -90,7 +111,8 @@ export function bookingConfirmationEmail(params: {
           { label: "Destination", value: dropoffAddress },
           { label: "Date", value: `${formatDateFr(pickupDatetime)} à ${formatTimeFr(pickupDatetime)}` },
         ])}
-        <p style="margin:0;font-size:14px;color:#6b7280;line-height:1.5;">Vous pouvez suivre l'avancement de votre réservation à tout moment sur la page "Mes réservations".</p>
+        ${ctaButton("Suivre ma réservation", trackingUrl(referenceCode))}
+        <p style="margin:0;font-size:14px;color:#6b7280;line-height:1.5;">Ce lien ouvre la page de suivi avec votre référence déjà renseignée. Pour des raisons de sécurité, vous devrez confirmer votre numéro de téléphone pour accéder aux détails.</p>
       `,
     }),
   };

@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ClipboardList, History, Phone } from "lucide-react";
+import { z } from "zod";
 import { supabase } from "~/lib/supabase";
 import { useRealtime } from "~/hooks/useRealtime";
 import { BookingStatusCard } from "~/components/booking/BookingStatusCard";
@@ -10,7 +11,21 @@ import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
 import * as bookingsRepository from "~/repositories/bookingsRepository";
 import { STATUS_LABELS, isTerminalStatus, type BookingStatus } from "~/lib/bookingStatus";
 
+// `ref` only ever carries the public reference code (e.g. from the
+// confirmation email link) — never a phone number or anything else that
+// would let a link alone unlock a booking. Malformed values are dropped
+// rather than passed through.
+const referenceCodePattern = /^[A-Z2-9]{4}-?[A-Z2-9]{4}$/i;
+const myBookingsSearchSchema = z.object({
+  ref: z
+    .string()
+    .regex(referenceCodePattern)
+    .optional()
+    .catch(undefined),
+});
+
 export const Route = createFileRoute("/mes-reservations")({
+  validateSearch: myBookingsSearchSchema,
   head: () => ({
     meta: [
       { title: "Mes réservations — Mon Taxi Santé" },
@@ -27,6 +42,7 @@ async function fetchMyBookings() {
 function MyBookingsPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { ref } = Route.useSearch();
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["my-bookings"],
@@ -117,7 +133,7 @@ function MyBookingsPage() {
 
         {!isLoading && !isError && bookings.length === 0 && (
           <div className="mt-6">
-            <BookingLookupForm />
+            <BookingLookupForm defaultReferenceCode={ref} />
           </div>
         )}
 

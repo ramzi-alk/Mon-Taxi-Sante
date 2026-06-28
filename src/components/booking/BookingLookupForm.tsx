@@ -83,12 +83,15 @@ async function lookupBooking(
   });
 }
 
-export function BookingLookupForm() {
+export function BookingLookupForm({ defaultReferenceCode }: { defaultReferenceCode?: string }) {
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LookupSchema>({ resolver: zodResolver(lookupSchema) });
+  } = useForm<LookupSchema>({
+    resolver: zodResolver(lookupSchema),
+    defaultValues: { reference_code: defaultReferenceCode ?? "" },
+  });
 
   const { containerRef, token, reset } = useTurnstile(TURNSTILE_SITE_KEY);
   const [captchaRequired, setCaptchaRequired] = useState(false);
