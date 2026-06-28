@@ -1,13 +1,16 @@
 import { useState } from "react";
-import { MapPin, Clock, Car, Users, Navigation, Loader2, PlayCircle, FlagTriangleRight, XCircle } from "lucide-react";
+import { MapPin, Clock, Car, Users, Navigation, Loader2, PlayCircle, FlagTriangleRight, XCircle, User, Phone } from "lucide-react";
 import { formatDateFr, formatTimeFr, formatPrice } from "~/lib/utils";
 import { cn } from "~/lib/utils";
 
-// Mirrors bookings_pool_for_drivers view — no medical fields
+// Mirrors bookings_pool_for_drivers view — no medical fields. patient_full_name
+// is only ever populated for "my rides" (accepted/in_progress/completed, see
+// fetchDriverRides) — the pool view only exposes the first name pre-acceptance.
 export interface PoolRide {
   id: string;
   driver_id: string | null;
   patient_first_name: string;
+  patient_full_name?: string;
   patient_phone: string;
   pickup_address: string;
   pickup_lat: number | null;
@@ -167,6 +170,24 @@ export function RideCard({
             </span>
           ))}
         </div>
+
+        {ride.status !== "available" && (ride.patient_full_name || ride.patient_first_name) && (
+          <div className="rounded-xl bg-brand-green-50/60 border border-brand-green-100 p-3 space-y-1.5">
+            <p className="flex items-center gap-2 text-sm font-semibold text-gray-900">
+              <User className="h-4 w-4 text-brand-green-600" aria-hidden="true" />
+              {ride.patient_full_name ?? ride.patient_first_name}
+            </p>
+            {ride.patient_phone && (
+              <a
+                href={`tel:${ride.patient_phone}`}
+                className="flex items-center gap-2 text-sm font-medium text-brand-green-700 hover:underline"
+              >
+                <Phone className="h-3.5 w-3.5" aria-hidden="true" />
+                {ride.patient_phone}
+              </a>
+            )}
+          </div>
+        )}
 
         {/* Price + CTA */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-2 border-t border-gray-100">
