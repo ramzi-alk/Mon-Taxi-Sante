@@ -10,6 +10,45 @@ interface PoolRideRowProps {
 
 const URGENT_THRESHOLD_MIN = 45;
 
+function AcceptButton({
+  ride,
+  isAccepting,
+  onAccept,
+  compact,
+  className,
+}: {
+  ride: PoolRide;
+  isAccepting: boolean;
+  onAccept: (rideId: string) => void;
+  compact?: boolean;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onAccept(ride.id)}
+      disabled={isAccepting}
+      aria-label={`Accepter la course — ${ride.pickup_address} vers ${ride.dropoff_address}`}
+      aria-busy={isAccepting}
+      className={cn(
+        "flex shrink-0 items-center justify-center gap-1.5 rounded-xl font-bold text-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        compact ? "px-2.5 py-1.5 text-xs" : "px-4 py-2.5 text-sm",
+        isAccepting
+          ? "bg-gray-400 cursor-not-allowed"
+          : "bg-brand-green-600 hover:bg-brand-green-700 shadow-sm active:scale-95",
+        className
+      )}
+    >
+      {isAccepting ? (
+        <Loader2 className="h-3.5 w-3.5 animate-spin sm:h-4 sm:w-4" aria-hidden="true" />
+      ) : (
+        <Car className="h-3.5 w-3.5 sm:h-4 sm:w-4" aria-hidden="true" />
+      )}
+      Accepter
+    </button>
+  );
+}
+
 export function PoolRideRow({ ride, onAccept, isAccepting }: PoolRideRowProps) {
   const pickupDate = formatDateFr(ride.pickup_datetime);
   const pickupTime = formatTimeFr(ride.pickup_datetime);
@@ -32,35 +71,38 @@ export function PoolRideRow({ ride, onAccept, isAccepting }: PoolRideRowProps) {
   return (
     <article
       className={cn(
-        "flex flex-col gap-3 rounded-xl bg-white px-4 py-3 ring-1 ring-gray-200 transition-all hover:shadow-sm hover:ring-brand-blue-200 sm:flex-row sm:items-center sm:gap-4",
+        "rounded-xl bg-white px-3 py-2 ring-1 ring-gray-200 transition-all hover:shadow-sm hover:ring-brand-blue-200 sm:flex sm:items-center sm:gap-4 sm:px-4 sm:py-2.5",
         isUrgent && "ring-amber-300 bg-amber-50/40"
       )}
       aria-label={`Course disponible — ${ride.pickup_address} vers ${ride.dropoff_address}`}
     >
-      {/* Heure */}
-      <div className="flex items-center gap-2 sm:w-28 sm:shrink-0">
-        <Clock
-          className={cn("h-4 w-4 shrink-0", isUrgent ? "text-amber-600" : "text-brand-blue-500")}
-          aria-hidden="true"
-        />
-        <div className="leading-tight">
-          <p className={cn("text-sm font-bold", isUrgent ? "text-amber-800" : "text-gray-900")}>
-            {dayLabel}
-          </p>
-          <p className="text-xs text-gray-500">
-            <time dateTime={ride.pickup_datetime}>{pickupTime}</time>
-          </p>
+      {/* En-tête : heure + véhicule (+ bouton sur mobile) */}
+      <div className="flex items-center justify-between gap-2 sm:w-auto sm:shrink-0 sm:gap-3">
+        <div className="flex items-center gap-2.5">
+          <span
+            className={cn(
+              "flex shrink-0 items-center gap-1.5 whitespace-nowrap text-xs font-bold sm:min-w-[7rem]",
+              isUrgent ? "text-amber-800" : "text-gray-900"
+            )}
+          >
+            <Clock
+              className={cn("h-3.5 w-3.5 shrink-0", isUrgent ? "text-amber-600" : "text-brand-blue-500")}
+              aria-hidden="true"
+            />
+            <time dateTime={ride.pickup_datetime}>
+              {dayLabel} <span className="font-normal text-gray-500">{pickupTime}</span>
+            </time>
+          </span>
+          <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs font-semibold text-gray-500 sm:min-w-[3.25rem]">
+            <span aria-hidden="true">{vehicleIcons[ride.vehicle_type]}</span>
+            {ride.vehicle_type.toUpperCase()}
+          </span>
         </div>
+        <AcceptButton ride={ride} isAccepting={isAccepting} onAccept={onAccept} compact className="sm:hidden" />
       </div>
 
-      {/* Véhicule */}
-      <span className="flex items-center gap-1 text-xs font-semibold text-gray-600 sm:w-16 sm:shrink-0">
-        <span aria-hidden="true">{vehicleIcons[ride.vehicle_type]}</span>
-        {ride.vehicle_type.toUpperCase()}
-      </span>
-
       {/* Trajet */}
-      <div className="min-w-0 flex-1 space-y-1.5">
+      <div className="mt-1.5 min-w-0 space-y-1 sm:mt-0 sm:flex-1">
         <div className="flex items-baseline gap-1.5">
           <Navigation className="h-3.5 w-3.5 shrink-0 text-brand-blue-500" aria-hidden="true" />
           <AddressLink
@@ -90,7 +132,7 @@ export function PoolRideRow({ ride, onAccept, isAccepting }: PoolRideRowProps) {
       </div>
 
       {/* Conformité / besoins */}
-      <div className="flex flex-wrap items-center gap-1.5 sm:w-44 sm:shrink-0">
+      <div className="mt-1.5 flex flex-wrap items-center gap-1.5 sm:mt-0 sm:w-44 sm:shrink-0">
         <span className="flex items-center gap-1 text-xs text-gray-500">
           <Users className="h-3.5 w-3.5" aria-hidden="true" />
           {ride.passenger_count}
@@ -110,27 +152,7 @@ export function PoolRideRow({ ride, onAccept, isAccepting }: PoolRideRowProps) {
         ))}
       </div>
 
-      {/* CTA */}
-      <button
-        type="button"
-        onClick={() => onAccept(ride.id)}
-        disabled={isAccepting}
-        aria-label={`Accepter la course — ${ride.pickup_address} vers ${ride.dropoff_address}`}
-        aria-busy={isAccepting}
-        className={cn(
-          "flex shrink-0 items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-bold text-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:w-auto",
-          isAccepting
-            ? "bg-gray-400 cursor-not-allowed"
-            : "bg-brand-green-600 hover:bg-brand-green-700 shadow-sm active:scale-95"
-        )}
-      >
-        {isAccepting ? (
-          <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-        ) : (
-          <Car className="h-4 w-4" aria-hidden="true" />
-        )}
-        Accepter
-      </button>
+      <AcceptButton ride={ride} isAccepting={isAccepting} onAccept={onAccept} className="hidden sm:flex" />
     </article>
   );
 }

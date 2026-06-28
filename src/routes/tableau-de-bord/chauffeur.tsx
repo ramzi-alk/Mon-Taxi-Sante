@@ -566,6 +566,16 @@ function DriverDashboard() {
                 onAccept={(id) => acceptMutation.mutate(id)}
                 acceptingId={acceptingId}
                 isAccepting={acceptMutation.isPending}
+                driverProfile={
+                  availabilityQuery.data
+                    ? {
+                        vehicle_type: availabilityQuery.data.vehicle_type,
+                        pmr_equipped: availabilityQuery.data.pmr_equipped,
+                        stretcher_equipped: availabilityQuery.data.stretcher_equipped,
+                        oxygen_equipped: availabilityQuery.data.oxygen_equipped,
+                      }
+                    : null
+                }
               />
             )}
           </section>

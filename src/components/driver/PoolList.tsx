@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Search, LayoutGrid, Rows3, ArrowDownWideNarrow } from "lucide-react";
 import { Input } from "~/components/ui/input";
@@ -18,11 +18,19 @@ type VehicleFilter = "all" | "taxi" | "vsl" | "pmr";
 type SortBy = "urgency" | "proximity";
 type ViewMode = "compact" | "grid";
 
+export interface DriverProfileFilter {
+  vehicle_type: "taxi" | "vsl" | "ambulance";
+  pmr_equipped: boolean;
+  stretcher_equipped: boolean;
+  oxygen_equipped: boolean;
+}
+
 interface PoolListProps {
   rides: PoolRide[];
   onAccept: (rideId: string) => void;
   acceptingId: string | null;
   isAccepting: boolean;
+  driverProfile?: DriverProfileFilter | null;
 }
 
 const VIRTUALIZE_THRESHOLD = 20;
@@ -34,20 +42,39 @@ function matchesSearch(ride: PoolRide, query: string): boolean {
   return haystack.includes(query.toLowerCase());
 }
 
-export function PoolList({ rides, onAccept, acceptingId, isAccepting }: PoolListProps) {
+function defaultVehicleFilter(profile: DriverProfileFilter | null | undefined): VehicleFilter {
+  if (!profile) return "all";
+  if (profile.vehicle_type === "taxi") return "taxi";
+  if (profile.vehicle_type === "vsl" || profile.vehicle_type === "ambulance") return "vsl";
+  return "all";
+}
+
+export function PoolList({ rides, onAccept, acceptingId, isAccepting, driverProfile }: PoolListProps) {
   const [search, setSearch] = useState("");
-  const [vehicleFilter, setVehicleFilter] = useState<VehicleFilter>("all");
+  const [vehicleFilter, setVehicleFilter] = useState<VehicleFilter>(() => defaultVehicleFilter(driverProfile));
   const [accessibilityOnly, setAccessibilityOnly] = useState(false);
   const [sortBy, setSortBy] = useState<SortBy>("urgency");
   const [viewMode, setViewMode] = useState<ViewMode>(
     rides.length > VIRTUALIZE_THRESHOLD ? "compact" : "grid"
   );
 
+  const hasAppliedDriverDefault = useRef(false);
+  useEffect(() => {
+    if (hasAppliedDriverDefault.current || !driverProfile) return;
+    hasAppliedDriverDefault.current = true;
+    setVehicleFilter(defaultVehicleFilter(driverProfile));
+  }, [driverProfile]);
+
   const filteredRides = useMemo(() => {
     let result = rides.filter((ride) => {
       if (vehicleFilter !== "all" && ride.vehicle_type !== vehicleFilter) return false;
       if (accessibilityOnly && !ride.requires_wheelchair && !ride.requires_stretcher && !ride.requires_oxygen) {
         return false;
+      }
+      if (driverProfile) {
+        if (ride.requires_wheelchair && !driverProfile.pmr_equipped) return false;
+        if (ride.requires_stretcher && !driverProfile.stretcher_equipped) return false;
+        if (ride.requires_oxygen && !driverProfile.oxygen_equipped) return false;
       }
       if (!matchesSearch(ride, search)) return false;
       return true;
@@ -63,7 +90,7 @@ export function PoolList({ rides, onAccept, acceptingId, isAccepting }: PoolList
     });
 
     return result;
-  }, [rides, vehicleFilter, accessibilityOnly, search, sortBy]);
+  }, [rides, vehicleFilter, accessibilityOnly, search, sortBy, driverProfile]);
 
   const parentRef = useRef<HTMLDivElement>(null);
   const virtualizer = useVirtualizer({
