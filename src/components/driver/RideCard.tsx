@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MapPin, Clock, Car, Users, Navigation, Loader2, PlayCircle, FlagTriangleRight, XCircle, User, Phone } from "lucide-react";
+import { MapPin, Clock, Car, Users, Navigation, Loader2, PlayCircle, FlagTriangleRight, XCircle, User, Phone, CalendarPlus } from "lucide-react";
 import { formatDateFr, formatTimeFr } from "~/lib/utils";
 import { cn } from "~/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
@@ -170,6 +170,111 @@ function AddressLink({
   );
 }
 
+function formatICSDate(date: Date) {
+  return date.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+}
+
+function buildCalendarLinks(ride: PoolRide) {
+  const start = new Date(ride.pickup_datetime);
+  const end = ride.return_datetime
+    ? new Date(ride.return_datetime)
+    : new Date(start.getTime() + 60 * 60 * 1000);
+
+  const title = `Course — ${ride.patient_full_name ?? ride.patient_first_name}`;
+  const details = [
+    `Destination : ${ride.dropoff_address}`,
+    ride.patient_phone ? `Téléphone patient : ${ride.patient_phone}` : null,
+    `Véhicule : ${ride.vehicle_type.toUpperCase()}`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const startICS = formatICSDate(start);
+  const endICS = formatICSDate(end);
+
+  const googleCalendar = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
+    title
+  )}&dates=${startICS}/${endICS}&details=${encodeURIComponent(details)}&location=${encodeURIComponent(
+    ride.pickup_address
+  )}`;
+
+  const outlookCalendar = `https://outlook.live.com/calendar/0/deeplink/compose?path=/calendar/action/compose&rru=addevent&subject=${encodeURIComponent(
+    title
+  )}&startdt=${encodeURIComponent(start.toISOString())}&enddt=${encodeURIComponent(
+    end.toISOString()
+  )}&body=${encodeURIComponent(details)}&location=${encodeURIComponent(ride.pickup_address)}`;
+
+  const icsContent = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Mon Taxi Sante//FR",
+    "BEGIN:VEVENT",
+    `UID:${ride.id}@mon-taxi-sante`,
+    `DTSTAMP:${formatICSDate(new Date())}`,
+    `DTSTART:${startICS}`,
+    `DTEND:${endICS}`,
+    `SUMMARY:${title}`,
+    `DESCRIPTION:${details.replace(/\n/g, "\\n")}`,
+    `LOCATION:${ride.pickup_address}`,
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ].join("\r\n");
+
+  const appleCalendar = `data:text/calendar;charset=utf-8,${encodeURIComponent(icsContent)}`;
+
+  return { googleCalendar, outlookCalendar, appleCalendar };
+}
+
+function CalendarOptions({ ride }: { ride: PoolRide }) {
+  const links = buildCalendarLinks(ride);
+  return (
+    <>
+      <a
+        href={links.googleCalendar}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+      >
+        Google Agenda
+      </a>
+      <a
+        href={links.appleCalendar}
+        download={`course-${ride.id}.ics`}
+        className="block rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+      >
+        Apple Calendrier (.ics)
+      </a>
+      <a
+        href={links.outlookCalendar}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+      >
+        Outlook
+      </a>
+    </>
+  );
+}
+
+function CalendarButton({ ride, children }: { ride: PoolRide; children: React.ReactNode }) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          aria-label="Ajouter au calendrier"
+          className="flex items-center gap-1.5 text-left underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+        >
+          {children}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-56 p-1.5">
+        <CalendarOptions ride={ride} />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 export function RideCard({
   ride,
   onAccept,
@@ -205,10 +310,19 @@ export function RideCard({
       {/* Header strip */}
       <div className="flex items-center justify-between bg-gray-50 border-b px-4 py-2">
         <span className="flex items-center gap-1.5 text-sm font-semibold text-gray-700">
-          <Clock className="h-4 w-4 text-brand-blue-500" aria-hidden="true" />
-          <time dateTime={ride.pickup_datetime}>
-            {dayLabel} à {pickupTime}
-          </time>
+          <Clock className="h-4 w-4 text-brand-blue-500 shrink-0" aria-hidden="true" />
+          {ride.status === "accepted" ? (
+            <CalendarButton ride={ride}>
+              <time dateTime={ride.pickup_datetime}>
+                {dayLabel} à {pickupTime}
+              </time>
+              <CalendarPlus className="h-3.5 w-3.5 text-gray-400" aria-hidden="true" />
+            </CalendarButton>
+          ) : (
+            <time dateTime={ride.pickup_datetime}>
+              {dayLabel} à {pickupTime}
+            </time>
+          )}
         </span>
         <span className="flex items-center gap-2">
           {statusLabels[ride.status] && (
