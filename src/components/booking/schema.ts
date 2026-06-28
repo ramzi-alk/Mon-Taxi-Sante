@@ -44,6 +44,8 @@ export const bookingSchema = z
 
     // Step 5 — Trip type
     trip_type: z.enum(["aller_simple", "aller_retour", "multiple"]),
+    // Retour à vide éligible (hospitalisation ou soins répétés) — convention 2025 art. 4
+    is_hospitalization: z.boolean(),
 
     // Step 6 — Specificities
     requires_wheelchair: z.boolean(),
@@ -114,7 +116,7 @@ export const STEP_FIELDS: Record<number, (keyof BookingSchema)[]> = {
   2: ["pickup_address", "dropoff_address"],
   3: ["pickup_date", "pickup_time", "return_date", "return_time"],
   4: ["vehicle_type"],
-  5: ["trip_type"],
+  5: ["trip_type", "is_hospitalization"],
   6: ["passenger_count"],
   7: ["cpam_status"],
   8: ["pmt_declared"],

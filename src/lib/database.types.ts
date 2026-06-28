@@ -99,6 +99,7 @@ export type Database = {
           created_at: string
           distance_km: number | null
           driver_id: string | null
+          is_hospitalization: boolean
           dropoff_address: string
           dropoff_lat: number | null
           dropoff_lng: number | null
@@ -139,6 +140,7 @@ export type Database = {
           created_at?: string
           distance_km?: number | null
           driver_id?: string | null
+          is_hospitalization?: boolean
           dropoff_address: string
           dropoff_lat?: number | null
           dropoff_lng?: number | null
@@ -179,6 +181,7 @@ export type Database = {
           created_at?: string
           distance_km?: number | null
           driver_id?: string | null
+          is_hospitalization?: boolean
           dropoff_address?: string
           dropoff_lat?: number | null
           dropoff_lng?: number | null

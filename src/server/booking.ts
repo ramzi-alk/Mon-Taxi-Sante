@@ -22,6 +22,7 @@ interface SubmitBookingPayload {
   return_datetime: string | null;
   vehicle_type: Database["public"]["Tables"]["bookings"]["Row"]["vehicle_type"];
   trip_type: Database["public"]["Tables"]["bookings"]["Row"]["trip_type"];
+  is_hospitalization: boolean;
   requires_wheelchair: boolean;
   requires_stretcher: boolean;
   requires_oxygen: boolean;
