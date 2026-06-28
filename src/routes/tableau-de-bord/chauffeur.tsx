@@ -112,13 +112,15 @@ function StatCard({
   color: string;
 }) {
   return (
-    <div className="flex items-center gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-100">
-      <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${color}`}>
-        <Icon className="h-6 w-6" aria-hidden="true" />
+    <div className="flex items-center gap-2.5 rounded-xl bg-white p-3 shadow-sm ring-1 ring-gray-100 sm:gap-4 sm:rounded-2xl sm:p-5">
+      <div
+        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg sm:h-12 sm:w-12 sm:rounded-xl ${color}`}
+      >
+        <Icon className="h-5 w-5 sm:h-6 sm:w-6" aria-hidden="true" />
       </div>
-      <div>
-        <p className="text-2xl font-black text-gray-900">{value}</p>
-        <p className="text-sm text-muted-foreground">{label}</p>
+      <div className="min-w-0">
+        <p className="text-lg font-black text-gray-900 leading-tight sm:text-2xl">{value}</p>
+        <p className="truncate text-xs text-muted-foreground sm:text-sm">{label}</p>
       </div>
     </div>
   );
@@ -366,7 +368,7 @@ function DriverDashboard() {
           <h2 id="stats-heading" className="sr-only">
             Statistiques du jour
           </h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4">
             <StatCard
               icon={Activity}
               label="Courses disponibles"
@@ -405,7 +407,7 @@ function DriverDashboard() {
           <h2 id="earnings-heading" className="sr-only">
             Kilomètres et gains
           </h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-3">
             <StatCard
               icon={Gauge}
               label="Km parcourus (total)"

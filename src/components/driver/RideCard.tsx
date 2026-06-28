@@ -2,6 +2,7 @@ import { useState } from "react";
 import { MapPin, Clock, Car, Users, Navigation, Loader2, PlayCircle, FlagTriangleRight, XCircle, User, Phone } from "lucide-react";
 import { formatDateFr, formatTimeFr } from "~/lib/utils";
 import { cn } from "~/lib/utils";
+import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
 
 // Mirrors bookings_pool_for_drivers view — no medical fields. patient_full_name
 // is only ever populated for "my rides" (accepted/in_progress/completed, see
@@ -57,9 +58,69 @@ const statusLabels: Record<string, string> = {
   completed: "Terminée",
 };
 
-function buildMapsUrl(address: string, lat: number | null, lng: number | null): string {
-  const destination = lat != null && lng != null ? `${lat},${lng}` : address;
-  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`;
+function buildNavigationLinks(address: string, lat: number | null, lng: number | null) {
+  const hasCoords = lat != null && lng != null;
+  const destination = hasCoords ? `${lat},${lng}` : address;
+  return {
+    googleMaps: `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`,
+    waze: hasCoords
+      ? `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`
+      : `https://waze.com/ul?q=${encodeURIComponent(address)}&navigate=yes`,
+    appleMaps: `https://maps.apple.com/?daddr=${encodeURIComponent(destination)}`,
+  };
+}
+
+function NavigationMenu({
+  address,
+  lat,
+  lng,
+  label,
+}: {
+  address: string;
+  lat: number | null;
+  lng: number | null;
+  label: string;
+}) {
+  const links = buildNavigationLinks(address, lat, lng);
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          aria-label={label}
+          className="flex items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors shrink-0"
+        >
+          <Navigation className="h-4 w-4" aria-hidden="true" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-48 p-1.5">
+        <a
+          href={links.googleMaps}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+        >
+          Google Maps
+        </a>
+        <a
+          href={links.waze}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+        >
+          Waze
+        </a>
+        <a
+          href={links.appleMaps}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+        >
+          Apple Plans
+        </a>
+      </PopoverContent>
+    </Popover>
+  );
 }
 
 export function RideCard({
@@ -233,15 +294,12 @@ export function RideCard({
 
           {ride.status === "accepted" && (
             <div className="flex items-center gap-2">
-              <a
-                href={buildMapsUrl(ride.pickup_address, ride.pickup_lat, ride.pickup_lng)}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Naviguer vers le point de départ"
-                className="flex items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors shrink-0"
-              >
-                <Navigation className="h-4 w-4" aria-hidden="true" />
-              </a>
+              <NavigationMenu
+                address={ride.pickup_address}
+                lat={ride.pickup_lat}
+                lng={ride.pickup_lng}
+                label="Naviguer vers le point de départ"
+              />
               <button
                 type="button"
                 onClick={() => onStart?.(ride.id)}
@@ -302,15 +360,12 @@ export function RideCard({
 
           {ride.status === "in_progress" && (
             <div className="flex items-center gap-2">
-              <a
-                href={buildMapsUrl(ride.dropoff_address, ride.dropoff_lat, ride.dropoff_lng)}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Naviguer vers la destination"
-                className="flex items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors shrink-0"
-              >
-                <Navigation className="h-4 w-4" aria-hidden="true" />
-              </a>
+              <NavigationMenu
+                address={ride.dropoff_address}
+                lat={ride.dropoff_lat}
+                lng={ride.dropoff_lng}
+                label="Naviguer vers la destination"
+              />
               <button
                 type="button"
                 onClick={() => onComplete?.(ride.id)}
