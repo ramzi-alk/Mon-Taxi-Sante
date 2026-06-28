@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { MapPin, Clock, Car, Users, Navigation, Loader2, PlayCircle, FlagTriangleRight, XCircle, User, Phone } from "lucide-react";
-import { formatDateFr, formatTimeFr, formatPrice } from "~/lib/utils";
+import { formatDateFr, formatTimeFr } from "~/lib/utils";
 import { cn } from "~/lib/utils";
 
 // Mirrors bookings_pool_for_drivers view — no medical fields. patient_full_name
@@ -201,17 +201,8 @@ export function RideCard({
           </div>
         )}
 
-        {/* Price + CTA */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-2 border-t border-gray-100">
-          <div>
-            <p className="text-xs text-muted-foreground">Estimation</p>
-            <p className="text-xl font-black text-brand-blue-700">
-              {ride.estimated_price
-                ? formatPrice(ride.estimated_price)
-                : "Sur devis"}
-            </p>
-          </div>
-
+        {/* CTA */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end pt-2 border-t border-gray-100">
           {ride.status === "available" && (
             <button
               type="button"
