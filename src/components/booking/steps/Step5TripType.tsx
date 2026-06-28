@@ -36,8 +36,6 @@ export function Step5TripType({ form }: StepProps) {
   const isHospitalization = watch("is_hospitalization");
 
   // Les soins répétés sont automatiquement considérés comme hospitalisations
-  const isMultiple = selected === "multiple";
-
   function handleTripTypeChange(value: typeof selected) {
     setValue("trip_type", value);
     if (value === "aller_retour") setValue("has_return", true);
@@ -128,30 +126,14 @@ export function Step5TripType({ form }: StepProps) {
               <div className="flex items-center gap-2">
                 <Hospital className="h-4 w-4 text-brand-blue-600 shrink-0" aria-hidden="true" />
                 <span className="font-semibold text-gray-800 text-sm">
-                  Ce trajet est lié à une hospitalisation
+                  Le patient sera hospitalisé (ne rentre pas le jour même)
                 </span>
               </div>
               <p id="hospit-hint" className="text-xs text-muted-foreground mt-1">
-                Cochez si le patient est admis en hospitalisation complète, partielle ou
-                ambulatoire. Cela permet au chauffeur de déclarer le retour à vide
-                selon la convention CPAM 2025.
+                Cochez cette case si le patient est admis et reste à l&apos;hôpital à l&apos;issue du transport.
               </p>
             </div>
           </label>
-        </div>
-      )}
-
-      {/* Message informatif pour soins en série */}
-      {isMultiple && (
-        <div className="rounded-xl border border-brand-blue-100 bg-brand-blue-50 p-4 text-sm text-brand-blue-900">
-          <p className="font-semibold flex items-center gap-2">
-            <Hospital className="h-4 w-4" aria-hidden="true" />
-            Retour à vide inclus automatiquement
-          </p>
-          <p className="mt-1 text-brand-blue-700">
-            Pour les soins en série (dialyse, chimiothérapie, radiothérapie), la convention
-            CPAM 2025 permet au chauffeur de facturer le retour à vide à chaque séance.
-          </p>
         </div>
       )}
 
