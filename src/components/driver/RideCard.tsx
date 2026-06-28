@@ -108,12 +108,6 @@ export function RideCard({
               {statusLabels[ride.status]}
             </span>
           )}
-          {ride.distance_to_driver_km != null && (
-            <span className="flex items-center gap-1 rounded-full bg-brand-blue-50 text-brand-blue-700 px-2 py-0.5 text-xs font-semibold">
-              <Navigation className="h-3 w-3" aria-hidden="true" />
-              {ride.distance_to_driver_km} km de vous
-            </span>
-          )}
           <span className="flex items-center gap-1 text-xs font-medium text-gray-500">
             <span aria-hidden="true">{vehicleIcons[ride.vehicle_type]}</span>
             {ride.vehicle_type.toUpperCase()}
@@ -123,25 +117,27 @@ export function RideCard({
 
       <div className="p-5 space-y-4">
         {/* Route */}
-        <div className="space-y-2">
+        <div className="space-y-3">
           <div className="flex items-start gap-2.5">
             <Navigation
               className="h-4 w-4 text-brand-blue-500 shrink-0 mt-0.5"
               aria-hidden="true"
             />
             <div>
-              <p className="text-xs text-muted-foreground">Départ</p>
+              {ride.distance_to_driver_km != null ? (
+                <p className="text-sm font-bold text-gray-900 leading-snug">
+                  {ride.distance_to_driver_km} km{" "}
+                  <span className="font-normal text-gray-400">
+                    jusqu'à la prise en charge
+                  </span>
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">Départ</p>
+              )}
               <p className="text-sm font-medium text-gray-900 leading-snug">
                 {ride.pickup_address}
               </p>
             </div>
-          </div>
-          <div className="ml-2 border-l-2 border-dashed border-gray-200 pl-3 py-0.5">
-            {ride.distance_km && (
-              <span className="text-xs text-muted-foreground">
-                ~{ride.distance_km} km
-              </span>
-            )}
           </div>
           <div className="flex items-start gap-2.5">
             <MapPin
@@ -149,7 +145,16 @@ export function RideCard({
               aria-hidden="true"
             />
             <div>
-              <p className="text-xs text-muted-foreground">Destination</p>
+              {ride.distance_km != null ? (
+                <p className="text-sm font-bold text-gray-900 leading-snug">
+                  {ride.distance_km} km{" "}
+                  <span className="font-normal text-gray-400">
+                    jusqu'à la destination
+                  </span>
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">Destination</p>
+              )}
               <p className="text-sm font-medium text-gray-900 leading-snug">
                 {ride.dropoff_address}
               </p>
