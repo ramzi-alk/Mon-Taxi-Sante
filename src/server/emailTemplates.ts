@@ -202,13 +202,23 @@ export function bookingAcceptedEmail(params: {
           { label: "Référence", value: formatReferenceCode(referenceCode) },
           { label: "Chauffeur", value: driverFullName },
           ...(driverAverageRating != null ? [{ label: "Note moyenne", value: `⭐ ${driverAverageRating.toFixed(1)} / 5` }] : []),
-          ...(driverPhone ? [{ label: "Téléphone", value: driverPhone }] : []),
           ...(vehicleLabel ? [{ label: "Véhicule", value: vehicleLabel }] : []),
           ...(vehicleRegistration ? [{ label: "Immatriculation", value: vehicleRegistration }] : []),
           { label: "Départ", value: pickupAddress },
           { label: "Destination", value: dropoffAddress },
           { label: "Date", value: `${formatDateFr(pickupDatetime)} à ${formatTimeFr(pickupDatetime)}` },
         ])}
+        ${driverPhone ? `
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;">
+          <tr>
+            <td style="background:#EFF4FF;border:1px solid #c7d7fd;border-radius:12px;padding:16px 20px;">
+              <p style="margin:0 0 4px;font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#4361c2;">Contacter votre chauffeur</p>
+              <a href="tel:${driverPhone}" style="font-size:22px;font-weight:800;color:#1244E8;text-decoration:none;letter-spacing:0.02em;">${driverPhone}</a>
+              <p style="margin:6px 0 0;font-size:12px;color:#6b7280;">Appuyez sur ce numéro depuis votre téléphone pour appeler directement.</p>
+            </td>
+          </tr>
+        </table>
+        ` : ""}
         ${ctaButton("Suivre ma réservation", trackingUrl(referenceCode))}
       `,
     }),
