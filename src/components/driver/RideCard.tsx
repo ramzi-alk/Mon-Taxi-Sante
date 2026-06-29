@@ -431,12 +431,15 @@ export function RideCard({
 
       {/* ── Résumé collapsed (courses terminées uniquement) ─────────── */}
       {isCompleted && collapsed && (
-        <div className="px-4 py-2 flex items-center gap-2 text-xs text-gray-500">
-          <Navigation className="h-3 w-3 shrink-0 text-brand-blue-400" aria-hidden="true" />
-          <span className="truncate font-medium text-gray-700">{ride.pickup_address}</span>
-          <span className="shrink-0">→</span>
-          <MapPin className="h-3 w-3 shrink-0 text-red-400" aria-hidden="true" />
-          <span className="truncate font-medium text-gray-700">{ride.dropoff_address}</span>
+        <div className="px-4 py-2 space-y-1">
+          <div className="flex items-baseline gap-1.5 text-xs">
+            <Navigation className="h-3 w-3 shrink-0 text-brand-blue-400 mt-0.5" aria-hidden="true" />
+            <span className="truncate font-medium text-gray-700">{ride.pickup_address}</span>
+          </div>
+          <div className="flex items-baseline gap-1.5 text-xs">
+            <MapPin className="h-3 w-3 shrink-0 text-red-400 mt-0.5" aria-hidden="true" />
+            <span className="truncate font-medium text-gray-500">{ride.dropoff_address}</span>
+          </div>
         </div>
       )}
 
