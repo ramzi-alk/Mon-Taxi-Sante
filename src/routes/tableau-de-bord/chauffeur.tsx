@@ -18,13 +18,14 @@ import {
   UserCog,
   Star,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "~/lib/supabase";
 import { cn, formatPrice } from "~/lib/utils";
 import { useRealtime } from "~/hooks/useRealtime";
 import { RideCard, type PoolRide } from "~/components/driver/RideCard";
 import { PoolList } from "~/components/driver/PoolList";
 import { Input } from "~/components/ui/input";
+import { useToast } from "~/components/ui/toast";
 import * as authRepository from "~/repositories/authRepository";
 import * as bookingsRepository from "~/repositories/bookingsRepository";
 import * as driversRepository from "~/repositories/driversRepository";
@@ -137,6 +138,7 @@ function StatCard({
 
 function DriverDashboard() {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
   const [startingId, setStartingId] = useState<string | null>(null);
   const [completingId, setCompletingId] = useState<string | null>(null);
@@ -144,6 +146,11 @@ function DriverDashboard() {
   const [ratingId, setRatingId] = useState<string | null>(null);
   const [realtimeEnabled, setRealtimeEnabled] = useState(true);
   const [tab, setTab] = useState<"pool" | "my_rides">("pool");
+  const [soundEnabled, setSoundEnabled] = useState(() => {
+    try { return localStorage.getItem("driver-sound") !== "off"; } catch { return true; }
+  });
+  const prevPoolCountRef = useRef<number | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Driver's own online/paused/offline status — the pool only shows rides
   // to drivers who are "online" (see migration 018).
@@ -173,10 +180,11 @@ function DriverDashboard() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["my-availability"] });
       queryClient.invalidateQueries({ queryKey: ["ride-pool"] });
+      toast({ title: "Rayon mis à jour", variant: "success" });
     },
     onError: (error) => {
       logger.error("driver.setAcceptanceRadius failed", { error: error.message });
-      alert(`Erreur : ${error.message}`);
+      toast({ title: "Erreur", description: error.message, variant: "error" });
     },
   });
 
@@ -188,7 +196,7 @@ function DriverDashboard() {
     },
     onError: (error) => {
       logger.error("driver.setAvailability failed", { error: error.message });
-      alert(`Erreur : ${error.message}`);
+      toast({ title: "Erreur", description: error.message, variant: "error" });
     },
   });
 
@@ -224,6 +232,7 @@ function DriverDashboard() {
     mutationFn: acceptRide,
     onMutate: (rideId) => setAcceptingId(rideId),
     onSuccess: (_, rideId) => {
+      toast({ title: "Course acceptée !", variant: "success" });
       notifyBookingAcceptedServerFn({ data: { bookingId: rideId } }).catch((err) => {
         logger.warn("email.notifyBookingAccepted failed", { error: err.message, rideId });
       });
@@ -235,33 +244,39 @@ function DriverDashboard() {
     },
     onError: (error, rideId) => {
       logger.error("driver.acceptRide failed", { error: error.message, rideId });
-      alert(`Erreur : ${error.message}. La course a peut-être déjà été prise.`);
+      toast({ title: "Course non disponible", description: error.message, variant: "error" });
     },
   });
 
   const startMutation = useMutation({
     mutationFn: startRide,
     onMutate: (rideId) => setStartingId(rideId),
+    onSuccess: () => {
+      toast({ title: "Course démarrée", variant: "success" });
+    },
     onSettled: () => {
       setStartingId(null);
       queryClient.invalidateQueries({ queryKey: ["my-rides"] });
     },
     onError: (error, rideId) => {
       logger.error("driver.startRide failed", { error: error.message, rideId });
-      alert(`Erreur : ${error.message}`);
+      toast({ title: "Erreur", description: error.message, variant: "error" });
     },
   });
 
   const completeMutation = useMutation({
     mutationFn: completeRide,
     onMutate: (rideId) => setCompletingId(rideId),
+    onSuccess: () => {
+      toast({ title: "Course terminée !", variant: "success" });
+    },
     onSettled: () => {
       setCompletingId(null);
       queryClient.invalidateQueries({ queryKey: ["my-rides"] });
     },
     onError: (error, rideId) => {
       logger.error("driver.completeRide failed", { error: error.message, rideId });
-      alert(`Erreur : ${error.message}`);
+      toast({ title: "Erreur", description: error.message, variant: "error" });
     },
   });
 
@@ -269,6 +284,7 @@ function DriverDashboard() {
     mutationFn: cancelRideByDriver,
     onMutate: (rideId) => setCancellingId(rideId),
     onSuccess: (_, rideId) => {
+      toast({ title: "Course annulée", description: "La course est retournée dans le pool.", variant: "default" });
       notifyRideUnassignedServerFn({ data: { bookingId: rideId } }).catch((err) => {
         logger.warn("email.notifyRideUnassigned failed", { error: err.message, rideId });
       });
@@ -280,13 +296,16 @@ function DriverDashboard() {
     },
     onError: (error, rideId) => {
       logger.error("driver.cancelRideByDriver failed", { error: error.message, rideId });
-      alert(`Erreur : ${error.message}`);
+      toast({ title: "Erreur", description: error.message, variant: "error" });
     },
   });
 
   const rateMutation = useMutation({
     mutationFn: rateRide,
     onMutate: (vars) => setRatingId(vars.rideId),
+    onSuccess: () => {
+      toast({ title: "Avis envoyé", variant: "success" });
+    },
     onSettled: () => {
       setRatingId(null);
       queryClient.invalidateQueries({ queryKey: ["my-rides"] });
@@ -294,7 +313,7 @@ function DriverDashboard() {
     },
     onError: (error, vars) => {
       logger.error("driver.rateBookingAsDriver failed", { error: error.message, rideId: vars.rideId });
-      alert(`Erreur : ${error.message}`);
+      toast({ title: "Erreur", description: error.message, variant: "error" });
     },
   });
 
@@ -304,6 +323,23 @@ function DriverDashboard() {
     (r) =>
       new Date(r.pickup_datetime).toDateString() === new Date().toDateString()
   );
+
+  // Sound + vibration when a new ride appears in the pool
+  useEffect(() => {
+    const prev = prevPoolCountRef.current;
+    prevPoolCountRef.current = poolRides.length;
+    if (prev === null || availability !== "online") return;
+    if (poolRides.length > prev) {
+      if (soundEnabled) {
+        try {
+          if (!audioRef.current) audioRef.current = new Audio("/sounds/new-ride.wav");
+          audioRef.current.currentTime = 0;
+          audioRef.current.play().catch(() => {});
+        } catch {}
+      }
+      navigator.vibrate?.([200, 100, 200]);
+    }
+  }, [poolRides.length, availability, soundEnabled]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -362,25 +398,26 @@ function DriverDashboard() {
                 Mon compte
               </Link>
               <button
-                onClick={() => setRealtimeEnabled(!realtimeEnabled)}
+                onClick={() => {
+                  const next = !soundEnabled;
+                  setSoundEnabled(next);
+                  try { localStorage.setItem("driver-sound", next ? "on" : "off"); } catch {}
+                }}
                 className="flex items-center gap-2 rounded-xl bg-white/10 border border-white/20 px-4 py-2 text-sm font-medium hover:bg-white/20 transition-colors"
-                aria-pressed={realtimeEnabled}
-                aria-label={
-                  realtimeEnabled
-                    ? "Désactiver les mises à jour en temps réel"
-                    : "Activer les mises à jour en temps réel"
-                }
+                aria-pressed={soundEnabled}
+                aria-label={soundEnabled ? "Désactiver le son" : "Activer le son"}
+                title={soundEnabled ? "Son activé — cliquer pour désactiver" : "Son désactivé — cliquer pour activer"}
               >
-                {realtimeEnabled ? (
+                {soundEnabled ? (
                   <>
                     <Bell className="h-4 w-4" aria-hidden="true" />
                     <span className="h-2 w-2 rounded-full bg-brand-green-400 animate-pulse" aria-hidden="true" />
-                    Temps réel actif
+                    Son activé
                   </>
                 ) : (
                   <>
                     <BellOff className="h-4 w-4" aria-hidden="true" />
-                    Temps réel désactivé
+                    Son désactivé
                   </>
                 )}
               </button>

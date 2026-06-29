@@ -1,5 +1,6 @@
-import { Clock, Users, Navigation, MapPin, Loader2, Car } from "lucide-react";
+import { Clock, Users, Navigation, MapPin, Loader2, Car, Banknote } from "lucide-react";
 import { formatDateFr, formatTimeFr, cn } from "~/lib/utils";
+import { useEffect, useState } from "react";
 import { AddressLink, vehicleIcons, type PoolRide } from "./RideCard";
 
 interface PoolRideRowProps {
@@ -49,18 +50,30 @@ function AcceptButton({
   );
 }
 
+function useMinutesUntil(datetimeStr: string) {
+  const [minutes, setMinutes] = useState(() =>
+    (new Date(datetimeStr).getTime() - Date.now()) / 60000
+  );
+  useEffect(() => {
+    const id = setInterval(() => {
+      setMinutes((new Date(datetimeStr).getTime() - Date.now()) / 60000);
+    }, 30_000);
+    return () => clearInterval(id);
+  }, [datetimeStr]);
+  return minutes;
+}
+
 export function PoolRideRow({ ride, onAccept, isAccepting }: PoolRideRowProps) {
   const pickupDate = formatDateFr(ride.pickup_datetime);
   const pickupTime = formatTimeFr(ride.pickup_datetime);
-  const now = Date.now();
-  const pickupMs = new Date(ride.pickup_datetime).getTime();
   const isToday = new Date(ride.pickup_datetime).toDateString() === new Date().toDateString();
   const isTomorrow =
     new Date(ride.pickup_datetime).toDateString() ===
     new Date(Date.now() + 86400000).toDateString();
   const dayLabel = isToday ? "Aujourd'hui" : isTomorrow ? "Demain" : pickupDate;
-  const minutesUntilPickup = (pickupMs - now) / 60000;
+  const minutesUntilPickup = useMinutesUntil(ride.pickup_datetime);
   const isUrgent = minutesUntilPickup >= 0 && minutesUntilPickup <= URGENT_THRESHOLD_MIN;
+  const isCritical = minutesUntilPickup >= 0 && minutesUntilPickup <= 20;
 
   const needs = [
     ride.requires_wheelchair && "PMR",
@@ -89,16 +102,35 @@ export function PoolRideRow({ ride, onAccept, isAccepting }: PoolRideRowProps) {
               className={cn("h-3.5 w-3.5 shrink-0", isUrgent ? "text-amber-600" : "text-brand-blue-500")}
               aria-hidden="true"
             />
-            <time dateTime={ride.pickup_datetime}>
-              {dayLabel} <span className="font-normal text-gray-500">{pickupTime}</span>
-            </time>
+            <span>
+              <time dateTime={ride.pickup_datetime}>
+                {dayLabel} <span className="font-normal text-gray-500">{pickupTime}</span>
+              </time>
+              {isUrgent && (
+                <span
+                  className={cn(
+                    "ml-1.5 font-semibold",
+                    isCritical ? "text-red-600 animate-pulse" : "text-amber-700"
+                  )}
+                >
+                  · Dans {Math.max(0, Math.round(minutesUntilPickup))} min
+                </span>
+              )}
+            </span>
           </span>
           <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs font-semibold text-gray-500 sm:min-w-[3.25rem]">
             <span aria-hidden="true">{vehicleIcons[ride.vehicle_type]}</span>
             {ride.vehicle_type.toUpperCase()}
           </span>
         </div>
-        <AcceptButton ride={ride} isAccepting={isAccepting} onAccept={onAccept} compact className="sm:hidden" />
+        <div className="flex items-center gap-1.5 sm:hidden">
+          {ride.estimated_price != null && (
+            <span className="flex items-center gap-0.5 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-bold text-amber-700">
+              ~{ride.estimated_price.toFixed(2).replace(".", ",")} €
+            </span>
+          )}
+          <AcceptButton ride={ride} isAccepting={isAccepting} onAccept={onAccept} compact />
+        </div>
       </div>
 
       {/* Trajet */}
@@ -158,7 +190,15 @@ export function PoolRideRow({ ride, onAccept, isAccepting }: PoolRideRowProps) {
         ))}
       </div>
 
-      <AcceptButton ride={ride} isAccepting={isAccepting} onAccept={onAccept} className="hidden sm:flex" />
+      <div className="hidden sm:flex items-center gap-2 shrink-0">
+        {ride.estimated_price != null && (
+          <span className="flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-700">
+            <Banknote className="h-3.5 w-3.5" aria-hidden="true" />
+            ~{ride.estimated_price.toFixed(2).replace(".", ",")} €
+          </span>
+        )}
+        <AcceptButton ride={ride} isAccepting={isAccepting} onAccept={onAccept} />
+      </div>
     </article>
   );
 }

@@ -96,6 +96,13 @@ function buildNavigationLinks(address: string, lat: number | null, lng: number |
   };
 }
 
+function getDefaultNavUrl(address: string, lat: number | null, lng: number | null): string {
+  const links = buildNavigationLinks(address, lat, lng);
+  const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
+  if (/iPad|iPhone|iPod/.test(ua)) return links.appleMaps;
+  return links.googleMaps;
+}
+
 function NavigationOptions({
   address,
   lat,
@@ -148,20 +155,31 @@ function NavigationButton({
   label: string;
 }) {
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          aria-label={label}
-          className="flex items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors shrink-0"
-        >
-          <Navigation className="h-4 w-4" aria-hidden="true" />
-        </button>
-      </PopoverTrigger>
-      <PopoverContent align="start" className="w-48 p-1.5">
-        <NavigationOptions address={address} lat={lat} lng={lng} />
-      </PopoverContent>
-    </Popover>
+    <div className="flex shrink-0 rounded-xl border border-gray-200 bg-white overflow-hidden">
+      <a
+        href={getDefaultNavUrl(address, lat, lng)}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={label}
+        className="flex items-center justify-center gap-1.5 px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+      >
+        <Navigation className="h-4 w-4" aria-hidden="true" />
+      </a>
+      <Popover>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            aria-label="Choisir l'application de navigation"
+            className="flex items-center px-2 py-3 text-gray-400 hover:bg-gray-50 transition-colors border-l border-gray-200 text-xs"
+          >
+            ▾
+          </button>
+        </PopoverTrigger>
+        <PopoverContent align="end" className="w-48 p-1.5">
+          <NavigationOptions address={address} lat={lat} lng={lng} />
+        </PopoverContent>
+      </Popover>
+    </div>
   );
 }
 
