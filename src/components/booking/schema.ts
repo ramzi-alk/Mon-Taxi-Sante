@@ -115,9 +115,9 @@ export const BOOKING_STEPS = [
 export const STEP_FIELDS: Record<number, (keyof BookingSchema)[]> = {
   1: ["patient_full_name", "patient_phone", "patient_email", "patient_birth_date"],
   2: ["pickup_address", "dropoff_address"],
-  3: ["pickup_date", "pickup_time", "return_date", "return_time"],
+  3: ["pickup_date", "pickup_time"],
   4: ["vehicle_type"],
-  5: ["trip_type", "is_hospitalization"],
+  5: ["trip_type", "is_hospitalization", "return_date", "return_time"],
   6: ["passenger_count"],
   7: ["cpam_status"],
   8: ["pmt_declared"],

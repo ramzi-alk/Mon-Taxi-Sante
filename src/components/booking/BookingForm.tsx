@@ -193,13 +193,8 @@ export function BookingForm() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  // Step 5 (trip type) can flip `has_return` to true after step 3 (date/time,
-  // where return_date/return_time are actually entered) has already been
-  // validated and passed — e.g. switching to "aller_retour" later, or
-  // re-using a previous booking's info, where trip_type isn't carried over
-  // (see bookingPrefill.ts) and defaults back to "aller_simple". The
-  // cross-field refine in schema.ts then fails at the final step on a field
-  // no longer visible there, so jump back to wherever the invalid field
+  // Safety net: if the final cross-field validation in schema.ts ever fails
+  // on a field the user already passed, jump back to wherever that field
   // actually lives instead of leaving the button silently inert.
   async function handleSubmit() {
     const valid = await form.trigger();
