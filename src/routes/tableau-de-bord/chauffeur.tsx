@@ -24,11 +24,11 @@ import { cn, formatPrice } from "~/lib/utils";
 import { useRealtime } from "~/hooks/useRealtime";
 import { RideCard, type PoolRide } from "~/components/driver/RideCard";
 import { PoolList } from "~/components/driver/PoolList";
-import { Input } from "~/components/ui/input";
 import { useToast } from "~/components/ui/toast";
 import * as authRepository from "~/repositories/authRepository";
 import * as bookingsRepository from "~/repositories/bookingsRepository";
 import * as driversRepository from "~/repositories/driversRepository";
+import type { DriverStatsPeriod } from "~/repositories/driversRepository";
 import { notifyBookingAcceptedServerFn, notifyRideUnassignedServerFn } from "~/server/email";
 import { logger } from "~/lib/logger";
 import type { Database } from "~/lib/database.types";
@@ -100,6 +100,10 @@ async function fetchMyDriverStats(): Promise<driversRepository.MyDriverStats | n
   return driversRepository.fetchMyDriverStats(supabase);
 }
 
+async function fetchDriverStatsSince(since: Date): Promise<DriverStatsPeriod> {
+  return driversRepository.fetchDriverStatsSince(supabase, since);
+}
+
 async function setAcceptanceRadius(radiusKm: number | null): Promise<void> {
   const user = await authRepository.getCurrentUser(supabase);
   if (!user) throw new Error("Non authentifié");
@@ -146,6 +150,7 @@ function DriverDashboard() {
   const [ratingId, setRatingId] = useState<string | null>(null);
   const [realtimeEnabled, setRealtimeEnabled] = useState(true);
   const [tab, setTab] = useState<"pool" | "my_rides">("pool");
+  const [statsPeriod, setStatsPeriod] = useState<"today" | "week" | "month" | "total">("today");
   const [soundEnabled, setSoundEnabled] = useState(() => {
     try { return localStorage.getItem("driver-sound") !== "off"; } catch { return true; }
   });
@@ -170,10 +175,18 @@ function DriverDashboard() {
     queryFn: fetchMyDriverStats,
   });
 
-  const [radiusInput, setRadiusInput] = useState("");
-  useEffect(() => {
-    setRadiusInput(availabilityQuery.data?.acceptance_radius_km?.toString() ?? "");
-  }, [availabilityQuery.data?.acceptance_radius_km]);
+  const periodSince = (() => {
+    const d = new Date();
+    if (statsPeriod === "week") { d.setDate(d.getDate() - 7); return d; }
+    if (statsPeriod === "month") { d.setDate(d.getDate() - 30); return d; }
+    return d;
+  })();
+
+  const periodStatsQuery = useQuery({
+    queryKey: ["driver-stats-since", statsPeriod],
+    queryFn: () => fetchDriverStatsSince(periodSince),
+    enabled: statsPeriod === "week" || statsPeriod === "month",
+  });
 
   const radiusMutation = useMutation({
     mutationFn: setAcceptanceRadius,
@@ -320,9 +333,38 @@ function DriverDashboard() {
   const poolRides = poolQuery.data ?? [];
   const myRides = myRidesQuery.data ?? [];
   const todayRides = myRides.filter(
-    (r) =>
-      new Date(r.pickup_datetime).toDateString() === new Date().toDateString()
+    (r) => new Date(r.pickup_datetime).toDateString() === new Date().toDateString()
   );
+
+  const myRidesGrouped = (() => {
+    const now = new Date();
+    const todayStr = now.toDateString();
+    const tomorrowStr = new Date(now.getTime() + 86400000).toDateString();
+    const weekEnd = new Date(now.getTime() + 7 * 86400000);
+    const groups: { label: string; sublabel?: string; rides: PoolRide[] }[] = [
+      { label: "Aujourd'hui", rides: [] },
+      { label: "Demain", rides: [] },
+      { label: "Cette semaine", rides: [] },
+      { label: "Plus tard", rides: [] },
+    ];
+    for (const ride of myRides) {
+      const d = new Date(ride.pickup_datetime);
+      if (d.toDateString() === todayStr) groups[0].rides.push(ride);
+      else if (d.toDateString() === tomorrowStr) groups[1].rides.push(ride);
+      else if (d < weekEnd) groups[2].rides.push(ride);
+      else groups[3].rides.push(ride);
+    }
+    return groups
+      .filter((g) => g.rides.length > 0)
+      .map((g) => ({
+        ...g,
+        sublabel: `${g.rides.length} course${g.rides.length > 1 ? "s" : ""}${
+          g.rides.some((r) => r.distance_km != null)
+            ? ` · ~${Math.round(g.rides.reduce((s, r) => s + (r.distance_km ?? 0), 0))} km`
+            : ""
+        }`,
+      }));
+  })();
 
   // Sound + vibration when a new ride appears in the pool
   useEffect(() => {
@@ -427,79 +469,73 @@ function DriverDashboard() {
       </div>
 
       <div className="container py-8 space-y-8">
-        {/* Stats */}
+        {/* Stats avec sélecteur de période */}
         <section aria-labelledby="stats-heading">
-          <h2 id="stats-heading" className="sr-only">
-            Statistiques du jour
-          </h2>
-          <div className="grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4">
-            <StatCard
-              icon={Activity}
-              label="Courses disponibles"
-              value={poolRides.length}
-              color="bg-brand-blue-50 text-brand-blue-600"
-            />
-            <StatCard
-              icon={Car}
-              label="Mes courses aujourd'hui"
-              value={todayRides.length}
-              color="bg-brand-green-50 text-brand-green-600"
-            />
-            <StatCard
-              icon={CheckCircle2}
-              label="Courses terminées (total)"
-              value={statsQuery.data?.rides_completed ?? 0}
-              color="bg-purple-50 text-purple-600"
-            />
-            <StatCard
-              icon={Clock}
-              label="Prochaine course"
-              value={
-                myRides.find((r) => r.status === "accepted")
-                  ? new Date(
-                      myRides.find((r) => r.status === "accepted")!.pickup_datetime
-                    ).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
-                  : "—"
-              }
-              color="bg-amber-50 text-amber-600"
-            />
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <h2 id="stats-heading" className="text-xl font-bold text-gray-900">Statistiques</h2>
+            <div role="tablist" aria-label="Période" className="flex gap-0.5 rounded-lg bg-white ring-1 ring-gray-200 p-0.5 shadow-sm">
+              {(["today", "week", "month", "total"] as const).map((p) => {
+                const labels = { today: "Auj.", week: "7 jours", month: "30 jours", total: "Total" };
+                return (
+                  <button
+                    key={p}
+                    role="tab"
+                    aria-selected={statsPeriod === p}
+                    onClick={() => setStatsPeriod(p)}
+                    className={cn(
+                      "rounded-md px-3 py-1 text-xs font-semibold transition-colors",
+                      statsPeriod === p
+                        ? "bg-brand-blue-600 text-white shadow-sm"
+                        : "text-gray-500 hover:text-gray-800"
+                    )}
+                  >
+                    {labels[p]}
+                  </button>
+                );
+              })}
+            </div>
           </div>
+
+          {(() => {
+            const s = statsQuery.data;
+            const p = periodStatsQuery.data;
+            const rides = statsPeriod === "today" ? (s?.rides_today ?? 0)
+              : statsPeriod === "total" ? (s?.rides_completed ?? 0)
+              : (p?.rides ?? 0);
+            const earnings = statsPeriod === "today" ? (s?.earnings_today ?? 0)
+              : statsPeriod === "total" ? (s?.total_earnings ?? 0)
+              : (p?.earnings ?? 0);
+            const km = statsPeriod === "total" ? (s?.total_km ?? 0) : (p?.km ?? 0);
+            const nextRide = myRides.find((r) => r.status === "accepted");
+            return (
+              <div className="grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4">
+                <StatCard icon={Car} label="Courses" value={rides} color="bg-brand-green-50 text-brand-green-600" />
+                <StatCard icon={Wallet} label="Gains" value={formatPrice(earnings)} color="bg-brand-blue-50 text-brand-blue-600" />
+                <StatCard icon={Gauge} label="Km parcourus" value={statsPeriod === "today" ? "—" : `${km} km`} color="bg-indigo-50 text-indigo-600" />
+                <StatCard
+                  icon={statsPeriod === "total" ? Star : Clock}
+                  label={statsPeriod === "total" ? "Note moyenne" : "Prochaine course"}
+                  value={
+                    statsPeriod === "total"
+                      ? (s?.average_rating != null ? `${s.average_rating} / 5` : "—")
+                      : (nextRide
+                          ? new Date(nextRide.pickup_datetime).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
+                          : "—")
+                  }
+                  color="bg-amber-50 text-amber-600"
+                />
+              </div>
+            );
+          })()}
         </section>
 
-        {/* Earnings */}
-        <section aria-labelledby="earnings-heading">
-          <h2 id="earnings-heading" className="sr-only">
-            Kilomètres et gains
-          </h2>
-          <div className="grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4">
-            <StatCard
-              icon={Gauge}
-              label="Km parcourus (total)"
-              value={`${statsQuery.data?.total_km ?? 0} km`}
-              color="bg-indigo-50 text-indigo-600"
-            />
-            <StatCard
-              icon={Wallet}
-              label="Gains totaux"
-              value={formatPrice(statsQuery.data?.total_earnings ?? 0)}
-              color="bg-brand-green-50 text-brand-green-600"
-            />
-            <StatCard
-              icon={Wallet}
-              label="Gains aujourd'hui"
-              value={formatPrice(statsQuery.data?.earnings_today ?? 0)}
-              color="bg-brand-blue-50 text-brand-blue-600"
-            />
-            <StatCard
-              icon={Star}
-              label="Note moyenne"
-              value={statsQuery.data?.average_rating != null ? `${statsQuery.data.average_rating} / 5` : "—"}
-              color="bg-amber-50 text-amber-600"
-            />
-          </div>
-        </section>
+        {/* Pool disponible — toujours visible */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <StatCard icon={Activity} label="Courses disponibles" value={poolRides.length} color="bg-brand-blue-50 text-brand-blue-600" />
+          <StatCard icon={Star} label="Note moyenne" value={statsQuery.data?.average_rating != null ? `${statsQuery.data.average_rating} / 5` : "—"} color="bg-amber-50 text-amber-600" />
+        </div>
 
-        {/* Acceptance radius setting */}
+        {/* Acceptance radius setting — chips instantanés */}
         <section aria-labelledby="radius-heading">
           <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-100">
             <div className="flex items-center gap-2 mb-1">
@@ -507,39 +543,37 @@ function DriverDashboard() {
               <h2 id="radius-heading" className="text-sm font-bold text-gray-900">
                 Rayon d'acceptation
               </h2>
+              {radiusMutation.isPending && (
+                <span className="text-xs text-gray-400">Enregistrement…</span>
+              )}
             </div>
             <p className="text-sm text-muted-foreground mb-3">
-              Distance maximale (km) entre votre commune de stationnement et le
-              point de départ d'une course pour qu'elle apparaisse dans votre
-              pool. Laissez vide pour aucune limite.
+              Distance maximale entre votre stationnement et le départ d'une course. Illimité = toutes les courses.
             </p>
-            <form
-              className="flex flex-wrap items-center gap-2"
-              onSubmit={(e) => {
-                e.preventDefault();
-                const trimmed = radiusInput.trim();
-                radiusMutation.mutate(trimmed === "" ? null : Number(trimmed));
-              }}
-            >
-              <Input
-                type="number"
-                min={0}
-                step="0.1"
-                inputMode="decimal"
-                value={radiusInput}
-                onChange={(e) => setRadiusInput(e.target.value)}
-                placeholder="Aucune limite"
-                aria-label="Rayon d'acceptation en kilomètres"
-                className="max-w-[160px]"
-              />
-              <button
-                type="submit"
-                disabled={radiusMutation.isPending}
-                className="rounded-xl bg-brand-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-blue-700 disabled:opacity-60 transition-colors"
-              >
-                {radiusMutation.isPending ? "Enregistrement…" : "Enregistrer"}
-              </button>
-            </form>
+            <div role="group" aria-label="Rayon d'acceptation" className="flex flex-wrap gap-2">
+              {([5, 10, 25, 50, null] as (number | null)[]).map((val) => {
+                const label = val === null ? "Illimité" : `${val} km`;
+                const current = availabilityQuery.data?.acceptance_radius_km ?? null;
+                const isActive = current === val;
+                return (
+                  <button
+                    key={String(val)}
+                    type="button"
+                    aria-pressed={isActive}
+                    disabled={radiusMutation.isPending}
+                    onClick={() => radiusMutation.mutate(val)}
+                    className={cn(
+                      "rounded-xl px-4 py-2 text-sm font-semibold transition-all border",
+                      isActive
+                        ? "bg-brand-blue-600 text-white border-brand-blue-600 shadow-sm"
+                        : "bg-white text-gray-700 border-gray-200 hover:border-brand-blue-300 hover:bg-brand-blue-50"
+                    )}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </section>
 
@@ -688,25 +722,35 @@ function DriverDashboard() {
                 </p>
               </div>
             ) : (
-              <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 list-none">
-                {myRides.map((ride) => (
-                  <li key={ride.id}>
-                    <RideCard
-                      ride={ride}
-                      onAccept={() => {}}
-                      isAccepting={false}
-                      onStart={(id) => startMutation.mutate(id)}
-                      isStarting={startingId === ride.id && startMutation.isPending}
-                      onComplete={(id) => completeMutation.mutate(id)}
-                      isCompleting={completingId === ride.id && completeMutation.isPending}
-                      onCancel={(id) => cancelMutation.mutate(id)}
-                      isCancelling={cancellingId === ride.id && cancelMutation.isPending}
-                      onRate={(id, rating, comment) => rateMutation.mutate({ rideId: id, rating, comment })}
-                      isRating={ratingId === ride.id && rateMutation.isPending}
-                    />
-                  </li>
+              <div className="space-y-8">
+                {myRidesGrouped.map((group) => (
+                  <div key={group.label}>
+                    <div className="flex items-baseline gap-2 mb-3">
+                      <h3 className="text-base font-bold text-gray-900">{group.label}</h3>
+                      <span className="text-xs text-gray-400">{group.sublabel}</span>
+                    </div>
+                    <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 list-none">
+                      {group.rides.map((ride) => (
+                        <li key={ride.id}>
+                          <RideCard
+                            ride={ride}
+                            onAccept={() => {}}
+                            isAccepting={false}
+                            onStart={(id) => startMutation.mutate(id)}
+                            isStarting={startingId === ride.id && startMutation.isPending}
+                            onComplete={(id) => completeMutation.mutate(id)}
+                            isCompleting={completingId === ride.id && completeMutation.isPending}
+                            onCancel={(id) => cancelMutation.mutate(id)}
+                            isCancelling={cancellingId === ride.id && cancelMutation.isPending}
+                            onRate={(id, rating, comment) => rateMutation.mutate({ rideId: id, rating, comment })}
+                            isRating={ratingId === ride.id && rateMutation.isPending}
+                          />
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 ))}
-              </ul>
+              </div>
             )}
           </section>
         )}

@@ -153,13 +153,14 @@ Application de **transport sanitaire conventionné** (taxi, VSL, ambulance). Les
 - [x] **#9** Prix estimé dans la vue compacte `PoolRideRow`
 - [x] **#10** Countdown d'urgence (minutes restantes) dans `PoolRideRow`
 - [x] **#11** Navigation GPS directe selon plateforme (iOS / Android / Desktop)
+- [x] **layout** Refonte complète `PoolRideRow` : header date/heure, adresses pleine largeur, badges ligne 2
 
-## Sprint 2 — À planifier
+## Sprint 2 — Implémenté
 
-- [ ] **#5** Slider rayon d'acceptation avec debounce
-- [ ] **#6** Sélecteur de période sur les stats
-- [ ] **#7** Groupement des courses par date dans "Mes courses"
-- [ ] **#8** Confirmation slide "Terminer la course"
+- [x] **#5** Chips rayon d'acceptation (5 / 10 / 25 / 50 km / Illimité) — sauvegarde instantanée au clic, plus de formulaire
+- [x] **#6** Sélecteur de période sur les stats (Auj. / 7 jours / 30 jours / Total) — requête Supabase filtrée par `completed_at`
+- [x] **#7** Groupement des courses par date dans "Mes courses" (Aujourd'hui / Demain / Cette semaine / Plus tard) + indicateur km estimés
+- [x] **#8** Confirmation "Terminer la course" — bouton en 2 étapes (Terminer → Oui, terminer / Non), identique au pattern d'annulation existant
 
 ## Sprint 3 — À planifier
 

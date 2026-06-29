@@ -335,6 +335,7 @@ export function RideCard({
   isRating,
 }: RideCardProps) {
   const [confirmingCancel, setConfirmingCancel] = useState(false);
+  const [confirmingComplete, setConfirmingComplete] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const isPool = ride.status === "available";
   const pickupDate = formatDateFr(ride.pickup_datetime);
@@ -643,32 +644,48 @@ export function RideCard({
           )}
 
           {ride.status === "in_progress" && (
-            <div className="flex items-center gap-2">
-              <NavigationButton
-                address={ride.dropoff_address}
-                lat={ride.dropoff_lat}
-                lng={ride.dropoff_lng}
-                label="Naviguer vers la destination"
-              />
-              <button
-                type="button"
-                onClick={() => onComplete?.(ride.id)}
-                disabled={isCompleting}
-                aria-busy={isCompleting}
-                className={cn(
-                  "flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 flex-1 sm:flex-initial",
-                  isCompleting
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-brand-green-600 hover:bg-brand-green-700 shadow-md shadow-brand-green-600/20 active:scale-95"
-                )}
-              >
-                {isCompleting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+            <div className="flex flex-col gap-2 w-full">
+              <div className="flex items-center gap-2">
+                <NavigationButton
+                  address={ride.dropoff_address}
+                  lat={ride.dropoff_lat}
+                  lng={ride.dropoff_lng}
+                  label="Naviguer vers la destination"
+                />
+                {confirmingComplete ? (
+                  <div className="flex items-center gap-2 flex-1">
+                    <span className="text-sm font-semibold text-gray-800 flex-1">Confirmer la fin de course ?</span>
+                    <button
+                      type="button"
+                      onClick={() => { onComplete?.(ride.id); setConfirmingComplete(false); }}
+                      disabled={isCompleting}
+                      className="flex items-center gap-1.5 rounded-xl bg-brand-green-600 hover:bg-brand-green-700 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60 transition-colors"
+                    >
+                      {isCompleting && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+                      Oui, terminer
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmingComplete(false)}
+                      disabled={isCompleting}
+                      className="rounded-xl border border-gray-200 px-3 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-60 transition-colors"
+                    >
+                      Non
+                    </button>
+                  </div>
                 ) : (
-                  <FlagTriangleRight className="h-4 w-4" aria-hidden="true" />
+                  <button
+                    type="button"
+                    onClick={() => setConfirmingComplete(true)}
+                    disabled={isCompleting}
+                    aria-busy={isCompleting}
+                    className="flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white bg-brand-green-600 hover:bg-brand-green-700 shadow-md shadow-brand-green-600/20 active:scale-95 transition-all flex-1 sm:flex-initial focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  >
+                    <FlagTriangleRight className="h-4 w-4" aria-hidden="true" />
+                    Terminer la course
+                  </button>
                 )}
-                Terminer la course
-              </button>
+              </div>
             </div>
           )}
 
