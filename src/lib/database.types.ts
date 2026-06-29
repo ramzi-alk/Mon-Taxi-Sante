@@ -516,6 +516,7 @@ export type Database = {
           dropoff_lng: number | null
           estimated_price: number | null
           id: string | null
+          is_hospitalization: boolean | null
           passenger_count: number | null
           patient_full_name: string | null
           patient_phone: string | null
@@ -525,10 +526,13 @@ export type Database = {
           pickup_datetime: string | null
           pickup_lat: number | null
           pickup_lng: number | null
+          pmt_declared: boolean | null
           requires_oxygen: boolean | null
           requires_stretcher: boolean | null
           requires_wheelchair: boolean | null
           return_datetime: string | null
+          series_index: number | null
+          series_total: number | null
           status: Database["public"]["Enums"]["booking_status"] | null
           trip_type: Database["public"]["Enums"]["trip_type"] | null
           vehicle_type:
@@ -556,6 +560,7 @@ export type Database = {
           dropoff_lng: number | null
           estimated_price: number | null
           id: string | null
+          is_hospitalization: boolean | null
           passenger_count: number | null
           patient_first_name: string | null
           patient_phone: string | null
@@ -564,12 +569,15 @@ export type Database = {
           pickup_datetime: string | null
           pickup_lat: number | null
           pickup_lng: number | null
+          pmt_declared: boolean | null
           priority_driver_id: string | null
           priority_expires_at: string | null
           requires_oxygen: boolean | null
           requires_stretcher: boolean | null
           requires_wheelchair: boolean | null
           return_datetime: string | null
+          series_index: number | null
+          series_total: number | null
           status: Database["public"]["Enums"]["booking_status"] | null
           trip_type: Database["public"]["Enums"]["trip_type"] | null
           vehicle_type:

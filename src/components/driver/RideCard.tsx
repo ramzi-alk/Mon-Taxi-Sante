@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MapPin, Clock, Car, Users, Navigation, Loader2, PlayCircle, FlagTriangleRight, XCircle, User, Phone, CalendarPlus, Banknote } from "lucide-react";
+import { MapPin, Clock, Car, Users, Navigation, Loader2, PlayCircle, FlagTriangleRight, XCircle, User, Phone, CalendarPlus, Banknote, ChevronDown, ChevronUp, ClipboardCheck, Building2, Repeat } from "lucide-react";
 import { formatDateFr, formatTimeFr } from "~/lib/utils";
 import { cn } from "~/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
@@ -50,6 +50,12 @@ export interface PoolRide {
   // both in the pool (avant acceptation, façon note du passager chez Uber) et
   // sur "my rides" pour cohérence (migration 034).
   patient_rating_avg?: number | null;
+  // Non identifiants — exposés dans le pool (migration 035) pour aider à la
+  // décision d'acceptation sans révéler l'identité/le contact du patient.
+  pmt_declared?: boolean | null;
+  is_hospitalization?: boolean | null;
+  series_index?: number | null;
+  series_total?: number | null;
 }
 
 interface RideCardProps {
@@ -311,6 +317,8 @@ export function RideCard({
   isRating,
 }: RideCardProps) {
   const [confirmingCancel, setConfirmingCancel] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const isPool = ride.status === "available";
   const pickupDate = formatDateFr(ride.pickup_datetime);
   const pickupTime = formatTimeFr(ride.pickup_datetime);
   const isToday = new Date(ride.pickup_datetime).toDateString() === new Date().toDateString();
@@ -455,6 +463,43 @@ export function RideCard({
             </span>
           ))}
         </div>
+
+        {isPool && (
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            aria-expanded={expanded}
+            className="flex items-center gap-1.5 text-xs font-semibold text-brand-blue-700 hover:underline"
+          >
+            {expanded ? (
+              <ChevronUp className="h-3.5 w-3.5" aria-hidden="true" />
+            ) : (
+              <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
+            )}
+            {expanded ? "Voir moins de détails" : "Voir plus de détails"}
+          </button>
+        )}
+
+        {(!isPool || expanded) && (
+          <div className="rounded-xl bg-gray-50 border border-gray-100 p-3 space-y-1.5 text-xs text-gray-700">
+            <p className="flex items-center gap-1.5">
+              <ClipboardCheck className="h-3.5 w-3.5 text-gray-500" aria-hidden="true" />
+              PMT déclarée : <span className="font-semibold">{ride.pmt_declared ? "Oui" : "Non"}</span>
+            </p>
+            {ride.is_hospitalization && (
+              <p className="flex items-center gap-1.5">
+                <Building2 className="h-3.5 w-3.5 text-gray-500" aria-hidden="true" />
+                Hospitalisation
+              </p>
+            )}
+            {!!ride.series_total && ride.series_total > 1 && (
+              <p className="flex items-center gap-1.5">
+                <Repeat className="h-3.5 w-3.5 text-gray-500" aria-hidden="true" />
+                Séance {ride.series_index}/{ride.series_total}
+              </p>
+            )}
+          </div>
+        )}
 
         {(ride.patient_full_name || ride.patient_first_name) && (
           <div className="rounded-xl bg-brand-green-50/60 border border-brand-green-100 p-3 space-y-1.5">
