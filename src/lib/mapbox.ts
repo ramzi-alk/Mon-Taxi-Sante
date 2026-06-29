@@ -1,0 +1,110 @@
+import { logger } from "~/lib/logger";
+
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN as string;
+const SEARCH_BASE_URL = "https://api.mapbox.com/search/searchbox/v1";
+const DIRECTIONS_BASE_URL = "https://api.mapbox.com/directions/v5/mapbox/driving";
+
+export interface MapboxSuggestion {
+  mapboxId: string;
+  label: string;
+}
+
+export interface MapboxPlace {
+  label: string;
+  lat: number;
+  lng: number;
+}
+
+interface SuggestFeature {
+  mapbox_id: string;
+  name: string;
+  place_formatted?: string;
+  full_address?: string;
+}
+
+interface RetrieveFeature {
+  properties: { name: string; place_formatted?: string; full_address?: string };
+  geometry: { coordinates: [number, number] };
+}
+
+/**
+ * Recherche adresses + POI (ex: "Hôpital Robert Debré") via Mapbox Search
+ * Box API. `sessionToken` doit être le même pour un suggest() suivi de son
+ * retrieve() correspondant (facturation par session Mapbox), puis renouvelé.
+ */
+export async function suggestAddresses(
+  query: string,
+  sessionToken: string,
+  options?: { signal?: AbortSignal; types?: string }
+): Promise<MapboxSuggestion[]> {
+  const params = new URLSearchParams({
+    q: query,
+    access_token: MAPBOX_TOKEN,
+    session_token: sessionToken,
+    language: "fr",
+    country: "fr",
+    limit: "5",
+  });
+  if (options?.types) params.set("types", options.types);
+
+  const res = await fetch(`${SEARCH_BASE_URL}/suggest?${params}`, {
+    signal: options?.signal,
+  });
+  if (!res.ok) throw new Error(`Mapbox Search a répondu ${res.status}`);
+  const data: { suggestions: SuggestFeature[] } = await res.json();
+
+  return data.suggestions.map((f) => ({
+    mapboxId: f.mapbox_id,
+    label: [f.name, f.place_formatted ?? f.full_address].filter(Boolean).join(", "),
+  }));
+}
+
+/** Résout les coordonnées d'une suggestion Mapbox (même session_token que le suggest()). */
+export async function retrieveAddress(
+  mapboxId: string,
+  sessionToken: string
+): Promise<MapboxPlace | null> {
+  const params = new URLSearchParams({
+    access_token: MAPBOX_TOKEN,
+    session_token: sessionToken,
+  });
+
+  const res = await fetch(`${SEARCH_BASE_URL}/retrieve/${mapboxId}?${params}`);
+  if (!res.ok) throw new Error(`Mapbox Search a répondu ${res.status}`);
+  const data: { features: RetrieveFeature[] } = await res.json();
+  const feature = data.features[0];
+  if (!feature) return null;
+
+  const [lng, lat] = feature.geometry.coordinates;
+  return {
+    label: [feature.properties.name, feature.properties.place_formatted ?? feature.properties.full_address]
+      .filter(Boolean)
+      .join(", "),
+    lat,
+    lng,
+  };
+}
+
+/** Distance réelle sur route (km, arrondie à 2 décimales) via Mapbox Directions, ou null si indisponible. */
+export async function getDrivingDistanceKm(
+  origin: { lat: number; lng: number },
+  destination: { lat: number; lng: number }
+): Promise<number | null> {
+  const coords = `${origin.lng},${origin.lat};${destination.lng},${destination.lat}`;
+  const params = new URLSearchParams({
+    access_token: MAPBOX_TOKEN,
+    overview: "false",
+  });
+
+  try {
+    const res = await fetch(`${DIRECTIONS_BASE_URL}/${coords}?${params}`);
+    if (!res.ok) throw new Error(`Mapbox Directions a répondu ${res.status}`);
+    const data: { routes: { distance: number }[] } = await res.json();
+    const meters = data.routes[0]?.distance;
+    if (typeof meters !== "number") return null;
+    return Math.round((meters / 1000) * 100) / 100;
+  } catch (err) {
+    logger.warn("mapbox.directions_failed", { error: (err as Error).message });
+    return null;
+  }
+}

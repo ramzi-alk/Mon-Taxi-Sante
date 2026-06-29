@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Loader2 } from "lucide-react";
 import { logger } from "~/lib/logger";
+import { suggestAddresses, retrieveAddress, type MapboxSuggestion } from "~/lib/mapbox";
 import { Input } from "~/components/ui/input";
 
 interface AddressSuggestion {
@@ -20,18 +21,12 @@ interface AddressAutocompleteProps {
   ariaDescribedBy?: string;
   ariaInvalid?: boolean;
   ariaRequired?: boolean;
-  /** Restreint les résultats de l'API BAN à un type donné (ex. "municipality" pour les communes). */
+  /** Restreint les résultats Mapbox à un type donné (ex. "municipality" pour les communes). */
   type?: "municipality";
 }
 
-const BAN_SEARCH_URL = "https://api-adresse.data.gouv.fr/search/";
 const MIN_QUERY_LENGTH = 3;
 const DEBOUNCE_MS = 300;
-
-interface BanFeature {
-  properties: { label: string };
-  geometry: { coordinates: [number, number] };
-}
 
 export function AddressAutocomplete({
   id,
@@ -46,12 +41,14 @@ export function AddressAutocomplete({
   ariaRequired,
   type,
 }: AddressAutocompleteProps) {
-  const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
+  const [suggestions, setSuggestions] = useState<MapboxSuggestion[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isResolving, setIsResolving] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const containerRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const sessionTokenRef = useRef<string>(crypto.randomUUID());
 
   useEffect(() => {
     if (value.trim().length < MIN_QUERY_LENGTH) {
@@ -66,18 +63,11 @@ export function AddressAutocomplete({
       abortRef.current = controller;
       setIsLoading(true);
       try {
-        const typeParam = type ? `&type=${type}` : "";
-        const url = `${BAN_SEARCH_URL}?q=${encodeURIComponent(value)}&limit=5&autocomplete=1${typeParam}`;
-        const res = await fetch(url, { signal: controller.signal });
-        if (!res.ok) throw new Error(`API Adresse a répondu ${res.status}`);
-        const data: { features: BanFeature[] } = await res.json();
-        setSuggestions(
-          data.features.map((f) => ({
-            label: f.properties.label,
-            lng: f.geometry.coordinates[0],
-            lat: f.geometry.coordinates[1],
-          }))
-        );
+        const results = await suggestAddresses(value, sessionTokenRef.current, {
+          signal: controller.signal,
+          types: type === "municipality" ? "place" : undefined,
+        });
+        setSuggestions(results);
         setIsOpen(true);
         setActiveIndex(-1);
       } catch (err) {
@@ -105,12 +95,21 @@ export function AddressAutocomplete({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  function selectSuggestion(suggestion: AddressSuggestion) {
+  async function selectSuggestion(suggestion: MapboxSuggestion) {
     onChange(suggestion.label);
-    onSelect(suggestion);
     setSuggestions([]);
     setIsOpen(false);
     setActiveIndex(-1);
+    setIsResolving(true);
+    try {
+      const place = await retrieveAddress(suggestion.mapboxId, sessionTokenRef.current);
+      if (place) onSelect(place);
+    } catch (err) {
+      logger.warn("address_autocomplete.retrieve_failed", { error: (err as Error).message });
+    } finally {
+      setIsResolving(false);
+      sessionTokenRef.current = crypto.randomUUID();
+    }
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -125,7 +124,7 @@ export function AddressAutocomplete({
     } else if (e.key === "Enter") {
       if (activeIndex >= 0) {
         e.preventDefault();
-        selectSuggestion(suggestions[activeIndex]);
+        void selectSuggestion(suggestions[activeIndex]);
       }
     } else if (e.key === "Escape") {
       setIsOpen(false);
@@ -162,7 +161,7 @@ export function AddressAutocomplete({
           onBlur={onBlur}
           className="pl-11 pr-10 py-3.5 text-base"
         />
-        {isLoading && (
+        {(isLoading || isResolving) && (
           <Loader2
             className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground"
             aria-hidden="true"
@@ -178,13 +177,13 @@ export function AddressAutocomplete({
         >
           {suggestions.map((suggestion, index) => (
             <li
-              key={suggestion.label}
+              key={suggestion.mapboxId}
               id={`${id}-option-${index}`}
               role="option"
               aria-selected={index === activeIndex}
               onMouseDown={(e) => {
                 e.preventDefault();
-                selectSuggestion(suggestion);
+                void selectSuggestion(suggestion);
               }}
               onMouseEnter={() => setActiveIndex(index)}
               className={`cursor-pointer px-4 py-2.5 text-sm ${

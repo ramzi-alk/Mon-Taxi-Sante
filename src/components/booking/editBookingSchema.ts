@@ -10,6 +10,7 @@ export const editBookingSchema = z
     dropoff_address: z.string().min(5, "Adresse de destination requise"),
     dropoff_lat: z.number().nullable(),
     dropoff_lng: z.number().nullable(),
+    distance_km: z.number().nullable(),
     pickup_date: z.string().regex(frenchDate, "Date de départ invalide"),
     pickup_time: z.string().regex(/^\d{2}:\d{2}$/, "Heure de départ invalide (HH:MM)"),
     has_return: z.boolean(),

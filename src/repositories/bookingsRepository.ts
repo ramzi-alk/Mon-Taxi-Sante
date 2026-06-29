@@ -58,6 +58,7 @@ export interface UpdateBookingPayload {
   dropoff_address: string;
   dropoff_lat: number | null;
   dropoff_lng: number | null;
+  distance_km: number | null;
   pickup_datetime: string;
   return_datetime: string | null;
   vehicle_type: BookingRow["vehicle_type"];
@@ -145,6 +146,7 @@ export async function updateBooking(
     p_cpam_status: payload.cpam_status,
     p_mutual_name: payload.mutual_name,
     p_medical_notes: payload.medical_notes,
+    p_distance_km: payload.distance_km,
   } as Database["public"]["Functions"]["update_booking"]["Args"]);
 
   if (error) {
@@ -221,6 +223,7 @@ export async function updateBookingByReference(
     p_cpam_status: payload.cpam_status,
     p_mutual_name: payload.mutual_name,
     p_medical_notes: payload.medical_notes,
+    p_distance_km: payload.distance_km,
   } as Database["public"]["Functions"]["update_booking_by_reference"]["Args"]);
 
   if (error) {

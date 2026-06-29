@@ -1,7 +1,10 @@
+import { useEffect, useState } from "react";
 import { UseFormReturn } from "react-hook-form";
-import { MapPin, Navigation, ArrowDown } from "lucide-react";
+import { MapPin, Navigation, ArrowDown, Loader2, Route } from "lucide-react";
 import type { BookingSchema } from "../schema";
 import { AddressAutocomplete } from "../AddressAutocomplete";
+import { getDrivingDistanceKm } from "~/lib/mapbox";
+import { logger } from "~/lib/logger";
 
 interface StepProps {
   form: UseFormReturn<BookingSchema>;
@@ -15,12 +18,41 @@ export function Step2Route({ form }: StepProps) {
     trigger,
   } = form;
 
+  const [isComputingDistance, setIsComputingDistance] = useState(false);
+
   const pickupAddress = watch("pickup_address");
   const dropoffAddress = watch("dropoff_address");
   const pickupLat = watch("pickup_lat");
   const pickupLng = watch("pickup_lng");
   const dropoffLat = watch("dropoff_lat");
   const dropoffLng = watch("dropoff_lng");
+  const distanceKm = watch("distance_km");
+
+  useEffect(() => {
+    if (pickupLat == null || pickupLng == null || dropoffLat == null || dropoffLng == null) {
+      return;
+    }
+
+    let cancelled = false;
+    setIsComputingDistance(true);
+    getDrivingDistanceKm(
+      { lat: pickupLat, lng: pickupLng },
+      { lat: dropoffLat, lng: dropoffLng }
+    )
+      .then((km) => {
+        if (!cancelled) setValue("distance_km", km);
+      })
+      .catch((err) => {
+        logger.warn("step2_route.distance_failed", { error: (err as Error).message });
+      })
+      .finally(() => {
+        if (!cancelled) setIsComputingDistance(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [pickupLat, pickupLng, dropoffLat, dropoffLng, setValue]);
 
   function swapAddresses() {
     setValue("pickup_address", dropoffAddress);
@@ -54,6 +86,7 @@ export function Step2Route({ form }: StepProps) {
             setValue("pickup_address", val);
             setValue("pickup_lat", null);
             setValue("pickup_lng", null);
+            setValue("distance_km", null);
           }}
           onSelect={(suggestion) => {
             setValue("pickup_lat", suggestion.lat);
@@ -104,6 +137,7 @@ export function Step2Route({ form }: StepProps) {
             setValue("dropoff_address", val);
             setValue("dropoff_lat", null);
             setValue("dropoff_lng", null);
+            setValue("distance_km", null);
           }}
           onSelect={(suggestion) => {
             setValue("dropoff_lat", suggestion.lat);
@@ -127,12 +161,26 @@ export function Step2Route({ form }: StepProps) {
         )}
       </div>
 
-      {/* Map placeholder */}
+      {/* Distance estimée */}
       <div
-        className="rounded-xl bg-gray-100 h-40 flex items-center justify-center text-muted-foreground text-sm border border-dashed border-gray-300"
-        aria-hidden="true"
+        className="rounded-xl bg-gray-100 h-16 flex items-center justify-center gap-2 text-sm border border-dashed border-gray-300"
+        aria-live="polite"
       >
-        <span>Aperçu du trajet</span>
+        {isComputingDistance ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" aria-hidden="true" />
+            <span className="text-muted-foreground">Calcul de la distance…</span>
+          </>
+        ) : distanceKm != null ? (
+          <>
+            <Route className="h-4 w-4 text-brand-blue-500" aria-hidden="true" />
+            <span className="font-medium text-gray-900">
+              Distance estimée : {distanceKm} km (trajet routier)
+            </span>
+          </>
+        ) : (
+          <span className="text-muted-foreground">Aperçu du trajet</span>
+        )}
       </div>
     </div>
   );

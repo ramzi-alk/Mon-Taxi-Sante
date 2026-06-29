@@ -37,6 +37,7 @@ const DEFAULT_VALUES: Partial<BookingSchema> = {
   dropoff_address: "",
   dropoff_lat: null,
   dropoff_lng: null,
+  distance_km: null,
   pickup_date: "",
   pickup_time: "",
   has_return: false,
@@ -113,6 +114,7 @@ async function submitBooking(data: BookingSchema) {
         dropoff_address: data.dropoff_address,
         dropoff_lat: data.dropoff_lat,
         dropoff_lng: data.dropoff_lng,
+        distance_km: data.distance_km,
         pickup_datetime: `${data.pickup_date}T${data.pickup_time}:00`,
         return_datetime:
           data.has_return && data.return_date && data.return_time

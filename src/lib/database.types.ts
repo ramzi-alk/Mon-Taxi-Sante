@@ -653,6 +653,7 @@ export type Database = {
         Args: {
           p_booking_id: string
           p_cpam_status: Database["public"]["Enums"]["cpam_status"]
+          p_distance_km?: number | null
           p_dropoff_address: string
           p_dropoff_lat: number
           p_dropoff_lng: number
@@ -675,6 +676,7 @@ export type Database = {
       update_booking_by_reference: {
         Args: {
           p_cpam_status: Database["public"]["Enums"]["cpam_status"]
+          p_distance_km?: number | null
           p_dropoff_address: string
           p_dropoff_lat: number
           p_dropoff_lng: number

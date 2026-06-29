@@ -18,6 +18,7 @@ interface SubmitBookingPayload {
   dropoff_address: string;
   dropoff_lat: number | null;
   dropoff_lng: number | null;
+  distance_km: number | null;
   pickup_datetime: string;
   return_datetime: string | null;
   vehicle_type: Database["public"]["Tables"]["bookings"]["Row"]["vehicle_type"];
