@@ -439,8 +439,8 @@ export function RideCard({
         {/* Meta row */}
         <div className="flex flex-wrap gap-3 text-xs">
           <span className="flex items-center gap-1 text-gray-600">
-            <Users className="h-3.5 w-3.5" aria-hidden="true" />
-            {ride.passenger_count} passager{ride.passenger_count > 1 ? "s" : ""}
+            <ClipboardCheck className="h-3.5 w-3.5" aria-hidden="true" />
+            PMT déclarée : <span className="font-semibold">{ride.pmt_declared ? "Oui" : "Non"}</span>
           </span>
           {ride.trip_type === "aller_retour" && (
             <span className="rounded-full bg-brand-blue-50 text-brand-blue-700 px-2.5 py-0.5 font-semibold">
@@ -483,8 +483,8 @@ export function RideCard({
         {(!isPool || expanded) && (
           <div className="rounded-xl bg-gray-50 border border-gray-100 p-3 space-y-1.5 text-xs text-gray-700">
             <p className="flex items-center gap-1.5">
-              <ClipboardCheck className="h-3.5 w-3.5 text-gray-500" aria-hidden="true" />
-              PMT déclarée : <span className="font-semibold">{ride.pmt_declared ? "Oui" : "Non"}</span>
+              <Users className="h-3.5 w-3.5 text-gray-500" aria-hidden="true" />
+              {ride.passenger_count} passager{ride.passenger_count > 1 ? "s" : ""}
             </p>
             {ride.is_hospitalization && (
               <p className="flex items-center gap-1.5">
