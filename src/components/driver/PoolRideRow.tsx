@@ -19,6 +19,8 @@ interface PoolRideRowProps {
   ride: PoolRide;
   onAccept: (rideId: string) => void;
   isAccepting: boolean;
+  onAcceptSeries?: (rideId: string) => void;
+  isAcceptingSeries?: boolean;
 }
 
 const URGENT_THRESHOLD_MIN = 45;
@@ -36,7 +38,7 @@ function useMinutesUntil(datetimeStr: string) {
   return minutes;
 }
 
-export function PoolRideRow({ ride, onAccept, isAccepting }: PoolRideRowProps) {
+export function PoolRideRow({ ride, onAccept, isAccepting, onAcceptSeries, isAcceptingSeries }: PoolRideRowProps) {
   const [expanded, setExpanded] = useState(false);
 
   const pickupDate = formatDateFr(ride.pickup_datetime);
@@ -187,6 +189,26 @@ export function PoolRideRow({ ride, onAccept, isAccepting }: PoolRideRowProps) {
                 ? <ChevronUp className="h-3 w-3" aria-hidden="true" />
                 : <ChevronDown className="h-3 w-3" aria-hidden="true" />
               }
+            </button>
+          )}
+          {onAcceptSeries && !!ride.series_total && ride.series_total > 1 && (
+            <button
+              type="button"
+              onClick={() => onAcceptSeries(ride.id)}
+              disabled={isAcceptingSeries || isAccepting}
+              aria-label={`Accepter toutes les ${ride.series_total} séances`}
+              className={cn(
+                "shrink-0 flex items-center gap-0.5 rounded-lg px-2 py-1 text-[10px] font-bold transition-all",
+                (isAcceptingSeries || isAccepting)
+                  ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  : "bg-violet-100 text-violet-700 hover:bg-violet-200"
+              )}
+            >
+              {isAcceptingSeries
+                ? <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />
+                : <Repeat className="h-3 w-3" aria-hidden="true" />
+              }
+              {ride.series_total} séances
             </button>
           )}
         </div>

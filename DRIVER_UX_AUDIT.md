@@ -162,11 +162,14 @@ Application de **transport sanitaire conventionné** (taxi, VSL, ambulance). Les
 - [x] **#7** Groupement des courses par date dans "Mes courses" (Aujourd'hui / Demain / Cette semaine / Plus tard) + indicateur km estimés
 - [x] **#8** Confirmation "Terminer la course" — bouton en 2 étapes (Terminer → Oui, terminer / Non), identique au pattern d'annulation existant
 
-## Sprint 3 — À planifier
+## Sprint 3 — Implémenté
 
-- [ ] **#1** Web Push Notifications (Service Worker)
-- [ ] **#2** Heartbeat + auto-offline
-- [ ] **#13** Gestion complète des séries
+- [x] **#2** Heartbeat : `update_driver_heartbeat()` RPC (migration 037) + useEffect 30 s + Beacon API beforeunload
+- [x] **#13** Gestion séries : bouton "X séances" dans PoolRideRow → `accept_series()` RPC (1 seul appel, 1 seul mail récap) + drawer planning dans RideCard
+- [x] **collapse** Courses terminées : header cliquable, corps masqué par défaut, "À noter" badge si notation en attente
+- [ ] **#1** Web Push Notifications (Service Worker + VAPID) — nécessite config serveur, reporté S4
+
+> **Note mail série** : `accept_series` accepte toutes les séances en une transaction — un seul email est envoyé côté client pour éviter le spam patient.
 
 ## Sprint 4 — À planifier
 

@@ -54,6 +54,7 @@ export interface PoolRide {
   // décision d'acceptation sans révéler l'identité/le contact du patient.
   pmt_declared?: boolean | null;
   is_hospitalization?: boolean | null;
+  series_id?: string | null;
   series_index?: number | null;
   series_total?: number | null;
 }
@@ -70,6 +71,7 @@ interface RideCardProps {
   isCancelling?: boolean;
   onRate?: (rideId: string, rating: number, comment?: string) => void;
   isRating?: boolean;
+  seriesRides?: PoolRide[];
 }
 
 const vehicleIcons: Record<string, string> = {
@@ -333,10 +335,15 @@ export function RideCard({
   isCancelling,
   onRate,
   isRating,
+  seriesRides,
 }: RideCardProps) {
+  const isCompleted = ride.status === "completed";
+  // Collapsed by default when completed and already rated; expand if pending rating
+  const [collapsed, setCollapsed] = useState(isCompleted && ride.driver_rating_given != null);
   const [confirmingCancel, setConfirmingCancel] = useState(false);
   const [confirmingComplete, setConfirmingComplete] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [seriesOpen, setSeriesOpen] = useState(false);
   const isPool = ride.status === "available";
   const pickupDate = formatDateFr(ride.pickup_datetime);
   const pickupTime = formatTimeFr(ride.pickup_datetime);
@@ -355,11 +362,24 @@ export function RideCard({
 
   return (
     <article
-      className="rounded-2xl bg-white shadow-sm ring-1 ring-gray-200 hover:shadow-md hover:ring-brand-blue-200 transition-all overflow-hidden"
-      aria-label={`Course disponible — ${ride.pickup_address} vers ${ride.dropoff_address}`}
+      className={cn(
+        "rounded-2xl bg-white shadow-sm ring-1 ring-gray-200 hover:shadow-md transition-all overflow-hidden",
+        isCompleted ? "ring-gray-100 hover:ring-gray-200" : "hover:ring-brand-blue-200"
+      )}
+      aria-label={`Course — ${ride.pickup_address} vers ${ride.dropoff_address}`}
     >
-      {/* Header strip */}
-      <div className="flex items-center justify-between bg-gray-50 border-b px-4 py-2">
+      {/* ── Header — toujours visible ──────────────────────────────── */}
+      <div
+        className={cn(
+          "flex items-center justify-between px-4 py-2 border-b",
+          isCompleted ? "bg-gray-50 cursor-pointer" : "bg-gray-50"
+        )}
+        onClick={isCompleted ? () => setCollapsed((v) => !v) : undefined}
+        role={isCompleted ? "button" : undefined}
+        aria-expanded={isCompleted ? !collapsed : undefined}
+        tabIndex={isCompleted ? 0 : undefined}
+        onKeyDown={isCompleted ? (e) => e.key === "Enter" && setCollapsed((v) => !v) : undefined}
+      >
         <span className="flex items-center gap-1.5 text-sm font-semibold text-gray-700">
           <Clock className="h-4 w-4 text-brand-blue-500 shrink-0" aria-hidden="true" />
           {ride.status === "accepted" ? (
@@ -391,7 +411,10 @@ export function RideCard({
             </span>
           )}
           {statusLabels[ride.status] && (
-            <span className="rounded-full bg-brand-blue-100 text-brand-blue-700 px-2 py-0.5 text-xs font-semibold">
+            <span className={cn(
+              "rounded-full px-2 py-0.5 text-xs font-semibold",
+              isCompleted ? "bg-gray-100 text-gray-500" : "bg-brand-blue-100 text-brand-blue-700"
+            )}>
               {statusLabels[ride.status]}
             </span>
           )}
@@ -399,10 +422,35 @@ export function RideCard({
             <span aria-hidden="true">{vehicleIcons[ride.vehicle_type]}</span>
             {ride.vehicle_type.toUpperCase()}
           </span>
+          {isCompleted && (
+            ride.driver_rating_given != null
+              ? <StarRating value={ride.driver_rating_given} readOnly size="sm" />
+              : <span className="rounded-full bg-amber-50 text-amber-700 px-2 py-0.5 text-xs font-semibold">À noter</span>
+          )}
+          {isCompleted && (
+            collapsed
+              ? <ChevronDown className="h-4 w-4 text-gray-400" aria-hidden="true" />
+              : <ChevronUp className="h-4 w-4 text-gray-400" aria-hidden="true" />
+          )}
         </span>
       </div>
 
-      <div className="p-5 space-y-4">
+      {/* ── Résumé collapsed (courses terminées uniquement) ─────────── */}
+      {isCompleted && collapsed && (
+        <div className="px-4 py-2 flex items-center gap-2 text-xs text-gray-500">
+          <Navigation className="h-3 w-3 shrink-0 text-brand-blue-400" aria-hidden="true" />
+          <span className="truncate font-medium text-gray-700">{ride.pickup_address}</span>
+          <span className="shrink-0">→</span>
+          <MapPin className="h-3 w-3 shrink-0 text-red-400" aria-hidden="true" />
+          <span className="truncate font-medium text-gray-700">{ride.dropoff_address}</span>
+          {ride.estimated_price != null && (
+            <span className="ml-auto shrink-0 font-bold text-amber-700">~{ride.estimated_price.toFixed(2).replace(".", ",")} €</span>
+          )}
+        </div>
+      )}
+
+      {/* ── Corps — caché quand collapsed ──────────────────────────── */}
+      {(!isCompleted || !collapsed) && <div className="p-5 space-y-4">
         {/* Route */}
         <div className="space-y-3">
           <div className="flex items-start gap-2.5">
@@ -712,7 +760,48 @@ export function RideCard({
               />
             )
           ))}
-      </div>
+
+        {/* Drawer série */}
+        {seriesRides && seriesRides.length > 1 && (
+          <div className="pt-2 border-t border-gray-100">
+            <button
+              type="button"
+              onClick={() => setSeriesOpen((v) => !v)}
+              className="flex items-center gap-1.5 text-xs font-semibold text-brand-blue-700 hover:underline"
+            >
+              <Repeat className="h-3.5 w-3.5" aria-hidden="true" />
+              Voir toutes les séances ({seriesRides.length})
+              {seriesOpen ? <ChevronUp className="h-3.5 w-3.5" aria-hidden="true" /> : <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />}
+            </button>
+            {seriesOpen && (
+              <ul className="mt-2 space-y-1">
+                {seriesRides.map((s) => (
+                  <li key={s.id} className={cn(
+                    "flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs",
+                    s.id === ride.id ? "bg-brand-blue-50 font-semibold text-brand-blue-800" : "bg-gray-50 text-gray-600"
+                  )}>
+                    <span className="shrink-0 w-12 font-mono">
+                      {new Date(s.pickup_datetime).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" })}
+                    </span>
+                    <span className="shrink-0 w-10 text-gray-400">
+                      {new Date(s.pickup_datetime).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                    <span className={cn(
+                      "ml-auto shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                      s.status === "completed" ? "bg-gray-100 text-gray-500"
+                        : s.status === "in_progress" ? "bg-brand-blue-100 text-brand-blue-700"
+                        : s.status === "accepted" ? "bg-green-50 text-green-700"
+                        : "bg-amber-50 text-amber-700"
+                    )}>
+                      {s.status === "completed" ? "Terminée" : s.status === "in_progress" ? "En cours" : s.status === "accepted" ? "Acceptée" : "Dispo."}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+      </div>}
     </article>
   );
 }

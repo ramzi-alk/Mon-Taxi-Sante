@@ -31,6 +31,8 @@ interface PoolListProps {
   acceptingId: string | null;
   isAccepting: boolean;
   driverProfile?: DriverProfileFilter | null;
+  onAcceptSeries?: (rideId: string) => void;
+  acceptingSeriesId?: string | null;
 }
 
 const VIRTUALIZE_THRESHOLD = 20;
@@ -49,7 +51,7 @@ function defaultVehicleFilter(profile: DriverProfileFilter | null | undefined): 
   return "all";
 }
 
-export function PoolList({ rides, onAccept, acceptingId, isAccepting, driverProfile }: PoolListProps) {
+export function PoolList({ rides, onAccept, acceptingId, isAccepting, driverProfile, onAcceptSeries, acceptingSeriesId }: PoolListProps) {
   const [search, setSearch] = useState("");
   const [vehicleFilter, setVehicleFilter] = useState<VehicleFilter>(() => defaultVehicleFilter(driverProfile));
   const [accessibilityOnly, setAccessibilityOnly] = useState(false);
@@ -238,6 +240,8 @@ export function PoolList({ rides, onAccept, acceptingId, isAccepting, driverProf
                     ride={ride}
                     onAccept={onAccept}
                     isAccepting={acceptingId === ride.id && isAccepting}
+                    onAcceptSeries={onAcceptSeries}
+                    isAcceptingSeries={acceptingSeriesId === ride.id}
                   />
                 </li>
               );

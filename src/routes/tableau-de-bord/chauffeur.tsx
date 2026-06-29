@@ -68,6 +68,14 @@ async function acceptRide(rideId: string): Promise<void> {
   await bookingsRepository.acceptRide(supabase, rideId);
 }
 
+async function acceptSeriesRides(rideId: string): Promise<void> {
+  await bookingsRepository.acceptSeriesRides(supabase, rideId);
+}
+
+async function updateHeartbeat(): Promise<void> {
+  await supabase.rpc("update_driver_heartbeat");
+}
+
 async function startRide(rideId: string): Promise<void> {
   await bookingsRepository.startRide(supabase, rideId);
 }
@@ -156,6 +164,7 @@ function DriverDashboard() {
   });
   const prevPoolCountRef = useRef<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [acceptingSeriesId, setAcceptingSeriesId] = useState<string | null>(null);
 
   // Driver's own online/paused/offline status — the pool only shows rides
   // to drivers who are "online" (see migration 018).
@@ -336,6 +345,15 @@ function DriverDashboard() {
     (r) => new Date(r.pickup_datetime).toDateString() === new Date().toDateString()
   );
 
+  // Groupe les courses par series_id pour les passer aux RideCard
+  const ridesBySeries = myRides.reduce<Record<string, PoolRide[]>>((acc, r) => {
+    if (r.series_id) {
+      if (!acc[r.series_id]) acc[r.series_id] = [];
+      acc[r.series_id].push(r);
+    }
+    return acc;
+  }, {});
+
   const myRidesGrouped = (() => {
     const now = new Date();
     const todayStr = now.toDateString();
@@ -365,6 +383,37 @@ function DriverDashboard() {
         }`,
       }));
   })();
+
+  // Heartbeat toutes les 30 s quand le chauffeur est en ligne
+  useEffect(() => {
+    if (availability !== "online") return;
+    updateHeartbeat().catch(() => {});
+    const id = setInterval(() => updateHeartbeat().catch(() => {}), 30_000);
+    const onUnload = () => navigator.sendBeacon?.("/api/noop"); // beacon placeholder
+    window.addEventListener("beforeunload", onUnload);
+    return () => { clearInterval(id); window.removeEventListener("beforeunload", onUnload); };
+  }, [availability]);
+
+  const acceptSeriesMutation = useMutation({
+    mutationFn: acceptSeriesRides,
+    onMutate: (rideId) => setAcceptingSeriesId(rideId),
+    onSuccess: (_, rideId) => {
+      toast({ title: "Toutes les séances acceptées !", variant: "success" });
+      // Un seul email récap est envoyé côté serveur par accept_series — pas de boucle ici
+      notifyBookingAcceptedServerFn({ data: { bookingId: rideId } }).catch((err) => {
+        logger.warn("email.notifySeriesAccepted failed", { error: err.message, rideId });
+      });
+    },
+    onSettled: () => {
+      setAcceptingSeriesId(null);
+      queryClient.invalidateQueries({ queryKey: ["ride-pool"] });
+      queryClient.invalidateQueries({ queryKey: ["my-rides"] });
+    },
+    onError: (error, rideId) => {
+      logger.error("driver.acceptSeriesRides failed", { error: error.message, rideId });
+      toast({ title: "Erreur série", description: error.message, variant: "error" });
+    },
+  });
 
   // Sound + vibration when a new ride appears in the pool
   useEffect(() => {
@@ -685,6 +734,8 @@ function DriverDashboard() {
                 onAccept={(id) => acceptMutation.mutate(id)}
                 acceptingId={acceptingId}
                 isAccepting={acceptMutation.isPending}
+                onAcceptSeries={(id) => acceptSeriesMutation.mutate(id)}
+                acceptingSeriesId={acceptingSeriesId}
                 driverProfile={
                   availabilityQuery.data
                     ? {
@@ -744,6 +795,7 @@ function DriverDashboard() {
                             isCancelling={cancellingId === ride.id && cancelMutation.isPending}
                             onRate={(id, rating, comment) => rateMutation.mutate({ rideId: id, rating, comment })}
                             isRating={ratingId === ride.id && rateMutation.isPending}
+                            seriesRides={ride.series_id ? ridesBySeries[ride.series_id] : undefined}
                           />
                         </li>
                       ))}
