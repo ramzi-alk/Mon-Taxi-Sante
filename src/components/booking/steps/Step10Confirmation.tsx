@@ -99,8 +99,16 @@ export function Step10Confirmation({ form, isSubmitting, submitError }: StepProp
         {/* Details */}
         <div className="px-5">
           <SummaryRow icon={User} label="Patient" value={data.patient_full_name || "—"} />
-          <SummaryRow icon={User} label="Téléphone" value={data.patient_phone || "—"} />
-          <SummaryRow icon={User} label="Email" value={data.patient_email || "—"} />
+          <SummaryRow icon={User} label="Tél. patient" value={data.patient_phone || "—"} />
+          {data.booking_for_other ? (
+            <>
+              <SummaryRow icon={User} label="Réservé par" value={data.booker_full_name || "Vous (proche)"} />
+              <SummaryRow icon={User} label="Votre email" value={data.booker_email || "—"} />
+              <SummaryRow icon={User} label="Votre tél." value={data.booker_phone || "—"} />
+            </>
+          ) : (
+            <SummaryRow icon={User} label="Email" value={data.patient_email || "—"} />
+          )}
           <SummaryRow icon={MapPin} label="Départ" value={data.pickup_address || "—"} />
           <SummaryRow icon={MapPin} label="Destination" value={data.dropoff_address || "—"} />
           <SummaryRow icon={Calendar} label="Date & heure" value={pickupDatetime} />
@@ -161,7 +169,10 @@ export function Step10Confirmation({ form, isSubmitting, submitError }: StepProp
             <a href="/confidentialite" target="_blank" className="text-brand-blue-600 underline">
               Politique de confidentialité
             </a>
-            . Je confirme que les informations médicales fournies sont exactes.
+            .{" "}
+            {data.booking_for_other
+              ? "Je confirme que les informations médicales fournies pour le patient sont exactes au meilleur de ma connaissance et que j'ai son accord pour effectuer cette réservation en son nom."
+              : "Je confirme que les informations médicales fournies sont exactes."}
           </span>
         </label>
         {errors.consent && (

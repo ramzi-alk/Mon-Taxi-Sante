@@ -142,6 +142,10 @@ export type Database = {
       bookings: {
         Row: {
           accepted_at: string | null
+          booking_for_other: boolean
+          booker_email: string | null
+          booker_full_name: string | null
+          booker_phone: string | null
           cancellation_reason: string | null
           completed_at: string | null
           consent_accepted_at: string | null
@@ -190,6 +194,10 @@ export type Database = {
         }
         Insert: {
           accepted_at?: string | null
+          booking_for_other?: boolean
+          booker_email?: string | null
+          booker_full_name?: string | null
+          booker_phone?: string | null
           cancellation_reason?: string | null
           completed_at?: string | null
           consent_accepted_at?: string | null
@@ -238,6 +246,10 @@ export type Database = {
         }
         Update: {
           accepted_at?: string | null
+          booking_for_other?: boolean
+          booker_email?: string | null
+          booker_full_name?: string | null
+          booker_phone?: string | null
           cancellation_reason?: string | null
           completed_at?: string | null
           consent_accepted_at?: string | null

@@ -28,10 +28,14 @@ import * as storageRepository from "~/repositories/storageRepository";
 import { useToast } from "~/components/ui/toast";
 
 const DEFAULT_VALUES: Partial<BookingSchema> = {
+  booking_for_other: false,
   patient_full_name: "",
   patient_phone: "",
   patient_email: "",
   patient_birth_date: "",
+  booker_full_name: "",
+  booker_phone: "",
+  booker_email: "",
   pickup_address: "",
   pickup_lat: null,
   pickup_lng: null,
@@ -106,8 +110,12 @@ async function submitBooking(data: BookingSchema) {
     patient_id: userId,
     patient_full_name: data.patient_full_name,
     patient_phone: data.patient_phone,
-    patient_email: data.patient_email,
+    patient_email: data.patient_email || null,
     patient_birth_date: data.patient_birth_date || null,
+    booking_for_other: data.booking_for_other,
+    booker_full_name: data.booking_for_other ? (data.booker_full_name || null) : null,
+    booker_phone: data.booking_for_other ? (data.booker_phone || null) : null,
+    booker_email: data.booking_for_other ? (data.booker_email || null) : null,
     pickup_address: data.pickup_address,
     pickup_lat: data.pickup_lat,
     pickup_lng: data.pickup_lng,

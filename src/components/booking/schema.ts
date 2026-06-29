@@ -7,21 +7,28 @@ const frenchDate = /^\d{4}-\d{2}-\d{2}$/;
 export const bookingSchema = z
   .object({
     // Step 1 — Identity
+    // Who is booking
+    booking_for_other: z.boolean(),
+    // Patient (the person who will travel)
     patient_full_name: z
       .string()
-      .min(3, "Veuillez saisir votre nom complet (prénom et nom)"),
+      .min(3, "Veuillez saisir le nom complet du patient (prénom et nom)"),
     patient_phone: z
       .string()
       .regex(frenchPhone, "Numéro de téléphone français invalide (ex: 06 12 34 56 78)"),
     patient_email: z
       .string()
-      .min(1, "Adresse email requise")
-      .email("Adresse email invalide"),
+      .email("Adresse email invalide")
+      .or(z.literal("")),
     patient_birth_date: z
       .string()
       .regex(frenchDate, "Date de naissance invalide")
       .optional()
       .or(z.literal("")),
+    // Booker (the person placing the reservation, when different from the patient)
+    booker_full_name: z.string().optional().or(z.literal("")),
+    booker_phone: z.string().optional().or(z.literal("")),
+    booker_email: z.string().optional().or(z.literal("")),
 
     // Step 2 — Route
     pickup_address: z.string().min(5, "Adresse de départ requise"),
@@ -143,10 +150,46 @@ export const bookingSchema = z
       path: ["series_duration_weeks"],
     }
   )
+  .refine(
+    (data) => {
+      if (!data.booking_for_other) {
+        return !!data.patient_email && data.patient_email.length > 0;
+      }
+      return true;
+    },
+    {
+      message: "Adresse email requise",
+      path: ["patient_email"],
+    }
+  )
   .refine((data) => data.consent === true, {
     message: "Vous devez accepter les CGV et la politique de confidentialité pour continuer",
     path: ["consent"],
-  });
+  })
+  .refine(
+    (data) => {
+      if (data.booking_for_other) {
+        return !!data.booker_email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.booker_email);
+      }
+      return true;
+    },
+    {
+      message: "Votre adresse email est requise pour recevoir la confirmation de réservation",
+      path: ["booker_email"],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.booking_for_other) {
+        return !!data.booker_phone && frenchPhone.test(data.booker_phone);
+      }
+      return true;
+    },
+    {
+      message: "Votre numéro de téléphone est requis (ex : 06 12 34 56 78)",
+      path: ["booker_phone"],
+    }
+  );
 
 export type BookingSchema = z.infer<typeof bookingSchema>;
 
@@ -164,7 +207,7 @@ export const BOOKING_STEPS = [
 ] as const;
 
 export const STEP_FIELDS: Record<number, (keyof BookingSchema)[]> = {
-  1: ["patient_full_name", "patient_phone", "patient_email", "patient_birth_date"],
+  1: ["booking_for_other", "patient_full_name", "patient_phone", "patient_email", "patient_birth_date", "booker_full_name", "booker_phone", "booker_email"],
   2: ["pickup_address", "dropoff_address"],
   3: ["pickup_date", "pickup_time"],
   4: ["vehicle_type"],
