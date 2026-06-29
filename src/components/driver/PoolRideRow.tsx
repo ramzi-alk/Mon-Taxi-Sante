@@ -63,8 +63,7 @@ export function PoolRideRow({ ride, onAccept, isAccepting }: PoolRideRowProps) {
 
   const hasExpandableDetails =
     ride.is_hospitalization ||
-    (!!ride.series_total && ride.series_total > 1) ||
-    ride.pmt_declared != null;
+    (!!ride.series_total && ride.series_total > 1);
 
   return (
     <article
@@ -119,34 +118,38 @@ export function PoolRideRow({ ride, onAccept, isAccepting }: PoolRideRowProps) {
         {/* Col 2 — trajet + badges */}
         <div className="flex-1 min-w-0 px-3 py-2.5 sm:px-0 sm:py-0 flex flex-col justify-center gap-1.5">
           {/* Adresses */}
-          <div className="space-y-1">
-            <div className="flex items-baseline gap-1.5 min-w-0">
+          <div className="space-y-1.5">
+            <div className="flex items-start gap-1.5">
               <Navigation className="h-3.5 w-3.5 shrink-0 text-brand-blue-500 mt-0.5" aria-hidden="true" />
-              <AddressLink
-                address={ride.pickup_address}
-                lat={ride.pickup_lat}
-                lng={ride.pickup_lng}
-                className="truncate text-sm font-medium text-gray-900"
-              />
-              {ride.distance_to_driver_km != null && (
-                <span className="shrink-0 text-xs font-semibold text-gray-400 ml-auto pl-1">
-                  {ride.distance_to_driver_km} km
-                </span>
-              )}
+              <div className="min-w-0 flex-1">
+                <AddressLink
+                  address={ride.pickup_address}
+                  lat={ride.pickup_lat}
+                  lng={ride.pickup_lng}
+                  className="text-sm font-medium text-gray-900 break-words"
+                />
+                {ride.distance_to_driver_km != null && (
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {ride.distance_to_driver_km} km jusqu'à la prise en charge
+                  </p>
+                )}
+              </div>
             </div>
-            <div className="flex items-baseline gap-1.5 min-w-0">
+            <div className="flex items-start gap-1.5">
               <MapPin className="h-3.5 w-3.5 shrink-0 text-red-500 mt-0.5" aria-hidden="true" />
-              <AddressLink
-                address={ride.dropoff_address}
-                lat={ride.dropoff_lat}
-                lng={ride.dropoff_lng}
-                className="truncate text-sm font-medium text-gray-900"
-              />
-              {ride.distance_km != null && (
-                <span className="shrink-0 text-xs font-semibold text-gray-400 ml-auto pl-1">
-                  {ride.distance_km} km
-                </span>
-              )}
+              <div className="min-w-0 flex-1">
+                <AddressLink
+                  address={ride.dropoff_address}
+                  lat={ride.dropoff_lat}
+                  lng={ride.dropoff_lng}
+                  className="text-sm font-medium text-gray-900 break-words"
+                />
+                {ride.distance_km != null && (
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {ride.distance_km} km de trajet
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 
@@ -262,12 +265,6 @@ export function PoolRideRow({ ride, onAccept, isAccepting }: PoolRideRowProps) {
       {expanded && (
         <div className="border-t border-gray-100 mx-3 sm:mx-4 mb-2.5 pt-2.5">
           <div className="rounded-lg bg-gray-50 border border-gray-100 px-3 py-2 space-y-1.5 text-xs text-gray-700">
-            {ride.pmt_declared != null && (
-              <p className="flex items-center gap-1.5">
-                <ClipboardCheck className="h-3.5 w-3.5 text-gray-500" aria-hidden="true" />
-                PMT déclarée : <span className="font-semibold">{ride.pmt_declared ? "Oui" : "Non"}</span>
-              </p>
-            )}
             {ride.is_hospitalization && (
               <p className="flex items-center gap-1.5">
                 <Building2 className="h-3.5 w-3.5 text-gray-500" aria-hidden="true" />
