@@ -45,7 +45,7 @@ export function PoolRideRow({ ride, onAccept, isAccepting }: PoolRideRowProps) {
   const isTomorrow =
     new Date(ride.pickup_datetime).toDateString() ===
     new Date(Date.now() + 86400000).toDateString();
-  const dayLabel = isToday ? "Auj." : isTomorrow ? "Dem." : pickupDate;
+  const dayLabel = isToday ? "Aujourd'hui" : isTomorrow ? "Demain" : pickupDate;
 
   const minutesUntilPickup = useMinutesUntil(ride.pickup_datetime);
   const isUrgent = minutesUntilPickup >= 0 && minutesUntilPickup <= URGENT_THRESHOLD_MIN;
@@ -72,59 +72,27 @@ export function PoolRideRow({ ride, onAccept, isAccepting }: PoolRideRowProps) {
       )}
       aria-label={`Course — ${ride.pickup_address} → ${ride.dropoff_address}`}
     >
-      {/* ── Ligne 1 : heure | adresses | bouton accepter ─────────────── */}
-      <div className="flex items-start gap-2 px-3 pt-2.5 pb-1">
-
-        {/* Heure + type — 72 px fixes */}
-        <div className="w-[72px] shrink-0 flex flex-col gap-0 pt-px">
-          <span className={cn("text-xs font-bold whitespace-nowrap leading-tight", isUrgent ? "text-amber-800" : "text-gray-900")}>
-            <Clock className={cn("inline h-3 w-3 mr-0.5 -mt-px", isUrgent ? "text-amber-500" : "text-brand-blue-500")} aria-hidden="true" />
+      {/* ── Ligne 1 : date · heure · type · countdown | Accepter ──────── */}
+      <div className={cn(
+        "flex items-center justify-between gap-2 px-3 py-1.5 border-b",
+        isUrgent ? "border-amber-200 bg-amber-50/60" : "border-gray-100 bg-gray-50/60"
+      )}>
+        <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
+          <Clock className={cn("h-3 w-3 shrink-0", isUrgent ? "text-amber-500" : "text-brand-blue-500")} aria-hidden="true" />
+          <span className={cn("text-xs font-bold whitespace-nowrap", isUrgent ? "text-amber-800" : "text-gray-900")}>
             {dayLabel}
           </span>
-          <span className="text-xs text-gray-500 leading-tight">{pickupTime}</span>
-          {isUrgent && (
-            <span className={cn("text-[10px] font-semibold leading-tight mt-0.5", isCritical ? "text-red-600 animate-pulse" : "text-amber-600")}>
-              Dans {Math.max(0, Math.round(minutesUntilPickup))} min
-            </span>
-          )}
-          <span className="text-[10px] text-gray-400 leading-tight mt-0.5">
+          <span className="text-xs text-gray-600 whitespace-nowrap">{pickupTime}</span>
+          <span className="text-[10px] text-gray-400 whitespace-nowrap">
             {vehicleIcons[ride.vehicle_type]} {ride.vehicle_type.toUpperCase()}
           </span>
+          {isUrgent && (
+            <span className={cn("text-[10px] font-bold whitespace-nowrap", isCritical ? "text-red-600 animate-pulse" : "text-amber-600")}>
+              · Dans {Math.max(0, Math.round(minutesUntilPickup))} min
+            </span>
+          )}
         </div>
 
-        {/* Adresses — flex-1, distance en bout de ligne */}
-        <div className="flex-1 min-w-0 space-y-1">
-          <div className="flex items-baseline justify-between gap-1">
-            <div className="flex items-start gap-1 min-w-0">
-              <Navigation className="h-3 w-3 shrink-0 text-brand-blue-400 mt-0.5" aria-hidden="true" />
-              <AddressLink
-                address={ride.pickup_address}
-                lat={ride.pickup_lat}
-                lng={ride.pickup_lng}
-                className="text-xs font-medium text-gray-900 break-words"
-              />
-            </div>
-            {ride.distance_to_driver_km != null && (
-              <span className="shrink-0 text-[10px] text-gray-400 whitespace-nowrap ml-1">{ride.distance_to_driver_km} km</span>
-            )}
-          </div>
-          <div className="flex items-baseline justify-between gap-1">
-            <div className="flex items-start gap-1 min-w-0">
-              <MapPin className="h-3 w-3 shrink-0 text-red-400 mt-0.5" aria-hidden="true" />
-              <AddressLink
-                address={ride.dropoff_address}
-                lat={ride.dropoff_lat}
-                lng={ride.dropoff_lng}
-                className="text-xs font-medium text-gray-700 break-words"
-              />
-            </div>
-            {ride.distance_km != null && (
-              <span className="shrink-0 text-[10px] text-gray-400 whitespace-nowrap ml-1">{ride.distance_km} km</span>
-            )}
-          </div>
-        </div>
-
-        {/* Accepter */}
         <button
           type="button"
           onClick={() => onAccept(ride.id)}
@@ -132,7 +100,7 @@ export function PoolRideRow({ ride, onAccept, isAccepting }: PoolRideRowProps) {
           aria-label={`Accepter — ${ride.pickup_address} → ${ride.dropoff_address}`}
           aria-busy={isAccepting}
           className={cn(
-            "shrink-0 flex items-center justify-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-bold text-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 whitespace-nowrap mt-px",
+            "shrink-0 flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold text-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
             isAccepting
               ? "bg-gray-400 cursor-not-allowed"
               : "bg-brand-green-600 hover:bg-brand-green-700 shadow-sm active:scale-95"
@@ -146,13 +114,40 @@ export function PoolRideRow({ ride, onAccept, isAccepting }: PoolRideRowProps) {
         </button>
       </div>
 
-      {/* ── Ligne 2 : badges | passagers + prix + expand ─────────────── */}
-      {/* indentée pour s'aligner avec la colonne adresses */}
-      <div
-        className="flex items-center justify-between gap-2 pb-2 pr-3"
-        style={{ paddingLeft: "calc(0.75rem + 72px + 0.5rem)" }}
-      >
-        {/* badges */}
+      {/* ── Lignes 2 : adresses pleine largeur ───────────────────────── */}
+      <div className="px-3 pt-2 pb-1 space-y-1">
+        <div className="flex items-baseline justify-between gap-2">
+          <div className="flex items-start gap-1 min-w-0">
+            <Navigation className="h-3 w-3 shrink-0 text-brand-blue-400 mt-0.5" aria-hidden="true" />
+            <AddressLink
+              address={ride.pickup_address}
+              lat={ride.pickup_lat}
+              lng={ride.pickup_lng}
+              className="text-xs font-medium text-gray-900 break-words"
+            />
+          </div>
+          {ride.distance_to_driver_km != null && (
+            <span className="shrink-0 text-[10px] text-gray-400 whitespace-nowrap">{ride.distance_to_driver_km} km</span>
+          )}
+        </div>
+        <div className="flex items-baseline justify-between gap-2">
+          <div className="flex items-start gap-1 min-w-0">
+            <MapPin className="h-3 w-3 shrink-0 text-red-400 mt-0.5" aria-hidden="true" />
+            <AddressLink
+              address={ride.dropoff_address}
+              lat={ride.dropoff_lat}
+              lng={ride.dropoff_lng}
+              className="text-xs font-medium text-gray-700 break-words"
+            />
+          </div>
+          {ride.distance_km != null && (
+            <span className="shrink-0 text-[10px] text-gray-400 whitespace-nowrap">{ride.distance_km} km</span>
+          )}
+        </div>
+      </div>
+
+      {/* ── Ligne 3 : badges | passagers · prix · expand ─────────────── */}
+      <div className="flex items-center justify-between gap-2 px-3 pb-2">
         <div className="flex flex-wrap items-center gap-1">
           {ride.pmt_declared && (
             <span className="rounded-full bg-green-50 px-1.5 py-0.5 text-[10px] font-semibold text-green-700">PMT</span>
@@ -168,7 +163,6 @@ export function PoolRideRow({ ride, onAccept, isAccepting }: PoolRideRowProps) {
           ))}
         </div>
 
-        {/* passagers + prix + expand */}
         <div className="flex items-center gap-1.5 shrink-0">
           <span className="flex items-center gap-0.5 text-[10px] text-gray-500">
             <Users className="h-3 w-3" aria-hidden="true" />
