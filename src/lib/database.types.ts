@@ -127,6 +127,9 @@ export type Database = {
           requires_stretcher: boolean
           requires_wheelchair: boolean
           return_datetime: string | null
+          series_id: string | null
+          series_index: number | null
+          series_total: number | null
           status: Database["public"]["Enums"]["booking_status"]
           trip_type: Database["public"]["Enums"]["trip_type"]
           updated_at: string
@@ -168,6 +171,9 @@ export type Database = {
           requires_stretcher?: boolean
           requires_wheelchair?: boolean
           return_datetime?: string | null
+          series_id?: string | null
+          series_index?: number | null
+          series_total?: number | null
           status?: Database["public"]["Enums"]["booking_status"]
           trip_type?: Database["public"]["Enums"]["trip_type"]
           updated_at?: string
@@ -209,6 +215,9 @@ export type Database = {
           requires_stretcher?: boolean
           requires_wheelchair?: boolean
           return_datetime?: string | null
+          series_id?: string | null
+          series_index?: number | null
+          series_total?: number | null
           status?: Database["public"]["Enums"]["booking_status"]
           trip_type?: Database["public"]["Enums"]["trip_type"]
           updated_at?: string
@@ -570,6 +579,9 @@ export type Database = {
           requires_stretcher: boolean
           requires_wheelchair: boolean
           return_datetime: string
+          series_id: string
+          series_index: number
+          series_total: number
           status: Database["public"]["Enums"]["booking_status"]
           trip_type: Database["public"]["Enums"]["trip_type"]
           vehicle_brand: string
@@ -622,6 +634,9 @@ export type Database = {
           requires_stretcher: boolean
           requires_wheelchair: boolean
           return_datetime: string
+          series_id: string
+          series_index: number
+          series_total: number
           status: Database["public"]["Enums"]["booking_status"]
           trip_type: Database["public"]["Enums"]["trip_type"]
           vehicle_brand: string

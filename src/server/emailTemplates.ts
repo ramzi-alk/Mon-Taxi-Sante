@@ -104,24 +104,47 @@ export function bookingConfirmationEmail(params: {
   pickupAddress: string;
   dropoffAddress: string;
   pickupDatetime: string;
+  // Présents uniquement pour une série de soins (trip_type = multiple, PMT
+  // déclarée) : une seule confirmation résume toutes les séances plutôt que
+  // d'envoyer un email par réservation générée.
+  seriesTotal?: number;
+  seriesLastPickupDatetime?: string;
 }): EmailContent {
-  const { patientFullName, referenceCode, pickupAddress, dropoffAddress, pickupDatetime } = params;
+  const {
+    patientFullName,
+    referenceCode,
+    pickupAddress,
+    dropoffAddress,
+    pickupDatetime,
+    seriesTotal,
+    seriesLastPickupDatetime,
+  } = params;
+  const isSeries = !!seriesTotal && seriesTotal > 1 && !!seriesLastPickupDatetime;
+  const dateValue = isSeries
+    ? `${seriesTotal} séances, du ${formatDateFr(pickupDatetime)} au ${formatDateFr(seriesLastPickupDatetime!)}`
+    : `${formatDateFr(pickupDatetime)} à ${formatTimeFr(pickupDatetime)}`;
   return {
-    subject: `Réservation confirmée — Réf. ${formatReferenceCode(referenceCode)}`,
+    subject: isSeries
+      ? `Série de ${seriesTotal} séances confirmée — Réf. ${formatReferenceCode(referenceCode)}`
+      : `Réservation confirmée — Réf. ${formatReferenceCode(referenceCode)}`,
     html: layout({
-      title: "Réservation confirmée",
+      title: isSeries ? "Série de soins confirmée" : "Réservation confirmée",
       icon: "✅",
       bodyHtml: `
         ${badge("Confirmée", "green")}
         <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${patientFullName},</p>
-        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Votre réservation de transport médical a bien été enregistrée. Un chauffeur conventionné Assurance Maladie va prendre en charge votre course.</p>
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">${
+          isSeries
+            ? `Votre série de ${seriesTotal} séances de transport médical a bien été enregistrée. Un chauffeur conventionné Assurance Maladie sera affecté à chaque séance.`
+            : `Votre réservation de transport médical a bien été enregistrée. Un chauffeur conventionné Assurance Maladie va prendre en charge votre course.`
+        }</p>
         ${detailsCard([
           { label: "Référence", value: formatReferenceCode(referenceCode) },
           { label: "Départ", value: pickupAddress },
           { label: "Destination", value: dropoffAddress },
-          { label: "Date", value: `${formatDateFr(pickupDatetime)} à ${formatTimeFr(pickupDatetime)}` },
+          { label: isSeries ? "Dates" : "Date", value: dateValue },
         ])}
-        ${ctaButton("Suivre ma réservation", trackingUrl(referenceCode))}
+        ${ctaButton("Suivre mes réservations", trackingUrl(referenceCode))}
         <p style="margin:0;font-size:14px;color:#6b7280;line-height:1.5;">Ce lien ouvre la page de suivi avec votre référence déjà renseignée. Pour des raisons de sécurité, vous devrez confirmer votre numéro de téléphone pour accéder aux détails.</p>
       `,
     }),

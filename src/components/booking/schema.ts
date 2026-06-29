@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { computeSeriesDates, MAX_SERIES_SESSIONS } from "~/lib/seriesSchedule";
 
 const frenchPhone = /^(\+33|0)[1-9](\d{2}){4}$/;
 const frenchDate = /^\d{4}-\d{2}-\d{2}$/;
@@ -47,6 +48,11 @@ export const bookingSchema = z
     trip_type: z.enum(["aller_simple", "aller_retour", "multiple"]),
     // Retour à vide éligible (hospitalisation ou soins répétés) — convention 2025 art. 4
     is_hospitalization: z.boolean(),
+    // Jours de la semaine (0 = dimanche ... 6 = samedi, convention Date.getDay())
+    // et durée en semaines, utilisés uniquement pour trip_type === "multiple"
+    // afin de générer le calendrier des séances.
+    series_days_of_week: z.array(z.number().int().min(0).max(6)).optional(),
+    series_duration_weeks: z.number().int().min(1).max(26).optional(),
 
     // Step 6 — Specificities
     requires_wheelchair: z.boolean(),
@@ -92,6 +98,47 @@ export const bookingSchema = z
       path: ["return_date"],
     }
   )
+  .refine(
+    (data) => {
+      if (data.trip_type === "multiple") {
+        return !!data.series_days_of_week && data.series_days_of_week.length > 0;
+      }
+      return true;
+    },
+    {
+      message: "Sélectionnez au moins un jour de la semaine pour la série de soins",
+      path: ["series_days_of_week"],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.trip_type === "multiple") {
+        return !!data.series_duration_weeks && data.series_duration_weeks >= 1;
+      }
+      return true;
+    },
+    {
+      message: "Indiquez la durée de la série de soins",
+      path: ["series_duration_weeks"],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.trip_type === "multiple" && data.series_days_of_week?.length && data.series_duration_weeks) {
+        const dates = computeSeriesDates(
+          data.pickup_date,
+          data.series_days_of_week,
+          data.series_duration_weeks
+        );
+        return dates.length <= MAX_SERIES_SESSIONS;
+      }
+      return true;
+    },
+    {
+      message: `Trop de séances (maximum ${MAX_SERIES_SESSIONS}) : réduisez la durée ou le nombre de jours`,
+      path: ["series_duration_weeks"],
+    }
+  )
   .refine((data) => data.consent === true, {
     message: "Vous devez accepter les CGV et la politique de confidentialité pour continuer",
     path: ["consent"],
@@ -117,7 +164,14 @@ export const STEP_FIELDS: Record<number, (keyof BookingSchema)[]> = {
   2: ["pickup_address", "dropoff_address"],
   3: ["pickup_date", "pickup_time"],
   4: ["vehicle_type"],
-  5: ["trip_type", "is_hospitalization", "return_date", "return_time"],
+  5: [
+    "trip_type",
+    "is_hospitalization",
+    "return_date",
+    "return_time",
+    "series_days_of_week",
+    "series_duration_weeks",
+  ],
   6: ["passenger_count"],
   7: ["cpam_status"],
   8: ["pmt_declared"],

@@ -38,6 +38,9 @@ export type MyBookingRow = Pick<
   | "cpam_status"
   | "mutual_name"
   | "medical_notes"
+  | "series_id"
+  | "series_index"
+  | "series_total"
 > & {
   driver_full_name: string | null;
   driver_phone: string | null;
