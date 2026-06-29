@@ -174,6 +174,8 @@ export function bookingAcceptedEmail(params: {
   vehicleModel: string | null;
   vehicleRegistration: string | null;
   driverAverageRating?: number | null;
+  seriesTotal?: number;
+  seriesLastPickupDatetime?: string;
 }): EmailContent {
   const {
     patientFullName,
@@ -187,17 +189,28 @@ export function bookingAcceptedEmail(params: {
     vehicleModel,
     vehicleRegistration,
     driverAverageRating,
+    seriesTotal,
+    seriesLastPickupDatetime,
   } = params;
+  const isSeries = !!seriesTotal && seriesTotal > 1 && !!seriesLastPickupDatetime;
   const vehicleLabel = [vehicleBrand, vehicleModel].filter(Boolean).join(" ");
+  const dateValue = isSeries
+    ? `${seriesTotal} séances, du ${formatDateFr(pickupDatetime)} au ${formatDateFr(seriesLastPickupDatetime!)}`
+    : `${formatDateFr(pickupDatetime)} à ${formatTimeFr(pickupDatetime)}`;
+  const intro = isSeries
+    ? `Un chauffeur conventionné Assurance Maladie a accepté de prendre en charge l'ensemble de vos <strong>${seriesTotal} séances</strong> de transport.`
+    : `Un chauffeur conventionné Assurance Maladie a accepté de prendre en charge votre course.`;
   return {
-    subject: `Chauffeur affecté — Réf. ${formatReferenceCode(referenceCode)}`,
+    subject: isSeries
+      ? `Chauffeur affecté pour ${seriesTotal} séances — Réf. ${formatReferenceCode(referenceCode)}`
+      : `Chauffeur affecté — Réf. ${formatReferenceCode(referenceCode)}`,
     html: layout({
-      title: "Chauffeur affecté",
+      title: isSeries ? `Chauffeur affecté — ${seriesTotal} séances` : "Chauffeur affecté",
       icon: "🚗",
       bodyHtml: `
         ${badge("Chauffeur affecté", "blue")}
         <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${patientFullName},</p>
-        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Un chauffeur conventionné Assurance Maladie a accepté de prendre en charge votre course.</p>
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">${intro}</p>
         ${detailsCard([
           { label: "Référence", value: formatReferenceCode(referenceCode) },
           { label: "Chauffeur", value: driverFullName },
@@ -206,7 +219,7 @@ export function bookingAcceptedEmail(params: {
           ...(vehicleRegistration ? [{ label: "Immatriculation", value: vehicleRegistration }] : []),
           { label: "Départ", value: pickupAddress },
           { label: "Destination", value: dropoffAddress },
-          { label: "Date", value: `${formatDateFr(pickupDatetime)} à ${formatTimeFr(pickupDatetime)}` },
+          { label: isSeries ? "Dates" : "Date", value: dateValue },
         ])}
         ${driverPhone ? `
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;">
