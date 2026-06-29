@@ -53,7 +53,7 @@ export const bookingSchema = z
     return_time: z.string().optional().or(z.literal("")),
 
     // Step 4 — Vehicle
-    vehicle_type: z.enum(["taxi", "vsl", "pmr"]),
+    vehicle_type: z.enum(["taxi", "vsl", "pmr", "ambulance"]),
 
     // Step 5 — Trip type
     trip_type: z.enum(["aller_simple", "aller_retour", "multiple"]),

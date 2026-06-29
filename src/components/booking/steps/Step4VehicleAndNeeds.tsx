@@ -1,7 +1,8 @@
 import { UseFormReturn } from "react-hook-form";
 import { Car, Ambulance, Users, Minus, Plus } from "lucide-react";
+import { useEffect } from "react";
 import { cn } from "~/lib/utils";
-import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
+import { Checkbox } from "~/components/ui/checkbox";
 import type { BookingSchema } from "../schema";
 
 interface StepProps {
@@ -13,63 +14,27 @@ const vehicleOptions = [
     value: "taxi" as const,
     icon: Car,
     title: "Taxi conventionné",
-    description: "Pour les patients pouvant se déplacer de manière autonome. Berline confortable.",
+    description: "Patient autonome — berline confortable, tarif Assurance Maladie.",
     badge: "Le plus courant",
-    badgeColor: "bg-brand-blue-100 text-brand-blue-700",
-    details: ["Idéal pour consultations ambulatoires", "Confort et discrétion", "Tarif officiel AM"],
-    recommendedWhen: [] as string[],
+    badgeClass: "bg-brand-blue-100 text-brand-blue-700",
   },
   {
     value: "vsl" as const,
-    icon: Ambulance,
+    icon: Car,
     title: "VSL (Véhicule Sanitaire Léger)",
-    description: "Pour les patients nécessitant une aide à la mobilité mais pouvant s'asseoir.",
+    description: "Patient nécessitant une aide à la mobilité, pouvant s'asseoir.",
     badge: "Sur prescription",
-    badgeColor: "bg-purple-100 text-purple-700",
-    details: ["Chauffeur auxiliaire de santé", "Aide à la montée/descente", "Position allongée possible"],
-    recommendedWhen: ["requires_stretcher"],
+    badgeClass: "bg-purple-100 text-purple-700",
   },
   {
     value: "pmr" as const,
     icon: Users,
-    title: "Taxi PMR (Handicap)",
-    description: "Véhicule entièrement aménagé pour les fauteuils roulants et PMR.",
+    title: "Taxi PMR",
+    description: "Fauteuil roulant manuel ou électrique — rampe d'accès homologuée.",
     badge: "PMR / Handicap",
-    badgeColor: "bg-brand-green-100 text-brand-green-700",
-    details: ["Rampe d'accès électrique", "Fixation fauteuil homologuée", "Espace adapté"],
-    recommendedWhen: ["requires_wheelchair"],
+    badgeClass: "bg-emerald-100 text-emerald-700",
   },
 ] as const;
-
-const specificityOptions = [
-  {
-    field: "requires_wheelchair" as const,
-    label: "Fauteuil roulant",
-    description: "Le patient utilise un fauteuil roulant (manuel ou électrique).",
-    note: "→ Recommande un taxi PMR aménagé.",
-  },
-  {
-    field: "requires_stretcher" as const,
-    label: "Brancard / position allongée",
-    description: "Le patient doit être transporté en position allongée.",
-    note: "→ Recommande un VSL.",
-  },
-  {
-    field: "requires_oxygen" as const,
-    label: "Oxygène thérapeutique",
-    description: "Le patient nécessite de l'oxygène pendant le trajet.",
-    note: "→ Le chauffeur sera informé avant la prise en charge.",
-  },
-];
-
-function getRecommendedVehicle(
-  requiresWheelchair: boolean,
-  requiresStretcher: boolean
-): "taxi" | "vsl" | "pmr" | null {
-  if (requiresWheelchair) return "pmr";
-  if (requiresStretcher) return "vsl";
-  return null;
-}
 
 export function Step4VehicleAndNeeds({ form }: StepProps) {
   const { register, watch, setValue, formState: { errors } } = form;
@@ -77,16 +42,32 @@ export function Step4VehicleAndNeeds({ form }: StepProps) {
   const vehicleType = watch("vehicle_type");
   const requiresWheelchair = watch("requires_wheelchair");
   const requiresStretcher = watch("requires_stretcher");
+  const requiresOxygen = watch("requires_oxygen");
   const passengerCount = watch("passenger_count");
 
-  const recommended = getRecommendedVehicle(requiresWheelchair, requiresStretcher);
+  // Sync on mount in case form was pre-filled with stretcher=true
+  useEffect(() => {
+    if (requiresStretcher && vehicleType !== "ambulance") {
+      setValue("vehicle_type", "ambulance");
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
+  const isAmbulaneFrced = requiresStretcher;
+  const recommendedVehicle = !isAmbulaneFrced && requiresWheelchair ? "pmr" : null;
   const vehicleMismatch =
-    recommended !== null && vehicleType !== recommended
-      ? recommended === "pmr"
-        ? "Le fauteuil roulant nécessite un Taxi PMR aménagé."
-        : "La position allongée nécessite un VSL."
+    recommendedVehicle !== null && vehicleType !== recommendedVehicle
+      ? "Le fauteuil roulant nécessite un Taxi PMR aménagé."
       : null;
+
+  function handleStretcherChange(checked: boolean) {
+    setValue("requires_stretcher", checked);
+    if (checked) {
+      setValue("vehicle_type", "ambulance");
+    } else if (vehicleType === "ambulance") {
+      setValue("vehicle_type", "taxi");
+    }
+  }
 
   function changePassengers(delta: number) {
     const next = Math.max(1, Math.min(8, passengerCount + delta));
@@ -94,199 +75,221 @@ export function Step4VehicleAndNeeds({ form }: StepProps) {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900">Véhicule & besoins spécifiques</h2>
-        <p className="mt-1 text-muted-foreground">
-          Précisez vos besoins — le type de véhicule adapté sera mis en avant automatiquement.
+        <h2 className="text-2xl font-bold text-gray-900">Véhicule & besoins</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Indiquez vos besoins — le véhicule adapté sera sélectionné automatiquement.
         </p>
       </div>
 
-      {/* ── Besoins spécifiques ── */}
-      <div className="space-y-4">
-        <h3 className="text-base font-semibold text-gray-800">Besoins particuliers</h3>
-        <fieldset>
-          <legend className="sr-only">Besoins particuliers</legend>
-          <div className="space-y-3">
-            {specificityOptions.map(({ field, label, description, note }) => (
-              <label
-                key={field}
-                htmlFor={field}
-                className="flex items-start gap-4 rounded-xl border border-gray-200 bg-white p-4 cursor-pointer hover:bg-gray-50 transition-colors"
-              >
-                <input
-                  type="checkbox"
-                  id={field}
-                  {...register(field)}
-                  className="mt-0.5 h-5 w-5 rounded border-gray-300 text-brand-blue-600 focus:ring-brand-blue-500 cursor-pointer"
-                />
-                <div>
-                  <p className="font-semibold text-gray-800">{label}</p>
-                  <p className="text-sm text-muted-foreground">{description}</p>
-                  <p className="text-xs text-brand-blue-600 font-medium mt-0.5">{note}</p>
-                </div>
-              </label>
-            ))}
-          </div>
-        </fieldset>
-
-        {/* Passenger count */}
-        <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-3">
-          <p className="text-sm font-semibold text-gray-700">
-            Nombre de passagers (patient + accompagnant(s))
-          </p>
-          <div className="flex items-center gap-4">
-            <button
-              type="button"
-              onClick={() => changePassengers(-1)}
-              disabled={passengerCount <= 1}
-              aria-label="Réduire le nombre de passagers"
-              className="flex h-11 w-11 items-center justify-center rounded-xl border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <Minus className="h-4 w-4" aria-hidden="true" />
-            </button>
-
-            <div className="flex flex-col items-center min-w-[60px]">
-              <span
-                className="text-3xl font-black text-brand-blue-600"
-                aria-live="polite"
-                aria-label={`${passengerCount} passager${passengerCount > 1 ? "s" : ""}`}
-              >
-                {passengerCount}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                {passengerCount === 1 ? "passager" : "passagers"}
-              </span>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => changePassengers(1)}
-              disabled={passengerCount >= 8}
-              aria-label="Augmenter le nombre de passagers"
-              className="flex h-11 w-11 items-center justify-center rounded-xl border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <Plus className="h-4 w-4" aria-hidden="true" />
-            </button>
-
-            <p className="text-sm text-muted-foreground">Maximum 8</p>
-          </div>
-          <input type="hidden" {...register("passenger_count", { valueAsNumber: true })} />
-          <p className="text-xs text-muted-foreground">
-            Les accompagnants sont autorisés sous conditions d&apos;ordonnance.
-          </p>
-        </div>
-      </div>
-
-      {/* ── Type de véhicule ── */}
-      <div className="space-y-4">
-        <h3 className="text-base font-semibold text-gray-800">Type de véhicule médical</h3>
-        <p className="text-sm text-muted-foreground">
-          Sélectionnez le véhicule prescrit par votre médecin ou adapté à vos besoins.
-        </p>
-
-        {/* Mismatch warning */}
-        {vehicleMismatch && (
-          <div
-            role="alert"
-            className="rounded-xl bg-amber-50 border border-amber-200 p-3.5 text-sm text-amber-800 font-medium"
+      {/* Besoins particuliers */}
+      <fieldset>
+        <legend className="block text-sm font-semibold text-gray-700 mb-2.5">Besoins particuliers</legend>
+        <div className="space-y-2">
+          <label
+            htmlFor="requires_wheelchair"
+            className="flex items-center gap-3.5 rounded-xl border border-gray-200 bg-white p-3.5 cursor-pointer hover:bg-gray-50 transition-colors"
           >
-            ⚠️ {vehicleMismatch}
-          </div>
-        )}
+            <Checkbox
+              id="requires_wheelchair"
+              checked={requiresWheelchair}
+              onCheckedChange={(checked) => setValue("requires_wheelchair", checked === true)}
+            />
+            <div>
+              <p className="text-sm font-semibold text-gray-800">Fauteuil roulant</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Manuel ou électrique — recommande un Taxi PMR aménagé.
+              </p>
+            </div>
+          </label>
 
-        <fieldset>
-          <legend className="sr-only">Type de véhicule</legend>
-          <div className="space-y-3">
-            {vehicleOptions.map(({ value, icon: Icon, title, description, badge, badgeColor, details }) => {
-              const isSelected = vehicleType === value;
-              const isRecommended = recommended === value;
-              return (
-                <label
-                  key={value}
-                  htmlFor={`vehicle-${value}`}
-                  className={cn(
-                    "flex cursor-pointer gap-4 rounded-2xl border-2 p-4 transition-all relative",
-                    isSelected
-                      ? "border-brand-blue-500 bg-brand-blue-50/60 shadow-sm"
-                      : isRecommended
-                      ? "border-brand-green-400 bg-brand-green-50/40 hover:bg-brand-green-50"
-                      : "border-gray-200 bg-white hover:border-brand-blue-200 hover:bg-gray-50"
-                  )}
-                >
-                  <input
-                    type="radio"
-                    id={`vehicle-${value}`}
-                    value={value}
-                    checked={isSelected}
-                    onChange={() => setValue("vehicle_type", value)}
-                    className="sr-only"
-                    aria-describedby={`vehicle-desc-${value}`}
-                  />
+          <label
+            htmlFor="requires_stretcher"
+            className="flex items-center gap-3.5 rounded-xl border border-gray-200 bg-white p-3.5 cursor-pointer hover:bg-gray-50 transition-colors"
+          >
+            <Checkbox
+              id="requires_stretcher"
+              checked={requiresStretcher}
+              onCheckedChange={(checked) => handleStretcherChange(checked === true)}
+            />
+            <div>
+              <p className="text-sm font-semibold text-gray-800">Brancard / position allongée</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Transport couché — sélectionne une ambulance automatiquement.
+              </p>
+            </div>
+          </label>
 
-                  <div
+          <label
+            htmlFor="requires_oxygen"
+            className="flex items-center gap-3.5 rounded-xl border border-gray-200 bg-white p-3.5 cursor-pointer hover:bg-gray-50 transition-colors"
+          >
+            <Checkbox
+              id="requires_oxygen"
+              checked={requiresOxygen}
+              onCheckedChange={(checked) => setValue("requires_oxygen", checked === true)}
+            />
+            <div>
+              <p className="text-sm font-semibold text-gray-800">Oxygène thérapeutique</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Le chauffeur sera informé avant la prise en charge.
+              </p>
+            </div>
+          </label>
+        </div>
+      </fieldset>
+
+      {/* Passenger count — compact inline row */}
+      <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3">
+        <span className="flex-1 text-sm font-semibold text-gray-800">
+          Passagers{" "}
+          <span className="font-normal text-muted-foreground">(patient + accompagnant·s)</span>
+        </span>
+        <button
+          type="button"
+          onClick={() => changePassengers(-1)}
+          disabled={passengerCount <= 1}
+          aria-label="Réduire le nombre de passagers"
+          className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <Minus className="h-3.5 w-3.5" aria-hidden="true" />
+        </button>
+        <span
+          className="w-7 text-center text-lg font-black text-brand-blue-600"
+          aria-live="polite"
+          aria-label={`${passengerCount} passager${passengerCount > 1 ? "s" : ""}`}
+        >
+          {passengerCount}
+        </span>
+        <button
+          type="button"
+          onClick={() => changePassengers(1)}
+          disabled={passengerCount >= 8}
+          aria-label="Augmenter le nombre de passagers"
+          className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+        </button>
+        <input type="hidden" {...register("passenger_count", { valueAsNumber: true })} />
+      </div>
+
+      <div className="border-t border-gray-100" />
+
+      {/* Vehicle type */}
+      <div className="space-y-3">
+        <p className="text-sm font-semibold text-gray-700">Véhicule médical</p>
+
+        {isAmbulaneFrced ? (
+          /* Ambulance locked when stretcher is required */
+          <>
+            <div className="flex items-center gap-3.5 rounded-xl border-2 border-brand-blue-500 bg-brand-blue-50/60 p-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-blue-600 text-white">
+                <Ambulance className="h-5 w-5" aria-hidden="true" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-bold text-gray-900 text-sm">Ambulance</span>
+                  <span className="rounded-full bg-brand-blue-100 text-brand-blue-700 px-2 py-0.5 text-xs font-semibold">
+                    Sélectionné automatiquement
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Transport en position allongée sur brancard.
+                </p>
+              </div>
+              <div
+                className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-brand-blue-600 bg-brand-blue-600"
+                aria-hidden="true"
+              >
+                <div className="h-2 w-2 rounded-full bg-white" />
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Taxi et VSL ne sont pas adaptés au brancard. Décochez &laquo;&nbsp;Brancard&nbsp;&raquo; pour choisir un autre véhicule.
+            </p>
+          </>
+        ) : (
+          /* Normal selection */
+          <fieldset>
+            <legend className="sr-only">Type de véhicule</legend>
+            <div className="space-y-2">
+              {vehicleMismatch && (
+                <div role="alert" className="rounded-xl bg-amber-50 border border-amber-200 px-3.5 py-2.5 text-sm text-amber-800">
+                  ⚠️ {vehicleMismatch}
+                </div>
+              )}
+              {vehicleOptions.map(({ value, icon: Icon, title, description, badge, badgeClass }) => {
+                const isSelected = vehicleType === value;
+                const isRecommended = recommendedVehicle === value;
+                return (
+                  <label
+                    key={value}
+                    htmlFor={`vehicle-${value}`}
                     className={cn(
-                      "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-colors",
-                      isSelected ? "bg-brand-blue-600 text-white" : "bg-gray-100 text-gray-500"
+                      "flex cursor-pointer items-center gap-3.5 rounded-xl border-2 p-3.5 transition-all",
+                      isSelected
+                        ? "border-brand-blue-500 bg-brand-blue-50/60"
+                        : isRecommended
+                        ? "border-emerald-400 bg-emerald-50/40 hover:bg-emerald-50"
+                        : "border-gray-200 bg-white hover:border-brand-blue-200 hover:bg-gray-50"
                     )}
-                    aria-hidden="true"
                   >
-                    <Icon className="h-5 w-5" />
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-bold text-gray-900">{title}</span>
-                      <span className={cn("rounded-full px-2 py-0.5 text-xs font-semibold", badgeColor)}>
-                        {badge}
-                      </span>
-                      {isRecommended && (
-                        <span className="rounded-full bg-brand-green-100 text-brand-green-700 px-2 py-0.5 text-xs font-semibold">
-                          ✓ Recommandé
-                        </span>
+                    <input
+                      type="radio"
+                      id={`vehicle-${value}`}
+                      value={value}
+                      checked={isSelected}
+                      onChange={() => setValue("vehicle_type", value)}
+                      className="sr-only"
+                      aria-describedby={`vehicle-desc-${value}`}
+                    />
+                    <div
+                      className={cn(
+                        "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors",
+                        isSelected ? "bg-brand-blue-600 text-white" : "bg-gray-100 text-gray-500"
                       )}
+                      aria-hidden="true"
+                    >
+                      <Icon className="h-4 w-4" />
                     </div>
-                    <p id={`vehicle-desc-${value}`} className="text-sm text-muted-foreground mt-0.5">
-                      {description}
-                    </p>
-                    <ul className="mt-1.5 flex flex-wrap gap-x-4 gap-y-0.5 list-none">
-                      {details.map((d) => (
-                        <li key={d} className="text-xs text-gray-500 flex items-center gap-1">
-                          <span className="h-1 w-1 rounded-full bg-gray-400" aria-hidden="true" />
-                          {d}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div
-                    className={cn(
-                      "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 mt-0.5 transition-colors",
-                      isSelected ? "border-brand-blue-600 bg-brand-blue-600" : "border-gray-300 bg-white"
-                    )}
-                    aria-hidden="true"
-                  >
-                    {isSelected && <div className="h-2 w-2 rounded-full bg-white" aria-hidden="true" />}
-                  </div>
-                </label>
-              );
-            })}
-          </div>
-        </fieldset>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-bold text-gray-900 text-sm">{title}</span>
+                        <span className={cn("rounded-full px-2 py-0.5 text-xs font-semibold", badgeClass)}>
+                          {badge}
+                        </span>
+                        {isRecommended && (
+                          <span className="rounded-full bg-emerald-100 text-emerald-700 px-2 py-0.5 text-xs font-semibold">
+                            ✓ Recommandé
+                          </span>
+                        )}
+                      </div>
+                      <p id={`vehicle-desc-${value}`} className="text-xs text-muted-foreground mt-0.5">
+                        {description}
+                      </p>
+                    </div>
+                    <div
+                      className={cn(
+                        "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
+                        isSelected ? "border-brand-blue-600 bg-brand-blue-600" : "border-gray-300 bg-white"
+                      )}
+                      aria-hidden="true"
+                    >
+                      {isSelected && <div className="h-2 w-2 rounded-full bg-white" aria-hidden="true" />}
+                    </div>
+                  </label>
+                );
+              })}
+            </div>
+          </fieldset>
+        )}
 
         {errors.vehicle_type && (
           <p role="alert" className="text-sm text-red-600">
             {errors.vehicle_type.message}
           </p>
         )}
-
-        <div className="rounded-xl bg-amber-50 border border-amber-100 p-4 text-sm text-amber-800">
-          <strong>Besoin d&apos;aide pour choisir&nbsp;?</strong> Le type de véhicule est généralement
-          indiqué sur votre prescription médicale (PMT). En cas de doute, appelez le{" "}
-          <a href={`tel:${CONTACT_PHONE_TEL}`} className="font-semibold underline">
-            {CONTACT_PHONE_DISPLAY}
-          </a>.
-        </div>
       </div>
     </div>
   );
