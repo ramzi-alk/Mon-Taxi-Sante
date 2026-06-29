@@ -7,6 +7,7 @@ export const editBookingSchema = z
     pickup_address: z.string().min(5, "Adresse de départ requise"),
     pickup_lat: z.number().nullable(),
     pickup_lng: z.number().nullable(),
+    pickup_municipality: z.string().nullable(),
     dropoff_address: z.string().min(5, "Adresse de destination requise"),
     dropoff_lat: z.number().nullable(),
     dropoff_lng: z.number().nullable(),

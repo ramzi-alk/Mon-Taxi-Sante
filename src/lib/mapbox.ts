@@ -13,6 +13,8 @@ export interface MapboxPlace {
   label: string;
   lat: number;
   lng: number;
+  /** Commune/ville (place_formatted Mapbox), sans le numéro/nom de rue — utilisée pour masquer l'adresse exacte tant qu'une course n'est pas acceptée. */
+  municipality: string | null;
 }
 
 interface SuggestFeature {
@@ -88,6 +90,7 @@ export async function retrieveAddress(
       .join(", "),
     lat,
     lng,
+    municipality: feature.properties.place_formatted ?? null,
   };
 }
 

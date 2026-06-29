@@ -27,9 +27,13 @@ export const bookingSchema = z
     pickup_address: z.string().min(5, "Adresse de départ requise"),
     pickup_lat: z.number().nullable(),
     pickup_lng: z.number().nullable(),
+    // Commune de départ (sans le numéro/nom de rue) — affichée aux chauffeurs
+    // à la place de pickup_address tant que la course n'est pas acceptée.
+    pickup_municipality: z.string().nullable(),
     dropoff_address: z.string().min(5, "Adresse de destination requise"),
     dropoff_lat: z.number().nullable(),
     dropoff_lng: z.number().nullable(),
+    dropoff_municipality: z.string().nullable(),
     distance_km: z.number().nullable(),
 
     // Step 3 — Date/Time

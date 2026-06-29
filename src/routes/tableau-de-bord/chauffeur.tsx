@@ -11,6 +11,7 @@ import {
   Circle,
   Pause,
   PowerOff,
+  ShieldAlert,
   Gauge,
   Wallet,
   MapPin,
@@ -145,6 +146,11 @@ function DriverDashboard() {
     queryFn: fetchMyAvailability,
   });
   const availability = availabilityQuery.data?.availability ?? "offline";
+  // Suspension temporaire du pool suite à des annulations suspectes répétées
+  // (cf. cancel_ride_by_driver, migration 030) — distincte du statut
+  // online/paused/offline, qui reste sous le contrôle du chauffeur.
+  const poolSuspendedUntil = availabilityQuery.data?.pool_suspended_until ?? null;
+  const isPoolSuspended = poolSuspendedUntil != null && new Date(poolSuspendedUntil) > new Date();
 
   const statsQuery = useQuery({
     queryKey: ["my-driver-stats"],
@@ -537,6 +543,22 @@ function DriverDashboard() {
               <div className="rounded-2xl bg-red-50 border border-red-200 p-6 text-center text-red-700">
                 <p className="font-semibold">Impossible de charger le pool</p>
                 <p className="text-sm mt-1">{poolQuery.error?.message}</p>
+              </div>
+            ) : isPoolSuspended ? (
+              <div className="rounded-2xl bg-red-50 border border-red-200 p-12 text-center">
+                <ShieldAlert className="h-12 w-12 text-red-300 mx-auto mb-3" aria-hidden="true" />
+                <p className="text-lg font-semibold text-red-800">
+                  Accès au pool temporairement suspendu
+                </p>
+                <p className="text-sm text-red-700 mt-1">
+                  Suite à plusieurs annulations juste après acceptation, l'accès
+                  aux courses disponibles est suspendu jusqu'au{" "}
+                  {new Date(poolSuspendedUntil!).toLocaleString("fr-FR", {
+                    dateStyle: "long",
+                    timeStyle: "short",
+                  })}
+                  .
+                </p>
               </div>
             ) : availability !== "online" ? (
               <div className="rounded-2xl bg-amber-50 border border-amber-200 p-12 text-center">

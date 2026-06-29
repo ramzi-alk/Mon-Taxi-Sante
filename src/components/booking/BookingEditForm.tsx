@@ -43,6 +43,7 @@ function defaultValuesFromBooking(booking: MyBookingRow): EditBookingSchema {
     pickup_address: booking.pickup_address,
     pickup_lat: booking.pickup_lat,
     pickup_lng: booking.pickup_lng,
+    pickup_municipality: booking.pickup_municipality,
     dropoff_address: booking.dropoff_address,
     dropoff_lat: booking.dropoff_lat,
     dropoff_lng: booking.dropoff_lng,
@@ -128,6 +129,7 @@ export function BookingEditForm({ booking, lookupCredentials, onClose, onSaved }
         pickup_address: data.pickup_address,
         pickup_lat: data.pickup_lat,
         pickup_lng: data.pickup_lng,
+        pickup_municipality: data.pickup_municipality,
         dropoff_address: data.dropoff_address,
         dropoff_lat: data.dropoff_lat,
         dropoff_lng: data.dropoff_lng,
@@ -202,11 +204,13 @@ export function BookingEditForm({ booking, lookupCredentials, onClose, onSaved }
               setValue("pickup_address", val);
               setValue("pickup_lat", null);
               setValue("pickup_lng", null);
+              setValue("pickup_municipality", null);
               setValue("distance_km", null);
             }}
             onSelect={(s) => {
               setValue("pickup_lat", s.lat);
               setValue("pickup_lng", s.lng);
+              setValue("pickup_municipality", s.municipality);
               trigger("pickup_address");
             }}
             onBlur={() => trigger("pickup_address")}

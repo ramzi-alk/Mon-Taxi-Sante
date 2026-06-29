@@ -15,6 +15,7 @@ interface SubmitBookingPayload {
   pickup_address: string;
   pickup_lat: number | null;
   pickup_lng: number | null;
+  pickup_municipality: string | null;
   dropoff_address: string;
   dropoff_lat: number | null;
   dropoff_lng: number | null;

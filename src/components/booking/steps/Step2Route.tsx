@@ -55,12 +55,16 @@ export function Step2Route({ form }: StepProps) {
   }, [pickupLat, pickupLng, dropoffLat, dropoffLng, setValue]);
 
   function swapAddresses() {
+    const pickupMunicipality = watch("pickup_municipality");
+    const dropoffMunicipality = watch("dropoff_municipality");
     setValue("pickup_address", dropoffAddress);
     setValue("pickup_lat", dropoffLat);
     setValue("pickup_lng", dropoffLng);
+    setValue("pickup_municipality", dropoffMunicipality);
     setValue("dropoff_address", pickupAddress);
     setValue("dropoff_lat", pickupLat);
     setValue("dropoff_lng", pickupLng);
+    setValue("dropoff_municipality", pickupMunicipality);
   }
 
   return (
@@ -86,11 +90,13 @@ export function Step2Route({ form }: StepProps) {
             setValue("pickup_address", val);
             setValue("pickup_lat", null);
             setValue("pickup_lng", null);
+            setValue("pickup_municipality", null);
             setValue("distance_km", null);
           }}
           onSelect={(suggestion) => {
             setValue("pickup_lat", suggestion.lat);
             setValue("pickup_lng", suggestion.lng);
+            setValue("pickup_municipality", suggestion.municipality);
             trigger("pickup_address");
           }}
           onBlur={() => trigger("pickup_address")}
@@ -137,11 +143,13 @@ export function Step2Route({ form }: StepProps) {
             setValue("dropoff_address", val);
             setValue("dropoff_lat", null);
             setValue("dropoff_lng", null);
+            setValue("dropoff_municipality", null);
             setValue("distance_km", null);
           }}
           onSelect={(suggestion) => {
             setValue("dropoff_lat", suggestion.lat);
             setValue("dropoff_lng", suggestion.lng);
+            setValue("dropoff_municipality", suggestion.municipality);
             trigger("dropoff_address");
           }}
           onBlur={() => trigger("dropoff_address")}

@@ -8,6 +8,7 @@ interface AddressSuggestion {
   label: string;
   lat: number;
   lng: number;
+  municipality: string | null;
 }
 
 interface AddressAutocompleteProps {
