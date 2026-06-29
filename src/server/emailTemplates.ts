@@ -162,6 +162,7 @@ export function bookingAcceptedEmail(params: {
   vehicleBrand: string | null;
   vehicleModel: string | null;
   vehicleRegistration: string | null;
+  driverAverageRating?: number | null;
 }): EmailContent {
   const {
     patientFullName,
@@ -174,6 +175,7 @@ export function bookingAcceptedEmail(params: {
     vehicleBrand,
     vehicleModel,
     vehicleRegistration,
+    driverAverageRating,
   } = params;
   const vehicleLabel = [vehicleBrand, vehicleModel].filter(Boolean).join(" ");
   return {
@@ -188,6 +190,7 @@ export function bookingAcceptedEmail(params: {
         ${detailsCard([
           { label: "Référence", value: formatReferenceCode(referenceCode) },
           { label: "Chauffeur", value: driverFullName },
+          ...(driverAverageRating != null ? [{ label: "Note moyenne", value: `⭐ ${driverAverageRating.toFixed(1)} / 5` }] : []),
           ...(driverPhone ? [{ label: "Téléphone", value: driverPhone }] : []),
           ...(vehicleLabel ? [{ label: "Véhicule", value: vehicleLabel }] : []),
           ...(vehicleRegistration ? [{ label: "Immatriculation", value: vehicleRegistration }] : []),

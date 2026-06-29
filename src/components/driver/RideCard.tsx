@@ -46,6 +46,10 @@ export interface PoolRide {
   // Set once submitted, only exposed on "my rides" (bookings_active_for_driver).
   driver_rating_given?: number | null;
   patient_rating_received?: number | null;
+  // Patient's average rating from drivers, toutes courses confondues — exposed
+  // both in the pool (avant acceptation, façon note du passager chez Uber) et
+  // sur "my rides" pour cohérence (migration 034).
+  patient_rating_avg?: number | null;
 }
 
 interface RideCardProps {
@@ -452,11 +456,17 @@ export function RideCard({
           ))}
         </div>
 
-        {ride.status !== "available" && (ride.patient_full_name || ride.patient_first_name) && (
+        {(ride.patient_full_name || ride.patient_first_name) && (
           <div className="rounded-xl bg-brand-green-50/60 border border-brand-green-100 p-3 space-y-1.5">
             <p className="flex items-center gap-2 text-sm font-semibold text-gray-900">
               <User className="h-4 w-4 text-brand-green-600" aria-hidden="true" />
               {ride.patient_full_name ?? ride.patient_first_name}
+              {ride.patient_rating_avg != null && (
+                <span className="flex items-center gap-1 text-xs font-medium text-gray-600">
+                  <StarRating value={ride.patient_rating_avg} readOnly size="sm" />
+                  {ride.patient_rating_avg.toFixed(1)}
+                </span>
+              )}
               {ride.patient_rating_received != null && (
                 <StarRating value={ride.patient_rating_received} readOnly size="sm" />
               )}

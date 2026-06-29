@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { MapPin, Calendar, Car, XCircle, User, Phone, Download, Loader2, Pencil, Repeat } from "lucide-react";
-import { formatDateFr, formatTimeFr, formatPrice, formatReferenceCode, cn } from "~/lib/utils";
+import { formatDateFr, formatTimeFr, formatReferenceCode, cn } from "~/lib/utils";
 import { bookingToPrefillData, storeBookingPrefill } from "~/lib/bookingPrefill";
 import { VEHICLE_LABELS } from "~/lib/vehicle";
 import { openBookingReceipt } from "~/lib/receipt";
@@ -181,11 +181,6 @@ export function BookingStatusCard({
             <span className="flex items-center gap-1 rounded-full bg-brand-blue-50 text-brand-blue-700 px-2.5 py-0.5 font-semibold">
               <Repeat className="h-3 w-3" aria-hidden="true" />
               Séance {displayBooking.series_index}/{displayBooking.series_total}
-            </span>
-          )}
-          {displayBooking.estimated_price && (
-            <span className="font-bold text-brand-blue-700">
-              {formatPrice(displayBooking.estimated_price)}
             </span>
           )}
         </div>

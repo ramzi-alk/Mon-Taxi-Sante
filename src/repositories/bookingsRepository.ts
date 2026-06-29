@@ -389,7 +389,7 @@ export async function fetchDriverRides(
   const { data, error } = await client
     .from("bookings_active_for_driver")
     .select(
-      "id, driver_id, patient_full_name, patient_phone, pickup_address, pickup_lat, pickup_lng, dropoff_address, dropoff_lat, dropoff_lng, distance_km, pickup_datetime, return_datetime, vehicle_type, trip_type, requires_wheelchair, requires_stretcher, requires_oxygen, passenger_count, estimated_price, status, created_at, distance_to_driver_km, driver_rating_given, patient_rating_received"
+      "id, driver_id, patient_full_name, patient_phone, pickup_address, pickup_lat, pickup_lng, dropoff_address, dropoff_lat, dropoff_lng, distance_km, pickup_datetime, return_datetime, vehicle_type, trip_type, requires_wheelchair, requires_stretcher, requires_oxygen, passenger_count, estimated_price, status, created_at, distance_to_driver_km, driver_rating_given, patient_rating_received, patient_rating_avg"
     )
     .eq("driver_id", driverId)
     .in("status", ["accepted", "in_progress", "completed"])

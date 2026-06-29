@@ -519,6 +519,7 @@ export type Database = {
           passenger_count: number | null
           patient_full_name: string | null
           patient_phone: string | null
+          patient_rating_avg: number | null
           patient_rating_received: number | null
           pickup_address: string | null
           pickup_datetime: string | null
@@ -558,6 +559,7 @@ export type Database = {
           passenger_count: number | null
           patient_first_name: string | null
           patient_phone: string | null
+          patient_rating_avg: number | null
           pickup_address: string | null
           pickup_datetime: string | null
           pickup_lat: number | null
@@ -750,6 +752,10 @@ export type Database = {
         }[]
       }
       paques_date: { Args: { p_annee: number }; Returns: string }
+      patient_average_rating: {
+        Args: { p_patient_id: string }
+        Returns: number
+      }
       pickup_address_revealed: {
         Args: {
           p_pickup_datetime: string

@@ -139,13 +139,14 @@ export const notifyBookingAcceptedServerFn = createServerFn({ method: "POST" })
       return;
     }
 
-    const [{ data: driverProfile }, { data: driverDetails }] = await Promise.all([
+    const [{ data: driverProfile }, { data: driverDetails }, { data: driverAverageRating }] = await Promise.all([
       admin.from("profiles").select("full_name, phone").eq("id", booking.driver_id).single(),
       admin
         .from("drivers_details")
         .select("vehicle_brand, vehicle_model, vehicle_registration")
         .eq("profile_id", booking.driver_id)
         .single(),
+      admin.rpc("driver_average_rating", { p_driver_id: booking.driver_id }),
     ]);
 
     if (!driverProfile) {
@@ -164,6 +165,7 @@ export const notifyBookingAcceptedServerFn = createServerFn({ method: "POST" })
         vehicleBrand: driverDetails?.vehicle_brand ?? null,
         vehicleModel: driverDetails?.vehicle_model ?? null,
         vehicleRegistration: driverDetails?.vehicle_registration ?? null,
+        driverAverageRating: driverAverageRating ?? null,
       });
       const { error: sendApiError } = await getResendClient().emails.send({
         from: EMAIL_FROM,
