@@ -380,7 +380,7 @@ export function RideCard({
         tabIndex={isCompleted ? 0 : undefined}
         onKeyDown={isCompleted ? (e) => e.key === "Enter" && setCollapsed((v) => !v) : undefined}
       >
-        <span className="flex items-center gap-1.5 text-sm font-semibold text-gray-700">
+        <span className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 min-w-0 mr-2">
           <Clock className="h-4 w-4 text-brand-blue-500 shrink-0" aria-hidden="true" />
           {ride.status === "accepted" ? (
             <CalendarButton ride={ride}>
@@ -390,16 +390,16 @@ export function RideCard({
               <CalendarPlus className="h-3.5 w-3.5 text-gray-400" aria-hidden="true" />
             </CalendarButton>
           ) : (
-            <time dateTime={ride.pickup_datetime}>
+            <time dateTime={ride.pickup_datetime} className="truncate">
               {dayLabel} à {pickupTime}
             </time>
           )}
         </span>
-        <span className="flex items-center gap-2">
+        <span className="flex items-center gap-1.5 shrink-0">
           {ride.estimated_price != null && (
             <span
               className={cn(
-                "flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold",
+                "flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold whitespace-nowrap",
                 ride.status === "completed"
                   ? "bg-emerald-100 text-emerald-700"
                   : "bg-amber-50 text-amber-700"
@@ -412,25 +412,19 @@ export function RideCard({
           )}
           {statusLabels[ride.status] && (
             <span className={cn(
-              "rounded-full px-2 py-0.5 text-xs font-semibold",
+              "rounded-full px-2 py-0.5 text-xs font-semibold whitespace-nowrap",
               isCompleted ? "bg-gray-100 text-gray-500" : "bg-brand-blue-100 text-brand-blue-700"
             )}>
               {statusLabels[ride.status]}
             </span>
           )}
-          <span className="flex items-center gap-1 text-xs font-medium text-gray-500">
-            <span aria-hidden="true">{vehicleIcons[ride.vehicle_type]}</span>
-            {ride.vehicle_type.toUpperCase()}
-          </span>
-          {isCompleted && (
-            ride.driver_rating_given != null
-              ? <StarRating value={ride.driver_rating_given} readOnly size="sm" />
-              : <span className="rounded-full bg-amber-50 text-amber-700 px-2 py-0.5 text-xs font-semibold">À noter</span>
+          {isCompleted && ride.driver_rating_given == null && (
+            <span className="rounded-full bg-amber-50 text-amber-700 px-2 py-0.5 text-xs font-semibold whitespace-nowrap">À noter</span>
           )}
           {isCompleted && (
             collapsed
-              ? <ChevronDown className="h-4 w-4 text-gray-400" aria-hidden="true" />
-              : <ChevronUp className="h-4 w-4 text-gray-400" aria-hidden="true" />
+              ? <ChevronDown className="h-4 w-4 text-gray-400 shrink-0" aria-hidden="true" />
+              : <ChevronUp className="h-4 w-4 text-gray-400 shrink-0" aria-hidden="true" />
           )}
         </span>
       </div>
@@ -443,9 +437,6 @@ export function RideCard({
           <span className="shrink-0">→</span>
           <MapPin className="h-3 w-3 shrink-0 text-red-400" aria-hidden="true" />
           <span className="truncate font-medium text-gray-700">{ride.dropoff_address}</span>
-          {ride.estimated_price != null && (
-            <span className="ml-auto shrink-0 font-bold text-amber-700">~{ride.estimated_price.toFixed(2).replace(".", ",")} €</span>
-          )}
         </div>
       )}
 
