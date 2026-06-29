@@ -107,25 +107,25 @@ export function PoolRideRow({ ride, onAccept, isAccepting }: PoolRideRowProps) {
 
         {/* Adresses — flex-1, tronquées (c'est voulu en vue liste) */}
         <div className="flex-1 min-w-0 space-y-0.5">
-          <div className="flex items-center gap-1 min-w-0">
-            <Navigation className="h-3 w-3 shrink-0 text-brand-blue-400" aria-hidden="true" />
+          <div className="flex items-start gap-1 min-w-0">
+            <Navigation className="h-3 w-3 shrink-0 text-brand-blue-400 mt-0.5" aria-hidden="true" />
             <AddressLink
               address={ride.pickup_address}
               lat={ride.pickup_lat}
               lng={ride.pickup_lng}
-              className="truncate text-xs font-medium text-gray-900"
+              className="text-xs font-medium text-gray-900 break-words"
             />
             {ride.distance_to_driver_km != null && (
               <span className="shrink-0 text-[10px] text-gray-400 ml-0.5">{ride.distance_to_driver_km}km</span>
             )}
           </div>
-          <div className="flex items-center gap-1 min-w-0">
-            <MapPin className="h-3 w-3 shrink-0 text-red-400" aria-hidden="true" />
+          <div className="flex items-start gap-1 min-w-0">
+            <MapPin className="h-3 w-3 shrink-0 text-red-400 mt-0.5" aria-hidden="true" />
             <AddressLink
               address={ride.dropoff_address}
               lat={ride.dropoff_lat}
               lng={ride.dropoff_lng}
-              className="truncate text-xs font-medium text-gray-700"
+              className="text-xs font-medium text-gray-700 break-words"
             />
             {ride.distance_km != null && (
               <span className="shrink-0 text-[10px] text-gray-400 ml-0.5">{ride.distance_km}km</span>
