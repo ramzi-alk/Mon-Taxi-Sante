@@ -100,6 +100,8 @@ function detailsCard(rows: Array<{ label: string; value: string }>): string {
 
 export function bookingConfirmationEmail(params: {
   patientFullName: string;
+  // Present when the booking was placed by someone other than the patient
+  bookerFullName?: string;
   referenceCode: string;
   pickupAddress: string;
   dropoffAddress: string;
@@ -112,6 +114,7 @@ export function bookingConfirmationEmail(params: {
 }): EmailContent {
   const {
     patientFullName,
+    bookerFullName,
     referenceCode,
     pickupAddress,
     dropoffAddress,
@@ -120,9 +123,20 @@ export function bookingConfirmationEmail(params: {
     seriesLastPickupDatetime,
   } = params;
   const isSeries = !!seriesTotal && seriesTotal > 1 && !!seriesLastPickupDatetime;
+  const isThirdParty = !!bookerFullName;
   const dateValue = isSeries
     ? `${seriesTotal} séances, du ${formatDateFr(pickupDatetime)} au ${formatDateFr(seriesLastPickupDatetime!)}`
     : `${formatDateFr(pickupDatetime)} à ${formatTimeFr(pickupDatetime)}`;
+  const greeting = isThirdParty
+    ? `Bonjour ${bookerFullName},`
+    : `Bonjour ${patientFullName},`;
+  const intro = isThirdParty
+    ? isSeries
+      ? `Vous avez réservé une série de ${seriesTotal} séances de transport médical pour <strong>${patientFullName}</strong>. Un chauffeur conventionné Assurance Maladie sera affecté à chaque séance.`
+      : `Vous avez réservé un transport médical pour <strong>${patientFullName}</strong>. Un chauffeur conventionné Assurance Maladie va prendre en charge la course.`
+    : isSeries
+    ? `Votre série de ${seriesTotal} séances de transport médical a bien été enregistrée. Un chauffeur conventionné Assurance Maladie sera affecté à chaque séance.`
+    : `Votre réservation de transport médical a bien été enregistrée. Un chauffeur conventionné Assurance Maladie va prendre en charge votre course.`;
   return {
     subject: isSeries
       ? `Série de ${seriesTotal} séances confirmée — Réf. ${formatReferenceCode(referenceCode)}`
@@ -132,20 +146,17 @@ export function bookingConfirmationEmail(params: {
       icon: "✅",
       bodyHtml: `
         ${badge("Confirmée", "green")}
-        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${patientFullName},</p>
-        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">${
-          isSeries
-            ? `Votre série de ${seriesTotal} séances de transport médical a bien été enregistrée. Un chauffeur conventionné Assurance Maladie sera affecté à chaque séance.`
-            : `Votre réservation de transport médical a bien été enregistrée. Un chauffeur conventionné Assurance Maladie va prendre en charge votre course.`
-        }</p>
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">${greeting}</p>
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">${intro}</p>
         ${detailsCard([
           { label: "Référence", value: formatReferenceCode(referenceCode) },
+          ...(isThirdParty ? [{ label: "Patient", value: patientFullName }] : []),
           { label: "Départ", value: pickupAddress },
           { label: "Destination", value: dropoffAddress },
           { label: isSeries ? "Dates" : "Date", value: dateValue },
         ])}
-        ${ctaButton("Suivre mes réservations", trackingUrl(referenceCode))}
-        <p style="margin:0;font-size:14px;color:#6b7280;line-height:1.5;">Ce lien ouvre la page de suivi avec votre référence déjà renseignée. Pour des raisons de sécurité, vous devrez confirmer votre numéro de téléphone pour accéder aux détails.</p>
+        ${ctaButton("Suivre la réservation", trackingUrl(referenceCode))}
+        <p style="margin:0;font-size:14px;color:#6b7280;line-height:1.5;">Ce lien ouvre la page de suivi avec la référence déjà renseignée. Pour des raisons de sécurité, le numéro de téléphone du patient sera demandé pour accéder aux détails.</p>
       `,
     }),
   };
@@ -191,13 +202,23 @@ export function bookingAcceptedEmail(params: {
           { label: "Référence", value: formatReferenceCode(referenceCode) },
           { label: "Chauffeur", value: driverFullName },
           ...(driverAverageRating != null ? [{ label: "Note moyenne", value: `⭐ ${driverAverageRating.toFixed(1)} / 5` }] : []),
-          ...(driverPhone ? [{ label: "Téléphone", value: driverPhone }] : []),
           ...(vehicleLabel ? [{ label: "Véhicule", value: vehicleLabel }] : []),
           ...(vehicleRegistration ? [{ label: "Immatriculation", value: vehicleRegistration }] : []),
           { label: "Départ", value: pickupAddress },
           { label: "Destination", value: dropoffAddress },
           { label: "Date", value: `${formatDateFr(pickupDatetime)} à ${formatTimeFr(pickupDatetime)}` },
         ])}
+        ${driverPhone ? `
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;">
+          <tr>
+            <td style="background:#EFF4FF;border:1px solid #c7d7fd;border-radius:12px;padding:16px 20px;">
+              <p style="margin:0 0 4px;font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#4361c2;">Contacter votre chauffeur</p>
+              <a href="tel:${driverPhone}" style="font-size:22px;font-weight:800;color:#1244E8;text-decoration:none;letter-spacing:0.02em;">${driverPhone}</a>
+              <p style="margin:6px 0 0;font-size:12px;color:#6b7280;">Appuyez sur ce numéro depuis votre téléphone pour appeler directement.</p>
+            </td>
+          </tr>
+        </table>
+        ` : ""}
         ${ctaButton("Suivre ma réservation", trackingUrl(referenceCode))}
       `,
     }),

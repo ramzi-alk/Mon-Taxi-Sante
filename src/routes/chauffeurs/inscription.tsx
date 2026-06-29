@@ -67,6 +67,7 @@ async function registerDriver(data: InscriptionSchema, company: CompanySuggestio
   await submitDriverApplicationServerFn({
     data: {
       profile_id: userId,
+      phone: data.phone,
       siret: company.siret,
       company_name: company.name,
       vehicle_type: data.vehicle_type,

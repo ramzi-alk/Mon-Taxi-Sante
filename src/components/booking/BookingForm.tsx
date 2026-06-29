@@ -12,9 +12,8 @@ import { ProgressBar } from "./ProgressBar";
 import { Step1Identity } from "./steps/Step1Identity";
 import { Step2Route } from "./steps/Step2Route";
 import { Step3DateTime } from "./steps/Step3DateTime";
-import { Step4Vehicle } from "./steps/Step4Vehicle";
+import { Step4VehicleAndNeeds } from "./steps/Step4VehicleAndNeeds";
 import { Step5TripType } from "./steps/Step5TripType";
-import { Step6Specificities } from "./steps/Step6Specificities";
 import { Step7CPAMStatus } from "./steps/Step7CPAMStatus";
 import { Step8PMT } from "./steps/Step8PMT";
 import { Step9Notes } from "./steps/Step9Notes";
@@ -28,10 +27,14 @@ import * as storageRepository from "~/repositories/storageRepository";
 import { useToast } from "~/components/ui/toast";
 
 const DEFAULT_VALUES: Partial<BookingSchema> = {
+  booking_for_other: false,
   patient_full_name: "",
   patient_phone: "",
   patient_email: "",
   patient_birth_date: "",
+  booker_full_name: "",
+  booker_phone: "",
+  booker_email: "",
   pickup_address: "",
   pickup_lat: null,
   pickup_lng: null,
@@ -106,8 +109,12 @@ async function submitBooking(data: BookingSchema) {
     patient_id: userId,
     patient_full_name: data.patient_full_name,
     patient_phone: data.patient_phone,
-    patient_email: data.patient_email,
+    patient_email: data.patient_email || null,
     patient_birth_date: data.patient_birth_date || null,
+    booking_for_other: data.booking_for_other,
+    booker_full_name: data.booking_for_other ? (data.booker_full_name || null) : null,
+    booker_phone: data.booking_for_other ? (data.booker_phone || null) : null,
+    booker_email: data.booking_for_other ? (data.booker_email || null) : null,
     pickup_address: data.pickup_address,
     pickup_lat: data.pickup_lat,
     pickup_lng: data.pickup_lng,
@@ -299,13 +306,12 @@ export function BookingForm() {
             {currentStep === 1 && <Step1Identity form={form} />}
             {currentStep === 2 && <Step2Route form={form} />}
             {currentStep === 3 && <Step3DateTime form={form} />}
-            {currentStep === 4 && <Step4Vehicle form={form} />}
+            {currentStep === 4 && <Step4VehicleAndNeeds form={form} />}
             {currentStep === 5 && <Step5TripType form={form} />}
-            {currentStep === 6 && <Step6Specificities form={form} />}
-            {currentStep === 7 && <Step7CPAMStatus form={form} />}
-            {currentStep === 8 && <Step8PMT form={form} />}
-            {currentStep === 9 && <Step9Notes form={form} />}
-            {currentStep === 10 && (
+            {currentStep === 6 && <Step7CPAMStatus form={form} />}
+            {currentStep === 7 && <Step8PMT form={form} />}
+            {currentStep === 8 && <Step9Notes form={form} />}
+            {currentStep === 9 && (
               <Step10Confirmation
                 form={form}
                 isSubmitting={isPending}

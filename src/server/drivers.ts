@@ -10,6 +10,7 @@ const siretRegex = /^\d{14}$/;
 
 const submitDriverApplicationSchema = z.object({
   profile_id: z.string().uuid(),
+  phone: z.string().nullable(),
   siret: z.string().regex(siretRegex),
   company_name: z.string().nullable(),
   vehicle_type: z.enum(["taxi", "vsl", "ambulance"]),
@@ -38,6 +39,11 @@ export const submitDriverApplicationServerFn = createServerFn({ method: "POST" }
         role: profile?.role,
       });
       throw new Error("Profil chauffeur introuvable.");
+    }
+
+    // Persist the driver's phone number so it can be shared in booking emails.
+    if (data.phone) {
+      await admin.from("profiles").update({ phone: data.phone }).eq("id", data.profile_id);
     }
 
     const driverDetails = await driversRepository.insertDriverDetails(admin, {

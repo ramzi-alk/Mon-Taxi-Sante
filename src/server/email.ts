@@ -20,6 +20,7 @@ import {
 export async function sendBookingConfirmationEmail(params: {
   to: string;
   patientFullName: string;
+  bookerFullName?: string;
   referenceCode: string;
   pickupAddress: string;
   dropoffAddress: string;
@@ -53,7 +54,7 @@ export const notifyBookingCancelledServerFn = createServerFn({ method: "POST" })
     const { data: booking, error } = await admin
       .from("bookings")
       .select(
-        "patient_full_name, patient_email, reference_code, pickup_datetime, cancellation_reason, status, driver_id"
+        "patient_full_name, patient_email, booking_for_other, booker_email, reference_code, pickup_datetime, cancellation_reason, status, driver_id"
       )
       .eq("id", data.bookingId)
       .single();
@@ -62,7 +63,13 @@ export const notifyBookingCancelledServerFn = createServerFn({ method: "POST" })
       return;
     }
 
-    if (booking.patient_email) {
+    const bookingTyped = booking as typeof booking & { booking_for_other: boolean; booker_email: string | null };
+    const cancellationRecipient =
+      bookingTyped.booking_for_other && bookingTyped.booker_email
+        ? bookingTyped.booker_email
+        : booking.patient_email;
+
+    if (cancellationRecipient) {
       try {
         const { subject, html } = bookingCancellationEmail({
           patientFullName: booking.patient_full_name,
@@ -72,7 +79,7 @@ export const notifyBookingCancelledServerFn = createServerFn({ method: "POST" })
         });
         const { error: sendApiError } = await getResendClient().emails.send({
           from: EMAIL_FROM,
-          to: booking.patient_email,
+          to: cancellationRecipient,
           subject,
           html,
         });
@@ -130,12 +137,22 @@ export const notifyBookingAcceptedServerFn = createServerFn({ method: "POST" })
     const { data: booking, error } = await admin
       .from("bookings")
       .select(
-        "patient_full_name, patient_email, reference_code, pickup_address, dropoff_address, pickup_datetime, status, driver_id"
+        "patient_full_name, patient_email, booking_for_other, booker_email, reference_code, pickup_address, dropoff_address, pickup_datetime, status, driver_id"
       )
       .eq("id", data.bookingId)
       .single();
 
-    if (error || !booking || booking.status !== "accepted" || !booking.patient_email || !booking.driver_id) {
+    if (error || !booking || booking.status !== "accepted" || !booking.driver_id) {
+      return;
+    }
+
+    const bookingTyped2 = booking as typeof booking & { booking_for_other: boolean; booker_email: string | null };
+    const acceptedRecipient =
+      bookingTyped2.booking_for_other && bookingTyped2.booker_email
+        ? bookingTyped2.booker_email
+        : booking.patient_email;
+
+    if (!acceptedRecipient) {
       return;
     }
 
@@ -169,7 +186,7 @@ export const notifyBookingAcceptedServerFn = createServerFn({ method: "POST" })
       });
       const { error: sendApiError } = await getResendClient().emails.send({
         from: EMAIL_FROM,
-        to: booking.patient_email,
+        to: acceptedRecipient,
         subject,
         html,
       });
@@ -239,11 +256,21 @@ export const notifyRideUnassignedServerFn = createServerFn({ method: "POST" })
     const admin = getSupabaseAdminClient();
     const { data: booking, error } = await admin
       .from("bookings")
-      .select("patient_full_name, patient_email, reference_code, pickup_datetime, status")
+      .select("patient_full_name, patient_email, booking_for_other, booker_email, reference_code, pickup_datetime, status")
       .eq("id", data.bookingId)
       .single();
 
-    if (error || !booking || booking.status !== "available" || !booking.patient_email) {
+    if (error || !booking || booking.status !== "available") {
+      return;
+    }
+
+    const bookingTyped3 = booking as typeof booking & { booking_for_other: boolean; booker_email: string | null };
+    const unassignedRecipient =
+      bookingTyped3.booking_for_other && bookingTyped3.booker_email
+        ? bookingTyped3.booker_email
+        : booking.patient_email;
+
+    if (!unassignedRecipient) {
       return;
     }
 
@@ -255,7 +282,7 @@ export const notifyRideUnassignedServerFn = createServerFn({ method: "POST" })
       });
       const { error: sendApiError } = await getResendClient().emails.send({
         from: EMAIL_FROM,
-        to: booking.patient_email,
+        to: unassignedRecipient,
         subject,
         html,
       });

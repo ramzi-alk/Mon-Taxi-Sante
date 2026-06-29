@@ -10,8 +10,12 @@ interface SubmitBookingPayload {
   patient_id: string;
   patient_full_name: string;
   patient_phone: string;
-  patient_email: string;
+  patient_email: string | null;
   patient_birth_date: string | null;
+  booking_for_other: boolean;
+  booker_full_name: string | null;
+  booker_phone: string | null;
+  booker_email: string | null;
   pickup_address: string;
   pickup_lat: number | null;
   pickup_lng: number | null;
@@ -83,18 +87,26 @@ export const submitBookingServerFn = createServerFn({ method: "POST" })
 
     const [firstBooking] = bookings;
 
-    await sendBookingConfirmationEmail({
-      to: firstPayload.patient_email,
-      patientFullName: firstPayload.patient_full_name,
-      referenceCode: firstBooking.reference_code,
-      pickupAddress: firstPayload.pickup_address,
-      dropoffAddress: firstPayload.dropoff_address,
-      pickupDatetime: firstPayload.pickup_datetime,
-      seriesTotal: isSeries ? data.payloads.length : undefined,
-      seriesLastPickupDatetime: isSeries
-        ? data.payloads[data.payloads.length - 1].pickup_datetime
-        : undefined,
-    });
+    const confirmationEmail =
+      firstPayload.booking_for_other && firstPayload.booker_email
+        ? firstPayload.booker_email
+        : firstPayload.patient_email;
+
+    if (confirmationEmail) {
+      await sendBookingConfirmationEmail({
+        to: confirmationEmail,
+        patientFullName: firstPayload.patient_full_name,
+        bookerFullName: firstPayload.booking_for_other ? (firstPayload.booker_full_name ?? undefined) : undefined,
+        referenceCode: firstBooking.reference_code,
+        pickupAddress: firstPayload.pickup_address,
+        dropoffAddress: firstPayload.dropoff_address,
+        pickupDatetime: firstPayload.pickup_datetime,
+        seriesTotal: isSeries ? data.payloads.length : undefined,
+        seriesLastPickupDatetime: isSeries
+          ? data.payloads[data.payloads.length - 1].pickup_datetime
+          : undefined,
+      });
+    }
 
     return { ...firstBooking, seriesTotal: isSeries ? data.payloads.length : undefined };
   });
