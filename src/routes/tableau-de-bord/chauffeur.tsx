@@ -88,6 +88,10 @@ async function cancelRideByDriver(rideId: string): Promise<void> {
   await bookingsRepository.cancelRideByDriver(supabase, rideId);
 }
 
+async function cancelSeriesRides(rideId: string): Promise<void> {
+  await bookingsRepository.cancelSeriesRides(supabase, rideId);
+}
+
 async function rateRide(vars: { rideId: string; rating: number; comment?: string }): Promise<void> {
   await bookingsRepository.rateBookingAsDriver(supabase, vars.rideId, vars.rating, vars.comment);
 }
@@ -155,6 +159,7 @@ function DriverDashboard() {
   const [startingId, setStartingId] = useState<string | null>(null);
   const [completingId, setCompletingId] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [cancellingSeriesId, setCancellingSeriesId] = useState<string | null>(null);
   const [ratingId, setRatingId] = useState<string | null>(null);
   const [realtimeEnabled, setRealtimeEnabled] = useState(true);
   const [tab, setTab] = useState<"pool" | "my_rides">("pool");
@@ -318,6 +323,27 @@ function DriverDashboard() {
     },
     onError: (error, rideId) => {
       logger.error("driver.cancelRideByDriver failed", { error: error.message, rideId });
+      toast({ title: "Erreur", description: error.message, variant: "error" });
+    },
+  });
+
+  const cancelSeriesMutation = useMutation({
+    mutationFn: cancelSeriesRides,
+    onMutate: (rideId) => setCancellingSeriesId(rideId),
+    onSuccess: (_, rideId) => {
+      toast({ title: "Série annulée", description: "Toutes les séances sont retournées dans le pool.", variant: "default" });
+      // Un seul email récap pour la série (notifyRideUnassignedServerFn détecte series_id)
+      notifyRideUnassignedServerFn({ data: { bookingId: rideId } }).catch((err) => {
+        logger.warn("email.notifyRideUnassigned (series) failed", { error: err.message, rideId });
+      });
+    },
+    onSettled: () => {
+      setCancellingSeriesId(null);
+      queryClient.invalidateQueries({ queryKey: ["ride-pool"] });
+      queryClient.invalidateQueries({ queryKey: ["my-rides"] });
+    },
+    onError: (error, rideId) => {
+      logger.error("driver.cancelSeriesRides failed", { error: error.message, rideId });
       toast({ title: "Erreur", description: error.message, variant: "error" });
     },
   });
@@ -793,6 +819,8 @@ function DriverDashboard() {
                             isCompleting={completingId === ride.id && completeMutation.isPending}
                             onCancel={(id) => cancelMutation.mutate(id)}
                             isCancelling={cancellingId === ride.id && cancelMutation.isPending}
+                            onCancelSeries={(id) => cancelSeriesMutation.mutate(id)}
+                            isCancellingSeries={cancellingSeriesId === ride.id && cancelSeriesMutation.isPending}
                             onRate={(id, rating, comment) => rateMutation.mutate({ rideId: id, rating, comment })}
                             isRating={ratingId === ride.id && rateMutation.isPending}
                             seriesRides={ride.series_id ? ridesBySeries[ride.series_id] : undefined}

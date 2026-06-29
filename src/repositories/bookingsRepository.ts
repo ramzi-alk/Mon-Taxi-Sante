@@ -556,6 +556,18 @@ export async function cancelRideByDriver(client: SupabaseClient, rideId: string)
   }
 }
 
+/**
+ * Driver backs out of all accepted rides in the same series as rideId
+ * (migration 038). Counts as a single suspicious-cancellation event.
+ */
+export async function cancelSeriesRides(client: SupabaseClient, rideId: string): Promise<void> {
+  const { error } = await client.rpc("cancel_series" as never, { p_booking_id: rideId } as never);
+
+  if (error) {
+    throw mapRideLifecycleError(error, rideId, "cancelSeriesRides");
+  }
+}
+
 export type ReminderTokenBooking = Database["public"]["Functions"]["resolve_reminder_token"]["Returns"][number];
 
 /**

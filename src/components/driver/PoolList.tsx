@@ -212,6 +212,8 @@ export function PoolList({ rides, onAccept, acceptingId, isAccepting, driverProf
                 ride={ride}
                 onAccept={onAccept}
                 isAccepting={acceptingId === ride.id && isAccepting}
+                onAcceptSeries={onAcceptSeries}
+                isAcceptingSeries={acceptingSeriesId === ride.id}
               />
             </li>
           ))}

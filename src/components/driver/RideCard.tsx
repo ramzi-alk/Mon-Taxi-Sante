@@ -63,12 +63,16 @@ interface RideCardProps {
   ride: PoolRide;
   onAccept: (rideId: string) => void;
   isAccepting: boolean;
+  onAcceptSeries?: (rideId: string) => void;
+  isAcceptingSeries?: boolean;
   onStart?: (rideId: string) => void;
   isStarting?: boolean;
   onComplete?: (rideId: string) => void;
   isCompleting?: boolean;
   onCancel?: (rideId: string) => void;
   isCancelling?: boolean;
+  onCancelSeries?: (rideId: string) => void;
+  isCancellingSeries?: boolean;
   onRate?: (rideId: string, rating: number, comment?: string) => void;
   isRating?: boolean;
   seriesRides?: PoolRide[];
@@ -327,12 +331,16 @@ export function RideCard({
   ride,
   onAccept,
   isAccepting,
+  onAcceptSeries,
+  isAcceptingSeries,
   onStart,
   isStarting,
   onComplete,
   isCompleting,
   onCancel,
   isCancelling,
+  onCancelSeries,
+  isCancellingSeries,
   onRate,
   isRating,
   seriesRides,
@@ -342,6 +350,7 @@ export function RideCard({
   const [collapsed, setCollapsed] = useState(isCompleted && ride.driver_rating_given != null);
   const [confirmingCancel, setConfirmingCancel] = useState(false);
   const [confirmingComplete, setConfirmingComplete] = useState(false);
+  const isSeries = !!ride.series_total && ride.series_total > 1;
   const [expanded, setExpanded] = useState(false);
   const [seriesOpen, setSeriesOpen] = useState(false);
   const isPool = ride.status === "available";
@@ -592,31 +601,55 @@ export function RideCard({
         {/* CTA */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end pt-2 border-t border-gray-100">
           {ride.status === "available" && (
-            <button
-              type="button"
-              onClick={() => onAccept(ride.id)}
-              disabled={isAccepting}
-              aria-label={`Accepter la course — ${ride.pickup_address} vers ${ride.dropoff_address}`}
-              aria-busy={isAccepting}
-              className={cn(
-                "flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 w-full sm:w-auto",
-                isAccepting
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-brand-green-600 hover:bg-brand-green-700 shadow-md shadow-brand-green-600/20 active:scale-95"
+            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+              <button
+                type="button"
+                onClick={() => onAccept(ride.id)}
+                disabled={isAccepting || isAcceptingSeries}
+                aria-label={`Accepter la course — ${ride.pickup_address} vers ${ride.dropoff_address}`}
+                aria-busy={isAccepting}
+                className={cn(
+                  "flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 flex-1 sm:flex-initial",
+                  (isAccepting || isAcceptingSeries)
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-brand-green-600 hover:bg-brand-green-700 shadow-md shadow-brand-green-600/20 active:scale-95"
+                )}
+              >
+                {isAccepting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                    En cours…
+                  </>
+                ) : (
+                  <>
+                    <Car className="h-4 w-4" aria-hidden="true" />
+                    {isSeries ? "Cette séance" : "Accepter"}
+                  </>
+                )}
+              </button>
+              {isSeries && onAcceptSeries && (
+                <button
+                  type="button"
+                  onClick={() => onAcceptSeries(ride.id)}
+                  disabled={isAcceptingSeries || isAccepting}
+                  aria-label={`Accepter toutes les ${ride.series_total} séances`}
+                  aria-busy={isAcceptingSeries}
+                  className={cn(
+                    "flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 flex-1 sm:flex-initial",
+                    (isAcceptingSeries || isAccepting)
+                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                      : "bg-violet-100 text-violet-700 hover:bg-violet-200 active:scale-95"
+                  )}
+                >
+                  {isAcceptingSeries ? (
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                  ) : (
+                    <Repeat className="h-4 w-4" aria-hidden="true" />
+                  )}
+                  {ride.series_total} séances
+                </button>
               )}
-            >
-              {isAccepting ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                  En cours…
-                </>
-              ) : (
-                <>
-                  <Car className="h-4 w-4" aria-hidden="true" />
-                  Accepter
-                </>
-              )}
-            </button>
+            </div>
           )}
 
           {ride.status === "accepted" && (
@@ -652,21 +685,46 @@ export function RideCard({
           {ride.status === "accepted" && onCancel && (
             <div className="w-full">
               {confirmingCancel ? (
-                <div className="flex items-center gap-3 text-sm pt-2">
-                  <span className="text-gray-700">Annuler cette course ?</span>
-                  <button
-                    type="button"
-                    onClick={() => onCancel(ride.id)}
-                    disabled={isCancelling}
-                    className="font-bold text-red-600 hover:underline disabled:opacity-60 flex items-center gap-1.5"
-                  >
-                    {isCancelling && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
-                    Oui, annuler
-                  </button>
+                <div className="flex flex-wrap items-center gap-3 text-sm pt-2">
+                  <span className="text-gray-700 shrink-0">
+                    {isSeries ? "Se désister de…" : "Annuler cette course ?"}
+                  </span>
+                  {isSeries && onCancelSeries ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => { onCancel(ride.id); setConfirmingCancel(false); }}
+                        disabled={isCancelling || isCancellingSeries}
+                        className="font-bold text-red-600 hover:underline disabled:opacity-60 flex items-center gap-1.5 whitespace-nowrap"
+                      >
+                        {isCancelling && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
+                        Cette séance
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { onCancelSeries(ride.id); setConfirmingCancel(false); }}
+                        disabled={isCancellingSeries || isCancelling}
+                        className="font-bold text-red-800 hover:underline disabled:opacity-60 flex items-center gap-1.5 whitespace-nowrap"
+                      >
+                        {isCancellingSeries && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
+                        Toutes les {ride.series_total} séances
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => { onCancel(ride.id); setConfirmingCancel(false); }}
+                      disabled={isCancelling}
+                      className="font-bold text-red-600 hover:underline disabled:opacity-60 flex items-center gap-1.5"
+                    >
+                      {isCancelling && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
+                      Oui, annuler
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => setConfirmingCancel(false)}
-                    disabled={isCancelling}
+                    disabled={isCancelling || isCancellingSeries}
                     className="text-gray-500 hover:underline"
                   >
                     Non

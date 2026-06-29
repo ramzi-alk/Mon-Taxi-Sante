@@ -377,17 +377,25 @@ export function rideUnassignedByDriverEmail(params: {
   patientFullName: string;
   referenceCode: string;
   pickupDatetime: string;
+  seriesTotal?: number;
+  seriesLastPickupDatetime?: string;
 }): EmailContent {
-  const { patientFullName, referenceCode, pickupDatetime } = params;
+  const { patientFullName, referenceCode, pickupDatetime, seriesTotal, seriesLastPickupDatetime } = params;
+  const isSeries = !!seriesTotal && seriesTotal > 1 && !!seriesLastPickupDatetime;
+  const body = isSeries
+    ? `Le chauffeur affecté à votre série de <strong>${seriesTotal} séances</strong> (du ${formatDateFr(pickupDatetime)} au ${formatDateFr(seriesLastPickupDatetime!)}, réf. ${formatReferenceCode(referenceCode)}) n'est finalement plus disponible. Toutes les séances sont de nouveau proposées à notre réseau de chauffeurs conventionnés ; vous serez averti dès qu'un nouveau chauffeur les accepte.`
+    : `Le chauffeur initialement affecté à votre course du <strong>${formatDateFr(pickupDatetime)} à ${formatTimeFr(pickupDatetime)}</strong> (réf. ${formatReferenceCode(referenceCode)}) n'est finalement plus disponible. Votre réservation est de nouveau proposée à notre réseau de chauffeurs conventionnés ; vous serez averti dès qu'un nouveau chauffeur l'accepte.`;
   return {
-    subject: `Recherche d'un nouveau chauffeur — Réf. ${formatReferenceCode(referenceCode)}`,
+    subject: isSeries
+      ? `Recherche d'un nouveau chauffeur pour ${seriesTotal} séances — Réf. ${formatReferenceCode(referenceCode)}`
+      : `Recherche d'un nouveau chauffeur — Réf. ${formatReferenceCode(referenceCode)}`,
     html: layout({
       title: "Recherche d'un nouveau chauffeur",
       icon: "🔄",
       bodyHtml: `
         ${badge("Nouvelle recherche en cours", "amber")}
         <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${patientFullName},</p>
-        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Le chauffeur initialement affecté à votre course du <strong>${formatDateFr(pickupDatetime)} à ${formatTimeFr(pickupDatetime)}</strong> (réf. ${formatReferenceCode(referenceCode)}) n'est finalement plus disponible. Votre réservation est de nouveau proposée à notre réseau de chauffeurs conventionnés ; vous serez averti dès qu'un nouveau chauffeur l'accepte.</p>
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">${body}</p>
         ${ctaButton("Suivre ma réservation", trackingUrl(referenceCode))}
       `,
     }),

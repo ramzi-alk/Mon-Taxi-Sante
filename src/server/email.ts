@@ -279,7 +279,7 @@ export const notifyRideUnassignedServerFn = createServerFn({ method: "POST" })
     const admin = getSupabaseAdminClient();
     const { data: booking, error } = await admin
       .from("bookings")
-      .select("patient_full_name, patient_email, booking_for_other, booker_email, reference_code, pickup_datetime, status")
+      .select("patient_full_name, patient_email, booking_for_other, booker_email, reference_code, pickup_datetime, status, series_id")
       .eq("id", data.bookingId)
       .single();
 
@@ -287,7 +287,11 @@ export const notifyRideUnassignedServerFn = createServerFn({ method: "POST" })
       return;
     }
 
-    const bookingTyped3 = booking as typeof booking & { booking_for_other: boolean; booker_email: string | null };
+    const bookingTyped3 = booking as typeof booking & {
+      booking_for_other: boolean;
+      booker_email: string | null;
+      series_id: string | null;
+    };
     const unassignedRecipient =
       bookingTyped3.booking_for_other && bookingTyped3.booker_email
         ? bookingTyped3.booker_email
@@ -297,11 +301,28 @@ export const notifyRideUnassignedServerFn = createServerFn({ method: "POST" })
       return;
     }
 
+    // Fetch series context when applicable (same pattern as notifyBookingAcceptedServerFn)
+    let seriesTotal: number | undefined;
+    let seriesLastPickupDatetime: string | undefined;
+    if (bookingTyped3.series_id) {
+      const { data: seriesRides } = await admin
+        .from("bookings")
+        .select("pickup_datetime")
+        .eq("series_id", bookingTyped3.series_id)
+        .order("pickup_datetime", { ascending: true });
+      if (seriesRides && seriesRides.length > 1) {
+        seriesTotal = seriesRides.length;
+        seriesLastPickupDatetime = seriesRides[seriesRides.length - 1].pickup_datetime;
+      }
+    }
+
     try {
       const { subject, html } = rideUnassignedByDriverEmail({
         patientFullName: booking.patient_full_name,
         referenceCode: booking.reference_code,
         pickupDatetime: booking.pickup_datetime,
+        seriesTotal,
+        seriesLastPickupDatetime,
       });
       const { error: sendApiError } = await getResendClient().emails.send({
         from: EMAIL_FROM,
