@@ -20,6 +20,7 @@ interface SuggestFeature {
   name: string;
   place_formatted?: string;
   full_address?: string;
+  feature_type: string;
 }
 
 interface RetrieveFeature {
@@ -45,7 +46,10 @@ export async function suggestAddresses(
     country: "fr",
     limit: "5",
   });
-  if (options?.types) params.set("types", options.types);
+  // "category"/"brand" sont des suggestions génériques sans adresse précise
+  // (ex: "Vétérinaire" affiché avec place_formatted="Category") — on ne veut
+  // que des lieux réels qu'on peut géocoder (rue, adresse, établissement).
+  params.set("types", options?.types ?? "street,address,poi");
 
   const res = await fetch(`${SEARCH_BASE_URL}/suggest?${params}`, {
     signal: options?.signal,
@@ -53,10 +57,12 @@ export async function suggestAddresses(
   if (!res.ok) throw new Error(`Mapbox Search a répondu ${res.status}`);
   const data: { suggestions: SuggestFeature[] } = await res.json();
 
-  return data.suggestions.map((f) => ({
-    mapboxId: f.mapbox_id,
-    label: [f.name, f.place_formatted ?? f.full_address].filter(Boolean).join(", "),
-  }));
+  return data.suggestions
+    .filter((f) => f.feature_type !== "category" && f.feature_type !== "brand")
+    .map((f) => ({
+      mapboxId: f.mapbox_id,
+      label: [f.name, f.place_formatted ?? f.full_address].filter(Boolean).join(", "),
+    }));
 }
 
 /** Résout les coordonnées d'une suggestion Mapbox (même session_token que le suggest()). */
