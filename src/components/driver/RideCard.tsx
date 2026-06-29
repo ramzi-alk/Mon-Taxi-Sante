@@ -12,7 +12,9 @@ export interface PoolRide {
   driver_id: string | null;
   patient_first_name: string;
   patient_full_name?: string;
-  patient_phone: string;
+  // null pre-acceptance for pool rides (bookings_pool_for_drivers masks it,
+  // see migration 029); populated once the ride is in "my rides".
+  patient_phone: string | null;
   pickup_address: string;
   pickup_lat: number | null;
   pickup_lng: number | null;
@@ -32,6 +34,13 @@ export interface PoolRide {
   status: string;
   created_at: string;
   distance_to_driver_km?: number | null;
+  // Set when this booking belongs to a series and another driver currently
+  // holds priority on it (see accept_ride()'s priority propagation in
+  // migration 029). Rides reserved for another driver are filtered out of
+  // the pool entirely, so when present here it always means *this* driver
+  // holds the priority window.
+  priority_driver_id?: string | null;
+  priority_expires_at?: string | null;
 }
 
 interface RideCardProps {
@@ -417,6 +426,13 @@ export function RideCard({
               Aller-retour
             </span>
           )}
+          {ride.status === "available" &&
+            ride.priority_driver_id &&
+            (!ride.priority_expires_at || new Date(ride.priority_expires_at) > new Date()) && (
+              <span className="rounded-full bg-violet-50 text-violet-700 px-2.5 py-0.5 font-semibold">
+                Priorité série — vous l'avez déjà acceptée
+              </span>
+            )}
           {needs.map((n) => (
             <span
               key={n}

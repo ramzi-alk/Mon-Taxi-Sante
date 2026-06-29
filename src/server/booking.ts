@@ -15,9 +15,11 @@ interface SubmitBookingPayload {
   pickup_address: string;
   pickup_lat: number | null;
   pickup_lng: number | null;
+  pickup_municipality: string | null;
   dropoff_address: string;
   dropoff_lat: number | null;
   dropoff_lng: number | null;
+  distance_km: number | null;
   pickup_datetime: string;
   return_datetime: string | null;
   vehicle_type: Database["public"]["Tables"]["bookings"]["Row"]["vehicle_type"];
@@ -38,7 +40,7 @@ interface SubmitBookingPayload {
 
 interface SubmitBookingInput {
   accessToken: string;
-  payload: SubmitBookingPayload;
+  payloads: SubmitBookingPayload[];
 }
 
 export const submitBookingServerFn = createServerFn({ method: "POST" })
@@ -52,27 +54,47 @@ export const submitBookingServerFn = createServerFn({ method: "POST" })
       auth: { persistSession: false },
     });
 
+    const [firstPayload] = data.payloads;
+
     // bookings.patient_id is a NOT NULL FK to profiles — self-heal a missing
     // profile row (same known trigger-reliability issue as driver signups,
     // see migration 017) before inserting, instead of letting the FK
     // violation surface to the patient mid-booking.
     const admin = getSupabaseAdminClient();
-    const profile = await profilesRepository.ensureProfile(admin, data.payload.patient_id);
+    const profile = await profilesRepository.ensureProfile(admin, firstPayload.patient_id);
     if (!profile) {
       throw new Error("Impossible de finaliser la réservation (profil introuvable). Réessayez.");
     }
 
-    const booking = await bookingsRepository.insertBooking(supabase, data.payload);
-    await bookingsRepository.publishBooking(supabase, booking.id);
+    const isSeries = data.payloads.length > 1;
+    const seriesId = isSeries ? crypto.randomUUID() : null;
+
+    const bookings: { id: string; reference_code: string }[] = [];
+    for (const [index, payload] of data.payloads.entries()) {
+      const booking = await bookingsRepository.insertBooking(supabase, {
+        ...payload,
+        series_id: seriesId,
+        series_index: isSeries ? index + 1 : null,
+        series_total: isSeries ? data.payloads.length : null,
+      });
+      await bookingsRepository.publishBooking(supabase, booking.id);
+      bookings.push(booking);
+    }
+
+    const [firstBooking] = bookings;
 
     await sendBookingConfirmationEmail({
-      to: data.payload.patient_email,
-      patientFullName: data.payload.patient_full_name,
-      referenceCode: booking.reference_code,
-      pickupAddress: data.payload.pickup_address,
-      dropoffAddress: data.payload.dropoff_address,
-      pickupDatetime: data.payload.pickup_datetime,
+      to: firstPayload.patient_email,
+      patientFullName: firstPayload.patient_full_name,
+      referenceCode: firstBooking.reference_code,
+      pickupAddress: firstPayload.pickup_address,
+      dropoffAddress: firstPayload.dropoff_address,
+      pickupDatetime: firstPayload.pickup_datetime,
+      seriesTotal: isSeries ? data.payloads.length : undefined,
+      seriesLastPickupDatetime: isSeries
+        ? data.payloads[data.payloads.length - 1].pickup_datetime
+        : undefined,
     });
 
-    return booking;
+    return { ...firstBooking, seriesTotal: isSeries ? data.payloads.length : undefined };
   });

@@ -1,7 +1,8 @@
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Navigation, MapPin, Loader2, X } from "lucide-react";
+import { Navigation, MapPin, Loader2, Route, X } from "lucide-react";
 import { editBookingSchema, type EditBookingSchema } from "./editBookingSchema";
 import { AddressAutocomplete } from "./AddressAutocomplete";
 import { Input } from "~/components/ui/input";
@@ -11,6 +12,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "~
 import { supabase } from "~/lib/supabase";
 import { useToast } from "~/components/ui/toast";
 import { logger } from "~/lib/logger";
+import { getDrivingDistanceKm } from "~/lib/mapbox";
 import * as bookingsRepository from "~/repositories/bookingsRepository";
 import type { MyBookingRow, UpdateBookingPayload, LookupCredentials } from "~/repositories/bookingsRepository";
 
@@ -41,9 +43,11 @@ function defaultValuesFromBooking(booking: MyBookingRow): EditBookingSchema {
     pickup_address: booking.pickup_address,
     pickup_lat: booking.pickup_lat,
     pickup_lng: booking.pickup_lng,
+    pickup_municipality: booking.pickup_municipality,
     dropoff_address: booking.dropoff_address,
     dropoff_lat: booking.dropoff_lat,
     dropoff_lng: booking.dropoff_lng,
+    distance_km: null,
     pickup_date: toDateInputValue(booking.pickup_datetime),
     pickup_time: toTimeInputValue(booking.pickup_datetime),
     has_return: booking.trip_type === "aller_retour",
@@ -79,6 +83,11 @@ export function BookingEditForm({ booking, lookupCredentials, onClose, onSaved }
 
   const pickupAddress = watch("pickup_address");
   const dropoffAddress = watch("dropoff_address");
+  const pickupLat = watch("pickup_lat");
+  const pickupLng = watch("pickup_lng");
+  const dropoffLat = watch("dropoff_lat");
+  const dropoffLng = watch("dropoff_lng");
+  const distanceKm = watch("distance_km");
   const hasReturn = watch("has_return");
   const tripType = watch("trip_type");
   const vehicleType = watch("vehicle_type");
@@ -86,15 +95,45 @@ export function BookingEditForm({ booking, lookupCredentials, onClose, onSaved }
   const passengerCount = watch("passenger_count");
   const isReturnTrip = hasReturn || tripType === "aller_retour";
 
+  const [isComputingDistance, setIsComputingDistance] = useState(false);
+
+  useEffect(() => {
+    if (pickupLat == null || pickupLng == null || dropoffLat == null || dropoffLng == null) {
+      return;
+    }
+
+    let cancelled = false;
+    setIsComputingDistance(true);
+    getDrivingDistanceKm(
+      { lat: pickupLat, lng: pickupLng },
+      { lat: dropoffLat, lng: dropoffLng }
+    )
+      .then((km) => {
+        if (!cancelled) setValue("distance_km", km);
+      })
+      .catch((err) => {
+        logger.warn("booking_edit.distance_failed", { error: (err as Error).message });
+      })
+      .finally(() => {
+        if (!cancelled) setIsComputingDistance(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [pickupLat, pickupLng, dropoffLat, dropoffLng, setValue]);
+
   const updateMutation = useMutation({
     mutationFn: (data: EditBookingSchema) => {
       const payload: UpdateBookingPayload = {
         pickup_address: data.pickup_address,
         pickup_lat: data.pickup_lat,
         pickup_lng: data.pickup_lng,
+        pickup_municipality: data.pickup_municipality,
         dropoff_address: data.dropoff_address,
         dropoff_lat: data.dropoff_lat,
         dropoff_lng: data.dropoff_lng,
+        distance_km: data.distance_km,
         pickup_datetime: `${data.pickup_date}T${data.pickup_time}:00`,
         return_datetime:
           isReturnTrip && data.return_date && data.return_time
@@ -165,10 +204,13 @@ export function BookingEditForm({ booking, lookupCredentials, onClose, onSaved }
               setValue("pickup_address", val);
               setValue("pickup_lat", null);
               setValue("pickup_lng", null);
+              setValue("pickup_municipality", null);
+              setValue("distance_km", null);
             }}
             onSelect={(s) => {
               setValue("pickup_lat", s.lat);
               setValue("pickup_lng", s.lng);
+              setValue("pickup_municipality", s.municipality);
               trigger("pickup_address");
             }}
             onBlur={() => trigger("pickup_address")}
@@ -190,6 +232,7 @@ export function BookingEditForm({ booking, lookupCredentials, onClose, onSaved }
               setValue("dropoff_address", val);
               setValue("dropoff_lat", null);
               setValue("dropoff_lng", null);
+              setValue("distance_km", null);
             }}
             onSelect={(s) => {
               setValue("dropoff_lat", s.lat);
@@ -203,6 +246,22 @@ export function BookingEditForm({ booking, lookupCredentials, onClose, onSaved }
             <p role="alert" className="text-xs text-red-600">{errors.dropoff_address.message}</p>
           )}
         </div>
+
+        {(isComputingDistance || distanceKm != null) && (
+          <p className="flex items-center gap-1.5 text-xs text-muted-foreground" aria-live="polite">
+            {isComputingDistance ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                Calcul de la distance…
+              </>
+            ) : (
+              <>
+                <Route className="h-3.5 w-3.5 text-brand-blue-500" aria-hidden="true" />
+                Distance estimée : {distanceKm} km (trajet routier)
+              </>
+            )}
+          </p>
+        )}
       </div>
 
       {/* Date / time */}

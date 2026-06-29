@@ -12,6 +12,7 @@ import { CPAM_LABELS } from "~/lib/cpam";
 
 const confirmationSearchSchema = z.object({
   id: z.string(),
+  seriesTotal: z.coerce.number().optional(),
 });
 
 export const Route = createFileRoute("/reservation/confirmation")({
@@ -42,7 +43,8 @@ async function fetchBooking(id: string) {
 }
 
 function ConfirmationPage() {
-  const { id } = Route.useSearch();
+  const { id, seriesTotal } = Route.useSearch();
+  const isSeries = !!seriesTotal && seriesTotal > 1;
 
   const { data: booking, isLoading, isError } = useQuery({
     queryKey: ["booking-confirmation", id],
@@ -70,6 +72,11 @@ function ConfirmationPage() {
             Vous recevrez une confirmation par SMS et email. Un chauffeur
             conventionné Assurance Maladie va accepter votre course.
           </p>
+          {isSeries && (
+            <p className="mt-4 inline-flex items-center gap-2 rounded-full bg-brand-blue-50 px-4 py-1.5 text-sm font-semibold text-brand-blue-700">
+              Série de {seriesTotal} séances réservées
+            </p>
+          )}
         </div>
 
         {isLoading && (
@@ -145,7 +152,7 @@ function ConfirmationPage() {
             className="btn-cta inline-flex items-center justify-center gap-2 bg-[#0B0F1C] text-white hover:bg-[#1244E8] transition-colors"
           >
             <ClipboardList className="h-4 w-4" aria-hidden="true" />
-            Suivre ma réservation
+            {isSeries ? "Suivre mes réservations" : "Suivre ma réservation"}
           </Link>
           <a
             href={`tel:${CONTACT_PHONE_TEL}`}

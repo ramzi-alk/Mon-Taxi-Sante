@@ -24,6 +24,8 @@ export async function sendBookingConfirmationEmail(params: {
   pickupAddress: string;
   dropoffAddress: string;
   pickupDatetime: string;
+  seriesTotal?: number;
+  seriesLastPickupDatetime?: string;
 }): Promise<void> {
   try {
     const { subject, html } = bookingConfirmationEmail(params);

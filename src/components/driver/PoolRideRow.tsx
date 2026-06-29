@@ -142,6 +142,12 @@ export function PoolRideRow({ ride, onAccept, isAccepting }: PoolRideRowProps) {
             A/R
           </span>
         )}
+        {ride.priority_driver_id &&
+          (!ride.priority_expires_at || new Date(ride.priority_expires_at) > new Date()) && (
+            <span className="rounded-full bg-violet-50 px-2 py-0.5 text-xs font-semibold text-violet-700">
+              Priorité
+            </span>
+          )}
         {needs.map((n) => (
           <span
             key={n}

@@ -154,6 +154,12 @@ export function BookingStatusCard({
               Aller-retour
             </span>
           )}
+          {!!displayBooking.series_total && displayBooking.series_total > 1 && (
+            <span className="flex items-center gap-1 rounded-full bg-brand-blue-50 text-brand-blue-700 px-2.5 py-0.5 font-semibold">
+              <Repeat className="h-3 w-3" aria-hidden="true" />
+              Séance {displayBooking.series_index}/{displayBooking.series_total}
+            </span>
+          )}
           {displayBooking.estimated_price && (
             <span className="font-bold text-brand-blue-700">
               {formatPrice(displayBooking.estimated_price)}

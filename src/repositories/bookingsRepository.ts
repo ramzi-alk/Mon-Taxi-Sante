@@ -17,6 +17,7 @@ export type MyBookingRow = Pick<
   | "pickup_address"
   | "pickup_lat"
   | "pickup_lng"
+  | "pickup_municipality"
   | "dropoff_address"
   | "dropoff_lat"
   | "dropoff_lng"
@@ -38,6 +39,9 @@ export type MyBookingRow = Pick<
   | "cpam_status"
   | "mutual_name"
   | "medical_notes"
+  | "series_id"
+  | "series_index"
+  | "series_total"
 > & {
   driver_full_name: string | null;
   driver_phone: string | null;
@@ -55,9 +59,11 @@ export interface UpdateBookingPayload {
   pickup_address: string;
   pickup_lat: number | null;
   pickup_lng: number | null;
+  pickup_municipality: string | null;
   dropoff_address: string;
   dropoff_lat: number | null;
   dropoff_lng: number | null;
+  distance_km: number | null;
   pickup_datetime: string;
   return_datetime: string | null;
   vehicle_type: BookingRow["vehicle_type"];
@@ -145,6 +151,8 @@ export async function updateBooking(
     p_cpam_status: payload.cpam_status,
     p_mutual_name: payload.mutual_name,
     p_medical_notes: payload.medical_notes,
+    p_distance_km: payload.distance_km,
+    p_pickup_municipality: payload.pickup_municipality,
   } as Database["public"]["Functions"]["update_booking"]["Args"]);
 
   if (error) {
@@ -221,6 +229,8 @@ export async function updateBookingByReference(
     p_cpam_status: payload.cpam_status,
     p_mutual_name: payload.mutual_name,
     p_medical_notes: payload.medical_notes,
+    p_distance_km: payload.distance_km,
+    p_pickup_municipality: payload.pickup_municipality,
   } as Database["public"]["Functions"]["update_booking_by_reference"]["Args"]);
 
   if (error) {
@@ -321,11 +331,21 @@ function mapRideLifecycleError(error: { message: string }, rideId: string, actio
   if (error.message.includes("booking_already_taken")) {
     return new Error("Cette course vient d'être acceptée par un autre chauffeur.");
   }
+  if (error.message.includes("booking_priority_reserved")) {
+    return new Error(
+      "Cette course est temporairement réservée en priorité au chauffeur qui a accepté une autre séance de la même série."
+    );
+  }
   if (error.message.includes("booking_not_available")) {
     return new Error("Cette course n'est plus disponible.");
   }
   if (error.message.includes("driver_profile_incomplete")) {
     return new Error("Votre profil chauffeur est incomplet (véhicule non renseigné).");
+  }
+  if (error.message.includes("driver_pool_suspended")) {
+    return new Error(
+      "Votre accès au pool de courses est temporairement suspendu suite à des annulations répétées juste après acceptation."
+    );
   }
   if (error.message.includes("not_a_driver")) {
     return new Error("Action réservée aux chauffeurs.");

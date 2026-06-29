@@ -7,6 +7,7 @@ import { useNavigate } from "@tanstack/react-router";
 
 import { bookingSchema, BOOKING_STEPS, STEP_FIELDS, type BookingSchema } from "./schema";
 import { consumeBookingPrefill } from "~/lib/bookingPrefill";
+import { computeSeriesDates } from "~/lib/seriesSchedule";
 import { ProgressBar } from "./ProgressBar";
 import { Step1Identity } from "./steps/Step1Identity";
 import { Step2Route } from "./steps/Step2Route";
@@ -34,9 +35,12 @@ const DEFAULT_VALUES: Partial<BookingSchema> = {
   pickup_address: "",
   pickup_lat: null,
   pickup_lng: null,
+  pickup_municipality: null,
   dropoff_address: "",
   dropoff_lat: null,
   dropoff_lng: null,
+  dropoff_municipality: null,
+  distance_km: null,
   pickup_date: "",
   pickup_time: "",
   has_return: false,
@@ -98,41 +102,62 @@ async function submitBooking(data: BookingSchema) {
     );
   }
 
+  const basePayload = {
+    patient_id: userId,
+    patient_full_name: data.patient_full_name,
+    patient_phone: data.patient_phone,
+    patient_email: data.patient_email,
+    patient_birth_date: data.patient_birth_date || null,
+    pickup_address: data.pickup_address,
+    pickup_lat: data.pickup_lat,
+    pickup_lng: data.pickup_lng,
+    pickup_municipality: data.pickup_municipality || null,
+    dropoff_address: data.dropoff_address,
+    dropoff_lat: data.dropoff_lat,
+    dropoff_lng: data.dropoff_lng,
+    distance_km: data.distance_km,
+    vehicle_type: data.vehicle_type,
+    trip_type: data.trip_type,
+    is_hospitalization: data.is_hospitalization,
+    requires_wheelchair: data.requires_wheelchair,
+    requires_stretcher: data.requires_stretcher,
+    requires_oxygen: data.requires_oxygen,
+    passenger_count: data.passenger_count,
+    cpam_status: data.cpam_status,
+    mutual_name: data.mutual_name || null,
+    pmt_declared: data.pmt_declared,
+    pmt_file_url: pmtFileUrl,
+    medical_notes: data.medical_notes || null,
+    consent_accepted_at: new Date().toISOString(),
+    status: "pending" as const,
+  };
+
+  // A real, dispatchable booking per session is only generated when a PMT is
+  // declared — without it there's no prescription to justify recurring
+  // transport, so the series collapses to a single aller_simple-shaped row.
+  const isPmtSeries =
+    data.trip_type === "multiple" &&
+    data.pmt_declared &&
+    !!data.series_days_of_week?.length &&
+    !!data.series_duration_weeks;
+
+  const sessionDates = isPmtSeries
+    ? computeSeriesDates(data.pickup_date, data.series_days_of_week!, data.series_duration_weeks!)
+    : [data.pickup_date];
+
+  const payloads = sessionDates.map((date) => ({
+    ...basePayload,
+    pickup_datetime: `${date}T${data.pickup_time}:00`,
+    return_datetime:
+      !isPmtSeries && data.has_return && data.return_date && data.return_time
+        ? `${data.return_date}T${data.return_time}:00`
+        : null,
+  }));
+
   return submitBookingServerFn({
     data: {
       accessToken: session.access_token,
-      payload: {
-        patient_id: userId,
-        patient_full_name: data.patient_full_name,
-        patient_phone: data.patient_phone,
-        patient_email: data.patient_email,
-        patient_birth_date: data.patient_birth_date || null,
-        pickup_address: data.pickup_address,
-        pickup_lat: data.pickup_lat,
-        pickup_lng: data.pickup_lng,
-        dropoff_address: data.dropoff_address,
-        dropoff_lat: data.dropoff_lat,
-        dropoff_lng: data.dropoff_lng,
-        pickup_datetime: `${data.pickup_date}T${data.pickup_time}:00`,
-        return_datetime:
-          data.has_return && data.return_date && data.return_time
-            ? `${data.return_date}T${data.return_time}:00`
-            : null,
-        vehicle_type: data.vehicle_type,
-        trip_type: data.trip_type,
-        is_hospitalization: data.is_hospitalization,
-        requires_wheelchair: data.requires_wheelchair,
-        requires_stretcher: data.requires_stretcher,
-        requires_oxygen: data.requires_oxygen,
-        passenger_count: data.passenger_count,
-        cpam_status: data.cpam_status,
-        mutual_name: data.mutual_name || null,
-        pmt_declared: data.pmt_declared,
-        pmt_file_url: pmtFileUrl,
-        medical_notes: data.medical_notes || null,
-        consent_accepted_at: new Date().toISOString(),
-        status: "pending",
-      },
+      payloads,
     },
   });
 }
@@ -166,7 +191,7 @@ export function BookingForm() {
     onSuccess: (booking) => {
       navigate({
         to: "/reservation/confirmation",
-        search: { id: booking.id },
+        search: { id: booking.id, seriesTotal: booking.seriesTotal },
       });
     },
     onError: (error: Error) => {
@@ -191,13 +216,8 @@ export function BookingForm() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  // Step 5 (trip type) can flip `has_return` to true after step 3 (date/time,
-  // where return_date/return_time are actually entered) has already been
-  // validated and passed — e.g. switching to "aller_retour" later, or
-  // re-using a previous booking's info, where trip_type isn't carried over
-  // (see bookingPrefill.ts) and defaults back to "aller_simple". The
-  // cross-field refine in schema.ts then fails at the final step on a field
-  // no longer visible there, so jump back to wherever the invalid field
+  // Safety net: if the final cross-field validation in schema.ts ever fails
+  // on a field the user already passed, jump back to wherever that field
   // actually lives instead of leaving the button silently inert.
   async function handleSubmit() {
     const valid = await form.trigger();
