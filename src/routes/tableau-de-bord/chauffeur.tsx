@@ -16,6 +16,7 @@ import {
   Wallet,
   MapPin,
   UserCog,
+  Star,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "~/lib/supabase";
@@ -78,6 +79,10 @@ async function cancelRideByDriver(rideId: string): Promise<void> {
   await bookingsRepository.cancelRideByDriver(supabase, rideId);
 }
 
+async function rateRide(vars: { rideId: string; rating: number; comment?: string }): Promise<void> {
+  await bookingsRepository.rateBookingAsDriver(supabase, vars.rideId, vars.rating, vars.comment);
+}
+
 async function fetchMyAvailability(): Promise<driversRepository.MyDriverDetails | null> {
   const user = await authRepository.getCurrentUser(supabase);
   if (!user) return null;
@@ -136,6 +141,7 @@ function DriverDashboard() {
   const [startingId, setStartingId] = useState<string | null>(null);
   const [completingId, setCompletingId] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [ratingId, setRatingId] = useState<string | null>(null);
   const [realtimeEnabled, setRealtimeEnabled] = useState(true);
   const [tab, setTab] = useState<"pool" | "my_rides">("pool");
 
@@ -278,6 +284,20 @@ function DriverDashboard() {
     },
   });
 
+  const rateMutation = useMutation({
+    mutationFn: rateRide,
+    onMutate: (vars) => setRatingId(vars.rideId),
+    onSettled: () => {
+      setRatingId(null);
+      queryClient.invalidateQueries({ queryKey: ["my-rides"] });
+      queryClient.invalidateQueries({ queryKey: ["my-driver-stats"] });
+    },
+    onError: (error, vars) => {
+      logger.error("driver.rateBookingAsDriver failed", { error: error.message, rideId: vars.rideId });
+      alert(`Erreur : ${error.message}`);
+    },
+  });
+
   const poolRides = poolQuery.data ?? [];
   const myRides = myRidesQuery.data ?? [];
   const todayRides = myRides.filter(
@@ -414,7 +434,7 @@ function DriverDashboard() {
           <h2 id="earnings-heading" className="sr-only">
             Kilomètres et gains
           </h2>
-          <div className="grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-3">
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4">
             <StatCard
               icon={Gauge}
               label="Km parcourus (total)"
@@ -432,6 +452,12 @@ function DriverDashboard() {
               label="Gains aujourd'hui"
               value={formatPrice(statsQuery.data?.earnings_today ?? 0)}
               color="bg-brand-blue-50 text-brand-blue-600"
+            />
+            <StatCard
+              icon={Star}
+              label="Note moyenne"
+              value={statsQuery.data?.average_rating != null ? `${statsQuery.data.average_rating} / 5` : "—"}
+              color="bg-amber-50 text-amber-600"
             />
           </div>
         </section>
@@ -638,6 +664,8 @@ function DriverDashboard() {
                       isCompleting={completingId === ride.id && completeMutation.isPending}
                       onCancel={(id) => cancelMutation.mutate(id)}
                       isCancelling={cancellingId === ride.id && cancelMutation.isPending}
+                      onRate={(id, rating, comment) => rateMutation.mutate({ rideId: id, rating, comment })}
+                      isRating={ratingId === ride.id && rateMutation.isPending}
                     />
                   </li>
                 ))}

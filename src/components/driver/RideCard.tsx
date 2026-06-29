@@ -3,6 +3,8 @@ import { MapPin, Clock, Car, Users, Navigation, Loader2, PlayCircle, FlagTriangl
 import { formatDateFr, formatTimeFr } from "~/lib/utils";
 import { cn } from "~/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
+import { StarRating } from "~/components/ui/star-rating";
+import { RatingForm } from "~/components/booking/RatingForm";
 
 // Mirrors bookings_pool_for_drivers view — no medical fields. patient_full_name
 // is only ever populated for "my rides" (accepted/in_progress/completed, see
@@ -41,6 +43,9 @@ export interface PoolRide {
   // holds the priority window.
   priority_driver_id?: string | null;
   priority_expires_at?: string | null;
+  // Set once submitted, only exposed on "my rides" (bookings_active_for_driver).
+  driver_rating_given?: number | null;
+  patient_rating_received?: number | null;
 }
 
 interface RideCardProps {
@@ -53,6 +58,8 @@ interface RideCardProps {
   isCompleting?: boolean;
   onCancel?: (rideId: string) => void;
   isCancelling?: boolean;
+  onRate?: (rideId: string, rating: number, comment?: string) => void;
+  isRating?: boolean;
 }
 
 const vehicleIcons: Record<string, string> = {
@@ -296,6 +303,8 @@ export function RideCard({
   isCompleting,
   onCancel,
   isCancelling,
+  onRate,
+  isRating,
 }: RideCardProps) {
   const [confirmingCancel, setConfirmingCancel] = useState(false);
   const pickupDate = formatDateFr(ride.pickup_datetime);
@@ -448,6 +457,9 @@ export function RideCard({
             <p className="flex items-center gap-2 text-sm font-semibold text-gray-900">
               <User className="h-4 w-4 text-brand-green-600" aria-hidden="true" />
               {ride.patient_full_name ?? ride.patient_first_name}
+              {ride.patient_rating_received != null && (
+                <StarRating value={ride.patient_rating_received} readOnly size="sm" />
+              )}
             </p>
             {ride.patient_phone && (
               <a
@@ -593,6 +605,23 @@ export function RideCard({
             </span>
           )}
         </div>
+
+        {ride.status === "completed" &&
+          (ride.driver_rating_given != null ? (
+            <div className="flex items-center gap-2 text-sm text-gray-600 pt-2 border-t border-gray-100">
+              <span>Votre avis sur ce patient :</span>
+              <StarRating value={ride.driver_rating_given} readOnly size="sm" />
+            </div>
+          ) : (
+            onRate && (
+              <RatingForm
+                prompt="Comment s'est passée cette course avec ce patient ?"
+                submitLabel="Envoyer mon avis"
+                isSubmitting={isRating}
+                onSubmit={(rating, comment) => onRate(ride.id, rating, comment)}
+              />
+            )
+          ))}
       </div>
     </article>
   );

@@ -48,6 +48,8 @@ export type MyBookingRow = Pick<
   vehicle_brand: string | null;
   vehicle_model: string | null;
   vehicle_registration: string | null;
+  driver_rating_avg: number | null;
+  patient_rating_given: number | null;
 };
 
 export interface LookupCredentials {
@@ -115,6 +117,41 @@ export async function cancelBooking(
       throw new Error("Cette réservation ne peut plus être annulée (course déjà en cours ou terminée).");
     }
     logger.error("bookings.cancelBooking failed", { error: error.message, bookingId });
+    throw new Error(error.message);
+  }
+}
+
+/**
+ * Patient rates the driver (1-5 stars + optional comment) for one of their
+ * own completed bookings. See migration 033's rate_booking_as_patient RPC —
+ * one rating per role per booking, not editable once submitted.
+ */
+export async function rateBookingAsPatient(
+  client: SupabaseClient,
+  bookingId: string,
+  rating: number,
+  comment?: string
+): Promise<void> {
+  const { error } = await client.rpc("rate_booking_as_patient", {
+    p_booking_id: bookingId,
+    p_rating: rating,
+    p_comment: comment,
+  });
+
+  if (error) {
+    if (error.message.includes("invalid_rating")) {
+      throw new Error("La note doit être comprise entre 1 et 5 étoiles.");
+    }
+    if (error.message.includes("booking_not_completed")) {
+      throw new Error("Cette course n'est pas encore terminée.");
+    }
+    if (error.message.includes("already_rated")) {
+      throw new Error("Vous avez déjà noté cette course.");
+    }
+    if (error.message.includes("booking_not_found")) {
+      throw new Error("Réservation introuvable.");
+    }
+    logger.error("bookings.rateBookingAsPatient failed", { error: error.message, bookingId });
     throw new Error(error.message);
   }
 }
@@ -274,6 +311,48 @@ export async function lookupBookingByReference(
   return data?.[0] ?? null;
 }
 
+/**
+ * Same as rateBookingAsPatient, but proves ownership via reference_code +
+ * phone instead of the live auth.uid() session — for the lost-session
+ * recovery flow (see lookupBookingByReference). Shares its rate-limit
+ * lockout. See migration 033's rate_booking_as_patient_by_reference RPC.
+ */
+export async function rateBookingAsPatientByReference(
+  client: SupabaseClient,
+  referenceCode: string,
+  phone: string,
+  rating: number,
+  comment?: string
+): Promise<void> {
+  const { data, error } = await client.rpc("rate_booking_as_patient_by_reference", {
+    p_reference_code: referenceCode,
+    p_phone: phone,
+    p_rating: rating,
+    p_comment: comment,
+  });
+
+  if (error) {
+    if (error.message.includes("invalid_rating")) {
+      throw new Error("La note doit être comprise entre 1 et 5 étoiles.");
+    }
+    if (error.message.includes("too_many_attempts")) {
+      throw new Error("Trop de tentatives pour cette référence. Réessayez dans 15 minutes ou contactez-nous directement.");
+    }
+    logger.error("bookings.rateBookingAsPatientByReference failed", { error: error.message });
+    throw new Error(error.message);
+  }
+
+  if (data === "booking_not_found") {
+    throw new Error("Réservation introuvable pour cette référence et ce numéro.");
+  }
+  if (data === "booking_not_completed") {
+    throw new Error("Cette course n'est pas encore terminée.");
+  }
+  if (data === "already_rated") {
+    throw new Error("Vous avez déjà noté cette course.");
+  }
+}
+
 export async function fetchBookingStatusCounts(
   client: SupabaseClient
 ): Promise<Record<string, number>> {
@@ -310,7 +389,7 @@ export async function fetchDriverRides(
   const { data, error } = await client
     .from("bookings_active_for_driver")
     .select(
-      "id, driver_id, patient_full_name, patient_phone, pickup_address, pickup_lat, pickup_lng, dropoff_address, dropoff_lat, dropoff_lng, distance_km, pickup_datetime, return_datetime, vehicle_type, trip_type, requires_wheelchair, requires_stretcher, requires_oxygen, passenger_count, estimated_price, status, created_at, distance_to_driver_km"
+      "id, driver_id, patient_full_name, patient_phone, pickup_address, pickup_lat, pickup_lng, dropoff_address, dropoff_lat, dropoff_lng, distance_km, pickup_datetime, return_datetime, vehicle_type, trip_type, requires_wheelchair, requires_stretcher, requires_oxygen, passenger_count, estimated_price, status, created_at, distance_to_driver_km, driver_rating_given, patient_rating_received"
     )
     .eq("driver_id", driverId)
     .in("status", ["accepted", "in_progress", "completed"])
@@ -362,6 +441,15 @@ function mapRideLifecycleError(error: { message: string }, rideId: string, actio
   if (error.message.includes("booking_not_cancellable_by_driver")) {
     return new Error("Cette course ne peut pas être annulée (elle n'est pas/plus affectée).");
   }
+  if (error.message.includes("invalid_rating")) {
+    return new Error("La note doit être comprise entre 1 et 5 étoiles.");
+  }
+  if (error.message.includes("booking_not_completed")) {
+    return new Error("Cette course n'est pas encore terminée.");
+  }
+  if (error.message.includes("already_rated")) {
+    return new Error("Vous avez déjà noté cette course.");
+  }
   logger.error(`bookings.${action} failed`, { error: error.message, rideId });
   return new Error(error.message);
 }
@@ -400,6 +488,28 @@ export async function completeRide(client: SupabaseClient, rideId: string): Prom
 
   if (error) {
     throw mapRideLifecycleError(error, rideId, "completeRide");
+  }
+}
+
+/**
+ * Driver rates the patient (1-5 stars + optional comment) for one of their
+ * own completed rides. See migration 033's rate_booking_as_driver RPC — one
+ * rating per role per booking, not editable once submitted (already_rated).
+ */
+export async function rateBookingAsDriver(
+  client: SupabaseClient,
+  rideId: string,
+  rating: number,
+  comment?: string
+): Promise<void> {
+  const { error } = await client.rpc("rate_booking_as_driver", {
+    p_booking_id: rideId,
+    p_rating: rating,
+    p_comment: comment,
+  });
+
+  if (error) {
+    throw mapRideLifecycleError(error, rideId, "rateBookingAsDriver");
   }
 }
 

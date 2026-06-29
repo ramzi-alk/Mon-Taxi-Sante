@@ -8,6 +8,8 @@ import { VEHICLE_LABELS } from "~/lib/vehicle";
 import { openBookingReceipt } from "~/lib/receipt";
 import { supabase } from "~/lib/supabase";
 import { useToast } from "~/components/ui/toast";
+import { StarRating } from "~/components/ui/star-rating";
+import { RatingForm } from "./RatingForm";
 import {
   STATUS_ORDER,
   STATUS_LABELS,
@@ -84,6 +86,27 @@ export function BookingStatusCard({
       setConfirmingCancel(false);
       logger.error("booking.cancel failed", { error: err.message, bookingId: displayBooking.id });
       toast({ title: "Impossible d'annuler", description: err.message, variant: "error" });
+    },
+  });
+
+  const rateMutation = useMutation({
+    mutationFn: (vars: { rating: number; comment?: string }) =>
+      lookupCredentials
+        ? bookingsRepository.rateBookingAsPatientByReference(
+            supabase,
+            lookupCredentials.referenceCode,
+            lookupCredentials.phone,
+            vars.rating,
+            vars.comment
+          )
+        : bookingsRepository.rateBookingAsPatient(supabase, displayBooking.id, vars.rating, vars.comment),
+    onSuccess: (_, vars) => {
+      toast({ title: "Merci pour votre avis !", variant: "success" });
+      setDisplayBooking((prev) => ({ ...prev, patient_rating_given: vars.rating }));
+      queryClient.invalidateQueries({ queryKey: ["my-bookings"] });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Impossible d'enregistrer votre avis", description: err.message, variant: "error" });
     },
   });
 
@@ -172,6 +195,12 @@ export function BookingStatusCard({
             <p className="flex items-center gap-2 text-sm font-semibold text-gray-900">
               <User className="h-4 w-4 text-brand-blue-600" aria-hidden="true" />
               {displayBooking.driver_full_name}
+              {displayBooking.driver_rating_avg != null && (
+                <span className="flex items-center gap-1 text-xs font-medium text-gray-600">
+                  <StarRating value={displayBooking.driver_rating_avg} readOnly size="sm" />
+                  {displayBooking.driver_rating_avg.toFixed(1)}
+                </span>
+              )}
             </p>
             {(displayBooking.vehicle_brand || displayBooking.vehicle_model || displayBooking.vehicle_registration) && (
               <p className="text-xs text-gray-600 pl-6">
@@ -251,6 +280,22 @@ export function BookingStatusCard({
                 <Download className="h-4 w-4" aria-hidden="true" />
                 Télécharger le justificatif
               </button>
+            )}
+
+            {status === "completed" && hasDriver && (
+              displayBooking.patient_rating_given != null ? (
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <span>Votre avis sur le chauffeur :</span>
+                  <StarRating value={displayBooking.patient_rating_given} readOnly size="sm" />
+                </div>
+              ) : (
+                <RatingForm
+                  prompt="Comment s'est passée votre course avec ce chauffeur ?"
+                  submitLabel="Envoyer mon avis"
+                  isSubmitting={rateMutation.isPending}
+                  onSubmit={(rating, comment) => rateMutation.mutate({ rating, comment })}
+                />
+              )
             )}
 
             <div className="border-t pt-3">
