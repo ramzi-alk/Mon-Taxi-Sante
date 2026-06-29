@@ -44,6 +44,7 @@ export interface MyDriverStats {
   total_earnings: number;
   rides_today: number;
   earnings_today: number;
+  average_rating: number | null;
 }
 
 export interface PendingDriver {

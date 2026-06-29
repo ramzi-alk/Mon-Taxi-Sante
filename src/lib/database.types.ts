@@ -38,6 +38,55 @@ export type Database = {
         }
         Relationships: []
       }
+      booking_ratings: {
+        Row: {
+          booking_id: string
+          comment: string | null
+          created_at: string
+          id: string
+          rater_role: Database["public"]["Enums"]["booking_rating_role"]
+          rating: number
+        }
+        Insert: {
+          booking_id: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rater_role: Database["public"]["Enums"]["booking_rating_role"]
+          rating: number
+        }
+        Update: {
+          booking_id?: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rater_role?: Database["public"]["Enums"]["booking_rating_role"]
+          rating?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_ratings_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_ratings_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings_active_for_driver"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_ratings_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings_pool_for_drivers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       booking_reminder_tokens: {
         Row: {
           booking_id: string
@@ -461,22 +510,29 @@ export type Database = {
           distance_km: number | null
           distance_to_driver_km: number | null
           driver_id: string | null
+          driver_rating_given: number | null
           dropoff_address: string | null
           dropoff_lat: number | null
           dropoff_lng: number | null
           estimated_price: number | null
           id: string | null
+          is_hospitalization: boolean | null
           passenger_count: number | null
           patient_full_name: string | null
           patient_phone: string | null
+          patient_rating_avg: number | null
+          patient_rating_received: number | null
           pickup_address: string | null
           pickup_datetime: string | null
           pickup_lat: number | null
           pickup_lng: number | null
+          pmt_declared: boolean | null
           requires_oxygen: boolean | null
           requires_stretcher: boolean | null
           requires_wheelchair: boolean | null
           return_datetime: string | null
+          series_index: number | null
+          series_total: number | null
           status: Database["public"]["Enums"]["booking_status"] | null
           trip_type: Database["public"]["Enums"]["trip_type"] | null
           vehicle_type:
@@ -504,19 +560,24 @@ export type Database = {
           dropoff_lng: number | null
           estimated_price: number | null
           id: string | null
+          is_hospitalization: boolean | null
           passenger_count: number | null
           patient_first_name: string | null
           patient_phone: string | null
+          patient_rating_avg: number | null
           pickup_address: string | null
           pickup_datetime: string | null
           pickup_lat: number | null
           pickup_lng: number | null
+          pmt_declared: boolean | null
           priority_driver_id: string | null
           priority_expires_at: string | null
           requires_oxygen: boolean | null
           requires_stretcher: boolean | null
           requires_wheelchair: boolean | null
           return_datetime: string | null
+          series_index: number | null
+          series_total: number | null
           status: Database["public"]["Enums"]["booking_status"] | null
           trip_type: Database["public"]["Enums"]["trip_type"] | null
           vehicle_type:
@@ -580,6 +641,7 @@ export type Database = {
         Args: { p_address: string }
         Returns: string
       }
+      driver_average_rating: { Args: { p_driver_id: string }; Returns: number }
       driver_matches_booking: {
         Args: {
           p_booking_vehicle_type: Database["public"]["Enums"]["booking_vehicle_type"]
@@ -603,6 +665,7 @@ export type Database = {
           created_at: string
           driver_full_name: string
           driver_phone: string
+          driver_rating_avg: number
           dropoff_address: string
           dropoff_lat: number
           dropoff_lng: number
@@ -615,6 +678,7 @@ export type Database = {
           patient_email: string
           patient_full_name: string
           patient_phone: string
+          patient_rating_given: number
           pickup_address: string
           pickup_datetime: string
           pickup_lat: number
@@ -639,6 +703,7 @@ export type Database = {
       get_my_driver_stats: {
         Args: never
         Returns: {
+          average_rating: number
           earnings_today: number
           rides_completed: number
           rides_today: number
@@ -659,6 +724,7 @@ export type Database = {
           created_at: string
           driver_full_name: string
           driver_phone: string
+          driver_rating_avg: number
           dropoff_address: string
           dropoff_lat: number
           dropoff_lng: number
@@ -671,6 +737,7 @@ export type Database = {
           patient_email: string
           patient_full_name: string
           patient_phone: string
+          patient_rating_given: number
           pickup_address: string
           pickup_datetime: string
           pickup_lat: number
@@ -693,6 +760,10 @@ export type Database = {
         }[]
       }
       paques_date: { Args: { p_annee: number }; Returns: string }
+      patient_average_rating: {
+        Args: { p_patient_id: string }
+        Returns: number
+      }
       pickup_address_revealed: {
         Args: {
           p_pickup_datetime: string
@@ -701,6 +772,23 @@ export type Database = {
         Returns: boolean
       }
       publish_booking: { Args: { p_booking_id: string }; Returns: undefined }
+      rate_booking_as_driver: {
+        Args: { p_booking_id: string; p_comment?: string; p_rating: number }
+        Returns: undefined
+      }
+      rate_booking_as_patient: {
+        Args: { p_booking_id: string; p_comment?: string; p_rating: number }
+        Returns: undefined
+      }
+      rate_booking_as_patient_by_reference: {
+        Args: {
+          p_comment?: string
+          p_phone: string
+          p_rating: number
+          p_reference_code: string
+        }
+        Returns: string
+      }
       record_lookup_result: {
         Args: { p_found: boolean; p_reference_code: string }
         Returns: undefined
@@ -773,6 +861,7 @@ export type Database = {
       }
     }
     Enums: {
+      booking_rating_role: "patient" | "driver"
       booking_status:
         | "draft"
         | "pending"
@@ -916,6 +1005,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      booking_rating_role: ["patient", "driver"],
       booking_status: [
         "draft",
         "pending",
