@@ -26,8 +26,31 @@ interface SuggestFeature {
 }
 
 interface RetrieveFeature {
-  properties: { name: string; place_formatted?: string; full_address?: string };
+  properties: {
+    name: string;
+    place_formatted?: string;
+    full_address?: string;
+    context?: {
+      postcode?: { name?: string };
+      place?: { name?: string };
+      locality?: { name?: string };
+    };
+  };
   geometry: { coordinates: [number, number] };
+}
+
+// `place_formatted` n'est pas toujours présent dans la réponse de l'endpoint
+// retrieve de Mapbox (contrairement à suggest) alors que `context` l'est
+// quasi systématiquement — on reconstruit donc la commune ("75017 Paris")
+// à partir de context.postcode/context.place en repli pour ne jamais
+// laisser pickup_municipality/dropoff_municipality null silencieusement
+// (ce qui ferait fuiter l'adresse exacte dans le pool, cf. migration 029).
+function deriveMunicipality(props: RetrieveFeature["properties"]): string | null {
+  if (props.place_formatted) return props.place_formatted;
+  const postcode = props.context?.postcode?.name;
+  const place = props.context?.place?.name ?? props.context?.locality?.name;
+  const parts = [postcode, place].filter(Boolean);
+  return parts.length > 0 ? parts.join(" ") : null;
 }
 
 /**
@@ -90,7 +113,7 @@ export async function retrieveAddress(
       .join(", "),
     lat,
     lng,
-    municipality: feature.properties.place_formatted ?? null,
+    municipality: deriveMunicipality(feature.properties),
   };
 }
 
