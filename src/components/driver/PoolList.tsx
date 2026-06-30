@@ -31,7 +31,7 @@ interface PoolListProps {
   acceptingId: string | null;
   isAccepting: boolean;
   driverProfile?: DriverProfileFilter | null;
-  onAcceptSeries?: (rideId: string) => void;
+  onAcceptSeries?: (rideIds: string[]) => void;
   acceptingSeriesId?: string | null;
 }
 
@@ -53,6 +53,19 @@ function defaultVehicleFilter(profile: DriverProfileFilter | null | undefined): 
 
 export function PoolList({ rides, onAccept, acceptingId, isAccepting, driverProfile, onAcceptSeries, acceptingSeriesId }: PoolListProps) {
   const [search, setSearch] = useState("");
+
+  // Toutes les rides du pool groupées par series_id (non filtrées) pour
+  // que chaque carte/ligne voie l'ensemble des séances disponibles de sa série
+  const seriesPoolMap = useMemo(() => {
+    const map: Record<string, PoolRide[]> = {};
+    rides.forEach((r) => {
+      if (r.series_id) {
+        if (!map[r.series_id]) map[r.series_id] = [];
+        map[r.series_id].push(r);
+      }
+    });
+    return map;
+  }, [rides]);
   const [vehicleFilter, setVehicleFilter] = useState<VehicleFilter>(() => defaultVehicleFilter(driverProfile));
   const [accessibilityOnly, setAccessibilityOnly] = useState(false);
   const [sortBy, setSortBy] = useState<SortBy>("urgency");
@@ -214,6 +227,7 @@ export function PoolList({ rides, onAccept, acceptingId, isAccepting, driverProf
                 isAccepting={acceptingId === ride.id && isAccepting}
                 onAcceptSeries={onAcceptSeries}
                 isAcceptingSeries={acceptingSeriesId === ride.id}
+                seriesPoolRides={ride.series_id ? seriesPoolMap[ride.series_id] : undefined}
               />
             </li>
           ))}
@@ -244,6 +258,7 @@ export function PoolList({ rides, onAccept, acceptingId, isAccepting, driverProf
                     isAccepting={acceptingId === ride.id && isAccepting}
                     onAcceptSeries={onAcceptSeries}
                     isAcceptingSeries={acceptingSeriesId === ride.id}
+                    seriesPoolRides={ride.series_id ? seriesPoolMap[ride.series_id] : undefined}
                   />
                 </li>
               );

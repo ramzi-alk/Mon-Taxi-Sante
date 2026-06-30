@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { MapPin, Clock, Car, Users, Navigation, Loader2, PlayCircle, FlagTriangleRight, XCircle, User, Phone, CalendarPlus, Banknote, ChevronDown, ChevronUp, ClipboardCheck, Building2, Repeat } from "lucide-react";
+import { SeriesRideSelectPanel } from "./SeriesRideSelectPanel";
 import { formatDateFr, formatTimeFr } from "~/lib/utils";
 import { cn } from "~/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
@@ -63,15 +64,16 @@ interface RideCardProps {
   ride: PoolRide;
   onAccept: (rideId: string) => void;
   isAccepting: boolean;
-  onAcceptSeries?: (rideId: string) => void;
+  onAcceptSeries?: (rideIds: string[]) => void;
   isAcceptingSeries?: boolean;
+  seriesPoolRides?: PoolRide[];
   onStart?: (rideId: string) => void;
   isStarting?: boolean;
   onComplete?: (rideId: string) => void;
   isCompleting?: boolean;
   onCancel?: (rideId: string) => void;
   isCancelling?: boolean;
-  onCancelSeries?: (rideId: string) => void;
+  onCancelSeries?: (rideIds: string[]) => void;
   isCancellingSeries?: boolean;
   onRate?: (rideId: string, rating: number, comment?: string) => void;
   isRating?: boolean;
@@ -333,6 +335,7 @@ export function RideCard({
   isAccepting,
   onAcceptSeries,
   isAcceptingSeries,
+  seriesPoolRides,
   onStart,
   isStarting,
   onComplete,
@@ -350,7 +353,11 @@ export function RideCard({
   const [collapsed, setCollapsed] = useState(isCompleted && ride.driver_rating_given != null);
   const [confirmingCancel, setConfirmingCancel] = useState(false);
   const [confirmingComplete, setConfirmingComplete] = useState(false);
+  const [seriesAcceptOpen, setSeriesAcceptOpen] = useState(false);
+  const [seriesCancelOpen, setSeriesCancelOpen] = useState(false);
   const isSeries = !!ride.series_total && ride.series_total > 1;
+  const selectableSeriesPoolRides = seriesPoolRides && seriesPoolRides.length > 1 ? seriesPoolRides : null;
+  const cancellableSeriesRides = seriesRides?.filter((r) => r.status === "accepted") ?? [];
   const [expanded, setExpanded] = useState(false);
   const [seriesOpen, setSeriesOpen] = useState(false);
   const isPool = ride.status === "available";
@@ -627,17 +634,19 @@ export function RideCard({
                   </>
                 )}
               </button>
-              {isSeries && onAcceptSeries && (
+              {isSeries && onAcceptSeries && selectableSeriesPoolRides && (
                 <button
                   type="button"
-                  onClick={() => onAcceptSeries(ride.id)}
+                  onClick={() => setSeriesAcceptOpen((v) => !v)}
                   disabled={isAcceptingSeries || isAccepting}
-                  aria-label={`Accepter toutes les ${ride.series_total} séances`}
+                  aria-label={`Choisir parmi les ${selectableSeriesPoolRides.length} séances de la série`}
                   aria-busy={isAcceptingSeries}
                   className={cn(
                     "flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 flex-1 sm:flex-initial",
                     (isAcceptingSeries || isAccepting)
                       ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                      : seriesAcceptOpen
+                      ? "bg-violet-200 text-violet-800"
                       : "bg-violet-100 text-violet-700 hover:bg-violet-200 active:scale-95"
                   )}
                 >
@@ -646,7 +655,7 @@ export function RideCard({
                   ) : (
                     <Repeat className="h-4 w-4" aria-hidden="true" />
                   )}
-                  {ride.series_total} séances
+                  {selectableSeriesPoolRides.length}/{ride.series_total} séances
                 </button>
               )}
             </div>
@@ -683,34 +692,32 @@ export function RideCard({
           )}
 
           {ride.status === "accepted" && onCancel && (
-            <div className="w-full">
-              {confirmingCancel ? (
-                <div className="flex flex-wrap items-center gap-3 text-sm pt-2">
-                  <span className="text-gray-700 shrink-0">
-                    {isSeries ? "Se désister de…" : "Annuler cette course ?"}
-                  </span>
-                  {isSeries && onCancelSeries ? (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => { onCancel(ride.id); setConfirmingCancel(false); }}
-                        disabled={isCancelling || isCancellingSeries}
-                        className="font-bold text-red-600 hover:underline disabled:opacity-60 flex items-center gap-1.5 whitespace-nowrap"
-                      >
-                        {isCancelling && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
-                        Cette séance
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => { onCancelSeries(ride.id); setConfirmingCancel(false); }}
-                        disabled={isCancellingSeries || isCancelling}
-                        className="font-bold text-red-800 hover:underline disabled:opacity-60 flex items-center gap-1.5 whitespace-nowrap"
-                      >
-                        {isCancellingSeries && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
-                        Toutes les {ride.series_total} séances
-                      </button>
-                    </>
-                  ) : (
+            <div className="w-full space-y-2">
+              {/* Série : panneau de sélection multi-séances */}
+              {isSeries && onCancelSeries && cancellableSeriesRides.length > 0 ? (
+                seriesCancelOpen ? (
+                  <SeriesRideSelectPanel
+                    rides={cancellableSeriesRides}
+                    mode="cancel"
+                    isSubmitting={!!isCancellingSeries || !!isCancelling}
+                    onConfirm={(ids) => { onCancelSeries(ids); setSeriesCancelOpen(false); }}
+                    onClose={() => setSeriesCancelOpen(false)}
+                  />
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setSeriesCancelOpen(true)}
+                    className="flex items-center gap-1.5 text-xs font-semibold text-red-600 hover:underline pt-2"
+                  >
+                    <XCircle className="h-3.5 w-3.5" aria-hidden="true" />
+                    Me désister de cette série
+                  </button>
+                )
+              ) : (
+                /* Course seule : confirmation classique en 2 étapes */
+                confirmingCancel ? (
+                  <div className="flex items-center gap-3 text-sm pt-2">
+                    <span className="text-gray-700">Annuler cette course ?</span>
                     <button
                       type="button"
                       onClick={() => { onCancel(ride.id); setConfirmingCancel(false); }}
@@ -720,25 +727,25 @@ export function RideCard({
                       {isCancelling && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
                       Oui, annuler
                     </button>
-                  )}
+                    <button
+                      type="button"
+                      onClick={() => setConfirmingCancel(false)}
+                      disabled={isCancelling}
+                      className="text-gray-500 hover:underline"
+                    >
+                      Non
+                    </button>
+                  </div>
+                ) : (
                   <button
                     type="button"
-                    onClick={() => setConfirmingCancel(false)}
-                    disabled={isCancelling || isCancellingSeries}
-                    className="text-gray-500 hover:underline"
+                    onClick={() => setConfirmingCancel(true)}
+                    className="flex items-center gap-1.5 text-xs font-semibold text-red-600 hover:underline pt-2"
                   >
-                    Non
+                    <XCircle className="h-3.5 w-3.5" aria-hidden="true" />
+                    Me désister de cette course
                   </button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setConfirmingCancel(true)}
-                  className="flex items-center gap-1.5 text-xs font-semibold text-red-600 hover:underline pt-2"
-                >
-                  <XCircle className="h-3.5 w-3.5" aria-hidden="true" />
-                  Me désister de cette course
-                </button>
+                )
               )}
             </div>
           )}
@@ -812,6 +819,19 @@ export function RideCard({
               />
             )
           ))}
+
+        {/* Panneau sélection séances à accepter */}
+        {seriesAcceptOpen && selectableSeriesPoolRides && onAcceptSeries && (
+          <div className="pt-2 border-t border-gray-100">
+            <SeriesRideSelectPanel
+              rides={selectableSeriesPoolRides}
+              mode="accept"
+              isSubmitting={!!isAcceptingSeries}
+              onConfirm={(ids) => { onAcceptSeries(ids); setSeriesAcceptOpen(false); }}
+              onClose={() => setSeriesAcceptOpen(false)}
+            />
+          </div>
+        )}
 
         {/* Drawer série */}
         {seriesRides && seriesRides.length > 1 && (

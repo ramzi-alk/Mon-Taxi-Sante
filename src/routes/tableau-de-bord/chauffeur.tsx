@@ -328,13 +328,16 @@ function DriverDashboard() {
   });
 
   const cancelSeriesMutation = useMutation({
-    mutationFn: cancelSeriesRides,
-    onMutate: (rideId) => setCancellingSeriesId(rideId),
-    onSuccess: (_, rideId) => {
-      toast({ title: "Série annulée", description: "Toutes les séances sont retournées dans le pool.", variant: "default" });
-      // Un seul email récap pour la série (notifyRideUnassignedServerFn détecte series_id)
-      notifyRideUnassignedServerFn({ data: { bookingId: rideId } }).catch((err) => {
-        logger.warn("email.notifyRideUnassigned (series) failed", { error: err.message, rideId });
+    mutationFn: async (rideIds: string[]) => {
+      for (const id of rideIds) await cancelRideByDriver(id);
+    },
+    onMutate: ([firstId]) => setCancellingSeriesId(firstId),
+    onSuccess: (_, rideIds) => {
+      const n = rideIds.length;
+      toast({ title: `${n} séance${n > 1 ? "s" : ""} annulée${n > 1 ? "s" : ""}`, description: "Retournées dans le pool.", variant: "default" });
+      // Un seul email récap : la server fn détecte series_id automatiquement
+      notifyRideUnassignedServerFn({ data: { bookingId: rideIds[0] } }).catch((err) => {
+        logger.warn("email.notifyRideUnassigned (series) failed", { error: err.message, rideId: rideIds[0] });
       });
     },
     onSettled: () => {
@@ -342,8 +345,8 @@ function DriverDashboard() {
       queryClient.invalidateQueries({ queryKey: ["ride-pool"] });
       queryClient.invalidateQueries({ queryKey: ["my-rides"] });
     },
-    onError: (error, rideId) => {
-      logger.error("driver.cancelSeriesRides failed", { error: error.message, rideId });
+    onError: (error) => {
+      logger.error("driver.cancelSeriesRides failed", { error: error.message });
       toast({ title: "Erreur", description: error.message, variant: "error" });
     },
   });
@@ -421,13 +424,16 @@ function DriverDashboard() {
   }, [availability]);
 
   const acceptSeriesMutation = useMutation({
-    mutationFn: acceptSeriesRides,
-    onMutate: (rideId) => setAcceptingSeriesId(rideId),
-    onSuccess: (_, rideId) => {
-      toast({ title: "Toutes les séances acceptées !", variant: "success" });
-      // Un seul email récap est envoyé côté serveur par accept_series — pas de boucle ici
-      notifyBookingAcceptedServerFn({ data: { bookingId: rideId } }).catch((err) => {
-        logger.warn("email.notifySeriesAccepted failed", { error: err.message, rideId });
+    mutationFn: async (rideIds: string[]) => {
+      for (const id of rideIds) await acceptRide(id);
+    },
+    onMutate: ([firstId]) => setAcceptingSeriesId(firstId),
+    onSuccess: (_, rideIds) => {
+      const n = rideIds.length;
+      toast({ title: `${n} séance${n > 1 ? "s" : ""} acceptée${n > 1 ? "s" : ""} !`, variant: "success" });
+      // Un seul email récap : on passe le premier ID, la server fn détecte series_id
+      notifyBookingAcceptedServerFn({ data: { bookingId: rideIds[0] } }).catch((err) => {
+        logger.warn("email.notifySeriesAccepted failed", { error: err.message, rideId: rideIds[0] });
       });
     },
     onSettled: () => {
@@ -435,8 +441,8 @@ function DriverDashboard() {
       queryClient.invalidateQueries({ queryKey: ["ride-pool"] });
       queryClient.invalidateQueries({ queryKey: ["my-rides"] });
     },
-    onError: (error, rideId) => {
-      logger.error("driver.acceptSeriesRides failed", { error: error.message, rideId });
+    onError: (error) => {
+      logger.error("driver.acceptSeriesRides failed", { error: error.message });
       toast({ title: "Erreur série", description: error.message, variant: "error" });
     },
   });
@@ -760,7 +766,7 @@ function DriverDashboard() {
                 onAccept={(id) => acceptMutation.mutate(id)}
                 acceptingId={acceptingId}
                 isAccepting={acceptMutation.isPending}
-                onAcceptSeries={(id) => acceptSeriesMutation.mutate(id)}
+                onAcceptSeries={(ids) => acceptSeriesMutation.mutate(ids)}
                 acceptingSeriesId={acceptingSeriesId}
                 driverProfile={
                   availabilityQuery.data
@@ -819,7 +825,7 @@ function DriverDashboard() {
                             isCompleting={completingId === ride.id && completeMutation.isPending}
                             onCancel={(id) => cancelMutation.mutate(id)}
                             isCancelling={cancellingId === ride.id && cancelMutation.isPending}
-                            onCancelSeries={(id) => cancelSeriesMutation.mutate(id)}
+                            onCancelSeries={(ids) => cancelSeriesMutation.mutate(ids)}
                             isCancellingSeries={cancellingSeriesId === ride.id && cancelSeriesMutation.isPending}
                             onRate={(id, rating, comment) => rateMutation.mutate({ rideId: id, rating, comment })}
                             isRating={ratingId === ride.id && rateMutation.isPending}

@@ -14,13 +14,15 @@ import {
 import { formatDateFr, formatTimeFr, cn } from "~/lib/utils";
 import { useEffect, useState } from "react";
 import { AddressLink, vehicleIcons, type PoolRide } from "./RideCard";
+import { SeriesRideSelectPanel } from "./SeriesRideSelectPanel";
 
 interface PoolRideRowProps {
   ride: PoolRide;
   onAccept: (rideId: string) => void;
   isAccepting: boolean;
-  onAcceptSeries?: (rideId: string) => void;
+  onAcceptSeries?: (rideIds: string[]) => void;
   isAcceptingSeries?: boolean;
+  seriesPoolRides?: PoolRide[];
 }
 
 const URGENT_THRESHOLD_MIN = 45;
@@ -38,8 +40,11 @@ function useMinutesUntil(datetimeStr: string) {
   return minutes;
 }
 
-export function PoolRideRow({ ride, onAccept, isAccepting, onAcceptSeries, isAcceptingSeries }: PoolRideRowProps) {
+export function PoolRideRow({ ride, onAccept, isAccepting, onAcceptSeries, isAcceptingSeries, seriesPoolRides }: PoolRideRowProps) {
   const [expanded, setExpanded] = useState(false);
+  const [seriesSelectOpen, setSeriesSelectOpen] = useState(false);
+
+  const selectableSeriesRides = seriesPoolRides && seriesPoolRides.length > 1 ? seriesPoolRides : null;
 
   const pickupDate = formatDateFr(ride.pickup_datetime);
   const pickupTime = formatTimeFr(ride.pickup_datetime);
@@ -191,16 +196,18 @@ export function PoolRideRow({ ride, onAccept, isAccepting, onAcceptSeries, isAcc
               }
             </button>
           )}
-          {onAcceptSeries && !!ride.series_total && ride.series_total > 1 && (
+          {onAcceptSeries && selectableSeriesRides && (
             <button
               type="button"
-              onClick={() => onAcceptSeries(ride.id)}
+              onClick={() => setSeriesSelectOpen((v) => !v)}
               disabled={isAcceptingSeries || isAccepting}
-              aria-label={`Accepter toutes les ${ride.series_total} séances`}
+              aria-label={`Choisir parmi les ${selectableSeriesRides.length} séances de la série`}
               className={cn(
                 "shrink-0 flex items-center gap-0.5 rounded-lg px-2 py-1 text-[10px] font-bold transition-all",
                 (isAcceptingSeries || isAccepting)
                   ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  : seriesSelectOpen
+                  ? "bg-violet-200 text-violet-800"
                   : "bg-violet-100 text-violet-700 hover:bg-violet-200"
               )}
             >
@@ -208,7 +215,7 @@ export function PoolRideRow({ ride, onAccept, isAccepting, onAcceptSeries, isAcc
                 ? <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />
                 : <Repeat className="h-3 w-3" aria-hidden="true" />
               }
-              {ride.series_total} séances
+              {selectableSeriesRides.length}/{ride.series_total} séances
             </button>
           )}
         </div>
@@ -231,6 +238,19 @@ export function PoolRideRow({ ride, onAccept, isAccepting, onAcceptSeries, isAcc
               </span>
             )}
           </div>
+        </div>
+      )}
+
+      {/* ── Sélection séances à accepter ─────────────────────────────── */}
+      {seriesSelectOpen && selectableSeriesRides && onAcceptSeries && (
+        <div className="px-3 pb-3">
+          <SeriesRideSelectPanel
+            rides={selectableSeriesRides}
+            mode="accept"
+            isSubmitting={!!isAcceptingSeries}
+            onConfirm={(ids) => { onAcceptSeries(ids); setSeriesSelectOpen(false); }}
+            onClose={() => setSeriesSelectOpen(false)}
+          />
         </div>
       )}
     </article>
