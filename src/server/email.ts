@@ -160,12 +160,16 @@ export const notifyBookingAcceptedServerFn = createServerFn({ method: "POST" })
       return;
     }
 
-    // Fetch series info in parallel with driver info when applicable
+    // Fetch series info in parallel with driver info when applicable.
+    // Filter to rides accepted by THIS driver so the count reflects what was
+    // actually accepted (a driver may have accepted a subset of the series).
     const seriesQuery = bookingTyped2.series_id
       ? admin
           .from("bookings")
           .select("pickup_datetime")
           .eq("series_id", bookingTyped2.series_id)
+          .eq("status", "accepted")
+          .eq("driver_id", booking.driver_id)
           .order("pickup_datetime", { ascending: true })
       : null;
 
@@ -274,7 +278,7 @@ export const notifyBookingUpdatedServerFn = createServerFn({ method: "POST" })
   });
 
 export const notifyRideUnassignedServerFn = createServerFn({ method: "POST" })
-  .validator((input: { bookingId: string }) => input)
+  .validator((input: { bookingId: string; seriesAffectedCount?: number }) => input)
   .handler(async ({ data }) => {
     const admin = getSupabaseAdminClient();
     const { data: booking, error } = await admin
@@ -301,7 +305,9 @@ export const notifyRideUnassignedServerFn = createServerFn({ method: "POST" })
       return;
     }
 
-    // Fetch series context when applicable (same pattern as notifyBookingAcceptedServerFn)
+    // Fetch series context when applicable.
+    // When the caller passes seriesAffectedCount (partial series cancel), use that
+    // as the total so the email reflects rides actually lost, not the full series.
     let seriesTotal: number | undefined;
     let seriesLastPickupDatetime: string | undefined;
     if (bookingTyped3.series_id) {
@@ -311,7 +317,7 @@ export const notifyRideUnassignedServerFn = createServerFn({ method: "POST" })
         .eq("series_id", bookingTyped3.series_id)
         .order("pickup_datetime", { ascending: true });
       if (seriesRides && seriesRides.length > 1) {
-        seriesTotal = seriesRides.length;
+        seriesTotal = data.seriesAffectedCount ?? seriesRides.length;
         seriesLastPickupDatetime = seriesRides[seriesRides.length - 1].pickup_datetime;
       }
     }

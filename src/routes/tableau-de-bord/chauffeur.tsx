@@ -335,8 +335,9 @@ function DriverDashboard() {
     onSuccess: (_, rideIds) => {
       const n = rideIds.length;
       toast({ title: `${n} séance${n > 1 ? "s" : ""} annulée${n > 1 ? "s" : ""}`, description: "Retournées dans le pool.", variant: "default" });
-      // Un seul email récap : la server fn détecte series_id automatiquement
-      notifyRideUnassignedServerFn({ data: { bookingId: rideIds[0] } }).catch((err) => {
+      // Un seul email récap : on passe le compte exact annulé pour que l'email
+      // reflète les séances réellement perdues (sélection partielle possible)
+      notifyRideUnassignedServerFn({ data: { bookingId: rideIds[0], seriesAffectedCount: rideIds.length } }).catch((err) => {
         logger.warn("email.notifyRideUnassigned (series) failed", { error: err.message, rideId: rideIds[0] });
       });
     },
