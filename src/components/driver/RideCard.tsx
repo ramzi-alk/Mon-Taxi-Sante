@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { MapPin, Clock, Car, Users, Navigation, Loader2, PlayCircle, FlagTriangleRight, XCircle, User, CalendarPlus, Banknote, ChevronDown, ChevronUp, ClipboardCheck, Building2, Repeat, Lock } from "lucide-react";
+import { MapPin, Clock, Car, Users, Navigation, Loader2, PlayCircle, FlagTriangleRight, XCircle, User, Phone, CalendarPlus, Banknote, ChevronDown, ChevronUp, ClipboardCheck, Building2, Repeat, Lock } from "lucide-react";
 import { SeriesRideSelectPanel } from "./SeriesRideSelectPanel";
 import { formatDateFr, formatTimeFr, formatCountdown } from "~/lib/utils";
 import { cn } from "~/lib/utils";
@@ -377,6 +377,14 @@ export function RideCard({
   const minutesUntilPickup = useMinutesUntil(ride.pickup_datetime);
   const pickupIsUrgent = minutesUntilPickup >= 0 && minutesUntilPickup <= 45;
   const pickupIsCritical = minutesUntilPickup >= 0 && minutesUntilPickup <= 20;
+  // Contact info + exact pickup address revealed 24h before pickup for accepted rides.
+  const REVEAL_THRESHOLD_MIN = 24 * 60;
+  const isContactRevealed =
+    isPool ||
+    ride.status === "in_progress" ||
+    ride.status === "completed" ||
+    minutesUntilPickup <= REVEAL_THRESHOLD_MIN;
+  const minutesUntilReveal = minutesUntilPickup - REVEAL_THRESHOLD_MIN;
   const pickupDate = formatDateFr(ride.pickup_datetime);
   const pickupTime = formatTimeFr(ride.pickup_datetime);
   const isToday = new Date(ride.pickup_datetime).toDateString() === new Date().toDateString();
@@ -512,12 +520,19 @@ export function RideCard({
               ) : (
                 <p className="text-xs text-muted-foreground">Départ</p>
               )}
-              <AddressLink
-                address={ride.pickup_address}
-                lat={ride.pickup_lat}
-                lng={ride.pickup_lng}
-                className="text-sm font-medium text-gray-900 leading-snug break-words"
-              />
+              {isContactRevealed ? (
+                <AddressLink
+                  address={ride.pickup_address}
+                  lat={ride.pickup_lat}
+                  lng={ride.pickup_lng}
+                  className="text-sm font-medium text-gray-900 leading-snug break-words"
+                />
+              ) : (
+                <p className="flex items-center gap-1.5 text-xs text-gray-400 italic">
+                  <Lock className="h-3 w-3 shrink-0" aria-hidden="true" />
+                  Adresse disponible dans {formatCountdown(minutesUntilReveal)}
+                </p>
+              )}
             </div>
           </div>
           <div className="flex items-start gap-2.5">
@@ -615,7 +630,9 @@ export function RideCard({
           <div className="rounded-xl bg-brand-green-50/60 border border-brand-green-100 p-3 space-y-1.5">
             <p className="flex items-center gap-2 text-sm font-semibold text-gray-900">
               <User className="h-4 w-4 text-brand-green-600" aria-hidden="true" />
-              {ride.patient_first_name}
+              {isContactRevealed
+                ? (ride.patient_full_name ?? ride.patient_first_name)
+                : ride.patient_first_name}
               {ride.patient_rating_avg != null && (
                 <span className="flex items-center gap-1 text-xs font-medium text-gray-600">
                   <StarRating value={ride.patient_rating_avg} readOnly size="sm" />
@@ -626,14 +643,26 @@ export function RideCard({
                 <StarRating value={ride.patient_rating_received} readOnly size="sm" />
               )}
             </p>
-            <p className="flex items-center gap-1.5 text-xs text-gray-400 italic min-w-0 overflow-hidden">
-              <Lock className="h-3 w-3 shrink-0" aria-hidden="true" />
-              <span className="truncate">
-                {isPool
-                  ? "Nom complet et téléphone révélés après acceptation"
-                  : "Coordonnées masquées — gérées par la centrale"}
-              </span>
-            </p>
+            {isContactRevealed && !isPool ? (
+              ride.patient_phone ? (
+                <a
+                  href={`tel:${ride.patient_phone}`}
+                  className="flex items-center gap-2 text-sm font-medium text-brand-green-700 hover:underline"
+                >
+                  <Phone className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                  {ride.patient_phone}
+                </a>
+              ) : null
+            ) : (
+              <p className="flex items-center gap-1.5 text-xs text-gray-400 italic min-w-0 overflow-hidden">
+                <Lock className="h-3 w-3 shrink-0" aria-hidden="true" />
+                <span className="truncate">
+                  {isPool
+                    ? "Nom complet et téléphone révélés après acceptation"
+                    : `Téléphone disponible dans ${formatCountdown(minutesUntilReveal)}`}
+                </span>
+              </p>
+            )}
           </div>
         )}
 
