@@ -93,6 +93,18 @@ interface RideCardProps {
   seriesRides?: PoolRide[];
 }
 
+// Returns how many minutes before pickup the contact/address is revealed.
+// Same day (< 24 h away)  → 0   (always visible)
+// Tomorrow  (24 h – 48 h) → 4 h before
+// Day after (48 h – 72 h) → 8 h before
+// Further out              → 24 h before
+function revealThresholdMin(minutesUntilPickup: number): number {
+  if (minutesUntilPickup <= 24 * 60) return 0;
+  if (minutesUntilPickup <= 48 * 60) return 4 * 60;
+  if (minutesUntilPickup <= 72 * 60) return 8 * 60;
+  return 24 * 60;
+}
+
 const vehicleIcons: Record<string, string> = {
   taxi: "🚕",
   vsl: "🚐",
@@ -377,14 +389,14 @@ export function RideCard({
   const minutesUntilPickup = useMinutesUntil(ride.pickup_datetime);
   const pickupIsUrgent = minutesUntilPickup >= 0 && minutesUntilPickup <= 45;
   const pickupIsCritical = minutesUntilPickup >= 0 && minutesUntilPickup <= 20;
-  // Contact info + exact pickup address revealed 24h before pickup for accepted rides.
-  const REVEAL_THRESHOLD_MIN = 24 * 60;
+  // Contact info + exact pickup address: progressive reveal threshold.
+  const threshold = revealThresholdMin(minutesUntilPickup);
   const isContactRevealed =
     isPool ||
     ride.status === "in_progress" ||
     ride.status === "completed" ||
-    minutesUntilPickup <= REVEAL_THRESHOLD_MIN;
-  const minutesUntilReveal = minutesUntilPickup - REVEAL_THRESHOLD_MIN;
+    minutesUntilPickup <= threshold;
+  const minutesUntilReveal = minutesUntilPickup - threshold;
   const pickupDate = formatDateFr(ride.pickup_datetime);
   const pickupTime = formatTimeFr(ride.pickup_datetime);
   const isToday = new Date(ride.pickup_datetime).toDateString() === new Date().toDateString();
