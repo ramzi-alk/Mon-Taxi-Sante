@@ -413,7 +413,7 @@ export function RideCard({
       {/* ── Header — toujours visible ──────────────────────────────── */}
       <div
         className={cn(
-          "flex items-center justify-between px-4 py-2 border-b",
+          "flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between px-4 py-2 border-b",
           isCompleted ? "bg-gray-50 cursor-pointer" : "bg-gray-50"
         )}
         onClick={isCompleted ? () => setCollapsed((v) => !v) : undefined}
@@ -422,7 +422,7 @@ export function RideCard({
         tabIndex={isCompleted ? 0 : undefined}
         onKeyDown={isCompleted ? (e) => e.key === "Enter" && setCollapsed((v) => !v) : undefined}
       >
-        <span className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 min-w-0 mr-2">
+        <span className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 min-w-0">
           <Clock className="h-4 w-4 text-brand-blue-500 shrink-0" aria-hidden="true" />
           {ride.status === "accepted" ? (
             <CalendarButton ride={ride}>
@@ -432,12 +432,12 @@ export function RideCard({
               <CalendarPlus className="h-3.5 w-3.5 text-gray-400" aria-hidden="true" />
             </CalendarButton>
           ) : (
-            <time dateTime={ride.pickup_datetime} className="truncate">
+            <time dateTime={ride.pickup_datetime}>
               {dayLabel} à {pickupTime}
             </time>
           )}
         </span>
-        <span className="flex items-center gap-1 flex-wrap justify-end shrink-0 max-w-[60%]">
+        <span className="flex items-center gap-1 flex-wrap sm:justify-end shrink-0">
           {ride.estimated_price != null && (
             <span
               className={cn(
