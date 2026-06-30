@@ -20,7 +20,6 @@ import {
   WifiOff,
   Radio,
   RadioTower,
-  Settings2,
   Mail,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -557,26 +556,63 @@ function DriverDashboard() {
         <section aria-labelledby="stats-heading">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
             <h2 id="stats-heading" className="text-xl font-bold text-gray-900">Statistiques</h2>
-            <div role="tablist" aria-label="Période" className="flex gap-0.5 rounded-lg bg-white ring-1 ring-gray-200 p-0.5 shadow-sm">
-              {(["today", "week", "month", "total"] as const).map((p) => {
-                const labels = { today: "Auj.", week: "7 jours", month: "30 jours", total: "Total" };
-                return (
-                  <button
-                    key={p}
-                    role="tab"
-                    aria-selected={statsPeriod === p}
-                    onClick={() => setStatsPeriod(p)}
-                    className={cn(
-                      "rounded-md px-3 py-1 text-xs font-semibold transition-colors",
-                      statsPeriod === p
-                        ? "bg-brand-blue-600 text-white shadow-sm"
-                        : "text-gray-500 hover:text-gray-800"
-                    )}
-                  >
-                    {labels[p]}
-                  </button>
-                );
-              })}
+            <div className="flex items-center gap-2">
+              {/* Toggles son + temps réel — icônes compactes */}
+              <button
+                type="button"
+                onClick={() => {
+                  const next = !soundEnabled;
+                  setSoundEnabled(next);
+                  try { localStorage.setItem("driver-sound", next ? "on" : "off"); } catch {}
+                }}
+                aria-pressed={soundEnabled}
+                aria-label={soundEnabled ? "Désactiver le son" : "Activer le son"}
+                title={soundEnabled ? "Son activé" : "Son désactivé"}
+                className={cn(
+                  "flex h-7 w-7 items-center justify-center rounded-lg border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  soundEnabled
+                    ? "bg-brand-green-50 border-brand-green-200 text-brand-green-700"
+                    : "bg-white border-gray-200 text-gray-400 hover:bg-gray-50"
+                )}
+              >
+                {soundEnabled ? <Bell className="h-3.5 w-3.5" aria-hidden="true" /> : <BellOff className="h-3.5 w-3.5" aria-hidden="true" />}
+              </button>
+              <button
+                type="button"
+                onClick={() => setRealtimeEnabled((v) => !v)}
+                aria-pressed={realtimeEnabled}
+                aria-label={realtimeEnabled ? "Désactiver le temps réel" : "Activer le temps réel"}
+                title={realtimeEnabled ? "Temps réel activé" : "Temps réel désactivé"}
+                className={cn(
+                  "flex h-7 w-7 items-center justify-center rounded-lg border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  realtimeEnabled
+                    ? "bg-brand-blue-50 border-brand-blue-200 text-brand-blue-700"
+                    : "bg-white border-gray-200 text-gray-400 hover:bg-gray-50"
+                )}
+              >
+                {realtimeEnabled ? <RadioTower className="h-3.5 w-3.5" aria-hidden="true" /> : <Radio className="h-3.5 w-3.5" aria-hidden="true" />}
+              </button>
+              <div role="tablist" aria-label="Période" className="flex gap-0.5 rounded-lg bg-white ring-1 ring-gray-200 p-0.5 shadow-sm">
+                {(["today", "week", "month", "total"] as const).map((p) => {
+                  const labels = { today: "Auj.", week: "7 j", month: "30 j", total: "Total" };
+                  return (
+                    <button
+                      key={p}
+                      role="tab"
+                      aria-selected={statsPeriod === p}
+                      onClick={() => setStatsPeriod(p)}
+                      className={cn(
+                        "rounded-md px-2.5 py-1 text-xs font-semibold transition-colors",
+                        statsPeriod === p
+                          ? "bg-brand-blue-600 text-white shadow-sm"
+                          : "text-gray-500 hover:text-gray-800"
+                      )}
+                    >
+                      {labels[p]}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
@@ -657,55 +693,6 @@ function DriverDashboard() {
                   </button>
                 );
               })}
-            </div>
-          </div>
-        </section>
-
-        {/* #14 Paramètres (son + temps réel) */}
-        <section aria-labelledby="settings-heading">
-          <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-100">
-            <div className="flex items-center gap-2 mb-3">
-              <Settings2 className="h-4 w-4 text-brand-blue-500" aria-hidden="true" />
-              <h2 id="settings-heading" className="text-sm font-bold text-gray-900">Paramètres</h2>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  const next = !soundEnabled;
-                  setSoundEnabled(next);
-                  try { localStorage.setItem("driver-sound", next ? "on" : "off"); } catch {}
-                }}
-                aria-pressed={soundEnabled}
-                aria-label={soundEnabled ? "Désactiver le son des nouvelles courses" : "Activer le son des nouvelles courses"}
-                className={cn(
-                  "flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                  soundEnabled
-                    ? "bg-brand-green-50 border-brand-green-200 text-brand-green-800"
-                    : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
-                )}
-              >
-                {soundEnabled ? <Bell className="h-4 w-4" aria-hidden="true" /> : <BellOff className="h-4 w-4" aria-hidden="true" />}
-                Son {soundEnabled ? "activé" : "désactivé"}
-              </button>
-              <button
-                type="button"
-                onClick={() => setRealtimeEnabled((v) => !v)}
-                aria-pressed={realtimeEnabled}
-                aria-label={realtimeEnabled ? "Désactiver les mises à jour en temps réel" : "Activer les mises à jour en temps réel"}
-                className={cn(
-                  "flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                  realtimeEnabled
-                    ? "bg-brand-blue-50 border-brand-blue-200 text-brand-blue-800"
-                    : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
-                )}
-              >
-                {realtimeEnabled
-                  ? <RadioTower className="h-4 w-4" aria-hidden="true" />
-                  : <Radio className="h-4 w-4" aria-hidden="true" />
-                }
-                Temps réel {realtimeEnabled ? "activé" : "désactivé"}
-              </button>
             </div>
           </div>
         </section>
