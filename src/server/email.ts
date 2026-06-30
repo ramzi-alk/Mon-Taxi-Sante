@@ -3,6 +3,7 @@ import { getResendClient, EMAIL_FROM, ADMIN_NOTIFICATION_EMAIL } from "~/lib/res
 import { getSupabaseAdminClient } from "~/lib/supabaseAdmin";
 import { logger } from "~/lib/logger";
 import { isContactRevealedAt } from "~/lib/bookingMasking";
+import { sendPushToDriver } from "./push";
 import {
   bookingConfirmationEmail,
   bookingCancellationEmail,
@@ -319,6 +320,14 @@ export const notifyBookingUpdatedServerFn = createServerFn({ method: "POST" })
       return;
     }
 
+    // Push notification — fire-and-forget, independent of email
+    sendPushToDriver(booking.driver_id, {
+      title: "Course modifiée par le patient",
+      body: `Vérifiez les nouveaux détails de la course du ${new Date(booking.pickup_datetime).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}.`,
+      url: "/tableau-de-bord/chauffeur",
+      tag: `booking-updated-${data.bookingId}`,
+    }).catch(() => {});
+
     try {
       const { data: driverProfile } = await admin
         .from("profiles")
@@ -443,6 +452,14 @@ export const notifyDriverPatientCancelledServerFn = createServerFn({ method: "PO
       .single();
 
     if (!profile?.email) return;
+
+    // Push notification — fire-and-forget, independent of email
+    sendPushToDriver(booking.driver_id, {
+      title: "Course annulée par le patient",
+      body: `La course du ${new Date(booking.pickup_datetime).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })} a été annulée.`,
+      url: "/tableau-de-bord/chauffeur",
+      tag: `booking-cancelled-${data.bookingId}`,
+    }).catch(() => {});
 
     try {
       const { subject, html } = bookingCancelledDriverEmail({

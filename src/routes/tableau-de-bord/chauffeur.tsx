@@ -27,6 +27,7 @@ import { supabase } from "~/lib/supabase";
 import { cn, formatPrice, formatDateFr, formatTimeFr } from "~/lib/utils";
 import { useRealtime } from "~/hooks/useRealtime";
 import { useOnlineStatus } from "~/hooks/useOnlineStatus";
+import { usePushNotifications } from "~/hooks/usePushNotifications";
 import { RideCard, type PoolRide } from "~/components/driver/RideCard";
 import { PoolList } from "~/components/driver/PoolList";
 import { SkeletonRideCard } from "~/components/driver/SkeletonCard";
@@ -173,6 +174,7 @@ function DriverDashboard() {
   const [soundEnabled, setSoundEnabled] = useState(() => {
     try { return localStorage.getItem("driver-sound") !== "off"; } catch { return true; }
   });
+  const push = usePushNotifications();
   const prevPoolCountRef = useRef<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [acceptingSeriesId, setAcceptingSeriesId] = useState<string | null>(null);
@@ -582,7 +584,7 @@ function DriverDashboard() {
           <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
             <h2 id="stats-heading" className="text-xl font-bold text-gray-900">Statistiques</h2>
             <div className="flex items-center gap-2">
-              {/* Toggles son + temps réel — icônes compactes */}
+              {/* Toggles son + notifs push + temps réel — icônes compactes */}
               <button
                 type="button"
                 onClick={() => {
@@ -602,6 +604,24 @@ function DriverDashboard() {
               >
                 {soundEnabled ? <Bell className="h-3.5 w-3.5" aria-hidden="true" /> : <BellOff className="h-3.5 w-3.5" aria-hidden="true" />}
               </button>
+              {push.isSupported && push.permission !== "denied" && (
+                <button
+                  type="button"
+                  onClick={() => push.isSubscribed ? push.unsubscribe() : push.subscribe()}
+                  disabled={push.isLoading}
+                  aria-pressed={push.isSubscribed}
+                  aria-label={push.isSubscribed ? "Désactiver les notifications push" : "Activer les notifications push"}
+                  title={push.isSubscribed ? "Notifications push activées" : "Activer les notifications push"}
+                  className={cn(
+                    "flex h-7 w-7 items-center justify-center rounded-lg border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    push.isSubscribed
+                      ? "bg-brand-blue-50 border-brand-blue-200 text-brand-blue-700"
+                      : "bg-white border-gray-200 text-gray-400 hover:bg-gray-50"
+                  )}
+                >
+                  <RadioTower className="h-3.5 w-3.5" aria-hidden="true" />
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => setRealtimeEnabled((v) => !v)}

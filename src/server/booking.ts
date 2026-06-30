@@ -5,6 +5,7 @@ import * as bookingsRepository from "~/repositories/bookingsRepository";
 import * as profilesRepository from "~/repositories/profilesRepository";
 import { getSupabaseAdminClient } from "~/lib/supabaseAdmin";
 import { sendBookingConfirmationEmail } from "./email";
+import { sendPushToAllDrivers } from "./push";
 
 interface SubmitBookingPayload {
   patient_id: string;
@@ -107,6 +108,16 @@ export const submitBookingServerFn = createServerFn({ method: "POST" })
           : undefined,
       });
     }
+
+    // Notify all subscribed drivers of new pool ride — fire-and-forget
+    sendPushToAllDrivers({
+      title: "Nouvelle course disponible",
+      body: isSeries
+        ? `Série de ${data.payloads.length} séances — ${firstPayload.pickup_address}`
+        : `${firstPayload.pickup_address} → ${firstPayload.dropoff_address}`,
+      url: "/tableau-de-bord/chauffeur",
+      tag: `new-ride-${firstBooking.id}`,
+    }).catch(() => {});
 
     return { ...firstBooking, seriesTotal: isSeries ? data.payloads.length : undefined };
   });
