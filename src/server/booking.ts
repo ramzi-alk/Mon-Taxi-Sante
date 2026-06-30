@@ -5,7 +5,7 @@ import * as bookingsRepository from "~/repositories/bookingsRepository";
 import * as profilesRepository from "~/repositories/profilesRepository";
 import { getSupabaseAdminClient } from "~/lib/supabaseAdmin";
 import { sendBookingConfirmationEmail } from "./email";
-import { sendPushToAllDrivers } from "./push";
+import { sendPushToAllDrivers } from "./pushSend";
 
 interface SubmitBookingPayload {
   patient_id: string;
