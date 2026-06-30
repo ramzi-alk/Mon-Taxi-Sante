@@ -17,13 +17,20 @@ import {
   MapPin,
   UserCog,
   Star,
+  WifiOff,
+  Radio,
+  RadioTower,
+  Settings2,
+  Mail,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "~/lib/supabase";
 import { cn, formatPrice } from "~/lib/utils";
 import { useRealtime } from "~/hooks/useRealtime";
+import { useOnlineStatus } from "~/hooks/useOnlineStatus";
 import { RideCard, type PoolRide } from "~/components/driver/RideCard";
 import { PoolList } from "~/components/driver/PoolList";
+import { SkeletonRideCard } from "~/components/driver/SkeletonCard";
 import { useToast } from "~/components/ui/toast";
 import * as authRepository from "~/repositories/authRepository";
 import * as bookingsRepository from "~/repositories/bookingsRepository";
@@ -170,6 +177,7 @@ function DriverDashboard() {
   const prevPoolCountRef = useRef<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [acceptingSeriesId, setAcceptingSeriesId] = useState<string | null>(null);
+  const isOnline = useOnlineStatus();
 
   // Driver's own online/paused/offline status — the pool only shows rides
   // to drivers who are "online" (see migration 018).
@@ -246,6 +254,7 @@ function DriverDashboard() {
     queryKey: ["ride-pool"],
     event: "*",
     filter: "status=eq.available",
+    enabled: realtimeEnabled,
   });
 
   // Also update my rides when a booking is accepted
@@ -253,6 +262,7 @@ function DriverDashboard() {
     table: "bookings",
     queryKey: ["my-rides"],
     event: "UPDATE",
+    enabled: realtimeEnabled,
   });
 
   const acceptMutation = useMutation({
@@ -465,10 +475,26 @@ function DriverDashboard() {
     }
   }, [poolRides.length, availability, soundEnabled]);
 
+  const unratedRides = myRides.filter(
+    (r) => r.status === "completed" && r.driver_rating_given == null
+  );
+
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* #20 Bannière offline */}
+      {!isOnline && (
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="fixed top-0 inset-x-0 z-50 flex items-center justify-center gap-2 bg-gray-900 px-4 py-2 text-sm font-semibold text-white"
+        >
+          <WifiOff className="h-4 w-4 shrink-0" aria-hidden="true" />
+          Connexion perdue — les données peuvent être obsolètes
+        </div>
+      )}
+
       {/* Header */}
-      <div className="bg-brand-blue-700 text-white">
+      <div className={cn("bg-brand-blue-700 text-white", !isOnline && "mt-9")}>
         <div className="container py-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -498,7 +524,7 @@ function DriverDashboard() {
                     disabled={availabilityMutation.isPending}
                     onClick={() => availabilityMutation.mutate(value)}
                     className={cn(
-                      "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors",
+                      "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-brand-blue-700",
                       availability === value
                         ? value === "online"
                           ? "bg-brand-green-500 text-white"
@@ -521,30 +547,6 @@ function DriverDashboard() {
                 <UserCog className="h-4 w-4" aria-hidden="true" />
                 Mon compte
               </Link>
-              <button
-                onClick={() => {
-                  const next = !soundEnabled;
-                  setSoundEnabled(next);
-                  try { localStorage.setItem("driver-sound", next ? "on" : "off"); } catch {}
-                }}
-                className="flex items-center gap-2 rounded-xl bg-white/10 border border-white/20 px-4 py-2 text-sm font-medium hover:bg-white/20 transition-colors"
-                aria-pressed={soundEnabled}
-                aria-label={soundEnabled ? "Désactiver le son" : "Activer le son"}
-                title={soundEnabled ? "Son activé — cliquer pour désactiver" : "Son désactivé — cliquer pour activer"}
-              >
-                {soundEnabled ? (
-                  <>
-                    <Bell className="h-4 w-4" aria-hidden="true" />
-                    <span className="h-2 w-2 rounded-full bg-brand-green-400 animate-pulse" aria-hidden="true" />
-                    Son activé
-                  </>
-                ) : (
-                  <>
-                    <BellOff className="h-4 w-4" aria-hidden="true" />
-                    Son désactivé
-                  </>
-                )}
-              </button>
             </div>
           </div>
         </div>
@@ -659,6 +661,55 @@ function DriverDashboard() {
           </div>
         </section>
 
+        {/* #14 Paramètres (son + temps réel) */}
+        <section aria-labelledby="settings-heading">
+          <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-100">
+            <div className="flex items-center gap-2 mb-3">
+              <Settings2 className="h-4 w-4 text-brand-blue-500" aria-hidden="true" />
+              <h2 id="settings-heading" className="text-sm font-bold text-gray-900">Paramètres</h2>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  const next = !soundEnabled;
+                  setSoundEnabled(next);
+                  try { localStorage.setItem("driver-sound", next ? "on" : "off"); } catch {}
+                }}
+                aria-pressed={soundEnabled}
+                aria-label={soundEnabled ? "Désactiver le son des nouvelles courses" : "Activer le son des nouvelles courses"}
+                className={cn(
+                  "flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  soundEnabled
+                    ? "bg-brand-green-50 border-brand-green-200 text-brand-green-800"
+                    : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
+                )}
+              >
+                {soundEnabled ? <Bell className="h-4 w-4" aria-hidden="true" /> : <BellOff className="h-4 w-4" aria-hidden="true" />}
+                Son {soundEnabled ? "activé" : "désactivé"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setRealtimeEnabled((v) => !v)}
+                aria-pressed={realtimeEnabled}
+                aria-label={realtimeEnabled ? "Désactiver les mises à jour en temps réel" : "Activer les mises à jour en temps réel"}
+                className={cn(
+                  "flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  realtimeEnabled
+                    ? "bg-brand-blue-50 border-brand-blue-200 text-brand-blue-800"
+                    : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
+                )}
+              >
+                {realtimeEnabled
+                  ? <RadioTower className="h-4 w-4" aria-hidden="true" />
+                  : <Radio className="h-4 w-4" aria-hidden="true" />
+                }
+                Temps réel {realtimeEnabled ? "activé" : "désactivé"}
+              </button>
+            </div>
+          </div>
+        </section>
+
         {/* Tabs */}
         <div
           role="tablist"
@@ -714,30 +765,42 @@ function DriverDashboard() {
             </div>
 
             {poolQuery.isLoading ? (
-              <div className="flex items-center justify-center py-16">
-                <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-blue-600 border-t-transparent" aria-hidden="true" />
-                <span className="ml-3 text-muted-foreground">Chargement des courses…</span>
-              </div>
+              <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 list-none" aria-busy="true" aria-label="Chargement des courses…">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <li key={i}><SkeletonRideCard /></li>
+                ))}
+              </ul>
             ) : poolQuery.isError ? (
               <div className="rounded-2xl bg-red-50 border border-red-200 p-6 text-center text-red-700">
                 <p className="font-semibold">Impossible de charger le pool</p>
                 <p className="text-sm mt-1">{poolQuery.error?.message}</p>
               </div>
             ) : isPoolSuspended ? (
-              <div className="rounded-2xl bg-red-50 border border-red-200 p-12 text-center">
-                <ShieldAlert className="h-12 w-12 text-red-300 mx-auto mb-3" aria-hidden="true" />
-                <p className="text-lg font-semibold text-red-800">
-                  Accès au pool temporairement suspendu
-                </p>
-                <p className="text-sm text-red-700 mt-1">
-                  Suite à plusieurs annulations juste après acceptation, l'accès
-                  aux courses disponibles est suspendu jusqu'au{" "}
-                  {new Date(poolSuspendedUntil!).toLocaleString("fr-FR", {
-                    dateStyle: "long",
-                    timeStyle: "short",
-                  })}
-                  .
-                </p>
+              <div className="rounded-2xl bg-red-50 border border-red-200 p-10 text-center space-y-4">
+                <ShieldAlert className="h-12 w-12 text-red-300 mx-auto" aria-hidden="true" />
+                <div>
+                  <p className="text-lg font-semibold text-red-800">
+                    Accès au pool temporairement suspendu
+                  </p>
+                  <p className="text-sm text-red-700 mt-1">
+                    Suite à plusieurs annulations juste après acceptation, l'accès
+                    aux courses disponibles est suspendu jusqu'au{" "}
+                    <strong>
+                      {new Date(poolSuspendedUntil!).toLocaleString("fr-FR", {
+                        dateStyle: "long",
+                        timeStyle: "short",
+                      })}
+                    </strong>
+                    .
+                  </p>
+                </div>
+                <a
+                  href="mailto:contact@mon-taxi-sante.com?subject=Suspension%20de%20pool%20-%20demande%20de%20r%C3%A9examen"
+                  className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-red-700 transition-colors"
+                >
+                  <Mail className="h-4 w-4" aria-hidden="true" />
+                  Contacter le support
+                </a>
               </div>
             ) : availability !== "online" ? (
               <div className="rounded-2xl bg-amber-50 border border-amber-200 p-12 text-center">
@@ -792,9 +855,11 @@ function DriverDashboard() {
             </h2>
 
             {myRidesQuery.isLoading ? (
-              <div className="flex items-center justify-center py-16">
-                <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-blue-600 border-t-transparent" aria-hidden="true" />
-              </div>
+              <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 list-none" aria-busy="true" aria-label="Chargement de vos courses…">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <li key={i}><SkeletonRideCard /></li>
+                ))}
+              </ul>
             ) : myRides.length === 0 ? (
               <div className="rounded-2xl bg-white shadow-sm ring-1 ring-gray-100 p-12 text-center">
                 <CheckCircle2 className="h-12 w-12 text-gray-300 mx-auto mb-3" aria-hidden="true" />
@@ -807,6 +872,17 @@ function DriverDashboard() {
               </div>
             ) : (
               <div className="space-y-8">
+                {/* #12 Prompt contextuel de notation */}
+                {unratedRides.length > 0 && (
+                  <div className="flex items-center gap-3 rounded-2xl bg-amber-50 border border-amber-200 px-5 py-4">
+                    <Star className="h-5 w-5 shrink-0 text-amber-500" aria-hidden="true" />
+                    <p className="text-sm font-medium text-amber-900 flex-1">
+                      {unratedRides.length === 1
+                        ? "Une course terminée attend votre avis — dépliez-la ci-dessous pour noter."
+                        : `${unratedRides.length} courses terminées attendent votre avis — dépliez-les ci-dessous pour noter.`}
+                    </p>
+                  </div>
+                )}
                 {myRidesGrouped.map((group) => (
                   <div key={group.label}>
                     <div className="flex items-baseline gap-2 mb-3">

@@ -15,6 +15,7 @@ interface UseRealtimeOptions {
   event?: RealtimeEvent;
   filter?: string;
   onChange?: (payload: RealtimePayload) => void;
+  enabled?: boolean;
 }
 
 /**
@@ -29,6 +30,7 @@ export function useRealtime({
   event = "*",
   filter,
   onChange,
+  enabled = true,
 }: UseRealtimeOptions) {
   const queryClient = useQueryClient();
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
@@ -36,6 +38,7 @@ export function useRealtime({
   onChangeRef.current = onChange;
 
   useEffect(() => {
+    if (!enabled) return;
     const channelName = `realtime:${table}:${event}:${filter ?? "all"}`;
 
     const channel = supabase
@@ -60,5 +63,5 @@ export function useRealtime({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [table, event, filter, queryKey, queryClient]);
+  }, [table, event, filter, queryKey, queryClient, enabled]);
 }
