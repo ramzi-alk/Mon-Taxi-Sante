@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "~/lib/supabase";
-import { cn, formatPrice } from "~/lib/utils";
+import { cn, formatPrice, formatDateFr, formatTimeFr } from "~/lib/utils";
 import { useRealtime } from "~/hooks/useRealtime";
 import { useOnlineStatus } from "~/hooks/useOnlineStatus";
 import { RideCard, type PoolRide } from "~/components/driver/RideCard";
@@ -246,6 +246,7 @@ function DriverDashboard() {
     queryKey: ["my-rides"],
     queryFn: fetchMyRides,
   });
+  const myRides = myRidesQuery.data ?? [];
 
   // Realtime subscription — updates pool in real-time
   useRealtime({
@@ -256,12 +257,25 @@ function DriverDashboard() {
     enabled: realtimeEnabled,
   });
 
-  // Also update my rides when a booking is accepted
+  // My rides realtime — also detects patient cancellations to alert the driver
   useRealtime({
     table: "bookings",
     queryKey: ["my-rides"],
     event: "UPDATE",
     enabled: realtimeEnabled,
+    onChange: (payload) => {
+      const updated = payload.new as { id?: string; status?: string; pickup_datetime?: string };
+      if (updated.status === "cancelled") {
+        const cancelled = myRides.find((r) => r.id === updated.id);
+        if (cancelled) {
+          toast({
+            title: "Course annulée par le patient",
+            description: `${formatDateFr(cancelled.pickup_datetime)} à ${formatTimeFr(cancelled.pickup_datetime)}`,
+            variant: "error",
+          });
+        }
+      }
+    },
   });
 
   const acceptMutation = useMutation({
@@ -382,7 +396,6 @@ function DriverDashboard() {
   });
 
   const poolRides = poolQuery.data ?? [];
-  const myRides = myRidesQuery.data ?? [];
   const todayRides = myRides.filter(
     (r) => new Date(r.pickup_datetime).toDateString() === new Date().toDateString()
   );
