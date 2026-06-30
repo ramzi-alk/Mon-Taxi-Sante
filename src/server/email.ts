@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getResendClient, EMAIL_FROM, ADMIN_NOTIFICATION_EMAIL } from "~/lib/resend";
 import { getSupabaseAdminClient } from "~/lib/supabaseAdmin";
 import { logger } from "~/lib/logger";
+import { isContactRevealedAt } from "~/lib/bookingMasking";
 import {
   bookingConfirmationEmail,
   bookingCancellationEmail,
@@ -272,11 +273,14 @@ export const notifyDriverRideAcceptedServerFn = createServerFn({ method: "POST" 
       }
     }
 
+    const contactRevealed = isContactRevealedAt(bookingTyped.pickup_datetime);
+
     try {
       const { subject, html } = rideAcceptedDriverEmail({
         driverFullName: driverProfile.full_name,
         patientFullName: bookingTyped.patient_full_name,
-        patientPhone: bookingTyped.patient_phone,
+        patientPhone: contactRevealed ? bookingTyped.patient_phone : null,
+        patientPhoneMasked: !contactRevealed,
         referenceCode: bookingTyped.reference_code,
         pickupAddress: bookingTyped.pickup_address,
         dropoffAddress: bookingTyped.dropoff_address,

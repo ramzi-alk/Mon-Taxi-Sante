@@ -406,6 +406,8 @@ export function rideAcceptedDriverEmail(params: {
   driverFullName: string;
   patientFullName: string;
   patientPhone: string | null;
+  /** When true, phone is intentionally withheld until closer to pickup; show a gate message instead of "non renseigné". */
+  patientPhoneMasked?: boolean;
   referenceCode: string;
   pickupAddress: string;
   dropoffAddress: string;
@@ -417,6 +419,7 @@ export function rideAcceptedDriverEmail(params: {
     driverFullName,
     patientFullName,
     patientPhone,
+    patientPhoneMasked,
     referenceCode,
     pickupAddress,
     dropoffAddress,
@@ -429,8 +432,19 @@ export function rideAcceptedDriverEmail(params: {
     ? `${seriesTotal} séances, du ${formatDateFr(pickupDatetime)} au ${formatDateFr(seriesLastPickupDatetime!)}`
     : `${formatDateFr(pickupDatetime)} à ${formatTimeFr(pickupDatetime)}`;
   const intro = isSeries
-    ? `Vous venez d'accepter <strong>${seriesTotal} séances</strong> pour ce patient. Retrouvez ci-dessous ses coordonnées pour organiser les prises en charge.`
-    : `Vous venez d'accepter cette course. Retrouvez ci-dessous les coordonnées du patient pour préparer la prise en charge.`;
+    ? `Vous venez d'accepter <strong>${seriesTotal} séances</strong> pour ce patient. Retrouvez ci-dessous les informations de la course.`
+    : `Vous venez d'accepter cette course. Retrouvez ci-dessous les informations de la prise en charge.`;
+
+  let phoneHtml: string;
+  if (patientPhone) {
+    phoneHtml = `<a href="tel:${patientPhone}" style="font-size:22px;font-weight:800;color:#16a34a;text-decoration:none;letter-spacing:0.02em;">${patientPhone}</a>
+                 <p style="margin:6px 0 0;font-size:12px;color:#6b7280;">Appuyez sur ce numéro depuis votre téléphone pour appeler directement.</p>`;
+  } else if (patientPhoneMasked) {
+    phoneHtml = `<p style="margin:0;font-size:14px;color:#b45309;font-style:italic;">📵 Numéro disponible dans votre tableau de bord à l'approche de la course.</p>`;
+  } else {
+    phoneHtml = `<p style="margin:0;font-size:14px;color:#6b7280;font-style:italic;">Numéro de téléphone non renseigné pour cette réservation.</p>`;
+  }
+
   return {
     subject: isSeries
       ? `${seriesTotal} séances acceptées — ${patientFullName} — Réf. ${formatReferenceCode(referenceCode)}`
@@ -447,11 +461,7 @@ export function rideAcceptedDriverEmail(params: {
             <td style="background:#F0FDF4;border:1px solid #bbf7d0;border-radius:12px;padding:16px 20px;">
               <p style="margin:0 0 4px;font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#16a34a;">Coordonnées du patient</p>
               <p style="margin:0 0 8px;font-size:17px;font-weight:800;color:#14532d;">${patientFullName}</p>
-              ${patientPhone
-                ? `<a href="tel:${patientPhone}" style="font-size:22px;font-weight:800;color:#16a34a;text-decoration:none;letter-spacing:0.02em;">${patientPhone}</a>
-                   <p style="margin:6px 0 0;font-size:12px;color:#6b7280;">Appuyez sur ce numéro depuis votre téléphone pour appeler directement.</p>`
-                : `<p style="margin:0;font-size:14px;color:#6b7280;font-style:italic;">Numéro de téléphone non renseigné pour cette réservation.</p>`
-              }
+              ${phoneHtml}
             </td>
           </tr>
         </table>

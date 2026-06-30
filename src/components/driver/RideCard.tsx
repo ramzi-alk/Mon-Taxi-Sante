@@ -3,6 +3,7 @@ import { MapPin, Clock, Car, Users, Navigation, Loader2, PlayCircle, FlagTriangl
 import { SeriesRideSelectPanel } from "./SeriesRideSelectPanel";
 import { formatDateFr, formatTimeFr, formatCountdown } from "~/lib/utils";
 import { cn } from "~/lib/utils";
+import { revealThresholdMin } from "~/lib/bookingMasking";
 
 function useMinutesUntil(datetimeStr: string) {
   const [minutes, setMinutes] = useState(() =>
@@ -93,17 +94,6 @@ interface RideCardProps {
   seriesRides?: PoolRide[];
 }
 
-// Returns how many minutes before pickup the contact/address is revealed.
-// Same day (< 24 h away)  → 0   (always visible)
-// Tomorrow  (24 h – 48 h) → 4 h before
-// Day after (48 h – 72 h) → 8 h before
-// Further out              → 24 h before
-function revealThresholdMin(minutesUntilPickup: number): number {
-  if (minutesUntilPickup <= 24 * 60) return 0;
-  if (minutesUntilPickup <= 48 * 60) return 4 * 60;
-  if (minutesUntilPickup <= 72 * 60) return 8 * 60;
-  return 24 * 60;
-}
 
 const vehicleIcons: Record<string, string> = {
   taxi: "🚕",
