@@ -759,7 +759,7 @@ function DriverDashboard() {
             {poolQuery.isLoading ? (
               <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 list-none" aria-busy="true" aria-label="Chargement des courses…">
                 {Array.from({ length: 4 }).map((_, i) => (
-                  <li key={i}><SkeletonRideCard /></li>
+                  <li key={i} className="min-w-0"><SkeletonRideCard /></li>
                 ))}
               </ul>
             ) : poolQuery.isError ? (
@@ -849,7 +849,7 @@ function DriverDashboard() {
             {myRidesQuery.isLoading ? (
               <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 list-none" aria-busy="true" aria-label="Chargement de vos courses…">
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <li key={i}><SkeletonRideCard /></li>
+                  <li key={i} className="min-w-0"><SkeletonRideCard /></li>
                 ))}
               </ul>
             ) : myRides.length === 0 ? (
@@ -883,7 +883,7 @@ function DriverDashboard() {
                     </div>
                     <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 list-none">
                       {group.rides.map((ride) => (
-                        <li key={ride.id}>
+                        <li key={ride.id} className="min-w-0">
                           <RideCard
                             ride={ride}
                             onAccept={() => {}}
