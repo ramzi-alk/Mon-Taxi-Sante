@@ -224,7 +224,7 @@ export function PoolList({ rides, onAccept, acceptingId, isAccepting, driverProf
           aria-label="Liste des courses disponibles"
         >
           {filteredRides.map((ride) => (
-            <li key={ride.id}>
+            <li key={ride.id} className="min-w-0">
               <RideCard
                 ride={ride}
                 onAccept={onAccept}
