@@ -248,6 +248,7 @@ export function PoolList({ rides, onAccept, acceptingId, isAccepting, driverProf
           >
             {virtualizer.getVirtualItems().map((virtualRow) => {
               const ride = filteredRides[virtualRow.index];
+              if (!ride) return null;
               return (
                 <li
                   key={ride.id}
