@@ -17,8 +17,11 @@ function isAuthorized(request: Request): boolean {
 export const ServerRoute = createServerFileRoute("/api/cron/booking-reminders").methods({
   GET: async ({ request }) => {
     if (!isAuthorized(request)) {
+      logger.error("cron.booking-reminders unauthorized");
       return new Response("Unauthorized", { status: 401 });
     }
+
+    logger.info("cron.booking-reminders started");
 
     const admin = getSupabaseAdminClient();
 
@@ -97,6 +100,7 @@ export const ServerRoute = createServerFileRoute("/api/cron/booking-reminders").
       sent += 1;
     }
 
+    logger.info("cron.booking-reminders completed", { found: bookings?.length ?? 0, sent });
     return Response.json({ sent });
   },
 });

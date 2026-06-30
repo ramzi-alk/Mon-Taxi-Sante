@@ -73,6 +73,45 @@ function RouteError({ error, reset }: ErrorComponentProps) {
 }
 
 /**
+ * Catches errors React's error boundary never sees: thrown in event
+ * handlers, timers, or rejected promises that nobody awaited. Without this,
+ * those failures only ever reach the browser console (invisible in Vercel
+ * Runtime Logs) — relay them through the same server-side logger as
+ * RouteError above.
+ */
+function GlobalErrorListener() {
+  useEffect(() => {
+    const reportError = (message: string, stack?: string) => {
+      logClientErrorServerFn({
+        data: { message, stack, url: window.location.href, userAgent: navigator.userAgent },
+      }).catch(() => {
+        // Best-effort — don't let logging failures compound the original error.
+      });
+    };
+
+    const onError = (event: ErrorEvent) => {
+      reportError(event.message, event.error instanceof Error ? event.error.stack : undefined);
+    };
+    const onUnhandledRejection = (event: PromiseRejectionEvent) => {
+      const reason = event.reason;
+      reportError(
+        reason instanceof Error ? reason.message : String(reason),
+        reason instanceof Error ? reason.stack : undefined
+      );
+    };
+
+    window.addEventListener("error", onError);
+    window.addEventListener("unhandledrejection", onUnhandledRejection);
+    return () => {
+      window.removeEventListener("error", onError);
+      window.removeEventListener("unhandledrejection", onUnhandledRejection);
+    };
+  }, []);
+
+  return null;
+}
+
+/**
  * Supabase Auth (GoTrue) redirects here after /auth/v1/verify with the
  * outcome appended as a URL hash fragment (#access_token=... on success,
  * #error=...&error_code=...&error_description=... on failure). Without
@@ -163,6 +202,7 @@ function RootDocument({ children }: { children: ReactNode }) {
       <body className="min-h-screen bg-background font-sans antialiased">
         <QueryClientProvider client={queryClient}>
           <ToastProvider>
+            <GlobalErrorListener />
             <AuthRedirectListener />
             <Navbar />
             <main id="main-content">{children}</main>

@@ -6,6 +6,7 @@ import * as profilesRepository from "~/repositories/profilesRepository";
 import { getSupabaseAdminClient } from "~/lib/supabaseAdmin";
 import { sendBookingConfirmationEmail } from "./email";
 import { sendPushToAllDrivers } from "./pushSend";
+import { logger, withServerFnLogging } from "~/lib/logger";
 
 interface SubmitBookingPayload {
   patient_id: string;
@@ -50,74 +51,85 @@ interface SubmitBookingInput {
 
 export const submitBookingServerFn = createServerFn({ method: "POST" })
   .validator((input: SubmitBookingInput) => input)
-  .handler(async ({ data }) => {
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
-    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+  .handler(async ({ data }) =>
+    withServerFnLogging(
+      "submitBooking",
+      { patientId: data.payloads[0]?.patient_id, ridesCount: data.payloads.length },
+      async () => {
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
+        const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 
-    const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: `Bearer ${data.accessToken}` } },
-      auth: { persistSession: false },
-    });
+        const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+          global: { headers: { Authorization: `Bearer ${data.accessToken}` } },
+          auth: { persistSession: false },
+        });
 
-    const [firstPayload] = data.payloads;
+        const [firstPayload] = data.payloads;
 
-    // bookings.patient_id is a NOT NULL FK to profiles — self-heal a missing
-    // profile row (same known trigger-reliability issue as driver signups,
-    // see migration 017) before inserting, instead of letting the FK
-    // violation surface to the patient mid-booking.
-    const admin = getSupabaseAdminClient();
-    const profile = await profilesRepository.ensureProfile(admin, firstPayload.patient_id);
-    if (!profile) {
-      throw new Error("Impossible de finaliser la réservation (profil introuvable). Réessayez.");
-    }
+        // bookings.patient_id is a NOT NULL FK to profiles — self-heal a missing
+        // profile row (same known trigger-reliability issue as driver signups,
+        // see migration 017) before inserting, instead of letting the FK
+        // violation surface to the patient mid-booking.
+        const admin = getSupabaseAdminClient();
+        const profile = await profilesRepository.ensureProfile(admin, firstPayload.patient_id);
+        if (!profile) {
+          throw new Error("Impossible de finaliser la réservation (profil introuvable). Réessayez.");
+        }
 
-    const isSeries = data.payloads.length > 1;
-    const seriesId = isSeries ? crypto.randomUUID() : null;
+        const isSeries = data.payloads.length > 1;
+        const seriesId = isSeries ? crypto.randomUUID() : null;
 
-    const bookings: { id: string; reference_code: string }[] = [];
-    for (const [index, payload] of data.payloads.entries()) {
-      const booking = await bookingsRepository.insertBooking(supabase, {
-        ...payload,
-        series_id: seriesId,
-        series_index: isSeries ? index + 1 : null,
-        series_total: isSeries ? data.payloads.length : null,
-      });
-      await bookingsRepository.publishBooking(supabase, booking.id);
-      bookings.push(booking);
-    }
+        const bookings: { id: string; reference_code: string }[] = [];
+        for (const [index, payload] of data.payloads.entries()) {
+          const booking = await bookingsRepository.insertBooking(supabase, {
+            ...payload,
+            series_id: seriesId,
+            series_index: isSeries ? index + 1 : null,
+            series_total: isSeries ? data.payloads.length : null,
+          });
+          await bookingsRepository.publishBooking(supabase, booking.id);
+          bookings.push(booking);
+        }
 
-    const [firstBooking] = bookings;
+        const [firstBooking] = bookings;
 
-    const confirmationEmail =
-      firstPayload.booking_for_other && firstPayload.booker_email
-        ? firstPayload.booker_email
-        : firstPayload.patient_email;
+        const confirmationEmail =
+          firstPayload.booking_for_other && firstPayload.booker_email
+            ? firstPayload.booker_email
+            : firstPayload.patient_email;
 
-    if (confirmationEmail) {
-      await sendBookingConfirmationEmail({
-        to: confirmationEmail,
-        patientFullName: firstPayload.patient_full_name,
-        bookerFullName: firstPayload.booking_for_other ? (firstPayload.booker_full_name ?? undefined) : undefined,
-        referenceCode: firstBooking.reference_code,
-        pickupAddress: firstPayload.pickup_address,
-        dropoffAddress: firstPayload.dropoff_address,
-        pickupDatetime: firstPayload.pickup_datetime,
-        seriesTotal: isSeries ? data.payloads.length : undefined,
-        seriesLastPickupDatetime: isSeries
-          ? data.payloads[data.payloads.length - 1].pickup_datetime
-          : undefined,
-      });
-    }
+        if (confirmationEmail) {
+          await sendBookingConfirmationEmail({
+            to: confirmationEmail,
+            patientFullName: firstPayload.patient_full_name,
+            bookerFullName: firstPayload.booking_for_other ? (firstPayload.booker_full_name ?? undefined) : undefined,
+            referenceCode: firstBooking.reference_code,
+            pickupAddress: firstPayload.pickup_address,
+            dropoffAddress: firstPayload.dropoff_address,
+            pickupDatetime: firstPayload.pickup_datetime,
+            seriesTotal: isSeries ? data.payloads.length : undefined,
+            seriesLastPickupDatetime: isSeries
+              ? data.payloads[data.payloads.length - 1].pickup_datetime
+              : undefined,
+          });
+        }
 
-    // Notify all subscribed drivers of new pool ride — fire-and-forget
-    sendPushToAllDrivers({
-      title: "Nouvelle course disponible",
-      body: isSeries
-        ? `Série de ${data.payloads.length} séances — ${firstPayload.pickup_address}`
-        : `${firstPayload.pickup_address} → ${firstPayload.dropoff_address}`,
-      url: "/tableau-de-bord/chauffeur",
-      tag: `new-ride-${firstBooking.id}`,
-    }).catch(() => {});
+        // Notify all subscribed drivers of new pool ride — fire-and-forget
+        sendPushToAllDrivers({
+          title: "Nouvelle course disponible",
+          body: isSeries
+            ? `Série de ${data.payloads.length} séances — ${firstPayload.pickup_address}`
+            : `${firstPayload.pickup_address} → ${firstPayload.dropoff_address}`,
+          url: "/tableau-de-bord/chauffeur",
+          tag: `new-ride-${firstBooking.id}`,
+        }).catch((err: unknown) => {
+          logger.error("booking.notifyDrivers failed", {
+            error: err instanceof Error ? err.message : String(err),
+            bookingId: firstBooking.id,
+          });
+        });
 
-    return { ...firstBooking, seriesTotal: isSeries ? data.payloads.length : undefined };
-  });
+        return { ...firstBooking, seriesTotal: isSeries ? data.payloads.length : undefined };
+      }
+    )
+  );
