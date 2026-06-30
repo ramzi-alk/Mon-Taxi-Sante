@@ -264,16 +264,22 @@ function DriverDashboard() {
     event: "UPDATE",
     enabled: realtimeEnabled,
     onChange: (payload) => {
-      const updated = payload.new as { id?: string; status?: string; pickup_datetime?: string };
+      const updated = payload.new as { id?: string; status?: string };
+      const ride = myRides.find((r) => r.id === updated.id);
+      if (!ride) return;
       if (updated.status === "cancelled") {
-        const cancelled = myRides.find((r) => r.id === updated.id);
-        if (cancelled) {
-          toast({
-            title: "Course annulée par le patient",
-            description: `${formatDateFr(cancelled.pickup_datetime)} à ${formatTimeFr(cancelled.pickup_datetime)}`,
-            variant: "error",
-          });
-        }
+        toast({
+          title: "Course annulée par le patient",
+          description: `${formatDateFr(ride.pickup_datetime)} à ${formatTimeFr(ride.pickup_datetime)}`,
+          variant: "error",
+        });
+      } else if (updated.status === "accepted") {
+        // status stays accepted → patient modified booking details
+        toast({
+          title: "Course modifiée par le patient",
+          description: `${formatDateFr(ride.pickup_datetime)} à ${formatTimeFr(ride.pickup_datetime)} — vérifiez les nouveaux détails`,
+          variant: "default",
+        });
       }
     },
   });
