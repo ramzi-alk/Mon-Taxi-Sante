@@ -1,7 +1,22 @@
-import { useState } from "react";
-import { MapPin, Clock, Car, Users, Navigation, Loader2, PlayCircle, FlagTriangleRight, XCircle, User, Phone, CalendarPlus, Banknote, ChevronDown, ChevronUp, ClipboardCheck, Building2, Repeat } from "lucide-react";
-import { formatDateFr, formatTimeFr } from "~/lib/utils";
+import { useState, useEffect } from "react";
+import { MapPin, Clock, Car, Users, Navigation, Loader2, PlayCircle, FlagTriangleRight, XCircle, User, Phone, CalendarPlus, Banknote, ChevronDown, ChevronUp, ClipboardCheck, Building2, Repeat, Lock } from "lucide-react";
+import { SeriesRideSelectPanel } from "./SeriesRideSelectPanel";
+import { formatDateFr, formatTimeFr, formatCountdown } from "~/lib/utils";
 import { cn } from "~/lib/utils";
+import { revealThresholdMin } from "~/lib/bookingMasking";
+
+function useMinutesUntil(datetimeStr: string) {
+  const [minutes, setMinutes] = useState(() =>
+    (new Date(datetimeStr).getTime() - Date.now()) / 60000
+  );
+  useEffect(() => {
+    const id = setInterval(() => {
+      setMinutes((new Date(datetimeStr).getTime() - Date.now()) / 60000);
+    }, 30_000);
+    return () => clearInterval(id);
+  }, [datetimeStr]);
+  return minutes;
+}
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
 import { StarRating } from "~/components/ui/star-rating";
 import { RatingForm } from "~/components/booking/RatingForm";
@@ -54,6 +69,7 @@ export interface PoolRide {
   // décision d'acceptation sans révéler l'identité/le contact du patient.
   pmt_declared?: boolean | null;
   is_hospitalization?: boolean | null;
+  series_id?: string | null;
   series_index?: number | null;
   series_total?: number | null;
 }
@@ -62,15 +78,22 @@ interface RideCardProps {
   ride: PoolRide;
   onAccept: (rideId: string) => void;
   isAccepting: boolean;
+  onAcceptSeries?: (rideIds: string[]) => void;
+  isAcceptingSeries?: boolean;
+  seriesPoolRides?: PoolRide[];
   onStart?: (rideId: string) => void;
   isStarting?: boolean;
   onComplete?: (rideId: string) => void;
   isCompleting?: boolean;
   onCancel?: (rideId: string) => void;
   isCancelling?: boolean;
+  onCancelSeries?: (rideIds: string[]) => void;
+  isCancellingSeries?: boolean;
   onRate?: (rideId: string, rating: number, comment?: string) => void;
   isRating?: boolean;
+  seriesRides?: PoolRide[];
 }
+
 
 const vehicleIcons: Record<string, string> = {
   taxi: "🚕",
@@ -94,6 +117,13 @@ function buildNavigationLinks(address: string, lat: number | null, lng: number |
       : `https://waze.com/ul?q=${encodeURIComponent(address)}&navigate=yes`,
     appleMaps: `https://maps.apple.com/?daddr=${encodeURIComponent(destination)}`,
   };
+}
+
+function getDefaultNavUrl(address: string, lat: number | null, lng: number | null): string {
+  const links = buildNavigationLinks(address, lat, lng);
+  const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
+  if (/iPad|iPhone|iPod/.test(ua)) return links.appleMaps;
+  return links.googleMaps;
 }
 
 function NavigationOptions({
@@ -148,20 +178,31 @@ function NavigationButton({
   label: string;
 }) {
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          aria-label={label}
-          className="flex items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors shrink-0"
-        >
-          <Navigation className="h-4 w-4" aria-hidden="true" />
-        </button>
-      </PopoverTrigger>
-      <PopoverContent align="start" className="w-48 p-1.5">
-        <NavigationOptions address={address} lat={lat} lng={lng} />
-      </PopoverContent>
-    </Popover>
+    <div className="flex shrink-0 rounded-xl border border-gray-200 bg-white overflow-hidden">
+      <a
+        href={getDefaultNavUrl(address, lat, lng)}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={label}
+        className="flex items-center justify-center gap-1.5 px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+      >
+        <Navigation className="h-4 w-4" aria-hidden="true" />
+      </a>
+      <Popover>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            aria-label="Choisir l'application de navigation"
+            className="flex items-center px-2 py-3 text-gray-400 hover:bg-gray-50 transition-colors border-l border-gray-200 text-xs"
+          >
+            ▾
+          </button>
+        </PopoverTrigger>
+        <PopoverContent align="end" className="w-48 p-1.5">
+          <NavigationOptions address={address} lat={lat} lng={lng} />
+        </PopoverContent>
+      </Popover>
+    </div>
   );
 }
 
@@ -307,18 +348,45 @@ export function RideCard({
   ride,
   onAccept,
   isAccepting,
+  onAcceptSeries,
+  isAcceptingSeries,
+  seriesPoolRides,
   onStart,
   isStarting,
   onComplete,
   isCompleting,
   onCancel,
   isCancelling,
+  onCancelSeries,
+  isCancellingSeries,
   onRate,
   isRating,
+  seriesRides,
 }: RideCardProps) {
+  const isCompleted = ride.status === "completed";
+  // Collapsed by default when completed and already rated; expand if pending rating
+  const [collapsed, setCollapsed] = useState(isCompleted && ride.driver_rating_given != null);
   const [confirmingCancel, setConfirmingCancel] = useState(false);
+  const [confirmingComplete, setConfirmingComplete] = useState(false);
+  const [seriesAcceptOpen, setSeriesAcceptOpen] = useState(false);
+  const [seriesCancelOpen, setSeriesCancelOpen] = useState(false);
+  const isSeries = !!ride.series_total && ride.series_total > 1;
+  const selectableSeriesPoolRides = seriesPoolRides && seriesPoolRides.length > 1 ? seriesPoolRides : null;
+  const cancellableSeriesRides = seriesRides?.filter((r) => r.status === "accepted") ?? [];
   const [expanded, setExpanded] = useState(false);
+  const [seriesOpen, setSeriesOpen] = useState(false);
   const isPool = ride.status === "available";
+  const minutesUntilPickup = useMinutesUntil(ride.pickup_datetime);
+  const pickupIsUrgent = minutesUntilPickup >= 0 && minutesUntilPickup <= 45;
+  const pickupIsCritical = minutesUntilPickup >= 0 && minutesUntilPickup <= 20;
+  // Contact info + exact pickup address: progressive reveal threshold.
+  const threshold = revealThresholdMin(minutesUntilPickup);
+  const isContactRevealed =
+    isPool ||
+    ride.status === "in_progress" ||
+    ride.status === "completed" ||
+    minutesUntilPickup <= threshold;
+  const minutesUntilReveal = minutesUntilPickup - threshold;
   const pickupDate = formatDateFr(ride.pickup_datetime);
   const pickupTime = formatTimeFr(ride.pickup_datetime);
   const isToday = new Date(ride.pickup_datetime).toDateString() === new Date().toDateString();
@@ -336,12 +404,25 @@ export function RideCard({
 
   return (
     <article
-      className="rounded-2xl bg-white shadow-sm ring-1 ring-gray-200 hover:shadow-md hover:ring-brand-blue-200 transition-all overflow-hidden"
-      aria-label={`Course disponible — ${ride.pickup_address} vers ${ride.dropoff_address}`}
+      className={cn(
+        "rounded-2xl bg-white shadow-sm ring-1 ring-gray-200 hover:shadow-md transition-all overflow-hidden",
+        isCompleted ? "ring-gray-100 hover:ring-gray-200" : "hover:ring-brand-blue-200"
+      )}
+      aria-label={`Course — ${ride.pickup_address} vers ${ride.dropoff_address}`}
     >
-      {/* Header strip */}
-      <div className="flex items-center justify-between bg-gray-50 border-b px-4 py-2">
-        <span className="flex items-center gap-1.5 text-sm font-semibold text-gray-700">
+      {/* ── Header — toujours visible ──────────────────────────────── */}
+      <div
+        className={cn(
+          "flex items-center justify-between px-4 py-2 border-b",
+          isCompleted ? "bg-gray-50 cursor-pointer" : "bg-gray-50"
+        )}
+        onClick={isCompleted ? () => setCollapsed((v) => !v) : undefined}
+        role={isCompleted ? "button" : undefined}
+        aria-expanded={isCompleted ? !collapsed : undefined}
+        tabIndex={isCompleted ? 0 : undefined}
+        onKeyDown={isCompleted ? (e) => e.key === "Enter" && setCollapsed((v) => !v) : undefined}
+      >
+        <span className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 min-w-0 mr-2">
           <Clock className="h-4 w-4 text-brand-blue-500 shrink-0" aria-hidden="true" />
           {ride.status === "accepted" ? (
             <CalendarButton ride={ride}>
@@ -351,16 +432,16 @@ export function RideCard({
               <CalendarPlus className="h-3.5 w-3.5 text-gray-400" aria-hidden="true" />
             </CalendarButton>
           ) : (
-            <time dateTime={ride.pickup_datetime}>
+            <time dateTime={ride.pickup_datetime} className="truncate">
               {dayLabel} à {pickupTime}
             </time>
           )}
         </span>
-        <span className="flex items-center gap-2">
+        <span className="flex items-center gap-1 flex-wrap justify-end shrink-0 max-w-[60%]">
           {ride.estimated_price != null && (
             <span
               className={cn(
-                "flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold",
+                "flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold whitespace-nowrap",
                 ride.status === "completed"
                   ? "bg-emerald-100 text-emerald-700"
                   : "bg-amber-50 text-amber-700"
@@ -371,19 +452,58 @@ export function RideCard({
               ~{ride.estimated_price.toFixed(2).replace(".", ",")} €
             </span>
           )}
+          {isPool && (
+            <span
+              className={cn(
+                "rounded-full px-2.5 py-0.5 text-xs font-bold whitespace-nowrap",
+                pickupIsCritical
+                  ? "bg-red-50 text-red-700 animate-pulse"
+                  : pickupIsUrgent
+                  ? "bg-amber-50 text-amber-700"
+                  : "bg-gray-100 text-gray-500"
+              )}
+              aria-label="Temps avant la prise en charge"
+            >
+              {minutesUntilPickup > 0
+                ? `Dans ${formatCountdown(minutesUntilPickup)}`
+                : "Maintenant"}
+            </span>
+          )}
           {statusLabels[ride.status] && (
-            <span className="rounded-full bg-brand-blue-100 text-brand-blue-700 px-2 py-0.5 text-xs font-semibold">
+            <span className={cn(
+              "rounded-full px-2 py-0.5 text-xs font-semibold whitespace-nowrap",
+              isCompleted ? "bg-gray-100 text-gray-500" : "bg-brand-blue-100 text-brand-blue-700"
+            )}>
               {statusLabels[ride.status]}
             </span>
           )}
-          <span className="flex items-center gap-1 text-xs font-medium text-gray-500">
-            <span aria-hidden="true">{vehicleIcons[ride.vehicle_type]}</span>
-            {ride.vehicle_type.toUpperCase()}
-          </span>
+          {isCompleted && ride.driver_rating_given == null && (
+            <span className="rounded-full bg-amber-50 text-amber-700 px-2 py-0.5 text-xs font-semibold whitespace-nowrap">À noter</span>
+          )}
+          {isCompleted && (
+            collapsed
+              ? <ChevronDown className="h-4 w-4 text-gray-400 shrink-0" aria-hidden="true" />
+              : <ChevronUp className="h-4 w-4 text-gray-400 shrink-0" aria-hidden="true" />
+          )}
         </span>
       </div>
 
-      <div className="p-5 space-y-4">
+      {/* ── Résumé collapsed (courses terminées uniquement) ─────────── */}
+      {isCompleted && collapsed && (
+        <div className="px-4 py-2 space-y-1">
+          <div className="flex items-baseline gap-1.5 text-xs">
+            <Navigation className="h-3 w-3 shrink-0 text-brand-blue-400 mt-0.5" aria-hidden="true" />
+            <span className="truncate font-medium text-gray-700">{ride.pickup_address}</span>
+          </div>
+          <div className="flex items-baseline gap-1.5 text-xs">
+            <MapPin className="h-3 w-3 shrink-0 text-red-400 mt-0.5" aria-hidden="true" />
+            <span className="truncate font-medium text-gray-500">{ride.dropoff_address}</span>
+          </div>
+        </div>
+      )}
+
+      {/* ── Corps — caché quand collapsed ──────────────────────────── */}
+      {(!isCompleted || !collapsed) && <div className="p-5 space-y-4">
         {/* Route */}
         <div className="space-y-3">
           <div className="flex items-start gap-2.5">
@@ -391,7 +511,7 @@ export function RideCard({
               className="h-4 w-4 text-brand-blue-500 shrink-0 mt-0.5"
               aria-hidden="true"
             />
-            <div>
+            <div className="min-w-0 overflow-hidden">
               {ride.distance_to_driver_km != null ? (
                 <p className="text-sm font-bold text-gray-900 leading-snug">
                   {ride.distance_to_driver_km} km{" "}
@@ -402,12 +522,19 @@ export function RideCard({
               ) : (
                 <p className="text-xs text-muted-foreground">Départ</p>
               )}
-              <AddressLink
-                address={ride.pickup_address}
-                lat={ride.pickup_lat}
-                lng={ride.pickup_lng}
-                className="text-sm font-medium text-gray-900 leading-snug"
-              />
+              {isContactRevealed ? (
+                <AddressLink
+                  address={ride.pickup_address}
+                  lat={ride.pickup_lat}
+                  lng={ride.pickup_lng}
+                  className="text-sm font-medium text-gray-900 leading-snug break-words"
+                />
+              ) : (
+                <p className="flex items-center gap-1.5 text-xs text-gray-400 italic">
+                  <Lock className="h-3 w-3 shrink-0" aria-hidden="true" />
+                  Adresse disponible dans {formatCountdown(minutesUntilReveal)}
+                </p>
+              )}
             </div>
           </div>
           <div className="flex items-start gap-2.5">
@@ -415,7 +542,7 @@ export function RideCard({
               className="h-4 w-4 text-red-500 shrink-0 mt-0.5"
               aria-hidden="true"
             />
-            <div>
+            <div className="min-w-0 overflow-hidden">
               {ride.distance_km != null ? (
                 <p className="text-sm font-bold text-gray-900 leading-snug">
                   {ride.distance_km} km{" "}
@@ -430,10 +557,24 @@ export function RideCard({
                 address={ride.dropoff_address}
                 lat={ride.dropoff_lat}
                 lng={ride.dropoff_lng}
-                className="text-sm font-medium text-gray-900 leading-snug"
+                className="text-sm font-medium text-gray-900 leading-snug break-words"
               />
             </div>
           </div>
+
+          {ride.trip_type === "aller_retour" && ride.return_datetime && (
+            <div className="flex items-center gap-2.5 pt-1 border-t border-dashed border-brand-blue-100">
+              <Repeat className="h-4 w-4 text-brand-blue-400 shrink-0" aria-hidden="true" />
+              <div className="min-w-0">
+                <p className="text-xs text-muted-foreground leading-none mb-0.5">Retour prévu</p>
+                <p className="text-sm font-semibold text-brand-blue-700">
+                  {new Date(ride.return_datetime).toDateString() !== new Date(ride.pickup_datetime).toDateString()
+                    ? `${formatDateFr(ride.return_datetime)} à ${formatTimeFr(ride.return_datetime)}`
+                    : formatTimeFr(ride.return_datetime)}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Meta row */}
@@ -501,11 +642,13 @@ export function RideCard({
           </div>
         )}
 
-        {(ride.patient_full_name || ride.patient_first_name) && (
+        {ride.patient_first_name && (
           <div className="rounded-xl bg-brand-green-50/60 border border-brand-green-100 p-3 space-y-1.5">
             <p className="flex items-center gap-2 text-sm font-semibold text-gray-900">
               <User className="h-4 w-4 text-brand-green-600" aria-hidden="true" />
-              {ride.patient_full_name ?? ride.patient_first_name}
+              {isContactRevealed
+                ? (ride.patient_full_name ?? ride.patient_first_name)
+                : ride.patient_first_name}
               {ride.patient_rating_avg != null && (
                 <span className="flex items-center gap-1 text-xs font-medium text-gray-600">
                   <StarRating value={ride.patient_rating_avg} readOnly size="sm" />
@@ -516,14 +659,25 @@ export function RideCard({
                 <StarRating value={ride.patient_rating_received} readOnly size="sm" />
               )}
             </p>
-            {ride.patient_phone && (
-              <a
-                href={`tel:${ride.patient_phone}`}
-                className="flex items-center gap-2 text-sm font-medium text-brand-green-700 hover:underline"
-              >
-                <Phone className="h-3.5 w-3.5" aria-hidden="true" />
-                {ride.patient_phone}
-              </a>
+            {isContactRevealed && !isPool ? (
+              ride.patient_phone ? (
+                <a
+                  href={`tel:${ride.patient_phone}`}
+                  className="flex items-center gap-2 text-sm font-medium text-brand-green-700 hover:underline"
+                >
+                  <Phone className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                  {ride.patient_phone}
+                </a>
+              ) : null
+            ) : (
+              <p className="flex items-center gap-1.5 text-xs text-gray-400 italic min-w-0 overflow-hidden">
+                <Lock className="h-3 w-3 shrink-0" aria-hidden="true" />
+                <span className="truncate">
+                  {isPool
+                    ? "Nom complet et téléphone révélés après acceptation"
+                    : `Téléphone disponible dans ${formatCountdown(minutesUntilReveal)}`}
+                </span>
+              </p>
             )}
           </div>
         )}
@@ -531,31 +685,57 @@ export function RideCard({
         {/* CTA */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end pt-2 border-t border-gray-100">
           {ride.status === "available" && (
-            <button
-              type="button"
-              onClick={() => onAccept(ride.id)}
-              disabled={isAccepting}
-              aria-label={`Accepter la course — ${ride.pickup_address} vers ${ride.dropoff_address}`}
-              aria-busy={isAccepting}
-              className={cn(
-                "flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 w-full sm:w-auto",
-                isAccepting
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-brand-green-600 hover:bg-brand-green-700 shadow-md shadow-brand-green-600/20 active:scale-95"
+            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+              <button
+                type="button"
+                onClick={() => onAccept(ride.id)}
+                disabled={isAccepting || isAcceptingSeries}
+                aria-label={`Accepter la course — ${ride.pickup_address} vers ${ride.dropoff_address}`}
+                aria-busy={isAccepting}
+                className={cn(
+                  "flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 flex-1 sm:flex-initial",
+                  (isAccepting || isAcceptingSeries)
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-brand-green-600 hover:bg-brand-green-700 shadow-md shadow-brand-green-600/20 active:scale-95"
+                )}
+              >
+                {isAccepting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                    En cours…
+                  </>
+                ) : (
+                  <>
+                    <Car className="h-4 w-4" aria-hidden="true" />
+                    {isSeries ? "Cette séance" : "Accepter"}
+                  </>
+                )}
+              </button>
+              {isSeries && onAcceptSeries && selectableSeriesPoolRides && (
+                <button
+                  type="button"
+                  onClick={() => setSeriesAcceptOpen((v) => !v)}
+                  disabled={isAcceptingSeries || isAccepting}
+                  aria-label={`Choisir parmi les ${selectableSeriesPoolRides.length} séances de la série`}
+                  aria-busy={isAcceptingSeries}
+                  className={cn(
+                    "flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 flex-1 sm:flex-initial",
+                    (isAcceptingSeries || isAccepting)
+                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                      : seriesAcceptOpen
+                      ? "bg-violet-200 text-violet-800"
+                      : "bg-violet-100 text-violet-700 hover:bg-violet-200 active:scale-95"
+                  )}
+                >
+                  {isAcceptingSeries ? (
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                  ) : (
+                    <Repeat className="h-4 w-4" aria-hidden="true" />
+                  )}
+                  {selectableSeriesPoolRides.length}/{ride.series_total} séances
+                </button>
               )}
-            >
-              {isAccepting ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                  En cours…
-                </>
-              ) : (
-                <>
-                  <Car className="h-4 w-4" aria-hidden="true" />
-                  Accepter
-                </>
-              )}
-            </button>
+            </div>
           )}
 
           {ride.status === "accepted" && (
@@ -589,68 +769,107 @@ export function RideCard({
           )}
 
           {ride.status === "accepted" && onCancel && (
-            <div className="w-full">
-              {confirmingCancel ? (
-                <div className="flex items-center gap-3 text-sm pt-2">
-                  <span className="text-gray-700">Annuler cette course ?</span>
+            <div className="w-full space-y-2">
+              {/* Série : panneau de sélection multi-séances */}
+              {isSeries && onCancelSeries && cancellableSeriesRides.length > 0 ? (
+                seriesCancelOpen ? (
+                  <SeriesRideSelectPanel
+                    rides={cancellableSeriesRides}
+                    mode="cancel"
+                    isSubmitting={!!isCancellingSeries || !!isCancelling}
+                    onConfirm={(ids) => { onCancelSeries(ids); setSeriesCancelOpen(false); }}
+                    onClose={() => setSeriesCancelOpen(false)}
+                  />
+                ) : (
                   <button
                     type="button"
-                    onClick={() => onCancel(ride.id)}
-                    disabled={isCancelling}
-                    className="font-bold text-red-600 hover:underline disabled:opacity-60 flex items-center gap-1.5"
+                    onClick={() => setSeriesCancelOpen(true)}
+                    className="flex items-center gap-1.5 text-xs font-semibold text-red-600 hover:underline pt-2"
                   >
-                    {isCancelling && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
-                    Oui, annuler
+                    <XCircle className="h-3.5 w-3.5" aria-hidden="true" />
+                    Me désister de cette série
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setConfirmingCancel(false)}
-                    disabled={isCancelling}
-                    className="text-gray-500 hover:underline"
-                  >
-                    Non
-                  </button>
-                </div>
+                )
               ) : (
-                <button
-                  type="button"
-                  onClick={() => setConfirmingCancel(true)}
-                  className="flex items-center gap-1.5 text-xs font-semibold text-red-600 hover:underline pt-2"
-                >
-                  <XCircle className="h-3.5 w-3.5" aria-hidden="true" />
-                  Me désister de cette course
-                </button>
+                /* Course seule : confirmation classique en 2 étapes */
+                confirmingCancel ? (
+                  <div className="flex items-center gap-3 text-sm pt-2">
+                    <span className="text-gray-700">Annuler cette course ?</span>
+                    <button
+                      type="button"
+                      onClick={() => { onCancel(ride.id); setConfirmingCancel(false); }}
+                      disabled={isCancelling}
+                      className="font-bold text-red-600 hover:underline disabled:opacity-60 flex items-center gap-1.5"
+                    >
+                      {isCancelling && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
+                      Oui, annuler
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmingCancel(false)}
+                      disabled={isCancelling}
+                      className="text-gray-500 hover:underline"
+                    >
+                      Non
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setConfirmingCancel(true)}
+                    className="flex items-center gap-1.5 text-xs font-semibold text-red-600 hover:underline pt-2"
+                  >
+                    <XCircle className="h-3.5 w-3.5" aria-hidden="true" />
+                    Me désister de cette course
+                  </button>
+                )
               )}
             </div>
           )}
 
           {ride.status === "in_progress" && (
-            <div className="flex items-center gap-2">
-              <NavigationButton
-                address={ride.dropoff_address}
-                lat={ride.dropoff_lat}
-                lng={ride.dropoff_lng}
-                label="Naviguer vers la destination"
-              />
-              <button
-                type="button"
-                onClick={() => onComplete?.(ride.id)}
-                disabled={isCompleting}
-                aria-busy={isCompleting}
-                className={cn(
-                  "flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 flex-1 sm:flex-initial",
-                  isCompleting
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-brand-green-600 hover:bg-brand-green-700 shadow-md shadow-brand-green-600/20 active:scale-95"
-                )}
-              >
-                {isCompleting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+            <div className="flex flex-col gap-2 w-full">
+              <div className="flex items-center gap-2">
+                <NavigationButton
+                  address={ride.dropoff_address}
+                  lat={ride.dropoff_lat}
+                  lng={ride.dropoff_lng}
+                  label="Naviguer vers la destination"
+                />
+                {confirmingComplete ? (
+                  <div className="flex items-center gap-2 flex-1">
+                    <span className="text-sm font-semibold text-gray-800 flex-1">Confirmer la fin de course ?</span>
+                    <button
+                      type="button"
+                      onClick={() => { onComplete?.(ride.id); setConfirmingComplete(false); }}
+                      disabled={isCompleting}
+                      className="flex items-center gap-1.5 rounded-xl bg-brand-green-600 hover:bg-brand-green-700 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60 transition-colors"
+                    >
+                      {isCompleting && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+                      Oui, terminer
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmingComplete(false)}
+                      disabled={isCompleting}
+                      className="rounded-xl border border-gray-200 px-3 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-60 transition-colors"
+                    >
+                      Non
+                    </button>
+                  </div>
                 ) : (
-                  <FlagTriangleRight className="h-4 w-4" aria-hidden="true" />
+                  <button
+                    type="button"
+                    onClick={() => setConfirmingComplete(true)}
+                    disabled={isCompleting}
+                    aria-busy={isCompleting}
+                    className="flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white bg-brand-green-600 hover:bg-brand-green-700 shadow-md shadow-brand-green-600/20 active:scale-95 transition-all flex-1 sm:flex-initial focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  >
+                    <FlagTriangleRight className="h-4 w-4" aria-hidden="true" />
+                    Terminer la course
+                  </button>
                 )}
-                Terminer la course
-              </button>
+              </div>
             </div>
           )}
 
@@ -677,7 +896,61 @@ export function RideCard({
               />
             )
           ))}
-      </div>
+
+        {/* Panneau sélection séances à accepter */}
+        {seriesAcceptOpen && selectableSeriesPoolRides && onAcceptSeries && (
+          <div className="pt-2 border-t border-gray-100">
+            <SeriesRideSelectPanel
+              rides={selectableSeriesPoolRides}
+              mode="accept"
+              isSubmitting={!!isAcceptingSeries}
+              onConfirm={(ids) => { onAcceptSeries(ids); setSeriesAcceptOpen(false); }}
+              onClose={() => setSeriesAcceptOpen(false)}
+            />
+          </div>
+        )}
+
+        {/* Drawer série */}
+        {seriesRides && seriesRides.length > 1 && (
+          <div className="pt-2 border-t border-gray-100">
+            <button
+              type="button"
+              onClick={() => setSeriesOpen((v) => !v)}
+              className="flex items-center gap-1.5 text-xs font-semibold text-brand-blue-700 hover:underline"
+            >
+              <Repeat className="h-3.5 w-3.5" aria-hidden="true" />
+              Voir toutes les séances ({seriesRides.length})
+              {seriesOpen ? <ChevronUp className="h-3.5 w-3.5" aria-hidden="true" /> : <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />}
+            </button>
+            {seriesOpen && (
+              <ul className="mt-2 space-y-1">
+                {seriesRides.map((s) => (
+                  <li key={s.id} className={cn(
+                    "flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs",
+                    s.id === ride.id ? "bg-brand-blue-50 font-semibold text-brand-blue-800" : "bg-gray-50 text-gray-600"
+                  )}>
+                    <span className="shrink-0 w-12 font-mono">
+                      {new Date(s.pickup_datetime).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" })}
+                    </span>
+                    <span className="shrink-0 w-10 text-gray-400">
+                      {new Date(s.pickup_datetime).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                    <span className={cn(
+                      "ml-auto shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                      s.status === "completed" ? "bg-gray-100 text-gray-500"
+                        : s.status === "in_progress" ? "bg-brand-blue-100 text-brand-blue-700"
+                        : s.status === "accepted" ? "bg-green-50 text-green-700"
+                        : "bg-amber-50 text-amber-700"
+                    )}>
+                      {s.status === "completed" ? "Terminée" : s.status === "in_progress" ? "En cours" : s.status === "accepted" ? "Acceptée" : "Dispo."}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+      </div>}
     </article>
   );
 }

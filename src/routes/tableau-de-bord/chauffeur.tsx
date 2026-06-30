@@ -17,18 +17,26 @@ import {
   MapPin,
   UserCog,
   Star,
+  WifiOff,
+  Radio,
+  RadioTower,
+  Mail,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "~/lib/supabase";
-import { cn, formatPrice } from "~/lib/utils";
+import { cn, formatPrice, formatDateFr, formatTimeFr } from "~/lib/utils";
 import { useRealtime } from "~/hooks/useRealtime";
+import { useOnlineStatus } from "~/hooks/useOnlineStatus";
+import { usePushNotifications } from "~/hooks/usePushNotifications";
 import { RideCard, type PoolRide } from "~/components/driver/RideCard";
 import { PoolList } from "~/components/driver/PoolList";
-import { Input } from "~/components/ui/input";
+import { SkeletonRideCard } from "~/components/driver/SkeletonCard";
+import { useToast } from "~/components/ui/toast";
 import * as authRepository from "~/repositories/authRepository";
 import * as bookingsRepository from "~/repositories/bookingsRepository";
 import * as driversRepository from "~/repositories/driversRepository";
-import { notifyBookingAcceptedServerFn, notifyRideUnassignedServerFn } from "~/server/email";
+import type { DriverStatsPeriod } from "~/repositories/driversRepository";
+import { notifyBookingAcceptedServerFn, notifyDriverRideAcceptedServerFn, notifyRideUnassignedServerFn } from "~/server/email";
 import { logger } from "~/lib/logger";
 import type { Database } from "~/lib/database.types";
 
@@ -67,6 +75,14 @@ async function acceptRide(rideId: string): Promise<void> {
   await bookingsRepository.acceptRide(supabase, rideId);
 }
 
+async function acceptSeriesRides(rideId: string): Promise<void> {
+  await bookingsRepository.acceptSeriesRides(supabase, rideId);
+}
+
+async function updateHeartbeat(): Promise<void> {
+  await supabase.rpc("update_driver_heartbeat");
+}
+
 async function startRide(rideId: string): Promise<void> {
   await bookingsRepository.startRide(supabase, rideId);
 }
@@ -77,6 +93,10 @@ async function completeRide(rideId: string): Promise<void> {
 
 async function cancelRideByDriver(rideId: string): Promise<void> {
   await bookingsRepository.cancelRideByDriver(supabase, rideId);
+}
+
+async function cancelSeriesRides(rideId: string): Promise<void> {
+  await bookingsRepository.cancelSeriesRides(supabase, rideId);
 }
 
 async function rateRide(vars: { rideId: string; rating: number; comment?: string }): Promise<void> {
@@ -97,6 +117,10 @@ async function setAvailability(availability: DriverAvailability): Promise<void> 
 
 async function fetchMyDriverStats(): Promise<driversRepository.MyDriverStats | null> {
   return driversRepository.fetchMyDriverStats(supabase);
+}
+
+async function fetchDriverStatsSince(since: Date): Promise<DriverStatsPeriod> {
+  return driversRepository.fetchDriverStatsSince(supabase, since);
 }
 
 async function setAcceptanceRadius(radiusKm: number | null): Promise<void> {
@@ -137,13 +161,24 @@ function StatCard({
 
 function DriverDashboard() {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
   const [startingId, setStartingId] = useState<string | null>(null);
   const [completingId, setCompletingId] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [cancellingSeriesId, setCancellingSeriesId] = useState<string | null>(null);
   const [ratingId, setRatingId] = useState<string | null>(null);
   const [realtimeEnabled, setRealtimeEnabled] = useState(true);
   const [tab, setTab] = useState<"pool" | "my_rides">("pool");
+  const [statsPeriod, setStatsPeriod] = useState<"today" | "week" | "month" | "total">("today");
+  const [soundEnabled, setSoundEnabled] = useState(() => {
+    try { return localStorage.getItem("driver-sound") !== "off"; } catch { return true; }
+  });
+  const push = usePushNotifications();
+  const prevPoolCountRef = useRef<number | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [acceptingSeriesId, setAcceptingSeriesId] = useState<string | null>(null);
+  const isOnline = useOnlineStatus();
 
   // Driver's own online/paused/offline status — the pool only shows rides
   // to drivers who are "online" (see migration 018).
@@ -163,20 +198,30 @@ function DriverDashboard() {
     queryFn: fetchMyDriverStats,
   });
 
-  const [radiusInput, setRadiusInput] = useState("");
-  useEffect(() => {
-    setRadiusInput(availabilityQuery.data?.acceptance_radius_km?.toString() ?? "");
-  }, [availabilityQuery.data?.acceptance_radius_km]);
+  const periodSince = (() => {
+    const d = new Date();
+    if (statsPeriod === "today") { d.setHours(0, 0, 0, 0); return d; }
+    if (statsPeriod === "week") { d.setDate(d.getDate() - 7); return d; }
+    if (statsPeriod === "month") { d.setDate(d.getDate() - 30); return d; }
+    return d;
+  })();
+
+  const periodStatsQuery = useQuery({
+    queryKey: ["driver-stats-since", statsPeriod],
+    queryFn: () => fetchDriverStatsSince(periodSince),
+    enabled: statsPeriod !== "total",
+  });
 
   const radiusMutation = useMutation({
     mutationFn: setAcceptanceRadius,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["my-availability"] });
       queryClient.invalidateQueries({ queryKey: ["ride-pool"] });
+      toast({ title: "Rayon mis à jour", variant: "success" });
     },
     onError: (error) => {
       logger.error("driver.setAcceptanceRadius failed", { error: error.message });
-      alert(`Erreur : ${error.message}`);
+      toast({ title: "Erreur", description: error.message, variant: "error" });
     },
   });
 
@@ -188,7 +233,7 @@ function DriverDashboard() {
     },
     onError: (error) => {
       logger.error("driver.setAvailability failed", { error: error.message });
-      alert(`Erreur : ${error.message}`);
+      toast({ title: "Erreur", description: error.message, variant: "error" });
     },
   });
 
@@ -204,6 +249,7 @@ function DriverDashboard() {
     queryKey: ["my-rides"],
     queryFn: fetchMyRides,
   });
+  const myRides = myRidesQuery.data ?? [];
 
   // Realtime subscription — updates pool in real-time
   useRealtime({
@@ -211,21 +257,46 @@ function DriverDashboard() {
     queryKey: ["ride-pool"],
     event: "*",
     filter: "status=eq.available",
+    enabled: realtimeEnabled,
   });
 
-  // Also update my rides when a booking is accepted
+  // My rides realtime — also detects patient cancellations to alert the driver
   useRealtime({
     table: "bookings",
     queryKey: ["my-rides"],
     event: "UPDATE",
+    enabled: realtimeEnabled,
+    onChange: (payload) => {
+      const updated = payload.new as { id?: string; status?: string };
+      const ride = myRides.find((r) => r.id === updated.id);
+      if (!ride) return;
+      if (updated.status === "cancelled") {
+        toast({
+          title: "Course annulée par le patient",
+          description: `${formatDateFr(ride.pickup_datetime)} à ${formatTimeFr(ride.pickup_datetime)}`,
+          variant: "error",
+        });
+      } else if (updated.status === "accepted") {
+        // status stays accepted → patient modified booking details
+        toast({
+          title: "Course modifiée par le patient",
+          description: `${formatDateFr(ride.pickup_datetime)} à ${formatTimeFr(ride.pickup_datetime)} — vérifiez les nouveaux détails`,
+          variant: "default",
+        });
+      }
+    },
   });
 
   const acceptMutation = useMutation({
     mutationFn: acceptRide,
     onMutate: (rideId) => setAcceptingId(rideId),
     onSuccess: (_, rideId) => {
+      toast({ title: "Course acceptée — coordonnées du patient envoyées par email", variant: "success" });
       notifyBookingAcceptedServerFn({ data: { bookingId: rideId } }).catch((err) => {
         logger.warn("email.notifyBookingAccepted failed", { error: err.message, rideId });
+      });
+      notifyDriverRideAcceptedServerFn({ data: { bookingId: rideId } }).catch((err) => {
+        logger.warn("email.notifyDriverRideAccepted failed", { error: err.message, rideId });
       });
     },
     onSettled: () => {
@@ -235,33 +306,39 @@ function DriverDashboard() {
     },
     onError: (error, rideId) => {
       logger.error("driver.acceptRide failed", { error: error.message, rideId });
-      alert(`Erreur : ${error.message}. La course a peut-être déjà été prise.`);
+      toast({ title: "Course non disponible", description: error.message, variant: "error" });
     },
   });
 
   const startMutation = useMutation({
     mutationFn: startRide,
     onMutate: (rideId) => setStartingId(rideId),
+    onSuccess: () => {
+      toast({ title: "Course démarrée", variant: "success" });
+    },
     onSettled: () => {
       setStartingId(null);
       queryClient.invalidateQueries({ queryKey: ["my-rides"] });
     },
     onError: (error, rideId) => {
       logger.error("driver.startRide failed", { error: error.message, rideId });
-      alert(`Erreur : ${error.message}`);
+      toast({ title: "Erreur", description: error.message, variant: "error" });
     },
   });
 
   const completeMutation = useMutation({
     mutationFn: completeRide,
     onMutate: (rideId) => setCompletingId(rideId),
+    onSuccess: () => {
+      toast({ title: "Course terminée !", variant: "success" });
+    },
     onSettled: () => {
       setCompletingId(null);
       queryClient.invalidateQueries({ queryKey: ["my-rides"] });
     },
     onError: (error, rideId) => {
       logger.error("driver.completeRide failed", { error: error.message, rideId });
-      alert(`Erreur : ${error.message}`);
+      toast({ title: "Erreur", description: error.message, variant: "error" });
     },
   });
 
@@ -269,6 +346,7 @@ function DriverDashboard() {
     mutationFn: cancelRideByDriver,
     onMutate: (rideId) => setCancellingId(rideId),
     onSuccess: (_, rideId) => {
+      toast({ title: "Course annulée", description: "La course est retournée dans le pool.", variant: "default" });
       notifyRideUnassignedServerFn({ data: { bookingId: rideId } }).catch((err) => {
         logger.warn("email.notifyRideUnassigned failed", { error: err.message, rideId });
       });
@@ -280,13 +358,41 @@ function DriverDashboard() {
     },
     onError: (error, rideId) => {
       logger.error("driver.cancelRideByDriver failed", { error: error.message, rideId });
-      alert(`Erreur : ${error.message}`);
+      toast({ title: "Erreur", description: error.message, variant: "error" });
+    },
+  });
+
+  const cancelSeriesMutation = useMutation({
+    mutationFn: async (rideIds: string[]) => {
+      for (const id of rideIds) await cancelRideByDriver(id);
+    },
+    onMutate: ([firstId]) => setCancellingSeriesId(firstId),
+    onSuccess: (_, rideIds) => {
+      const n = rideIds.length;
+      toast({ title: `${n} séance${n > 1 ? "s" : ""} annulée${n > 1 ? "s" : ""}`, description: "Retournées dans le pool.", variant: "default" });
+      // Un seul email récap : on passe le compte exact annulé pour que l'email
+      // reflète les séances réellement perdues (sélection partielle possible)
+      notifyRideUnassignedServerFn({ data: { bookingId: rideIds[0], seriesAffectedCount: rideIds.length } }).catch((err) => {
+        logger.warn("email.notifyRideUnassigned (series) failed", { error: err.message, rideId: rideIds[0] });
+      });
+    },
+    onSettled: () => {
+      setCancellingSeriesId(null);
+      queryClient.invalidateQueries({ queryKey: ["ride-pool"] });
+      queryClient.invalidateQueries({ queryKey: ["my-rides"] });
+    },
+    onError: (error) => {
+      logger.error("driver.cancelSeriesRides failed", { error: error.message });
+      toast({ title: "Erreur", description: error.message, variant: "error" });
     },
   });
 
   const rateMutation = useMutation({
     mutationFn: rateRide,
     onMutate: (vars) => setRatingId(vars.rideId),
+    onSuccess: () => {
+      toast({ title: "Avis envoyé", variant: "success" });
+    },
     onSettled: () => {
       setRatingId(null);
       queryClient.invalidateQueries({ queryKey: ["my-rides"] });
@@ -294,21 +400,127 @@ function DriverDashboard() {
     },
     onError: (error, vars) => {
       logger.error("driver.rateBookingAsDriver failed", { error: error.message, rideId: vars.rideId });
-      alert(`Erreur : ${error.message}`);
+      toast({ title: "Erreur", description: error.message, variant: "error" });
     },
   });
 
   const poolRides = poolQuery.data ?? [];
-  const myRides = myRidesQuery.data ?? [];
   const todayRides = myRides.filter(
-    (r) =>
-      new Date(r.pickup_datetime).toDateString() === new Date().toDateString()
+    (r) => new Date(r.pickup_datetime).toDateString() === new Date().toDateString()
+  );
+
+  // Groupe les courses par series_id pour les passer aux RideCard
+  const ridesBySeries = myRides.reduce<Record<string, PoolRide[]>>((acc, r) => {
+    if (r.series_id) {
+      if (!acc[r.series_id]) acc[r.series_id] = [];
+      acc[r.series_id].push(r);
+    }
+    return acc;
+  }, {});
+
+  const myRidesGrouped = (() => {
+    const now = new Date();
+    const todayStr = now.toDateString();
+    const tomorrowStr = new Date(now.getTime() + 86400000).toDateString();
+    const weekEnd = new Date(now.getTime() + 7 * 86400000);
+    const groups: { label: string; sublabel?: string; rides: PoolRide[] }[] = [
+      { label: "Aujourd'hui", rides: [] },
+      { label: "Demain", rides: [] },
+      { label: "Cette semaine", rides: [] },
+      { label: "Plus tard", rides: [] },
+    ];
+    for (const ride of myRides) {
+      const d = new Date(ride.pickup_datetime);
+      if (d.toDateString() === todayStr) groups[0].rides.push(ride);
+      else if (d.toDateString() === tomorrowStr) groups[1].rides.push(ride);
+      else if (d < weekEnd) groups[2].rides.push(ride);
+      else groups[3].rides.push(ride);
+    }
+    return groups
+      .filter((g) => g.rides.length > 0)
+      .map((g) => ({
+        ...g,
+        sublabel: `${g.rides.length} course${g.rides.length > 1 ? "s" : ""}${
+          g.rides.some((r) => r.distance_km != null)
+            ? ` · ~${Math.round(g.rides.reduce((s, r) => s + (r.distance_km ?? 0), 0))} km`
+            : ""
+        }`,
+      }));
+  })();
+
+  // Heartbeat toutes les 30 s quand le chauffeur est en ligne
+  useEffect(() => {
+    if (availability !== "online") return;
+    updateHeartbeat().catch(() => {});
+    const id = setInterval(() => updateHeartbeat().catch(() => {}), 30_000);
+    const onUnload = () => navigator.sendBeacon?.("/api/noop"); // beacon placeholder
+    window.addEventListener("beforeunload", onUnload);
+    return () => { clearInterval(id); window.removeEventListener("beforeunload", onUnload); };
+  }, [availability]);
+
+  const acceptSeriesMutation = useMutation({
+    mutationFn: async (rideIds: string[]) => {
+      for (const id of rideIds) await acceptRide(id);
+    },
+    onMutate: ([firstId]) => setAcceptingSeriesId(firstId),
+    onSuccess: (_, rideIds) => {
+      const n = rideIds.length;
+      toast({ title: `${n} séance${n > 1 ? "s" : ""} acceptée${n > 1 ? "s" : ""} — coordonnées du patient envoyées par email`, variant: "success" });
+      notifyBookingAcceptedServerFn({ data: { bookingId: rideIds[0] } }).catch((err) => {
+        logger.warn("email.notifySeriesAccepted failed", { error: err.message, rideId: rideIds[0] });
+      });
+      notifyDriverRideAcceptedServerFn({ data: { bookingId: rideIds[0], seriesAcceptedCount: n } }).catch((err) => {
+        logger.warn("email.notifyDriverSeriesAccepted failed", { error: err.message, rideId: rideIds[0] });
+      });
+    },
+    onSettled: () => {
+      setAcceptingSeriesId(null);
+      queryClient.invalidateQueries({ queryKey: ["ride-pool"] });
+      queryClient.invalidateQueries({ queryKey: ["my-rides"] });
+    },
+    onError: (error) => {
+      logger.error("driver.acceptSeriesRides failed", { error: error.message });
+      toast({ title: "Erreur série", description: error.message, variant: "error" });
+    },
+  });
+
+  // Sound + vibration when a new ride appears in the pool
+  useEffect(() => {
+    const prev = prevPoolCountRef.current;
+    prevPoolCountRef.current = poolRides.length;
+    if (prev === null || availability !== "online") return;
+    if (poolRides.length > prev) {
+      if (soundEnabled) {
+        try {
+          if (!audioRef.current) audioRef.current = new Audio("/sounds/new-ride.wav");
+          audioRef.current.currentTime = 0;
+          audioRef.current.play().catch(() => {});
+        } catch {}
+      }
+      navigator.vibrate?.([200, 100, 200]);
+    }
+  }, [poolRides.length, availability, soundEnabled]);
+
+  const unratedRides = myRides.filter(
+    (r) => r.status === "completed" && r.driver_rating_given == null
   );
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* #20 Bannière offline */}
+      {!isOnline && (
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="fixed top-0 inset-x-0 z-50 flex items-center justify-center gap-2 bg-gray-900 px-4 py-2 text-sm font-semibold text-white"
+        >
+          <WifiOff className="h-4 w-4 shrink-0" aria-hidden="true" />
+          Connexion perdue — les données peuvent être obsolètes
+        </div>
+      )}
+
       {/* Header */}
-      <div className="bg-brand-blue-700 text-white">
+      <div className={cn("bg-brand-blue-700 text-white", !isOnline && "mt-9")}>
         <div className="container py-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -338,7 +550,7 @@ function DriverDashboard() {
                     disabled={availabilityMutation.isPending}
                     onClick={() => availabilityMutation.mutate(value)}
                     className={cn(
-                      "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors",
+                      "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-brand-blue-700",
                       availability === value
                         ? value === "online"
                           ? "bg-brand-green-500 text-white"
@@ -361,108 +573,134 @@ function DriverDashboard() {
                 <UserCog className="h-4 w-4" aria-hidden="true" />
                 Mon compte
               </Link>
-              <button
-                onClick={() => setRealtimeEnabled(!realtimeEnabled)}
-                className="flex items-center gap-2 rounded-xl bg-white/10 border border-white/20 px-4 py-2 text-sm font-medium hover:bg-white/20 transition-colors"
-                aria-pressed={realtimeEnabled}
-                aria-label={
-                  realtimeEnabled
-                    ? "Désactiver les mises à jour en temps réel"
-                    : "Activer les mises à jour en temps réel"
-                }
-              >
-                {realtimeEnabled ? (
-                  <>
-                    <Bell className="h-4 w-4" aria-hidden="true" />
-                    <span className="h-2 w-2 rounded-full bg-brand-green-400 animate-pulse" aria-hidden="true" />
-                    Temps réel actif
-                  </>
-                ) : (
-                  <>
-                    <BellOff className="h-4 w-4" aria-hidden="true" />
-                    Temps réel désactivé
-                  </>
-                )}
-              </button>
             </div>
           </div>
         </div>
       </div>
 
       <div className="container py-8 space-y-8">
-        {/* Stats */}
+        {/* Stats avec sélecteur de période */}
         <section aria-labelledby="stats-heading">
-          <h2 id="stats-heading" className="sr-only">
-            Statistiques du jour
-          </h2>
-          <div className="grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4">
-            <StatCard
-              icon={Activity}
-              label="Courses disponibles"
-              value={poolRides.length}
-              color="bg-brand-blue-50 text-brand-blue-600"
-            />
-            <StatCard
-              icon={Car}
-              label="Mes courses aujourd'hui"
-              value={todayRides.length}
-              color="bg-brand-green-50 text-brand-green-600"
-            />
-            <StatCard
-              icon={CheckCircle2}
-              label="Courses terminées (total)"
-              value={statsQuery.data?.rides_completed ?? 0}
-              color="bg-purple-50 text-purple-600"
-            />
-            <StatCard
-              icon={Clock}
-              label="Prochaine course"
-              value={
-                myRides.find((r) => r.status === "accepted")
-                  ? new Date(
-                      myRides.find((r) => r.status === "accepted")!.pickup_datetime
-                    ).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
-                  : "—"
-              }
-              color="bg-amber-50 text-amber-600"
-            />
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <h2 id="stats-heading" className="text-xl font-bold text-gray-900">Statistiques</h2>
+            <div className="flex items-center gap-2">
+              {/* Toggles son + notifs push + temps réel — icônes compactes */}
+              <button
+                type="button"
+                onClick={() => {
+                  const next = !soundEnabled;
+                  setSoundEnabled(next);
+                  try { localStorage.setItem("driver-sound", next ? "on" : "off"); } catch {}
+                }}
+                aria-pressed={soundEnabled}
+                aria-label={soundEnabled ? "Désactiver le son" : "Activer le son"}
+                title={soundEnabled ? "Son activé" : "Son désactivé"}
+                className={cn(
+                  "flex h-7 w-7 items-center justify-center rounded-lg border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  soundEnabled
+                    ? "bg-brand-green-50 border-brand-green-200 text-brand-green-700"
+                    : "bg-white border-gray-200 text-gray-400 hover:bg-gray-50"
+                )}
+              >
+                {soundEnabled ? <Bell className="h-3.5 w-3.5" aria-hidden="true" /> : <BellOff className="h-3.5 w-3.5" aria-hidden="true" />}
+              </button>
+              {push.isSupported && push.permission !== "denied" && (
+                <button
+                  type="button"
+                  onClick={() => push.isSubscribed ? push.unsubscribe() : push.subscribe()}
+                  disabled={push.isLoading}
+                  aria-pressed={push.isSubscribed}
+                  aria-label={push.isSubscribed ? "Désactiver les notifications push" : "Activer les notifications push"}
+                  title={push.isSubscribed ? "Notifications push activées" : "Activer les notifications push"}
+                  className={cn(
+                    "flex h-7 w-7 items-center justify-center rounded-lg border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    push.isSubscribed
+                      ? "bg-brand-blue-50 border-brand-blue-200 text-brand-blue-700"
+                      : "bg-white border-gray-200 text-gray-400 hover:bg-gray-50"
+                  )}
+                >
+                  <RadioTower className="h-3.5 w-3.5" aria-hidden="true" />
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setRealtimeEnabled((v) => !v)}
+                aria-pressed={realtimeEnabled}
+                aria-label={realtimeEnabled ? "Désactiver le temps réel" : "Activer le temps réel"}
+                title={realtimeEnabled ? "Temps réel activé" : "Temps réel désactivé"}
+                className={cn(
+                  "flex h-7 w-7 items-center justify-center rounded-lg border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  realtimeEnabled
+                    ? "bg-brand-blue-50 border-brand-blue-200 text-brand-blue-700"
+                    : "bg-white border-gray-200 text-gray-400 hover:bg-gray-50"
+                )}
+              >
+                {realtimeEnabled ? <RadioTower className="h-3.5 w-3.5" aria-hidden="true" /> : <Radio className="h-3.5 w-3.5" aria-hidden="true" />}
+              </button>
+              <div role="tablist" aria-label="Période" className="flex gap-0.5 rounded-lg bg-white ring-1 ring-gray-200 p-0.5 shadow-sm">
+                {(["today", "week", "month", "total"] as const).map((p) => {
+                  const labels = { today: "Auj.", week: "7 j", month: "30 j", total: "Total" };
+                  return (
+                    <button
+                      key={p}
+                      role="tab"
+                      aria-selected={statsPeriod === p}
+                      onClick={() => setStatsPeriod(p)}
+                      className={cn(
+                        "rounded-md px-2.5 py-1 text-xs font-semibold transition-colors",
+                        statsPeriod === p
+                          ? "bg-brand-blue-600 text-white shadow-sm"
+                          : "text-gray-500 hover:text-gray-800"
+                      )}
+                    >
+                      {labels[p]}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
+
+          {(() => {
+            const s = statsQuery.data;
+            const p = periodStatsQuery.data;
+            const rides = statsPeriod === "today" ? (s?.rides_today ?? 0)
+              : statsPeriod === "total" ? (s?.rides_completed ?? 0)
+              : (p?.rides ?? 0);
+            const earnings = statsPeriod === "today" ? (s?.earnings_today ?? 0)
+              : statsPeriod === "total" ? (s?.total_earnings ?? 0)
+              : (p?.earnings ?? 0);
+            const km = statsPeriod === "total" ? (s?.total_km ?? 0) : (p?.km ?? 0);
+            const nextRide = myRides.find((r) => r.status === "accepted");
+            return (
+              <div className="grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4">
+                <StatCard icon={Car} label="Courses" value={rides} color="bg-brand-green-50 text-brand-green-600" />
+                <StatCard icon={Wallet} label="Gains" value={formatPrice(earnings)} color="bg-brand-blue-50 text-brand-blue-600" />
+                <StatCard icon={Gauge} label="Km parcourus" value={`${km} km`} color="bg-indigo-50 text-indigo-600" />
+                <StatCard
+                  icon={statsPeriod === "total" ? Star : Clock}
+                  label={statsPeriod === "total" ? "Note moyenne" : "Prochaine course"}
+                  value={
+                    statsPeriod === "total"
+                      ? (s?.average_rating != null ? `${s.average_rating} / 5` : "—")
+                      : (nextRide
+                          ? new Date(nextRide.pickup_datetime).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
+                          : "—")
+                  }
+                  color="bg-amber-50 text-amber-600"
+                />
+              </div>
+            );
+          })()}
         </section>
 
-        {/* Earnings */}
-        <section aria-labelledby="earnings-heading">
-          <h2 id="earnings-heading" className="sr-only">
-            Kilomètres et gains
-          </h2>
-          <div className="grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4">
-            <StatCard
-              icon={Gauge}
-              label="Km parcourus (total)"
-              value={`${statsQuery.data?.total_km ?? 0} km`}
-              color="bg-indigo-50 text-indigo-600"
-            />
-            <StatCard
-              icon={Wallet}
-              label="Gains totaux"
-              value={formatPrice(statsQuery.data?.total_earnings ?? 0)}
-              color="bg-brand-green-50 text-brand-green-600"
-            />
-            <StatCard
-              icon={Wallet}
-              label="Gains aujourd'hui"
-              value={formatPrice(statsQuery.data?.earnings_today ?? 0)}
-              color="bg-brand-blue-50 text-brand-blue-600"
-            />
-            <StatCard
-              icon={Star}
-              label="Note moyenne"
-              value={statsQuery.data?.average_rating != null ? `${statsQuery.data.average_rating} / 5` : "—"}
-              color="bg-amber-50 text-amber-600"
-            />
-          </div>
-        </section>
+        {/* Pool disponible — toujours visible */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <StatCard icon={Activity} label="Courses disponibles" value={poolRides.length} color="bg-brand-blue-50 text-brand-blue-600" />
+          <StatCard icon={Star} label="Note moyenne" value={statsQuery.data?.average_rating != null ? `${statsQuery.data.average_rating} / 5` : "—"} color="bg-amber-50 text-amber-600" />
+        </div>
 
-        {/* Acceptance radius setting */}
+        {/* Acceptance radius setting — chips instantanés */}
         <section aria-labelledby="radius-heading">
           <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-100">
             <div className="flex items-center gap-2 mb-1">
@@ -470,39 +708,37 @@ function DriverDashboard() {
               <h2 id="radius-heading" className="text-sm font-bold text-gray-900">
                 Rayon d'acceptation
               </h2>
+              {radiusMutation.isPending && (
+                <span className="text-xs text-gray-400">Enregistrement…</span>
+              )}
             </div>
             <p className="text-sm text-muted-foreground mb-3">
-              Distance maximale (km) entre votre commune de stationnement et le
-              point de départ d'une course pour qu'elle apparaisse dans votre
-              pool. Laissez vide pour aucune limite.
+              Distance maximale entre votre stationnement et le départ d'une course. Illimité = toutes les courses.
             </p>
-            <form
-              className="flex flex-wrap items-center gap-2"
-              onSubmit={(e) => {
-                e.preventDefault();
-                const trimmed = radiusInput.trim();
-                radiusMutation.mutate(trimmed === "" ? null : Number(trimmed));
-              }}
-            >
-              <Input
-                type="number"
-                min={0}
-                step="0.1"
-                inputMode="decimal"
-                value={radiusInput}
-                onChange={(e) => setRadiusInput(e.target.value)}
-                placeholder="Aucune limite"
-                aria-label="Rayon d'acceptation en kilomètres"
-                className="max-w-[160px]"
-              />
-              <button
-                type="submit"
-                disabled={radiusMutation.isPending}
-                className="rounded-xl bg-brand-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-blue-700 disabled:opacity-60 transition-colors"
-              >
-                {radiusMutation.isPending ? "Enregistrement…" : "Enregistrer"}
-              </button>
-            </form>
+            <div role="group" aria-label="Rayon d'acceptation" className="flex flex-wrap gap-2">
+              {([5, 10, 25, 50, null] as (number | null)[]).map((val) => {
+                const label = val === null ? "Illimité" : `${val} km`;
+                const current = availabilityQuery.data?.acceptance_radius_km ?? null;
+                const isActive = current === val;
+                return (
+                  <button
+                    key={String(val)}
+                    type="button"
+                    aria-pressed={isActive}
+                    disabled={radiusMutation.isPending}
+                    onClick={() => radiusMutation.mutate(val)}
+                    className={cn(
+                      "rounded-xl px-4 py-2 text-sm font-semibold transition-all border",
+                      isActive
+                        ? "bg-brand-blue-600 text-white border-brand-blue-600 shadow-sm"
+                        : "bg-white text-gray-700 border-gray-200 hover:border-brand-blue-300 hover:bg-brand-blue-50"
+                    )}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </section>
 
@@ -561,30 +797,42 @@ function DriverDashboard() {
             </div>
 
             {poolQuery.isLoading ? (
-              <div className="flex items-center justify-center py-16">
-                <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-blue-600 border-t-transparent" aria-hidden="true" />
-                <span className="ml-3 text-muted-foreground">Chargement des courses…</span>
-              </div>
+              <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 list-none" aria-busy="true" aria-label="Chargement des courses…">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <li key={i} className="min-w-0"><SkeletonRideCard /></li>
+                ))}
+              </ul>
             ) : poolQuery.isError ? (
               <div className="rounded-2xl bg-red-50 border border-red-200 p-6 text-center text-red-700">
                 <p className="font-semibold">Impossible de charger le pool</p>
                 <p className="text-sm mt-1">{poolQuery.error?.message}</p>
               </div>
             ) : isPoolSuspended ? (
-              <div className="rounded-2xl bg-red-50 border border-red-200 p-12 text-center">
-                <ShieldAlert className="h-12 w-12 text-red-300 mx-auto mb-3" aria-hidden="true" />
-                <p className="text-lg font-semibold text-red-800">
-                  Accès au pool temporairement suspendu
-                </p>
-                <p className="text-sm text-red-700 mt-1">
-                  Suite à plusieurs annulations juste après acceptation, l'accès
-                  aux courses disponibles est suspendu jusqu'au{" "}
-                  {new Date(poolSuspendedUntil!).toLocaleString("fr-FR", {
-                    dateStyle: "long",
-                    timeStyle: "short",
-                  })}
-                  .
-                </p>
+              <div className="rounded-2xl bg-red-50 border border-red-200 p-10 text-center space-y-4">
+                <ShieldAlert className="h-12 w-12 text-red-300 mx-auto" aria-hidden="true" />
+                <div>
+                  <p className="text-lg font-semibold text-red-800">
+                    Accès au pool temporairement suspendu
+                  </p>
+                  <p className="text-sm text-red-700 mt-1">
+                    Suite à plusieurs annulations juste après acceptation, l'accès
+                    aux courses disponibles est suspendu jusqu'au{" "}
+                    <strong>
+                      {new Date(poolSuspendedUntil!).toLocaleString("fr-FR", {
+                        dateStyle: "long",
+                        timeStyle: "short",
+                      })}
+                    </strong>
+                    .
+                  </p>
+                </div>
+                <a
+                  href="mailto:contact@mon-taxi-sante.com?subject=Suspension%20de%20pool%20-%20demande%20de%20r%C3%A9examen"
+                  className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-red-700 transition-colors"
+                >
+                  <Mail className="h-4 w-4" aria-hidden="true" />
+                  Contacter le support
+                </a>
               </div>
             ) : availability !== "online" ? (
               <div className="rounded-2xl bg-amber-50 border border-amber-200 p-12 text-center">
@@ -614,6 +862,8 @@ function DriverDashboard() {
                 onAccept={(id) => acceptMutation.mutate(id)}
                 acceptingId={acceptingId}
                 isAccepting={acceptMutation.isPending}
+                onAcceptSeries={(ids) => acceptSeriesMutation.mutate(ids)}
+                acceptingSeriesId={acceptingSeriesId}
                 driverProfile={
                   availabilityQuery.data
                     ? {
@@ -637,9 +887,11 @@ function DriverDashboard() {
             </h2>
 
             {myRidesQuery.isLoading ? (
-              <div className="flex items-center justify-center py-16">
-                <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-blue-600 border-t-transparent" aria-hidden="true" />
-              </div>
+              <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 list-none" aria-busy="true" aria-label="Chargement de vos courses…">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <li key={i} className="min-w-0"><SkeletonRideCard /></li>
+                ))}
+              </ul>
             ) : myRides.length === 0 ? (
               <div className="rounded-2xl bg-white shadow-sm ring-1 ring-gray-100 p-12 text-center">
                 <CheckCircle2 className="h-12 w-12 text-gray-300 mx-auto mb-3" aria-hidden="true" />
@@ -651,25 +903,49 @@ function DriverDashboard() {
                 </p>
               </div>
             ) : (
-              <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 list-none">
-                {myRides.map((ride) => (
-                  <li key={ride.id}>
-                    <RideCard
-                      ride={ride}
-                      onAccept={() => {}}
-                      isAccepting={false}
-                      onStart={(id) => startMutation.mutate(id)}
-                      isStarting={startingId === ride.id && startMutation.isPending}
-                      onComplete={(id) => completeMutation.mutate(id)}
-                      isCompleting={completingId === ride.id && completeMutation.isPending}
-                      onCancel={(id) => cancelMutation.mutate(id)}
-                      isCancelling={cancellingId === ride.id && cancelMutation.isPending}
-                      onRate={(id, rating, comment) => rateMutation.mutate({ rideId: id, rating, comment })}
-                      isRating={ratingId === ride.id && rateMutation.isPending}
-                    />
-                  </li>
+              <div className="space-y-8">
+                {/* #12 Prompt contextuel de notation */}
+                {unratedRides.length > 0 && (
+                  <div className="flex items-center gap-3 rounded-2xl bg-amber-50 border border-amber-200 px-5 py-4">
+                    <Star className="h-5 w-5 shrink-0 text-amber-500" aria-hidden="true" />
+                    <p className="text-sm font-medium text-amber-900 flex-1">
+                      {unratedRides.length === 1
+                        ? "Une course terminée attend votre avis — dépliez-la ci-dessous pour noter."
+                        : `${unratedRides.length} courses terminées attendent votre avis — dépliez-les ci-dessous pour noter.`}
+                    </p>
+                  </div>
+                )}
+                {myRidesGrouped.map((group) => (
+                  <div key={group.label}>
+                    <div className="flex items-baseline gap-2 mb-3">
+                      <h3 className="text-base font-bold text-gray-900">{group.label}</h3>
+                      <span className="text-xs text-gray-400">{group.sublabel}</span>
+                    </div>
+                    <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 list-none">
+                      {group.rides.map((ride) => (
+                        <li key={ride.id} className="min-w-0">
+                          <RideCard
+                            ride={ride}
+                            onAccept={() => {}}
+                            isAccepting={false}
+                            onStart={(id) => startMutation.mutate(id)}
+                            isStarting={startingId === ride.id && startMutation.isPending}
+                            onComplete={(id) => completeMutation.mutate(id)}
+                            isCompleting={completingId === ride.id && completeMutation.isPending}
+                            onCancel={(id) => cancelMutation.mutate(id)}
+                            isCancelling={cancellingId === ride.id && cancelMutation.isPending}
+                            onCancelSeries={(ids) => cancelSeriesMutation.mutate(ids)}
+                            isCancellingSeries={cancellingSeriesId === ride.id && cancelSeriesMutation.isPending}
+                            onRate={(id, rating, comment) => rateMutation.mutate({ rideId: id, rating, comment })}
+                            isRating={ratingId === ride.id && rateMutation.isPending}
+                            seriesRides={ride.series_id ? ridesBySeries[ride.series_id] : undefined}
+                          />
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 ))}
-              </ul>
+              </div>
             )}
           </section>
         )}

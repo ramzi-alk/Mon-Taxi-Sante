@@ -31,6 +31,8 @@ interface PoolListProps {
   acceptingId: string | null;
   isAccepting: boolean;
   driverProfile?: DriverProfileFilter | null;
+  onAcceptSeries?: (rideIds: string[]) => void;
+  acceptingSeriesId?: string | null;
 }
 
 const VIRTUALIZE_THRESHOLD = 20;
@@ -49,8 +51,21 @@ function defaultVehicleFilter(profile: DriverProfileFilter | null | undefined): 
   return "all";
 }
 
-export function PoolList({ rides, onAccept, acceptingId, isAccepting, driverProfile }: PoolListProps) {
+export function PoolList({ rides, onAccept, acceptingId, isAccepting, driverProfile, onAcceptSeries, acceptingSeriesId }: PoolListProps) {
   const [search, setSearch] = useState("");
+
+  // Toutes les rides du pool groupées par series_id (non filtrées) pour
+  // que chaque carte/ligne voie l'ensemble des séances disponibles de sa série
+  const seriesPoolMap = useMemo(() => {
+    const map: Record<string, PoolRide[]> = {};
+    rides.forEach((r) => {
+      if (r.series_id) {
+        if (!map[r.series_id]) map[r.series_id] = [];
+        map[r.series_id].push(r);
+      }
+    });
+    return map;
+  }, [rides]);
   const [vehicleFilter, setVehicleFilter] = useState<VehicleFilter>(() => defaultVehicleFilter(driverProfile));
   const [accessibilityOnly, setAccessibilityOnly] = useState(false);
   const [sortBy, setSortBy] = useState<SortBy>("urgency");
@@ -105,9 +120,10 @@ export function PoolList({ rides, onAccept, acceptingId, isAccepting, driverProf
   return (
     <div className="space-y-4">
       {/* Barre de filtres / tri */}
-      <div className="sticky top-16 z-30 -mx-1 rounded-2xl bg-white/95 p-3 shadow-sm ring-1 ring-gray-100 backdrop-blur-sm">
-        <div className="flex flex-wrap items-center gap-2.5">
-          <div className="relative min-w-[200px] flex-1">
+      <div className="sticky top-16 z-30 rounded-2xl bg-white/95 p-3 shadow-sm ring-1 ring-gray-100 backdrop-blur-sm">
+        {/* Ligne 1 : recherche + toggle vue */}
+        <div className="flex items-center gap-2 mb-2">
+          <div className="relative flex-1 min-w-0">
             <Search
               className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
               aria-hidden="true"
@@ -122,39 +138,7 @@ export function PoolList({ rides, onAccept, acceptingId, isAccepting, driverProf
             />
           </div>
 
-          <Select value={vehicleFilter} onValueChange={(v) => setVehicleFilter(v as VehicleFilter)}>
-            <SelectTrigger className="w-auto min-w-[140px]" aria-label="Filtrer par type de véhicule">
-              <SelectValue placeholder="Véhicule" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tous véhicules</SelectItem>
-              <SelectItem value="taxi">🚕 Taxi</SelectItem>
-              <SelectItem value="vsl">🚐 VSL</SelectItem>
-              <SelectItem value="pmr">♿ PMR</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortBy)}>
-            <SelectTrigger className="w-auto min-w-[170px]" aria-label="Trier les courses">
-              <ArrowDownWideNarrow className="h-4 w-4 text-gray-400" aria-hidden="true" />
-              <SelectValue placeholder="Trier" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="urgency">Plus urgent d'abord</SelectItem>
-              <SelectItem value="proximity">Plus proche d'abord</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-            <Checkbox
-              checked={accessibilityOnly}
-              onCheckedChange={(checked) => setAccessibilityOnly(checked === true)}
-              aria-label="Afficher uniquement les courses avec besoins spécifiques"
-            />
-            Besoins spécifiques uniquement
-          </label>
-
-          <div className="ml-auto flex items-center gap-1 rounded-lg bg-gray-100 p-1">
+          <div className="shrink-0 flex items-center gap-1 rounded-lg bg-gray-100 p-1">
             <button
               type="button"
               onClick={() => setViewMode("compact")}
@@ -184,6 +168,41 @@ export function PoolList({ rides, onAccept, acceptingId, isAccepting, driverProf
           </div>
         </div>
 
+        {/* Ligne 2 : filtres */}
+        <div className="flex flex-wrap items-center gap-2">
+          <Select value={vehicleFilter} onValueChange={(v) => setVehicleFilter(v as VehicleFilter)}>
+            <SelectTrigger className="w-auto" aria-label="Filtrer par type de véhicule">
+              <SelectValue placeholder="Véhicule" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous véhicules</SelectItem>
+              <SelectItem value="taxi">🚕 Taxi</SelectItem>
+              <SelectItem value="vsl">🚐 VSL</SelectItem>
+              <SelectItem value="pmr">♿ PMR</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortBy)}>
+            <SelectTrigger className="w-auto" aria-label="Trier les courses">
+              <ArrowDownWideNarrow className="h-4 w-4 text-gray-400" aria-hidden="true" />
+              <SelectValue placeholder="Trier" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="urgency">Plus urgent d'abord</SelectItem>
+              <SelectItem value="proximity">Plus proche d'abord</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+            <Checkbox
+              checked={accessibilityOnly}
+              onCheckedChange={(checked) => setAccessibilityOnly(checked === true)}
+              aria-label="Afficher uniquement les courses avec besoins spécifiques"
+            />
+            Besoins spécifiques
+          </label>
+        </div>
+
         <p className="mt-2 text-xs text-gray-500">
           {filteredRides.length} course{filteredRides.length > 1 ? "s" : ""}
           {hasActiveFilters && rides.length !== filteredRides.length
@@ -205,11 +224,14 @@ export function PoolList({ rides, onAccept, acceptingId, isAccepting, driverProf
           aria-label="Liste des courses disponibles"
         >
           {filteredRides.map((ride) => (
-            <li key={ride.id}>
+            <li key={ride.id} className="min-w-0">
               <RideCard
                 ride={ride}
                 onAccept={onAccept}
                 isAccepting={acceptingId === ride.id && isAccepting}
+                onAcceptSeries={onAcceptSeries}
+                isAcceptingSeries={acceptingSeriesId === ride.id}
+                seriesPoolRides={ride.series_id ? seriesPoolMap[ride.series_id] : undefined}
               />
             </li>
           ))}
@@ -226,6 +248,7 @@ export function PoolList({ rides, onAccept, acceptingId, isAccepting, driverProf
           >
             {virtualizer.getVirtualItems().map((virtualRow) => {
               const ride = filteredRides[virtualRow.index];
+              if (!ride) return null;
               return (
                 <li
                   key={ride.id}
@@ -238,6 +261,9 @@ export function PoolList({ rides, onAccept, acceptingId, isAccepting, driverProf
                     ride={ride}
                     onAccept={onAccept}
                     isAccepting={acceptingId === ride.id && isAccepting}
+                    onAcceptSeries={onAcceptSeries}
+                    isAcceptingSeries={acceptingSeriesId === ride.id}
+                    seriesPoolRides={ride.series_id ? seriesPoolMap[ride.series_id] : undefined}
                   />
                 </li>
               );

@@ -389,7 +389,7 @@ export async function fetchDriverRides(
   const { data, error } = await client
     .from("bookings_active_for_driver")
     .select(
-      "id, driver_id, patient_full_name, patient_phone, pickup_address, pickup_lat, pickup_lng, dropoff_address, dropoff_lat, dropoff_lng, distance_km, pickup_datetime, return_datetime, vehicle_type, trip_type, requires_wheelchair, requires_stretcher, requires_oxygen, passenger_count, estimated_price, status, created_at, distance_to_driver_km, driver_rating_given, patient_rating_received, patient_rating_avg, pmt_declared, is_hospitalization, series_index, series_total"
+      "id, driver_id, patient_full_name, patient_phone, pickup_address, pickup_lat, pickup_lng, dropoff_address, dropoff_lat, dropoff_lng, distance_km, pickup_datetime, return_datetime, vehicle_type, trip_type, requires_wheelchair, requires_stretcher, requires_oxygen, passenger_count, estimated_price, status, created_at, distance_to_driver_km, driver_rating_given, patient_rating_received, patient_rating_avg, pmt_declared, is_hospitalization, series_index, series_total, series_id"
     )
     .eq("driver_id", driverId)
     .in("status", ["accepted", "in_progress", "completed"])
@@ -514,6 +514,18 @@ export async function rateBookingAsDriver(
 }
 
 /**
+ * Accepts all available rides in the same series as p_booking_id in one call
+ * (migration 037). Returns the number of rides accepted.
+ */
+export async function acceptSeriesRides(client: SupabaseClient, rideId: string): Promise<void> {
+  const { error } = await client.rpc("accept_series", { p_booking_id: rideId });
+
+  if (error) {
+    throw mapRideLifecycleError(error, rideId, "acceptSeriesRides");
+  }
+}
+
+/**
  * Flips a freshly inserted booking from pending to available, putting it in
  * the driver pool — see migration 019. Called once, right after insertBooking
  * succeeds, since the patient insert RLS policy only allows status='pending'
@@ -541,6 +553,18 @@ export async function cancelRideByDriver(client: SupabaseClient, rideId: string)
 
   if (error) {
     throw mapRideLifecycleError(error, rideId, "cancelRideByDriver");
+  }
+}
+
+/**
+ * Driver backs out of all accepted rides in the same series as rideId
+ * (migration 038). Counts as a single suspicious-cancellation event.
+ */
+export async function cancelSeriesRides(client: SupabaseClient, rideId: string): Promise<void> {
+  const { error } = await client.rpc("cancel_series" as never, { p_booking_id: rideId } as never);
+
+  if (error) {
+    throw mapRideLifecycleError(error, rideId, "cancelSeriesRides");
   }
 }
 

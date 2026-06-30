@@ -320,6 +320,41 @@ export type Database = {
           },
         ]
       }
+      driver_push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          driver_id: string
+          endpoint: string
+          id: string
+          p256dh: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          driver_id: string
+          endpoint: string
+          id?: string
+          p256dh: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          driver_id?: string
+          endpoint?: string
+          id?: string
+          p256dh?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "driver_push_subscriptions_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       driver_subscriptions: {
         Row: {
           amount_eur: number
@@ -871,6 +906,7 @@ export type Database = {
         }
         Returns: string
       }
+      update_driver_heartbeat: { Args: never; Returns: undefined }
     }
     Enums: {
       booking_rating_role: "patient" | "driver"

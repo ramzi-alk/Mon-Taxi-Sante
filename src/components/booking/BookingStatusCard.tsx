@@ -24,7 +24,7 @@ import {
 import * as bookingsRepository from "~/repositories/bookingsRepository";
 import type { MyBookingRow, UpdateBookingPayload, LookupCredentials } from "~/repositories/bookingsRepository";
 import { BookingEditForm } from "./BookingEditForm";
-import { notifyBookingCancelledServerFn, notifyBookingUpdatedServerFn } from "~/server/email";
+import { notifyBookingCancelledServerFn, notifyBookingUpdatedServerFn, notifyDriverPatientCancelledServerFn } from "~/server/email";
 import { logger } from "~/lib/logger";
 
 interface BookingStatusCardProps {
@@ -77,6 +77,13 @@ export function BookingStatusCard({
       queryClient.invalidateQueries({ queryKey: ["my-bookings"] });
       notifyBookingCancelledServerFn({ data: { bookingId: displayBooking.id } }).catch((err) => {
         logger.error("email.notifyBookingCancelled call failed", {
+          error: err instanceof Error ? err.message : String(err),
+          bookingId: displayBooking.id,
+        });
+      });
+      // Notify the assigned driver (if any) that the patient has cancelled.
+      notifyDriverPatientCancelledServerFn({ data: { bookingId: displayBooking.id } }).catch((err) => {
+        logger.error("email.notifyDriverPatientCancelled call failed", {
           error: err instanceof Error ? err.message : String(err),
           bookingId: displayBooking.id,
         });

@@ -245,3 +245,32 @@ export async function fetchMyDriverStats(client: SupabaseClient): Promise<MyDriv
   }
   return data?.[0] ?? null;
 }
+
+export interface DriverStatsPeriod {
+  rides: number;
+  km: number;
+  earnings: number;
+}
+
+export async function fetchDriverStatsSince(
+  client: SupabaseClient,
+  since: Date
+): Promise<DriverStatsPeriod> {
+  const { data, error } = await client
+    .from("bookings")
+    .select("distance_km, estimated_price")
+    .eq("status", "completed")
+    .gte("completed_at", since.toISOString());
+
+  if (error) {
+    logger.error("drivers.fetchDriverStatsSince failed", { error: error.message });
+    throw new Error(error.message);
+  }
+
+  const rows = data ?? [];
+  return {
+    rides: rows.length,
+    km: Math.round(rows.reduce((sum, r) => sum + (r.distance_km ?? 0), 0)),
+    earnings: rows.reduce((sum, r) => sum + (r.estimated_price ?? 0), 0),
+  };
+}

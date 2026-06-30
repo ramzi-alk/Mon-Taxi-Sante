@@ -105,6 +105,22 @@ function Card({
   );
 }
 
+function SkeletonSection() {
+  return (
+    <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-100 animate-pulse space-y-4">
+      <div className="flex items-center gap-2">
+        <div className="h-5 w-5 bg-gray-200 rounded" />
+        <div className="h-5 w-40 bg-gray-200 rounded" />
+      </div>
+      <div className="space-y-3">
+        <div className="h-9 w-full bg-gray-200 rounded-lg" />
+        <div className="h-9 w-full bg-gray-200 rounded-lg" />
+      </div>
+      <div className="h-9 w-28 bg-gray-200 rounded-xl" />
+    </div>
+  );
+}
+
 function SaveButton({ pending, label = "Enregistrer" }: { pending: boolean; label?: string }) {
   return (
     <button
@@ -601,23 +617,22 @@ function DriverAccountPage() {
       </div>
 
       <div className="container py-8 max-w-2xl space-y-6">
-        {profileQuery.isLoading || accountQuery.isLoading ? (
-          <div className="flex items-center justify-center py-16">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-blue-600 border-t-transparent" aria-hidden="true" />
-          </div>
-        ) : (
+        {/* Chargement progressif : chaque section s'affiche dès que sa query est prête */}
+        {profileQuery.isLoading ? <SkeletonSection /> : profileQuery.data ? <PersonalInfoCard profile={profileQuery.data} /> : null}
+        <PasswordCard />
+        {accountQuery.isLoading ? (
           <>
-            {profileQuery.data && <PersonalInfoCard profile={profileQuery.data} />}
-            <PasswordCard />
-            {accountQuery.data && (
-              <>
-                <VehicleCard details={accountQuery.data} />
-                <ParkingCard details={accountQuery.data} />
-                <CompanyCard details={accountQuery.data} />
-              </>
-            )}
+            <SkeletonSection />
+            <SkeletonSection />
+            <SkeletonSection />
           </>
-        )}
+        ) : accountQuery.data ? (
+          <>
+            <VehicleCard details={accountQuery.data} />
+            <ParkingCard details={accountQuery.data} />
+            <CompanyCard details={accountQuery.data} />
+          </>
+        ) : null}
       </div>
     </div>
   );

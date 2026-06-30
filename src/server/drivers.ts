@@ -3,7 +3,7 @@ import { z } from "zod";
 import { getSupabaseAdminClient } from "~/lib/supabaseAdmin";
 import * as driversRepository from "~/repositories/driversRepository";
 import * as profilesRepository from "~/repositories/profilesRepository";
-import { logger } from "~/lib/logger";
+import { logger, withServerFnLogging } from "~/lib/logger";
 import { notifyAdminNewDriverApplicationServerFn } from "./email";
 
 const siretRegex = /^\d{14}$/;
@@ -28,42 +28,44 @@ export const submitDriverApplicationServerFn = createServerFn({ method: "POST" }
   .validator((input: z.infer<typeof submitDriverApplicationSchema>) =>
     submitDriverApplicationSchema.parse(input)
   )
-  .handler(async ({ data }) => {
-    const admin = getSupabaseAdminClient();
+  .handler(async ({ data }) =>
+    withServerFnLogging("submitDriverApplication", { profileId: data.profile_id }, async () => {
+      const admin = getSupabaseAdminClient();
 
-    const profile = await profilesRepository.ensureProfile(admin, data.profile_id);
+      const profile = await profilesRepository.ensureProfile(admin, data.profile_id);
 
-    if (!profile || profile.role !== "driver") {
-      logger.error("drivers.submitDriverApplication invalid profile", {
-        profileId: data.profile_id,
-        role: profile?.role,
+      if (!profile || profile.role !== "driver") {
+        logger.error("drivers.submitDriverApplication invalid profile", {
+          profileId: data.profile_id,
+          role: profile?.role,
+        });
+        throw new Error("Profil chauffeur introuvable.");
+      }
+
+      // Persist the driver's phone number so it can be shared in booking emails.
+      if (data.phone) {
+        await admin.from("profiles").update({ phone: data.phone }).eq("id", data.profile_id);
+      }
+
+      const driverDetails = await driversRepository.insertDriverDetails(admin, {
+        profile_id: data.profile_id,
+        siret: data.siret,
+        company_name: data.company_name,
+        convention_cpam: false,
+        convention_number: null,
+        vehicle_type: data.vehicle_type,
+        vehicle_registration: data.vehicle_registration,
+        pmr_equipped: data.pmr_equipped,
+        parking_municipality: data.parking_municipality,
+        parking_lat: data.parking_lat,
+        parking_lng: data.parking_lng,
+        subscription_status: "trial",
+        subscription_ends_at: null,
+        approved_at: null,
       });
-      throw new Error("Profil chauffeur introuvable.");
-    }
 
-    // Persist the driver's phone number so it can be shared in booking emails.
-    if (data.phone) {
-      await admin.from("profiles").update({ phone: data.phone }).eq("id", data.profile_id);
-    }
+      await notifyAdminNewDriverApplicationServerFn({ data: { driverDetailsId: driverDetails.id } });
 
-    const driverDetails = await driversRepository.insertDriverDetails(admin, {
-      profile_id: data.profile_id,
-      siret: data.siret,
-      company_name: data.company_name,
-      convention_cpam: false,
-      convention_number: null,
-      vehicle_type: data.vehicle_type,
-      vehicle_registration: data.vehicle_registration,
-      pmr_equipped: data.pmr_equipped,
-      parking_municipality: data.parking_municipality,
-      parking_lat: data.parking_lat,
-      parking_lng: data.parking_lng,
-      subscription_status: "trial",
-      subscription_ends_at: null,
-      approved_at: null,
-    });
-
-    await notifyAdminNewDriverApplicationServerFn({ data: { driverDetailsId: driverDetails.id } });
-
-    return driverDetails;
-  });
+      return driverDetails;
+    })
+  );

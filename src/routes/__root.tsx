@@ -12,6 +12,7 @@ import { Navbar } from "~/components/Navbar";
 import { Footer } from "~/components/Footer";
 import { ToastProvider, useToast } from "~/components/ui/toast";
 import { logger } from "~/lib/logger";
+import { logClientErrorServerFn } from "~/server/errorReporting";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
 import appCss from "~/styles/app.css?url";
 
@@ -36,6 +37,19 @@ function RouteError({ error, reset }: ErrorComponentProps) {
     error: error instanceof Error ? error.message : String(error),
   });
 
+  useEffect(() => {
+    logClientErrorServerFn({
+      data: {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        url: window.location.href,
+        userAgent: navigator.userAgent,
+      },
+    }).catch(() => {
+      // Best-effort — don't let logging failures compound the original error.
+    });
+  }, [error]);
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 text-center px-4">
       <h1 className="text-4xl font-bold text-gray-900">Une erreur est survenue</h1>
@@ -56,6 +70,45 @@ function RouteError({ error, reset }: ErrorComponentProps) {
       </div>
     </div>
   );
+}
+
+/**
+ * Catches errors React's error boundary never sees: thrown in event
+ * handlers, timers, or rejected promises that nobody awaited. Without this,
+ * those failures only ever reach the browser console (invisible in Vercel
+ * Runtime Logs) — relay them through the same server-side logger as
+ * RouteError above.
+ */
+function GlobalErrorListener() {
+  useEffect(() => {
+    const reportError = (message: string, stack?: string) => {
+      logClientErrorServerFn({
+        data: { message, stack, url: window.location.href, userAgent: navigator.userAgent },
+      }).catch(() => {
+        // Best-effort — don't let logging failures compound the original error.
+      });
+    };
+
+    const onError = (event: ErrorEvent) => {
+      reportError(event.message, event.error instanceof Error ? event.error.stack : undefined);
+    };
+    const onUnhandledRejection = (event: PromiseRejectionEvent) => {
+      const reason = event.reason;
+      reportError(
+        reason instanceof Error ? reason.message : String(reason),
+        reason instanceof Error ? reason.stack : undefined
+      );
+    };
+
+    window.addEventListener("error", onError);
+    window.addEventListener("unhandledrejection", onUnhandledRejection);
+    return () => {
+      window.removeEventListener("error", onError);
+      window.removeEventListener("unhandledrejection", onUnhandledRejection);
+    };
+  }, []);
+
+  return null;
 }
 
 /**
@@ -149,6 +202,7 @@ function RootDocument({ children }: { children: ReactNode }) {
       <body className="min-h-screen bg-background font-sans antialiased">
         <QueryClientProvider client={queryClient}>
           <ToastProvider>
+            <GlobalErrorListener />
             <AuthRedirectListener />
             <Navbar />
             <main id="main-content">{children}</main>

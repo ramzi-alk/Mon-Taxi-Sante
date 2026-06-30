@@ -174,6 +174,8 @@ export function bookingAcceptedEmail(params: {
   vehicleModel: string | null;
   vehicleRegistration: string | null;
   driverAverageRating?: number | null;
+  seriesTotal?: number;
+  seriesLastPickupDatetime?: string;
 }): EmailContent {
   const {
     patientFullName,
@@ -187,17 +189,28 @@ export function bookingAcceptedEmail(params: {
     vehicleModel,
     vehicleRegistration,
     driverAverageRating,
+    seriesTotal,
+    seriesLastPickupDatetime,
   } = params;
+  const isSeries = !!seriesTotal && seriesTotal > 1 && !!seriesLastPickupDatetime;
   const vehicleLabel = [vehicleBrand, vehicleModel].filter(Boolean).join(" ");
+  const dateValue = isSeries
+    ? `${seriesTotal} séances, du ${formatDateFr(pickupDatetime)} au ${formatDateFr(seriesLastPickupDatetime!)}`
+    : `${formatDateFr(pickupDatetime)} à ${formatTimeFr(pickupDatetime)}`;
+  const intro = isSeries
+    ? `Un chauffeur conventionné Assurance Maladie a accepté de prendre en charge l'ensemble de vos <strong>${seriesTotal} séances</strong> de transport.`
+    : `Un chauffeur conventionné Assurance Maladie a accepté de prendre en charge votre course.`;
   return {
-    subject: `Chauffeur affecté — Réf. ${formatReferenceCode(referenceCode)}`,
+    subject: isSeries
+      ? `Chauffeur affecté pour ${seriesTotal} séances — Réf. ${formatReferenceCode(referenceCode)}`
+      : `Chauffeur affecté — Réf. ${formatReferenceCode(referenceCode)}`,
     html: layout({
-      title: "Chauffeur affecté",
+      title: isSeries ? `Chauffeur affecté — ${seriesTotal} séances` : "Chauffeur affecté",
       icon: "🚗",
       bodyHtml: `
         ${badge("Chauffeur affecté", "blue")}
         <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${patientFullName},</p>
-        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Un chauffeur conventionné Assurance Maladie a accepté de prendre en charge votre course.</p>
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">${intro}</p>
         ${detailsCard([
           { label: "Référence", value: formatReferenceCode(referenceCode) },
           { label: "Chauffeur", value: driverFullName },
@@ -206,7 +219,7 @@ export function bookingAcceptedEmail(params: {
           ...(vehicleRegistration ? [{ label: "Immatriculation", value: vehicleRegistration }] : []),
           { label: "Départ", value: pickupAddress },
           { label: "Destination", value: dropoffAddress },
-          { label: "Date", value: `${formatDateFr(pickupDatetime)} à ${formatTimeFr(pickupDatetime)}` },
+          { label: isSeries ? "Dates" : "Date", value: dateValue },
         ])}
         ${driverPhone ? `
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;">
@@ -364,18 +377,101 @@ export function rideUnassignedByDriverEmail(params: {
   patientFullName: string;
   referenceCode: string;
   pickupDatetime: string;
+  seriesTotal?: number;
+  seriesLastPickupDatetime?: string;
 }): EmailContent {
-  const { patientFullName, referenceCode, pickupDatetime } = params;
+  const { patientFullName, referenceCode, pickupDatetime, seriesTotal, seriesLastPickupDatetime } = params;
+  const isSeries = !!seriesTotal && seriesTotal > 1 && !!seriesLastPickupDatetime;
+  const body = isSeries
+    ? `Le chauffeur affecté à votre série de <strong>${seriesTotal} séances</strong> (du ${formatDateFr(pickupDatetime)} au ${formatDateFr(seriesLastPickupDatetime!)}, réf. ${formatReferenceCode(referenceCode)}) n'est finalement plus disponible. Toutes les séances sont de nouveau proposées à notre réseau de chauffeurs conventionnés ; vous serez averti dès qu'un nouveau chauffeur les accepte.`
+    : `Le chauffeur initialement affecté à votre course du <strong>${formatDateFr(pickupDatetime)} à ${formatTimeFr(pickupDatetime)}</strong> (réf. ${formatReferenceCode(referenceCode)}) n'est finalement plus disponible. Votre réservation est de nouveau proposée à notre réseau de chauffeurs conventionnés ; vous serez averti dès qu'un nouveau chauffeur l'accepte.`;
   return {
-    subject: `Recherche d'un nouveau chauffeur — Réf. ${formatReferenceCode(referenceCode)}`,
+    subject: isSeries
+      ? `Recherche d'un nouveau chauffeur pour ${seriesTotal} séances — Réf. ${formatReferenceCode(referenceCode)}`
+      : `Recherche d'un nouveau chauffeur — Réf. ${formatReferenceCode(referenceCode)}`,
     html: layout({
       title: "Recherche d'un nouveau chauffeur",
       icon: "🔄",
       bodyHtml: `
         ${badge("Nouvelle recherche en cours", "amber")}
         <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${patientFullName},</p>
-        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Le chauffeur initialement affecté à votre course du <strong>${formatDateFr(pickupDatetime)} à ${formatTimeFr(pickupDatetime)}</strong> (réf. ${formatReferenceCode(referenceCode)}) n'est finalement plus disponible. Votre réservation est de nouveau proposée à notre réseau de chauffeurs conventionnés ; vous serez averti dès qu'un nouveau chauffeur l'accepte.</p>
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">${body}</p>
         ${ctaButton("Suivre ma réservation", trackingUrl(referenceCode))}
+      `,
+    }),
+  };
+}
+
+export function rideAcceptedDriverEmail(params: {
+  driverFullName: string;
+  patientFullName: string;
+  patientPhone: string | null;
+  /** When true, phone is intentionally withheld until closer to pickup; show a gate message instead of "non renseigné". */
+  patientPhoneMasked?: boolean;
+  referenceCode: string;
+  pickupAddress: string;
+  dropoffAddress: string;
+  pickupDatetime: string;
+  seriesTotal?: number;
+  seriesLastPickupDatetime?: string;
+}): EmailContent {
+  const {
+    driverFullName,
+    patientFullName,
+    patientPhone,
+    patientPhoneMasked,
+    referenceCode,
+    pickupAddress,
+    dropoffAddress,
+    pickupDatetime,
+    seriesTotal,
+    seriesLastPickupDatetime,
+  } = params;
+  const isSeries = !!seriesTotal && seriesTotal > 1 && !!seriesLastPickupDatetime;
+  const dateValue = isSeries
+    ? `${seriesTotal} séances, du ${formatDateFr(pickupDatetime)} au ${formatDateFr(seriesLastPickupDatetime!)}`
+    : `${formatDateFr(pickupDatetime)} à ${formatTimeFr(pickupDatetime)}`;
+  const intro = isSeries
+    ? `Vous venez d'accepter <strong>${seriesTotal} séances</strong> pour ce patient. Retrouvez ci-dessous les informations de la course.`
+    : `Vous venez d'accepter cette course. Retrouvez ci-dessous les informations de la prise en charge.`;
+
+  let phoneHtml: string;
+  if (patientPhone) {
+    phoneHtml = `<a href="tel:${patientPhone}" style="font-size:22px;font-weight:800;color:#16a34a;text-decoration:none;letter-spacing:0.02em;">${patientPhone}</a>
+                 <p style="margin:6px 0 0;font-size:12px;color:#6b7280;">Appuyez sur ce numéro depuis votre téléphone pour appeler directement.</p>`;
+  } else if (patientPhoneMasked) {
+    phoneHtml = `<p style="margin:0;font-size:14px;color:#b45309;font-style:italic;">📵 Numéro disponible dans votre tableau de bord à l'approche de la course.</p>`;
+  } else {
+    phoneHtml = `<p style="margin:0;font-size:14px;color:#6b7280;font-style:italic;">Numéro de téléphone non renseigné pour cette réservation.</p>`;
+  }
+
+  return {
+    subject: isSeries
+      ? `${seriesTotal} séances acceptées — ${patientFullName} — Réf. ${formatReferenceCode(referenceCode)}`
+      : `Course acceptée — ${patientFullName} — Réf. ${formatReferenceCode(referenceCode)}`,
+    html: layout({
+      title: isSeries ? `${seriesTotal} séances acceptées` : "Course acceptée",
+      icon: "✅",
+      bodyHtml: `
+        ${badge(isSeries ? `${seriesTotal} séances acceptées` : "Course acceptée", "green")}
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${driverFullName},</p>
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">${intro}</p>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;">
+          <tr>
+            <td style="background:#F0FDF4;border:1px solid #bbf7d0;border-radius:12px;padding:16px 20px;">
+              <p style="margin:0 0 4px;font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#16a34a;">Coordonnées du patient</p>
+              <p style="margin:0 0 8px;font-size:17px;font-weight:800;color:#14532d;">${patientFullName}</p>
+              ${phoneHtml}
+            </td>
+          </tr>
+        </table>
+        ${detailsCard([
+          { label: "Référence", value: formatReferenceCode(referenceCode) },
+          { label: "Départ", value: pickupAddress },
+          { label: "Destination", value: dropoffAddress },
+          { label: isSeries ? "Dates" : "Date", value: dateValue },
+        ])}
+        <p style="margin:0;font-size:13px;color:#6b7280;line-height:1.5;">Consultez votre tableau de bord pour démarrer la course le moment venu.</p>
       `,
     }),
   };
