@@ -35,7 +35,7 @@ import * as authRepository from "~/repositories/authRepository";
 import * as bookingsRepository from "~/repositories/bookingsRepository";
 import * as driversRepository from "~/repositories/driversRepository";
 import type { DriverStatsPeriod } from "~/repositories/driversRepository";
-import { notifyBookingAcceptedServerFn, notifyRideUnassignedServerFn } from "~/server/email";
+import { notifyBookingAcceptedServerFn, notifyDriverRideAcceptedServerFn, notifyRideUnassignedServerFn } from "~/server/email";
 import { logger } from "~/lib/logger";
 import type { Database } from "~/lib/database.types";
 
@@ -268,9 +268,12 @@ function DriverDashboard() {
     mutationFn: acceptRide,
     onMutate: (rideId) => setAcceptingId(rideId),
     onSuccess: (_, rideId) => {
-      toast({ title: "Course acceptée !", variant: "success" });
+      toast({ title: "Course acceptée — coordonnées du patient envoyées par email", variant: "success" });
       notifyBookingAcceptedServerFn({ data: { bookingId: rideId } }).catch((err) => {
         logger.warn("email.notifyBookingAccepted failed", { error: err.message, rideId });
+      });
+      notifyDriverRideAcceptedServerFn({ data: { bookingId: rideId } }).catch((err) => {
+        logger.warn("email.notifyDriverRideAccepted failed", { error: err.message, rideId });
       });
     },
     onSettled: () => {
@@ -440,10 +443,12 @@ function DriverDashboard() {
     onMutate: ([firstId]) => setAcceptingSeriesId(firstId),
     onSuccess: (_, rideIds) => {
       const n = rideIds.length;
-      toast({ title: `${n} séance${n > 1 ? "s" : ""} acceptée${n > 1 ? "s" : ""} !`, variant: "success" });
-      // Un seul email récap : on passe le premier ID, la server fn détecte series_id
+      toast({ title: `${n} séance${n > 1 ? "s" : ""} acceptée${n > 1 ? "s" : ""} — coordonnées du patient envoyées par email`, variant: "success" });
       notifyBookingAcceptedServerFn({ data: { bookingId: rideIds[0] } }).catch((err) => {
         logger.warn("email.notifySeriesAccepted failed", { error: err.message, rideId: rideIds[0] });
+      });
+      notifyDriverRideAcceptedServerFn({ data: { bookingId: rideIds[0], seriesAcceptedCount: n } }).catch((err) => {
+        logger.warn("email.notifyDriverSeriesAccepted failed", { error: err.message, rideId: rideIds[0] });
       });
     },
     onSettled: () => {

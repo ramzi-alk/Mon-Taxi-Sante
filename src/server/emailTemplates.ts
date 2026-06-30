@@ -402,6 +402,71 @@ export function rideUnassignedByDriverEmail(params: {
   };
 }
 
+export function rideAcceptedDriverEmail(params: {
+  driverFullName: string;
+  patientFullName: string;
+  patientPhone: string | null;
+  referenceCode: string;
+  pickupAddress: string;
+  dropoffAddress: string;
+  pickupDatetime: string;
+  seriesTotal?: number;
+  seriesLastPickupDatetime?: string;
+}): EmailContent {
+  const {
+    driverFullName,
+    patientFullName,
+    patientPhone,
+    referenceCode,
+    pickupAddress,
+    dropoffAddress,
+    pickupDatetime,
+    seriesTotal,
+    seriesLastPickupDatetime,
+  } = params;
+  const isSeries = !!seriesTotal && seriesTotal > 1 && !!seriesLastPickupDatetime;
+  const dateValue = isSeries
+    ? `${seriesTotal} séances, du ${formatDateFr(pickupDatetime)} au ${formatDateFr(seriesLastPickupDatetime!)}`
+    : `${formatDateFr(pickupDatetime)} à ${formatTimeFr(pickupDatetime)}`;
+  const intro = isSeries
+    ? `Vous venez d'accepter <strong>${seriesTotal} séances</strong> pour ce patient. Retrouvez ci-dessous ses coordonnées pour organiser les prises en charge.`
+    : `Vous venez d'accepter cette course. Retrouvez ci-dessous les coordonnées du patient pour préparer la prise en charge.`;
+  return {
+    subject: isSeries
+      ? `${seriesTotal} séances acceptées — ${patientFullName} — Réf. ${formatReferenceCode(referenceCode)}`
+      : `Course acceptée — ${patientFullName} — Réf. ${formatReferenceCode(referenceCode)}`,
+    html: layout({
+      title: isSeries ? `${seriesTotal} séances acceptées` : "Course acceptée",
+      icon: "✅",
+      bodyHtml: `
+        ${badge(isSeries ? `${seriesTotal} séances acceptées` : "Course acceptée", "green")}
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${driverFullName},</p>
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">${intro}</p>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;">
+          <tr>
+            <td style="background:#F0FDF4;border:1px solid #bbf7d0;border-radius:12px;padding:16px 20px;">
+              <p style="margin:0 0 4px;font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#16a34a;">Coordonnées du patient</p>
+              <p style="margin:0 0 8px;font-size:17px;font-weight:800;color:#14532d;">${patientFullName}</p>
+              ${patientPhone
+                ? `<a href="tel:${patientPhone}" style="font-size:22px;font-weight:800;color:#16a34a;text-decoration:none;letter-spacing:0.02em;">${patientPhone}</a>
+                   <p style="margin:6px 0 0;font-size:12px;color:#6b7280;">Appuyez sur ce numéro depuis votre téléphone pour appeler directement.</p>`
+                : `<p style="margin:0;font-size:14px;color:#6b7280;font-style:italic;">Numéro de téléphone non renseigné pour cette réservation.</p>`
+              }
+            </td>
+          </tr>
+        </table>
+        ${detailsCard([
+          { label: "Référence", value: formatReferenceCode(referenceCode) },
+          { label: "Départ", value: pickupAddress },
+          { label: "Destination", value: dropoffAddress },
+          { label: isSeries ? "Dates" : "Date", value: dateValue },
+        ])}
+        <p style="margin:0;font-size:13px;color:#6b7280;line-height:1.5;">Consultez votre tableau de bord pour démarrer la course le moment venu.</p>
+      `,
+    }),
+  };
+}
+
 export function bookingCancelledDriverEmail(params: {
   driverFullName: string;
   referenceCode: string;

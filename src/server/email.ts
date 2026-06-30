@@ -6,6 +6,7 @@ import {
   bookingConfirmationEmail,
   bookingCancellationEmail,
   bookingAcceptedEmail,
+  rideAcceptedDriverEmail,
   bookingUpdatedDriverEmail,
   rideUnassignedByDriverEmail,
   bookingCancelledDriverEmail,
@@ -222,6 +223,78 @@ export const notifyBookingAcceptedServerFn = createServerFn({ method: "POST" })
       }
     } catch (sendError) {
       logger.error("email.notifyBookingAccepted failed", {
+        error: sendError instanceof Error ? sendError.message : String(sendError),
+        bookingId: data.bookingId,
+      });
+    }
+  });
+
+export const notifyDriverRideAcceptedServerFn = createServerFn({ method: "POST" })
+  .validator((input: { bookingId: string; seriesAcceptedCount?: number }) => input)
+  .handler(async ({ data }) => {
+    const admin = getSupabaseAdminClient();
+    const { data: booking, error } = await admin
+      .from("bookings")
+      .select(
+        "patient_full_name, patient_phone, pickup_address, dropoff_address, pickup_datetime, reference_code, driver_id, series_id"
+      )
+      .eq("id", data.bookingId)
+      .single();
+
+    if (error || !booking || !booking.driver_id) {
+      return;
+    }
+
+    const { data: driverProfile } = await admin
+      .from("profiles")
+      .select("full_name, email")
+      .eq("id", booking.driver_id)
+      .single();
+
+    if (!driverProfile?.email) {
+      return;
+    }
+
+    const bookingTyped = booking as typeof booking & { series_id: string | null; patient_phone: string | null };
+    let seriesTotal: number | undefined;
+    let seriesLastPickupDatetime: string | undefined;
+    if (bookingTyped.series_id && (data.seriesAcceptedCount ?? 0) > 1) {
+      const { data: seriesRides } = await admin
+        .from("bookings")
+        .select("pickup_datetime")
+        .eq("series_id", bookingTyped.series_id)
+        .eq("status", "accepted")
+        .eq("driver_id", booking.driver_id)
+        .order("pickup_datetime", { ascending: true });
+      if (seriesRides && seriesRides.length > 1) {
+        seriesTotal = data.seriesAcceptedCount ?? seriesRides.length;
+        seriesLastPickupDatetime = seriesRides[seriesRides.length - 1].pickup_datetime;
+      }
+    }
+
+    try {
+      const { subject, html } = rideAcceptedDriverEmail({
+        driverFullName: driverProfile.full_name,
+        patientFullName: bookingTyped.patient_full_name,
+        patientPhone: bookingTyped.patient_phone,
+        referenceCode: bookingTyped.reference_code,
+        pickupAddress: bookingTyped.pickup_address,
+        dropoffAddress: bookingTyped.dropoff_address,
+        pickupDatetime: bookingTyped.pickup_datetime,
+        seriesTotal,
+        seriesLastPickupDatetime,
+      });
+      const { error: sendApiError } = await getResendClient().emails.send({
+        from: EMAIL_FROM,
+        to: driverProfile.email,
+        subject,
+        html,
+      });
+      if (sendApiError) {
+        throw new Error(sendApiError.message);
+      }
+    } catch (sendError) {
+      logger.error("email.notifyDriverRideAccepted failed", {
         error: sendError instanceof Error ? sendError.message : String(sendError),
         bookingId: data.bookingId,
       });
