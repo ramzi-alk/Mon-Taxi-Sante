@@ -571,6 +571,20 @@ export function RideCard({
               />
             </div>
           </div>
+
+          {ride.trip_type === "aller_retour" && ride.return_datetime && (
+            <div className="flex items-center gap-2.5 pt-1 border-t border-dashed border-brand-blue-100">
+              <Repeat className="h-4 w-4 text-brand-blue-400 shrink-0" aria-hidden="true" />
+              <div className="min-w-0">
+                <p className="text-xs text-muted-foreground leading-none mb-0.5">Retour prévu</p>
+                <p className="text-sm font-semibold text-brand-blue-700">
+                  {new Date(ride.return_datetime).toDateString() !== new Date(ride.pickup_datetime).toDateString()
+                    ? `${formatDateFr(ride.return_datetime)} à ${formatTimeFr(ride.return_datetime)}`
+                    : formatTimeFr(ride.return_datetime)}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Meta row */}

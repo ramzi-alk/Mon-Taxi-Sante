@@ -420,6 +420,47 @@ export const notifyRideUnassignedServerFn = createServerFn({ method: "POST" })
     }
   });
 
+export const notifyDriverPatientCancelledServerFn = createServerFn({ method: "POST" })
+  .validator((input: { bookingId: string }) => input)
+  .handler(async ({ data }) => {
+    const admin = getSupabaseAdminClient();
+    const { data: booking, error } = await admin
+      .from("bookings")
+      .select("driver_id, reference_code, pickup_datetime")
+      .eq("id", data.bookingId)
+      .single();
+
+    if (error || !booking?.driver_id) return;
+
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("full_name, email")
+      .eq("id", booking.driver_id)
+      .single();
+
+    if (!profile?.email) return;
+
+    try {
+      const { subject, html } = bookingCancelledDriverEmail({
+        driverFullName: profile.full_name ?? "Chauffeur",
+        referenceCode: booking.reference_code,
+        pickupDatetime: booking.pickup_datetime,
+      });
+      const { error: sendError } = await getResendClient().emails.send({
+        from: EMAIL_FROM,
+        to: profile.email,
+        subject,
+        html,
+      });
+      if (sendError) throw new Error(sendError.message);
+    } catch (err) {
+      logger.error("email.notifyDriverPatientCancelled failed", {
+        error: err instanceof Error ? err.message : String(err),
+        bookingId: data.bookingId,
+      });
+    }
+  });
+
 export const notifyAdminNewDriverApplicationServerFn = createServerFn({ method: "POST" })
   .validator((input: { driverDetailsId: string }) => input)
   .handler(async ({ data: input }) => {
