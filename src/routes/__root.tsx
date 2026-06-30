@@ -12,6 +12,7 @@ import { Navbar } from "~/components/Navbar";
 import { Footer } from "~/components/Footer";
 import { ToastProvider, useToast } from "~/components/ui/toast";
 import { logger } from "~/lib/logger";
+import { logClientErrorServerFn } from "~/server/errorReporting";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
 import appCss from "~/styles/app.css?url";
 
@@ -35,6 +36,19 @@ function RouteError({ error, reset }: ErrorComponentProps) {
   logger.error("route.render failed", {
     error: error instanceof Error ? error.message : String(error),
   });
+
+  useEffect(() => {
+    logClientErrorServerFn({
+      data: {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        url: window.location.href,
+        userAgent: navigator.userAgent,
+      },
+    }).catch(() => {
+      // Best-effort — don't let logging failures compound the original error.
+    });
+  }, [error]);
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 text-center px-4">
