@@ -160,9 +160,9 @@ export function PoolRideRow({ ride, onAccept, isAccepting, onAcceptSeries, isAcc
       </div>
 
       {/* ── Coordonnées masquées ─────────────────────────────────────── */}
-      <div className="flex items-center gap-1 px-3 pb-1">
+      <div className="flex items-center gap-1 px-3 pb-1 min-w-0 overflow-hidden">
         <Lock className="h-2.5 w-2.5 shrink-0 text-gray-300" aria-hidden="true" />
-        <span className="text-[10px] text-gray-400 italic">Nom complet et téléphone révélés après acceptation</span>
+        <span className="text-[10px] text-gray-400 italic truncate">Nom complet et téléphone révélés après acceptation</span>
       </div>
 
       {/* ── Ligne 3 : badges | passagers · prix · expand ─────────────── */}

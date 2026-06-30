@@ -427,7 +427,7 @@ export function RideCard({
             </time>
           )}
         </span>
-        <span className="flex items-center gap-1.5 shrink-0">
+        <span className="flex items-center gap-1 flex-wrap justify-end shrink-0 max-w-[60%]">
           {ride.estimated_price != null && (
             <span
               className={cn(
@@ -635,9 +635,9 @@ export function RideCard({
                 {ride.patient_phone}
               </a>
             ) : isPool && (
-              <p className="flex items-center gap-1.5 text-xs text-gray-400 italic">
+              <p className="flex items-center gap-1.5 text-xs text-gray-400 italic min-w-0 overflow-hidden">
                 <Lock className="h-3 w-3 shrink-0" aria-hidden="true" />
-                Nom complet et téléphone révélés après acceptation
+                <span className="truncate">Nom complet et téléphone révélés après acceptation</span>
               </p>
             )}
           </div>
