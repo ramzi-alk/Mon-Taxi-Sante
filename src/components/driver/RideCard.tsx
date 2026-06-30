@@ -1,8 +1,21 @@
-import { useState } from "react";
-import { MapPin, Clock, Car, Users, Navigation, Loader2, PlayCircle, FlagTriangleRight, XCircle, User, Phone, CalendarPlus, Banknote, ChevronDown, ChevronUp, ClipboardCheck, Building2, Repeat } from "lucide-react";
+import { useState, useEffect } from "react";
+import { MapPin, Clock, Car, Users, Navigation, Loader2, PlayCircle, FlagTriangleRight, XCircle, User, Phone, CalendarPlus, Banknote, ChevronDown, ChevronUp, ClipboardCheck, Building2, Repeat, Lock } from "lucide-react";
 import { SeriesRideSelectPanel } from "./SeriesRideSelectPanel";
-import { formatDateFr, formatTimeFr } from "~/lib/utils";
+import { formatDateFr, formatTimeFr, formatCountdown } from "~/lib/utils";
 import { cn } from "~/lib/utils";
+
+function useMinutesUntil(datetimeStr: string) {
+  const [minutes, setMinutes] = useState(() =>
+    (new Date(datetimeStr).getTime() - Date.now()) / 60000
+  );
+  useEffect(() => {
+    const id = setInterval(() => {
+      setMinutes((new Date(datetimeStr).getTime() - Date.now()) / 60000);
+    }, 30_000);
+    return () => clearInterval(id);
+  }, [datetimeStr]);
+  return minutes;
+}
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
 import { StarRating } from "~/components/ui/star-rating";
 import { RatingForm } from "~/components/booking/RatingForm";
@@ -361,6 +374,9 @@ export function RideCard({
   const [expanded, setExpanded] = useState(false);
   const [seriesOpen, setSeriesOpen] = useState(false);
   const isPool = ride.status === "available";
+  const minutesUntilPickup = useMinutesUntil(ride.pickup_datetime);
+  const pickupIsUrgent = minutesUntilPickup >= 0 && minutesUntilPickup <= 45;
+  const pickupIsCritical = minutesUntilPickup >= 0 && minutesUntilPickup <= 20;
   const pickupDate = formatDateFr(ride.pickup_datetime);
   const pickupTime = formatTimeFr(ride.pickup_datetime);
   const isToday = new Date(ride.pickup_datetime).toDateString() === new Date().toDateString();
@@ -424,6 +440,23 @@ export function RideCard({
             >
               <Banknote className="h-3.5 w-3.5" aria-hidden="true" />
               ~{ride.estimated_price.toFixed(2).replace(".", ",")} €
+            </span>
+          )}
+          {isPool && (
+            <span
+              className={cn(
+                "rounded-full px-2.5 py-0.5 text-xs font-bold whitespace-nowrap",
+                pickupIsCritical
+                  ? "bg-red-50 text-red-700 animate-pulse"
+                  : pickupIsUrgent
+                  ? "bg-amber-50 text-amber-700"
+                  : "bg-gray-100 text-gray-500"
+              )}
+              aria-label="Temps avant la prise en charge"
+            >
+              {minutesUntilPickup > 0
+                ? `Dans ${formatCountdown(minutesUntilPickup)}`
+                : "Maintenant"}
             </span>
           )}
           {statusLabels[ride.status] && (
@@ -593,7 +626,7 @@ export function RideCard({
                 <StarRating value={ride.patient_rating_received} readOnly size="sm" />
               )}
             </p>
-            {ride.patient_phone && (
+            {ride.patient_phone ? (
               <a
                 href={`tel:${ride.patient_phone}`}
                 className="flex items-center gap-2 text-sm font-medium text-brand-green-700 hover:underline"
@@ -601,6 +634,11 @@ export function RideCard({
                 <Phone className="h-3.5 w-3.5" aria-hidden="true" />
                 {ride.patient_phone}
               </a>
+            ) : isPool && (
+              <p className="flex items-center gap-1.5 text-xs text-gray-400 italic">
+                <Lock className="h-3 w-3 shrink-0" aria-hidden="true" />
+                Nom complet et téléphone révélés après acceptation
+              </p>
             )}
           </div>
         )}

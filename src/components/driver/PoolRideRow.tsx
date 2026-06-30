@@ -10,8 +10,9 @@ import {
   ChevronUp,
   Building2,
   Repeat,
+  Lock,
 } from "lucide-react";
-import { formatDateFr, formatTimeFr, cn } from "~/lib/utils";
+import { formatDateFr, formatTimeFr, formatCountdown, cn } from "~/lib/utils";
 import { useEffect, useState } from "react";
 import { AddressLink, vehicleIcons, type PoolRide } from "./RideCard";
 import { SeriesRideSelectPanel } from "./SeriesRideSelectPanel";
@@ -93,11 +94,16 @@ export function PoolRideRow({ ride, onAccept, isAccepting, onAcceptSeries, isAcc
           <span className="text-[10px] text-gray-400 whitespace-nowrap">
             {vehicleIcons[ride.vehicle_type]} {ride.vehicle_type.toUpperCase()}
           </span>
-          {isUrgent && (
-            <span className={cn("text-[10px] font-bold whitespace-nowrap", isCritical ? "text-red-600 animate-pulse" : "text-amber-600")}>
-              · Dans {Math.max(0, Math.round(minutesUntilPickup))} min
-            </span>
-          )}
+          <span className={cn(
+            "text-[10px] font-bold whitespace-nowrap",
+            isCritical ? "text-red-600 animate-pulse"
+              : isUrgent ? "text-amber-600"
+              : "text-gray-400"
+          )}>
+            {minutesUntilPickup > 0
+              ? `· Dans ${formatCountdown(minutesUntilPickup)}`
+              : "· Maintenant"}
+          </span>
         </div>
 
         <button
@@ -151,6 +157,12 @@ export function PoolRideRow({ ride, onAccept, isAccepting, onAcceptSeries, isAcc
             <span className="shrink-0 text-[10px] text-gray-400 whitespace-nowrap">{ride.distance_km} km</span>
           )}
         </div>
+      </div>
+
+      {/* ── Coordonnées masquées ─────────────────────────────────────── */}
+      <div className="flex items-center gap-1 px-3 pb-1">
+        <Lock className="h-2.5 w-2.5 shrink-0 text-gray-300" aria-hidden="true" />
+        <span className="text-[10px] text-gray-400 italic">Nom complet et téléphone révélés après acceptation</span>
       </div>
 
       {/* ── Ligne 3 : badges | passagers · prix · expand ─────────────── */}

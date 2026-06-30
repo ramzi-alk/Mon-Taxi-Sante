@@ -39,3 +39,13 @@ export function formatPrice(amount: number): string {
 export function formatReferenceCode(code: string): string {
   return `${code.slice(0, 4)}-${code.slice(4)}`;
 }
+
+export function formatCountdown(minutes: number): string {
+  if (minutes <= 0) return "Maintenant";
+  const total = Math.round(minutes);
+  if (total < 60) return `${total} min`;
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  if (h < 24) return m > 0 ? `${h}h${String(m).padStart(2, "0")}` : `${h}h`;
+  return `${Math.floor(h / 24)}j`;
+}
