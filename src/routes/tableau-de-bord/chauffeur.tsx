@@ -198,6 +198,7 @@ function DriverDashboard() {
 
   const periodSince = (() => {
     const d = new Date();
+    if (statsPeriod === "today") { d.setHours(0, 0, 0, 0); return d; }
     if (statsPeriod === "week") { d.setDate(d.getDate() - 7); return d; }
     if (statsPeriod === "month") { d.setDate(d.getDate() - 30); return d; }
     return d;
@@ -206,7 +207,7 @@ function DriverDashboard() {
   const periodStatsQuery = useQuery({
     queryKey: ["driver-stats-since", statsPeriod],
     queryFn: () => fetchDriverStatsSince(periodSince),
-    enabled: statsPeriod === "week" || statsPeriod === "month",
+    enabled: statsPeriod !== "total",
   });
 
   const radiusMutation = useMutation({
@@ -655,7 +656,7 @@ function DriverDashboard() {
               <div className="grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4">
                 <StatCard icon={Car} label="Courses" value={rides} color="bg-brand-green-50 text-brand-green-600" />
                 <StatCard icon={Wallet} label="Gains" value={formatPrice(earnings)} color="bg-brand-blue-50 text-brand-blue-600" />
-                <StatCard icon={Gauge} label="Km parcourus" value={statsPeriod === "today" ? "—" : `${km} km`} color="bg-indigo-50 text-indigo-600" />
+                <StatCard icon={Gauge} label="Km parcourus" value={`${km} km`} color="bg-indigo-50 text-indigo-600" />
                 <StatCard
                   icon={statsPeriod === "total" ? Star : Clock}
                   label={statsPeriod === "total" ? "Note moyenne" : "Prochaine course"}
