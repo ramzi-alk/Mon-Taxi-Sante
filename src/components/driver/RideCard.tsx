@@ -373,6 +373,7 @@ export function RideCard({
   const cancellableSeriesRides = seriesRides?.filter((r) => r.status === "accepted") ?? [];
   const [expanded, setExpanded] = useState(false);
   const [seriesOpen, setSeriesOpen] = useState(false);
+  const [contactRevealed, setContactRevealed] = useState(false);
   const isPool = ride.status === "available";
   const minutesUntilPickup = useMinutesUntil(ride.pickup_datetime);
   const pickupIsUrgent = minutesUntilPickup >= 0 && minutesUntilPickup <= 45;
@@ -613,32 +614,59 @@ export function RideCard({
 
         {(ride.patient_full_name || ride.patient_first_name) && (
           <div className="rounded-xl bg-brand-green-50/60 border border-brand-green-100 p-3 space-y-1.5">
-            <p className="flex items-center gap-2 text-sm font-semibold text-gray-900">
-              <User className="h-4 w-4 text-brand-green-600" aria-hidden="true" />
-              {ride.patient_full_name ?? ride.patient_first_name}
-              {ride.patient_rating_avg != null && (
-                <span className="flex items-center gap-1 text-xs font-medium text-gray-600">
-                  <StarRating value={ride.patient_rating_avg} readOnly size="sm" />
-                  {ride.patient_rating_avg.toFixed(1)}
-                </span>
-              )}
-              {ride.patient_rating_received != null && (
-                <StarRating value={ride.patient_rating_received} readOnly size="sm" />
-              )}
-            </p>
-            {ride.patient_phone ? (
-              <a
-                href={`tel:${ride.patient_phone}`}
-                className="flex items-center gap-2 text-sm font-medium text-brand-green-700 hover:underline"
+            {isPool ? (
+              /* Pool view: first name + lock note (full info masked pre-acceptance) */
+              <>
+                <p className="flex items-center gap-2 text-sm font-semibold text-gray-900">
+                  <User className="h-4 w-4 text-brand-green-600" aria-hidden="true" />
+                  {ride.patient_first_name}
+                </p>
+                <p className="flex items-center gap-1.5 text-xs text-gray-400 italic min-w-0 overflow-hidden">
+                  <Lock className="h-3 w-3 shrink-0" aria-hidden="true" />
+                  <span className="truncate">Nom complet et téléphone révélés après acceptation</span>
+                </p>
+              </>
+            ) : contactRevealed ? (
+              /* Accepted ride — revealed state */
+              <>
+                <p className="flex items-center gap-2 text-sm font-semibold text-gray-900">
+                  <User className="h-4 w-4 text-brand-green-600" aria-hidden="true" />
+                  {ride.patient_full_name ?? ride.patient_first_name}
+                  {ride.patient_rating_avg != null && (
+                    <span className="flex items-center gap-1 text-xs font-medium text-gray-600">
+                      <StarRating value={ride.patient_rating_avg} readOnly size="sm" />
+                      {ride.patient_rating_avg.toFixed(1)}
+                    </span>
+                  )}
+                  {ride.patient_rating_received != null && (
+                    <StarRating value={ride.patient_rating_received} readOnly size="sm" />
+                  )}
+                </p>
+                {ride.patient_phone && (
+                  <a
+                    href={`tel:${ride.patient_phone}`}
+                    className="flex items-center gap-2 text-sm font-medium text-brand-green-700 hover:underline"
+                  >
+                    <Phone className="h-3.5 w-3.5" aria-hidden="true" />
+                    {ride.patient_phone}
+                  </a>
+                )}
+              </>
+            ) : (
+              /* Accepted ride — locked state (tap to reveal) */
+              <button
+                type="button"
+                onClick={() => setContactRevealed(true)}
+                className="flex w-full items-center gap-2 text-left"
+                aria-label="Afficher le nom complet et le téléphone du patient"
               >
-                <Phone className="h-3.5 w-3.5" aria-hidden="true" />
-                {ride.patient_phone}
-              </a>
-            ) : isPool && (
-              <p className="flex items-center gap-1.5 text-xs text-gray-400 italic min-w-0 overflow-hidden">
-                <Lock className="h-3 w-3 shrink-0" aria-hidden="true" />
-                <span className="truncate">Nom complet et téléphone révélés après acceptation</span>
-              </p>
+                <User className="h-4 w-4 shrink-0 text-brand-green-600" aria-hidden="true" />
+                <span className="text-sm font-semibold text-gray-900">{ride.patient_first_name}</span>
+                <span className="ml-auto flex items-center gap-1 text-xs text-gray-400 whitespace-nowrap">
+                  <Lock className="h-3 w-3" aria-hidden="true" />
+                  Appuyer pour afficher
+                </span>
+              </button>
             )}
           </div>
         )}
