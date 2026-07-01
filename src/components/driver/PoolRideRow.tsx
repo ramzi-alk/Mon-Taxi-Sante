@@ -11,6 +11,7 @@ import {
   Building2,
   Repeat,
   Lock,
+  XCircle,
 } from "lucide-react";
 import { formatDateFr, formatTimeFr, formatCountdown, cn } from "~/lib/utils";
 import { useEffect, useState } from "react";
@@ -24,6 +25,8 @@ interface PoolRideRowProps {
   onAcceptSeries?: (rideIds: string[]) => void;
   isAcceptingSeries?: boolean;
   seriesPoolRides?: PoolRide[];
+  onRefuse?: (rideId: string) => void;
+  isRefusing?: boolean;
 }
 
 const URGENT_THRESHOLD_MIN = 45;
@@ -41,9 +44,10 @@ function useMinutesUntil(datetimeStr: string) {
   return minutes;
 }
 
-export function PoolRideRow({ ride, onAccept, isAccepting, onAcceptSeries, isAcceptingSeries, seriesPoolRides }: PoolRideRowProps) {
+export function PoolRideRow({ ride, onAccept, isAccepting, onAcceptSeries, isAcceptingSeries, seriesPoolRides, onRefuse, isRefusing }: PoolRideRowProps) {
   const [expanded, setExpanded] = useState(false);
   const [seriesSelectOpen, setSeriesSelectOpen] = useState(false);
+  const [confirmingRefuse, setConfirmingRefuse] = useState(false);
 
   const selectableSeriesRides = seriesPoolRides && seriesPoolRides.length > 1 ? seriesPoolRides : null;
 
@@ -106,26 +110,63 @@ export function PoolRideRow({ ride, onAccept, isAccepting, onAcceptSeries, isAcc
           </span>
         </div>
 
-        <button
-          type="button"
-          onClick={() => onAccept(ride.id)}
-          disabled={isAccepting}
-          aria-label={`Accepter — ${ride.pickup_address} → ${ride.dropoff_address}`}
-          aria-busy={isAccepting}
-          className={cn(
-            "shrink-0 flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold text-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
-            isAccepting
-              ? "bg-gray-400 cursor-not-allowed"
-              : "bg-brand-green-600 hover:bg-brand-green-700 shadow-sm active:scale-95"
+        <div className="shrink-0 flex items-center gap-1">
+          {onRefuse && !confirmingRefuse && (
+            <button
+              type="button"
+              onClick={() => setConfirmingRefuse(true)}
+              aria-label={`Refuser — ${ride.pickup_address} → ${ride.dropoff_address}`}
+              title="Refuser cette course"
+              className="flex items-center justify-center rounded-lg border border-red-200 bg-white p-1.5 text-red-600 hover:bg-red-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
+            >
+              <XCircle className="h-3.5 w-3.5" aria-hidden="true" />
+            </button>
           )}
-        >
-          {isAccepting
-            ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
-            : <Car className="h-3.5 w-3.5" aria-hidden="true" />
-          }
-          Accepter
-        </button>
+          <button
+            type="button"
+            onClick={() => onAccept(ride.id)}
+            disabled={isAccepting}
+            aria-label={`Accepter — ${ride.pickup_address} → ${ride.dropoff_address}`}
+            aria-busy={isAccepting}
+            className={cn(
+              "shrink-0 flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold text-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+              isAccepting
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-brand-green-600 hover:bg-brand-green-700 shadow-sm active:scale-95"
+            )}
+          >
+            {isAccepting
+              ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+              : <Car className="h-3.5 w-3.5" aria-hidden="true" />
+            }
+            Accepter
+          </button>
+        </div>
       </div>
+
+      {/* ── Confirmation de refus ─────────────────────────────────────── */}
+      {confirmingRefuse && onRefuse && (
+        <div className="flex items-center gap-3 px-3 py-1.5 text-xs bg-red-50 border-b border-red-100">
+          <span className="text-red-800 font-medium flex-1">Refuser cette course ?</span>
+          <button
+            type="button"
+            onClick={() => { onRefuse(ride.id); setConfirmingRefuse(false); }}
+            disabled={isRefusing}
+            className="font-bold text-red-600 hover:underline disabled:opacity-60 flex items-center gap-1"
+          >
+            {isRefusing && <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />}
+            Oui, refuser
+          </button>
+          <button
+            type="button"
+            onClick={() => setConfirmingRefuse(false)}
+            disabled={isRefusing}
+            className="text-gray-500 hover:underline"
+          >
+            Non
+          </button>
+        </div>
+      )}
 
       {/* ── Lignes 2 : adresses pleine largeur ───────────────────────── */}
       <div className="px-3 pt-2 pb-1 space-y-1">

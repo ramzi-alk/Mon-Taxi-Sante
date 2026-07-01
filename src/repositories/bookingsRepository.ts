@@ -557,6 +557,19 @@ export async function cancelRideByDriver(client: SupabaseClient, rideId: string)
 }
 
 /**
+ * Driver refuses a pool ride (see migration 041's refuse_ride RPC) — hides it
+ * from this driver's own pool (card + list views) only. The ride stays
+ * 'available' and visible to every other compatible driver.
+ */
+export async function refuseRide(client: SupabaseClient, rideId: string): Promise<void> {
+  const { error } = await client.rpc("refuse_ride", { p_booking_id: rideId });
+
+  if (error) {
+    throw mapRideLifecycleError(error, rideId, "refuseRide");
+  }
+}
+
+/**
  * Driver backs out of all accepted rides in the same series as rideId
  * (migration 038). Counts as a single suspicious-cancellation event.
  */

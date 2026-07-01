@@ -81,6 +81,8 @@ interface RideCardProps {
   onAcceptSeries?: (rideIds: string[]) => void;
   isAcceptingSeries?: boolean;
   seriesPoolRides?: PoolRide[];
+  onRefuse?: (rideId: string) => void;
+  isRefusing?: boolean;
   onStart?: (rideId: string) => void;
   isStarting?: boolean;
   onComplete?: (rideId: string) => void;
@@ -351,6 +353,8 @@ export function RideCard({
   onAcceptSeries,
   isAcceptingSeries,
   seriesPoolRides,
+  onRefuse,
+  isRefusing,
   onStart,
   isStarting,
   onComplete,
@@ -367,6 +371,7 @@ export function RideCard({
   // Collapsed by default when completed and already rated; expand if pending rating
   const [collapsed, setCollapsed] = useState(isCompleted && ride.driver_rating_given != null);
   const [confirmingCancel, setConfirmingCancel] = useState(false);
+  const [confirmingRefuse, setConfirmingRefuse] = useState(false);
   const [confirmingComplete, setConfirmingComplete] = useState(false);
   const [seriesAcceptOpen, setSeriesAcceptOpen] = useState(false);
   const [seriesCancelOpen, setSeriesCancelOpen] = useState(false);
@@ -733,6 +738,43 @@ export function RideCard({
                     <Repeat className="h-4 w-4" aria-hidden="true" />
                   )}
                   {selectableSeriesPoolRides.length}/{ride.series_total} séances
+                </button>
+              )}
+            </div>
+          )}
+
+          {ride.status === "available" && onRefuse && (
+            <div className="w-full sm:w-auto">
+              {confirmingRefuse ? (
+                <div className="flex items-center gap-3 text-sm">
+                  <span className="text-gray-700">Refuser cette course ?</span>
+                  <button
+                    type="button"
+                    onClick={() => { onRefuse(ride.id); setConfirmingRefuse(false); }}
+                    disabled={isRefusing}
+                    className="font-bold text-red-600 hover:underline disabled:opacity-60 flex items-center gap-1.5"
+                  >
+                    {isRefusing && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
+                    Oui, refuser
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmingRefuse(false)}
+                    disabled={isRefusing}
+                    className="text-gray-500 hover:underline"
+                  >
+                    Non
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setConfirmingRefuse(true)}
+                  aria-label={`Refuser la course — ${ride.pickup_address} vers ${ride.dropoff_address}`}
+                  className="flex items-center justify-center gap-1.5 rounded-xl border border-red-200 bg-white px-4 py-3 text-sm font-bold text-red-600 transition-all hover:bg-red-50 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                  <XCircle className="h-4 w-4" aria-hidden="true" />
+                  Refuser
                 </button>
               )}
             </div>

@@ -17,6 +17,53 @@ export type Database = {
   }
   public: {
     Tables: {
+      booking_driver_refusals: {
+        Row: {
+          booking_id: string
+          created_at: string
+          driver_id: string
+        }
+        Insert: {
+          booking_id: string
+          created_at?: string
+          driver_id: string
+        }
+        Update: {
+          booking_id?: string
+          created_at?: string
+          driver_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_driver_refusals_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_driver_refusals_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings_active_for_driver"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_driver_refusals_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings_pool_for_drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_driver_refusals_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       booking_lookup_attempts: {
         Row: {
           failed_count: number
@@ -142,10 +189,10 @@ export type Database = {
       bookings: {
         Row: {
           accepted_at: string | null
-          booking_for_other: boolean
           booker_email: string | null
           booker_full_name: string | null
           booker_phone: string | null
+          booking_for_other: boolean
           cancellation_reason: string | null
           completed_at: string | null
           consent_accepted_at: string | null
@@ -194,10 +241,10 @@ export type Database = {
         }
         Insert: {
           accepted_at?: string | null
-          booking_for_other?: boolean
           booker_email?: string | null
           booker_full_name?: string | null
           booker_phone?: string | null
+          booking_for_other?: boolean
           cancellation_reason?: string | null
           completed_at?: string | null
           consent_accepted_at?: string | null
@@ -246,10 +293,10 @@ export type Database = {
         }
         Update: {
           accepted_at?: string | null
-          booking_for_other?: boolean
           booker_email?: string | null
           booker_full_name?: string | null
           booker_phone?: string | null
+          booking_for_other?: boolean
           cancellation_reason?: string | null
           completed_at?: string | null
           consent_accepted_at?: string | null
@@ -414,6 +461,7 @@ export type Database = {
           driving_licence_url: string | null
           id: string
           insurance_url: string | null
+          last_heartbeat_at: string | null
           oxygen_equipped: boolean
           parking_lat: number | null
           parking_lng: number | null
@@ -447,6 +495,7 @@ export type Database = {
           driving_licence_url?: string | null
           id?: string
           insurance_url?: string | null
+          last_heartbeat_at?: string | null
           oxygen_equipped?: boolean
           parking_lat?: number | null
           parking_lng?: number | null
@@ -480,6 +529,7 @@ export type Database = {
           driving_licence_url?: string | null
           id?: string
           insurance_url?: string | null
+          last_heartbeat_at?: string | null
           oxygen_equipped?: boolean
           parking_lat?: number | null
           parking_lng?: number | null
@@ -578,6 +628,7 @@ export type Database = {
           requires_stretcher: boolean | null
           requires_wheelchair: boolean | null
           return_datetime: string | null
+          series_id: string | null
           series_index: number | null
           series_total: number | null
           status: Database["public"]["Enums"]["booking_status"] | null
@@ -623,6 +674,7 @@ export type Database = {
           requires_stretcher: boolean | null
           requires_wheelchair: boolean | null
           return_datetime: string | null
+          series_id: string | null
           series_index: number | null
           series_total: number | null
           status: Database["public"]["Enums"]["booking_status"] | null
@@ -652,6 +704,7 @@ export type Database = {
     Functions: {
       a_majoration_horaire: { Args: { p_datetime: string }; Returns: boolean }
       accept_ride: { Args: { p_booking_id: string }; Returns: undefined }
+      accept_series: { Args: { p_booking_id: string }; Returns: undefined }
       assert_lookup_not_locked: {
         Args: { p_reference_code: string }
         Returns: undefined
@@ -668,6 +721,7 @@ export type Database = {
         Args: { p_booking_id: string }
         Returns: undefined
       }
+      cancel_series: { Args: { p_booking_id: string }; Returns: undefined }
       cancel_via_reminder: { Args: { p_token: string }; Returns: string }
       complete_ride: { Args: { p_booking_id: string }; Returns: undefined }
       compute_booking_price: {
@@ -840,6 +894,7 @@ export type Database = {
         Args: { p_found: boolean; p_reference_code: string }
         Returns: undefined
       }
+      refuse_ride: { Args: { p_booking_id: string }; Returns: undefined }
       resolve_reminder_token: {
         Args: { p_token: string }
         Returns: {
