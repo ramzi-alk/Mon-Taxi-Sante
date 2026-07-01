@@ -771,9 +771,9 @@ export function RideCard({
                   type="button"
                   onClick={() => setConfirmingRefuse(true)}
                   aria-label={`Refuser la course — ${ride.pickup_address} vers ${ride.dropoff_address}`}
-                  className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-red-600 hover:underline"
+                  className="flex items-center justify-center gap-1.5 rounded-xl border border-red-200 bg-white px-4 py-3 text-sm font-bold text-red-600 transition-all hover:bg-red-50 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
-                  <XCircle className="h-3.5 w-3.5" aria-hidden="true" />
+                  <XCircle className="h-4 w-4" aria-hidden="true" />
                   Refuser
                 </button>
               )}

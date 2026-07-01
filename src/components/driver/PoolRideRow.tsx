@@ -117,7 +117,7 @@ export function PoolRideRow({ ride, onAccept, isAccepting, onAcceptSeries, isAcc
               onClick={() => setConfirmingRefuse(true)}
               aria-label={`Refuser — ${ride.pickup_address} → ${ride.dropoff_address}`}
               title="Refuser cette course"
-              className="flex items-center justify-center rounded-lg p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
+              className="flex items-center justify-center rounded-lg border border-red-200 bg-white p-1.5 text-red-600 hover:bg-red-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
             >
               <XCircle className="h-3.5 w-3.5" aria-hidden="true" />
             </button>
