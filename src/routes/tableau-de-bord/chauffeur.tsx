@@ -95,6 +95,10 @@ async function cancelRideByDriver(rideId: string): Promise<void> {
   await bookingsRepository.cancelRideByDriver(supabase, rideId);
 }
 
+async function refuseRide(rideId: string): Promise<void> {
+  await bookingsRepository.refuseRide(supabase, rideId);
+}
+
 async function cancelSeriesRides(rideId: string): Promise<void> {
   await bookingsRepository.cancelSeriesRides(supabase, rideId);
 }
@@ -163,6 +167,7 @@ function DriverDashboard() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
+  const [refusingId, setRefusingId] = useState<string | null>(null);
   const [startingId, setStartingId] = useState<string | null>(null);
   const [completingId, setCompletingId] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
@@ -307,6 +312,22 @@ function DriverDashboard() {
     onError: (error, rideId) => {
       logger.error("driver.acceptRide failed", { error: error.message, rideId });
       toast({ title: "Course non disponible", description: error.message, variant: "error" });
+    },
+  });
+
+  const refuseMutation = useMutation({
+    mutationFn: refuseRide,
+    onMutate: (rideId) => setRefusingId(rideId),
+    onSuccess: () => {
+      toast({ title: "Course refusée", description: "Elle n'apparaîtra plus dans votre pool.", variant: "default" });
+    },
+    onSettled: () => {
+      setRefusingId(null);
+      queryClient.invalidateQueries({ queryKey: ["ride-pool"] });
+    },
+    onError: (error, rideId) => {
+      logger.error("driver.refuseRide failed", { error: error.message, rideId });
+      toast({ title: "Erreur", description: error.message, variant: "error" });
     },
   });
 
@@ -864,6 +885,9 @@ function DriverDashboard() {
                 isAccepting={acceptMutation.isPending}
                 onAcceptSeries={(ids) => acceptSeriesMutation.mutate(ids)}
                 acceptingSeriesId={acceptingSeriesId}
+                onRefuse={(id) => refuseMutation.mutate(id)}
+                refusingId={refusingId}
+                isRefusing={refuseMutation.isPending}
                 driverProfile={
                   availabilityQuery.data
                     ? {

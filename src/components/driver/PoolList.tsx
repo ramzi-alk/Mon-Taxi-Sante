@@ -33,6 +33,9 @@ interface PoolListProps {
   driverProfile?: DriverProfileFilter | null;
   onAcceptSeries?: (rideIds: string[]) => void;
   acceptingSeriesId?: string | null;
+  onRefuse?: (rideId: string) => void;
+  refusingId?: string | null;
+  isRefusing?: boolean;
 }
 
 const VIRTUALIZE_THRESHOLD = 20;
@@ -51,7 +54,7 @@ function defaultVehicleFilter(profile: DriverProfileFilter | null | undefined): 
   return "all";
 }
 
-export function PoolList({ rides, onAccept, acceptingId, isAccepting, driverProfile, onAcceptSeries, acceptingSeriesId }: PoolListProps) {
+export function PoolList({ rides, onAccept, acceptingId, isAccepting, driverProfile, onAcceptSeries, acceptingSeriesId, onRefuse, refusingId, isRefusing }: PoolListProps) {
   const [search, setSearch] = useState("");
 
   // Toutes les rides du pool groupées par series_id (non filtrées) pour
@@ -232,6 +235,8 @@ export function PoolList({ rides, onAccept, acceptingId, isAccepting, driverProf
                 onAcceptSeries={onAcceptSeries}
                 isAcceptingSeries={acceptingSeriesId === ride.id}
                 seriesPoolRides={ride.series_id ? seriesPoolMap[ride.series_id] : undefined}
+                onRefuse={onRefuse}
+                isRefusing={refusingId === ride.id && !!isRefusing}
               />
             </li>
           ))}
@@ -264,6 +269,8 @@ export function PoolList({ rides, onAccept, acceptingId, isAccepting, driverProf
                     onAcceptSeries={onAcceptSeries}
                     isAcceptingSeries={acceptingSeriesId === ride.id}
                     seriesPoolRides={ride.series_id ? seriesPoolMap[ride.series_id] : undefined}
+                    onRefuse={onRefuse}
+                    isRefusing={refusingId === ride.id && !!isRefusing}
                   />
                 </li>
               );
