@@ -7,6 +7,10 @@
     {
       "path": "/api/cron/booking-reminders",
       "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/cron/at-risk-bookings",
+      "schedule": "0 */2 * * *"
     }
   ]
 }

@@ -14,6 +14,7 @@ import {
   bookingCancelledDriverEmail,
   driverApprovedEmail,
   driverRejectedEmail,
+  driverReassignedAwayEmail,
   adminNewDriverApplicationEmail,
 } from "./emailTemplates";
 
@@ -676,5 +677,66 @@ export const notifyDriverRejectedServerFn = createServerFn({ method: "POST" })
   .handler(async ({ data: input }) =>
     withServerFnLogging("notifyDriverRejected", { driverDetailsId: input.driverDetailsId }, () =>
       notifyDriverRejected(input)
+    )
+  );
+
+/**
+ * Notifies the outgoing driver when an admin reassigns their accepted ride
+ * to someone else — the booking's driver_id already points to the new
+ * driver by the time this runs, so the outgoing driver is passed in
+ * explicitly rather than read off the booking. Same success-reporting
+ * contract as notifyDriverApproved/notifyDriverRejected above.
+ */
+async function notifyDriverReassignedAway(input: {
+  bookingId: string;
+  previousDriverId: string;
+}): Promise<boolean> {
+  const admin = getSupabaseAdminClient();
+  const [{ data: booking }, { data: driverProfile }] = await Promise.all([
+    admin.from("bookings").select("reference_code, pickup_datetime").eq("id", input.bookingId).single(),
+    admin.from("profiles").select("full_name, email").eq("id", input.previousDriverId).single(),
+  ]);
+
+  if (!booking || !driverProfile?.email) {
+    return false;
+  }
+
+  sendPushToDriver(input.previousDriverId, {
+    title: "Course réattribuée",
+    body: `Votre course du ${new Date(booking.pickup_datetime).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })} a été confiée à un autre chauffeur.`,
+    url: "/tableau-de-bord/chauffeur",
+    tag: `booking-reassigned-${input.bookingId}`,
+  }).catch(() => {});
+
+  try {
+    const { subject, html } = driverReassignedAwayEmail({
+      driverFullName: driverProfile.full_name ?? "Chauffeur",
+      referenceCode: booking.reference_code,
+      pickupDatetime: booking.pickup_datetime,
+    });
+    const { error: sendApiError } = await getResendClient().emails.send({
+      from: EMAIL_FROM,
+      to: driverProfile.email,
+      subject,
+      html,
+    });
+    if (sendApiError) {
+      throw new Error(sendApiError.message);
+    }
+    return true;
+  } catch (sendError) {
+    logger.error("email.notifyDriverReassignedAway failed", {
+      error: sendError instanceof Error ? sendError.message : String(sendError),
+      bookingId: input.bookingId,
+    });
+    return false;
+  }
+}
+
+export const notifyDriverReassignedAwayServerFn = createServerFn({ method: "POST" })
+  .validator((input: { bookingId: string; previousDriverId: string }) => input)
+  .handler(async ({ data: input }) =>
+    withServerFnLogging("notifyDriverReassignedAway", { bookingId: input.bookingId }, () =>
+      notifyDriverReassignedAway(input)
     )
   );

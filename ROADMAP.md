@@ -202,22 +202,95 @@ directement avec la clé anon. Remédiation proposée (non appliquée) :
 à accompagner d'une policy explicite avant activation pour ne pas casser
 le flux de rappel de course.
 
-## Sprint 7 — Navigation & gestion des réservations
+## Sprint 7 — Navigation & gestion des réservations ✅ TERMINÉ
 
-- [ ] **Navigation en sidebar par domaine** (`High`) — layout app-shell,
-      sous-routes `/admin/reservations`, `/admin/chauffeurs`, `/admin/avis`,
-      `/admin/reglages`.
-- [ ] **Gestion complète des réservations** (`High`) — table paginée
-      (statut, véhicule, date, PMR/brancard/oxygène), recherche par
-      référence/téléphone/patient, vue détail, actions "réassigner",
-      "annuler avec motif", "marquer urgent".
-- [ ] **Recherche globale Cmd+K** (`High`) — palette de commande
-      (course/chauffeur/patient) accessible depuis tout `/admin/*`.
-- [ ] **File d'attente & alerte SLA** (`High`) — vue "à risque" (courses
-      `available` non attribuées à moins de N heures du départ) + alerte
-      automatique à l'équipe ops.
-- [ ] **Mises à jour en temps réel** (`Medium`) — abonnement Supabase
-      Realtime sur `bookings`/`drivers_details`, invalidation React Query.
+- [x] **Navigation en sidebar par domaine** (`High`) — `src/routes/admin.tsx`
+      devient un layout (garde d'accès + sidebar + `<Outlet/>`), avec
+      sous-routes imbriquées `admin/index.tsx` (vue d'ensemble),
+      `admin/reservations.tsx`, `admin/chauffeurs.tsx` (candidatures,
+      déplacées telles quelles depuis l'ancien `admin.tsx`). `/admin/avis`
+      et `/admin/reglages` ne sont pas créées : reportées aux sprints où
+      leur contenu existe réellement (8 et au-delà) plutôt que de poser des
+      pages vides dans la nav.
+- [x] **Gestion complète des réservations** (`High`) — `/admin/reservations` :
+      table paginée (20/page) avec filtres statut/véhicule et recherche
+      (référence/patient/téléphone), état de la pagination et des filtres
+      dans l'URL (`validateSearch`, partageable). Vue détail en `Dialog`
+      (patient, trajet, équipements, CPAM, chauffeur, prix). Actions
+      "Assigner/Réassigner un chauffeur" (liste de chauffeurs compatibles,
+      voir plus bas) et "Annuler avec motif" (statuts `pending`/`confirmed`/
+      `available`/`accepted` uniquement, via `isCancellable`).
+      **"Marquer urgent" n'a pas été implémenté comme flag manuel** : une
+      course non attribuée à moins de 4h du départ est automatiquement
+      détectée et signalée (badge ⚠️ dans la liste et le détail) — plus
+      fiable qu'un statut manuel qu'un admin peut oublier de poser, et
+      couvre le même besoin.
+- [x] **Recherche globale Cmd+K** (`High`) — `AdminCommandSearch`, montée
+      dans le layout donc disponible sur tout `/admin/*`. Scopée aux
+      réservations (référence/patient/téléphone) pour l'instant : la seule
+      zone avec une vue détail complète. Le répertoire chauffeurs (Sprint 8)
+      et les fiches patient (Sprint 8) l'étendront naturellement.
+- [x] **File d'attente & alerte SLA** (`High`) — seuil de 4h avant départ.
+      Vue "à risque" intégrée à la vue d'ensemble (`/admin`) plutôt qu'en
+      page séparée (même filtre `status=available` que Sprint 7 le
+      proposait, présenté comme un aperçu avec lien vers la liste complète
+      filtrée). Alerte automatique : nouveau cron
+      `/api/cron/at-risk-bookings` (email à `ADMIN_NOTIFICATION_EMAIL` s'il
+      reste des courses non attribuées sous 4h), ajouté à `vercel.json`
+      toutes les 2h. **Pas de déduplication** : le cron réalerte à chaque
+      exécution tant qu'une course reste non résolue (choix assumé — mieux
+      vaut une relance que perdre une alerte manquée en silence). Ajuster
+      la fréquence si le plan Vercel ne permet qu'un cron quotidien
+      (Hobby).
+- [x] **Mises à jour en temps réel** (`Medium`) — via le hook `useRealtime`
+      déjà présent dans le code (`src/hooks/useRealtime.ts`, jusque-là
+      utilisé uniquement par le tableau de bord chauffeur) : branché sur la
+      liste de réservations, les stats et la file "à risque". `bookings`
+      était déjà dans la publication Realtime Supabase, aucune config
+      serveur supplémentaire nécessaire. `drivers_details` n'a pas de vue
+      admin en temps réel pour l'instant (pas de répertoire chauffeurs
+      avant Sprint 8) — sera ajouté avec.
+
+**Réassignation de chauffeur — détail technique** : écriture directe sur
+`bookings` (l'admin a un accès complet via la policy RLS `bookings: admin
+all`, confirmée en base — pas de RPC dédiée nécessaire, contrairement aux
+actions patient/chauffeur qui passent par des RPC restreintes). Le
+sélecteur de chauffeurs reproduit la logique de `driver_matches_booking`
+(migration 018) côté client pour ne proposer que des chauffeurs
+compatibles — y compris son angle mort connu : les courses `ambulance` n'y
+matchent jamais (la fonction SQL ne gère pas ce cas), donc `/admin/
+reservations` ne propose aucun chauffeur pour ce type de course. Non
+corrigé ici : signaler ce comportement plutôt que le changer silencieusement,
+c'est un choix produit qui dépasse le périmètre de ce sprint. Si un
+chauffeur déjà affecté est remplacé, l'ancien chauffeur est notifié par
+email + push (nouveau `driverReassignedAwayEmail` /
+`notifyDriverReassignedAwayServerFn`) — sans quoi il continuerait de croire
+la course sienne.
+
+**Fichiers touchés** : `src/routes/admin.tsx` (réécrit en layout),
+`src/routes/admin/index.tsx`, `src/routes/admin/reservations.tsx`,
+`src/routes/admin/chauffeurs.tsx` (nouveaux, tous trois), `src/routes/api/cron/at-risk-bookings.ts`
+(nouveau), `src/repositories/adminBookingsRepository.ts` (nouveau),
+`src/components/admin/AdminCommandSearch.tsx`,
+`src/components/admin/AdminErrorState.tsx`, `src/components/ui/dialog.tsx`
+(nouveaux), `src/server/email.ts`, `src/server/emailTemplates.ts`,
+`vercel.json`.
+
+**Vérification effectuée** : `npx tsc --noEmit` (26 erreurs, toutes
+confirmées identiques avant/après ce sprint via `git stash` — aucune
+nouvelle) + `npx vite build` (succès complet, routes imbriquées
+correctement générées dans `routeTree.gen.ts`). Test navigateur (Playwright
+contre le serveur de dev) sur `/admin`, `/admin/reservations`,
+`/admin/chauffeurs`, `/connexion` : pages servies (200), aucune erreur
+JS propre à ce sprint. Une erreur `process is not defined` apparaît sur
+*toutes* les pages, y compris `/` et sur le commit d'avant Sprint 6 —
+confirmée pré-existante (bug du mode dev de `@tanstack/start-client-core`,
+la lib RPC alpha utilisée par ce projet), pas liée à ce travail. Un test
+complet en navigateur du flux authentifié (voir la sidebar, ouvrir le
+détail d'une course, réassigner) n'a pas pu être fait dans cet
+environnement : pas d'identifiants admin réels ni de clé service-role
+utilisable en toute sécurité pour se connecter au projet Supabase live
+depuis ce bac à sable.
 
 ## Sprint 8 — Chauffeurs, modération & qualité
 

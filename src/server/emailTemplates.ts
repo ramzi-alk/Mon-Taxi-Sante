@@ -297,6 +297,29 @@ export function adminNewDriverApplicationEmail(params: {
   };
 }
 
+export function atRiskBookingsAlertEmail(params: {
+  bookings: Array<{ referenceCode: string; patientFullName: string; pickupDatetime: string }>;
+  hoursThreshold: number;
+}): EmailContent {
+  const { bookings, hoursThreshold } = params;
+  const rows = bookings.map((b) => ({
+    label: formatReferenceCode(b.referenceCode),
+    value: `${b.patientFullName} — ${formatDateFr(b.pickupDatetime)} à ${formatTimeFr(b.pickupDatetime)}`,
+  }));
+  return {
+    subject: `⚠️ ${bookings.length} course${bookings.length > 1 ? "s" : ""} sans chauffeur à moins de ${hoursThreshold}h`,
+    html: layout({
+      title: "Courses à risque",
+      icon: "⚠️",
+      bodyHtml: `
+        ${badge(`${bookings.length} course${bookings.length > 1 ? "s" : ""} sans chauffeur`, "red")}
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Les réservations suivantes n'ont pas encore de chauffeur alors que le départ est prévu dans moins de ${hoursThreshold}h. Une intervention manuelle (assignation depuis le panel admin) est recommandée.</p>
+        ${detailsCard(rows)}
+      `,
+    }),
+  };
+}
+
 export function driverApprovedEmail(params: { driverFullName: string }): EmailContent {
   const { driverFullName } = params;
   return {
@@ -415,6 +438,26 @@ export function rideUnassignedByDriverEmail(params: {
         <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${patientFullName},</p>
         <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">${body}</p>
         ${ctaButton("Suivre ma réservation", trackingUrl(referenceCode))}
+      `,
+    }),
+  };
+}
+
+export function driverReassignedAwayEmail(params: {
+  driverFullName: string;
+  referenceCode: string;
+  pickupDatetime: string;
+}): EmailContent {
+  const { driverFullName, referenceCode, pickupDatetime } = params;
+  return {
+    subject: `Course réattribuée — Réf. ${formatReferenceCode(referenceCode)}`,
+    html: layout({
+      title: "Course réattribuée",
+      icon: "🔄",
+      bodyHtml: `
+        ${badge("Retirée de votre planning", "amber")}
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${driverFullName},</p>
+        <p style="margin:0;font-size:15px;line-height:1.5;">Votre course du <strong>${formatDateFr(pickupDatetime)} à ${formatTimeFr(pickupDatetime)}</strong> (réf. ${formatReferenceCode(referenceCode)}) a été réattribuée à un autre chauffeur par notre équipe. Elle n'apparaît plus dans votre tableau de bord. Pour toute question, contactez-nous directement.</p>
       `,
     }),
   };

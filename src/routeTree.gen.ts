@@ -26,6 +26,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ReservationIndexRouteImport } from './routes/reservation/index'
 import { Route as BlogIndexRouteImport } from './routes/blog/index'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as TableauDeBordChauffeurRouteImport } from './routes/tableau-de-bord/chauffeur'
 import { Route as ReservationConfirmationRouteImport } from './routes/reservation/confirmation'
 import { Route as ChauffeursTarifsRouteImport } from './routes/chauffeurs/tarifs'
@@ -33,9 +34,12 @@ import { Route as ChauffeursInscriptionRouteImport } from './routes/chauffeurs/i
 import { Route as BlogTransportCpamRouteImport } from './routes/blog/transport-cpam'
 import { Route as BlogPmtPrescriptionRouteImport } from './routes/blog/pmt-prescription'
 import { Route as BlogAldTransportRouteImport } from './routes/blog/ald-transport'
+import { Route as AdminReservationsRouteImport } from './routes/admin/reservations'
+import { Route as AdminChauffeursRouteImport } from './routes/admin/chauffeurs'
 import { Route as DepartmentCityRouteImport } from './routes/$department.$city'
 import { Route as TableauDeBordChauffeurCompteRouteImport } from './routes/tableau-de-bord/chauffeur_.compte'
 import { ServerRoute as ApiCronBookingRemindersServerRouteImport } from './routes/api/cron/booking-reminders'
+import { ServerRoute as ApiCronAtRiskBookingsServerRouteImport } from './routes/api/cron/at-risk-bookings'
 
 const rootServerRouteImport = createServerRootRoute()
 
@@ -114,6 +118,11 @@ const BlogIndexRoute = BlogIndexRouteImport.update({
   path: '/blog/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
 const TableauDeBordChauffeurRoute = TableauDeBordChauffeurRouteImport.update({
   id: '/tableau-de-bord/chauffeur',
   path: '/tableau-de-bord/chauffeur',
@@ -149,6 +158,16 @@ const BlogAldTransportRoute = BlogAldTransportRouteImport.update({
   path: '/blog/ald-transport',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminReservationsRoute = AdminReservationsRouteImport.update({
+  id: '/reservations',
+  path: '/reservations',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminChauffeursRoute = AdminChauffeursRouteImport.update({
+  id: '/chauffeurs',
+  path: '/chauffeurs',
+  getParentRoute: () => AdminRoute,
+} as any)
 const DepartmentCityRoute = DepartmentCityRouteImport.update({
   id: '/$department/$city',
   path: '/$department/$city',
@@ -166,10 +185,16 @@ const ApiCronBookingRemindersServerRoute =
     path: '/api/cron/booking-reminders',
     getParentRoute: () => rootServerRouteImport,
   } as any)
+const ApiCronAtRiskBookingsServerRoute =
+  ApiCronAtRiskBookingsServerRouteImport.update({
+    id: '/api/cron/at-risk-bookings',
+    path: '/api/cron/at-risk-bookings',
+    getParentRoute: () => rootServerRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/cgv': typeof CgvRoute
   '/comment-ca-marche': typeof CommentCaMarcheRoute
   '/confidentialite': typeof ConfidentialiteRoute
@@ -182,6 +207,8 @@ export interface FileRoutesByFullPath {
   '/reinitialiser-mot-de-passe': typeof ReinitialiserMotDePasseRoute
   '/tarifs-cpam': typeof TarifsCpamRoute
   '/$department/$city': typeof DepartmentCityRoute
+  '/admin/chauffeurs': typeof AdminChauffeursRoute
+  '/admin/reservations': typeof AdminReservationsRoute
   '/blog/ald-transport': typeof BlogAldTransportRoute
   '/blog/pmt-prescription': typeof BlogPmtPrescriptionRoute
   '/blog/transport-cpam': typeof BlogTransportCpamRoute
@@ -189,13 +216,13 @@ export interface FileRoutesByFullPath {
   '/chauffeurs/tarifs': typeof ChauffeursTarifsRoute
   '/reservation/confirmation': typeof ReservationConfirmationRoute
   '/tableau-de-bord/chauffeur': typeof TableauDeBordChauffeurRoute
+  '/admin/': typeof AdminIndexRoute
   '/blog': typeof BlogIndexRoute
   '/reservation': typeof ReservationIndexRoute
   '/tableau-de-bord/chauffeur/compte': typeof TableauDeBordChauffeurCompteRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
   '/cgv': typeof CgvRoute
   '/comment-ca-marche': typeof CommentCaMarcheRoute
   '/confidentialite': typeof ConfidentialiteRoute
@@ -208,6 +235,8 @@ export interface FileRoutesByTo {
   '/reinitialiser-mot-de-passe': typeof ReinitialiserMotDePasseRoute
   '/tarifs-cpam': typeof TarifsCpamRoute
   '/$department/$city': typeof DepartmentCityRoute
+  '/admin/chauffeurs': typeof AdminChauffeursRoute
+  '/admin/reservations': typeof AdminReservationsRoute
   '/blog/ald-transport': typeof BlogAldTransportRoute
   '/blog/pmt-prescription': typeof BlogPmtPrescriptionRoute
   '/blog/transport-cpam': typeof BlogTransportCpamRoute
@@ -215,6 +244,7 @@ export interface FileRoutesByTo {
   '/chauffeurs/tarifs': typeof ChauffeursTarifsRoute
   '/reservation/confirmation': typeof ReservationConfirmationRoute
   '/tableau-de-bord/chauffeur': typeof TableauDeBordChauffeurRoute
+  '/admin': typeof AdminIndexRoute
   '/blog': typeof BlogIndexRoute
   '/reservation': typeof ReservationIndexRoute
   '/tableau-de-bord/chauffeur/compte': typeof TableauDeBordChauffeurCompteRoute
@@ -222,7 +252,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/cgv': typeof CgvRoute
   '/comment-ca-marche': typeof CommentCaMarcheRoute
   '/confidentialite': typeof ConfidentialiteRoute
@@ -235,6 +265,8 @@ export interface FileRoutesById {
   '/reinitialiser-mot-de-passe': typeof ReinitialiserMotDePasseRoute
   '/tarifs-cpam': typeof TarifsCpamRoute
   '/$department/$city': typeof DepartmentCityRoute
+  '/admin/chauffeurs': typeof AdminChauffeursRoute
+  '/admin/reservations': typeof AdminReservationsRoute
   '/blog/ald-transport': typeof BlogAldTransportRoute
   '/blog/pmt-prescription': typeof BlogPmtPrescriptionRoute
   '/blog/transport-cpam': typeof BlogTransportCpamRoute
@@ -242,6 +274,7 @@ export interface FileRoutesById {
   '/chauffeurs/tarifs': typeof ChauffeursTarifsRoute
   '/reservation/confirmation': typeof ReservationConfirmationRoute
   '/tableau-de-bord/chauffeur': typeof TableauDeBordChauffeurRoute
+  '/admin/': typeof AdminIndexRoute
   '/blog/': typeof BlogIndexRoute
   '/reservation/': typeof ReservationIndexRoute
   '/tableau-de-bord/chauffeur_/compte': typeof TableauDeBordChauffeurCompteRoute
@@ -263,6 +296,8 @@ export interface FileRouteTypes {
     | '/reinitialiser-mot-de-passe'
     | '/tarifs-cpam'
     | '/$department/$city'
+    | '/admin/chauffeurs'
+    | '/admin/reservations'
     | '/blog/ald-transport'
     | '/blog/pmt-prescription'
     | '/blog/transport-cpam'
@@ -270,13 +305,13 @@ export interface FileRouteTypes {
     | '/chauffeurs/tarifs'
     | '/reservation/confirmation'
     | '/tableau-de-bord/chauffeur'
+    | '/admin/'
     | '/blog'
     | '/reservation'
     | '/tableau-de-bord/chauffeur/compte'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/admin'
     | '/cgv'
     | '/comment-ca-marche'
     | '/confidentialite'
@@ -289,6 +324,8 @@ export interface FileRouteTypes {
     | '/reinitialiser-mot-de-passe'
     | '/tarifs-cpam'
     | '/$department/$city'
+    | '/admin/chauffeurs'
+    | '/admin/reservations'
     | '/blog/ald-transport'
     | '/blog/pmt-prescription'
     | '/blog/transport-cpam'
@@ -296,6 +333,7 @@ export interface FileRouteTypes {
     | '/chauffeurs/tarifs'
     | '/reservation/confirmation'
     | '/tableau-de-bord/chauffeur'
+    | '/admin'
     | '/blog'
     | '/reservation'
     | '/tableau-de-bord/chauffeur/compte'
@@ -315,6 +353,8 @@ export interface FileRouteTypes {
     | '/reinitialiser-mot-de-passe'
     | '/tarifs-cpam'
     | '/$department/$city'
+    | '/admin/chauffeurs'
+    | '/admin/reservations'
     | '/blog/ald-transport'
     | '/blog/pmt-prescription'
     | '/blog/transport-cpam'
@@ -322,6 +362,7 @@ export interface FileRouteTypes {
     | '/chauffeurs/tarifs'
     | '/reservation/confirmation'
     | '/tableau-de-bord/chauffeur'
+    | '/admin/'
     | '/blog/'
     | '/reservation/'
     | '/tableau-de-bord/chauffeur_/compte'
@@ -329,7 +370,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AdminRoute: typeof AdminRoute
+  AdminRoute: typeof AdminRouteWithChildren
   CgvRoute: typeof CgvRoute
   CommentCaMarcheRoute: typeof CommentCaMarcheRoute
   ConfidentialiteRoute: typeof ConfidentialiteRoute
@@ -354,24 +395,28 @@ export interface RootRouteChildren {
   TableauDeBordChauffeurCompteRoute: typeof TableauDeBordChauffeurCompteRoute
 }
 export interface FileServerRoutesByFullPath {
+  '/api/cron/at-risk-bookings': typeof ApiCronAtRiskBookingsServerRoute
   '/api/cron/booking-reminders': typeof ApiCronBookingRemindersServerRoute
 }
 export interface FileServerRoutesByTo {
+  '/api/cron/at-risk-bookings': typeof ApiCronAtRiskBookingsServerRoute
   '/api/cron/booking-reminders': typeof ApiCronBookingRemindersServerRoute
 }
 export interface FileServerRoutesById {
   __root__: typeof rootServerRouteImport
+  '/api/cron/at-risk-bookings': typeof ApiCronAtRiskBookingsServerRoute
   '/api/cron/booking-reminders': typeof ApiCronBookingRemindersServerRoute
 }
 export interface FileServerRouteTypes {
   fileServerRoutesByFullPath: FileServerRoutesByFullPath
-  fullPaths: '/api/cron/booking-reminders'
+  fullPaths: '/api/cron/at-risk-bookings' | '/api/cron/booking-reminders'
   fileServerRoutesByTo: FileServerRoutesByTo
-  to: '/api/cron/booking-reminders'
-  id: '__root__' | '/api/cron/booking-reminders'
+  to: '/api/cron/at-risk-bookings' | '/api/cron/booking-reminders'
+  id: '__root__' | '/api/cron/at-risk-bookings' | '/api/cron/booking-reminders'
   fileServerRoutesById: FileServerRoutesById
 }
 export interface RootServerRouteChildren {
+  ApiCronAtRiskBookingsServerRoute: typeof ApiCronAtRiskBookingsServerRoute
   ApiCronBookingRemindersServerRoute: typeof ApiCronBookingRemindersServerRoute
 }
 
@@ -482,6 +527,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BlogIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/tableau-de-bord/chauffeur': {
       id: '/tableau-de-bord/chauffeur'
       path: '/tableau-de-bord/chauffeur'
@@ -531,6 +583,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BlogAldTransportRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/reservations': {
+      id: '/admin/reservations'
+      path: '/reservations'
+      fullPath: '/admin/reservations'
+      preLoaderRoute: typeof AdminReservationsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/chauffeurs': {
+      id: '/admin/chauffeurs'
+      path: '/chauffeurs'
+      fullPath: '/admin/chauffeurs'
+      preLoaderRoute: typeof AdminChauffeursRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/$department/$city': {
       id: '/$department/$city'
       path: '/$department/$city'
@@ -556,12 +622,33 @@ declare module '@tanstack/react-start/server' {
       preLoaderRoute: typeof ApiCronBookingRemindersServerRouteImport
       parentRoute: typeof rootServerRouteImport
     }
+    '/api/cron/at-risk-bookings': {
+      id: '/api/cron/at-risk-bookings'
+      path: '/api/cron/at-risk-bookings'
+      fullPath: '/api/cron/at-risk-bookings'
+      preLoaderRoute: typeof ApiCronAtRiskBookingsServerRouteImport
+      parentRoute: typeof rootServerRouteImport
+    }
   }
 }
 
+interface AdminRouteChildren {
+  AdminChauffeursRoute: typeof AdminChauffeursRoute
+  AdminReservationsRoute: typeof AdminReservationsRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminChauffeursRoute: AdminChauffeursRoute,
+  AdminReservationsRoute: AdminReservationsRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AdminRoute: AdminRoute,
+  AdminRoute: AdminRouteWithChildren,
   CgvRoute: CgvRoute,
   CommentCaMarcheRoute: CommentCaMarcheRoute,
   ConfidentialiteRoute: ConfidentialiteRoute,
@@ -589,6 +676,7 @@ export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
 const rootServerRouteChildren: RootServerRouteChildren = {
+  ApiCronAtRiskBookingsServerRoute: ApiCronAtRiskBookingsServerRoute,
   ApiCronBookingRemindersServerRoute: ApiCronBookingRemindersServerRoute,
 }
 export const serverRouteTree = rootServerRouteImport
