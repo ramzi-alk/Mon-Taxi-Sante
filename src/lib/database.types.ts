@@ -17,6 +17,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_grants: {
+        Row: {
+          admin_role: string
+          granted_at: string
+          granted_by: string | null
+          profile_id: string
+        }
+        Insert: {
+          admin_role?: string
+          granted_at?: string
+          granted_by?: string | null
+          profile_id: string
+        }
+        Update: {
+          admin_role?: string
+          granted_at?: string
+          granted_by?: string | null
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_grants_granted_by_fkey"
+            columns: ["granted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_grants_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       booking_driver_refusals: {
         Row: {
           booking_id: string
@@ -876,6 +912,7 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_driver: { Args: never; Returns: boolean }
+      is_super_admin: { Args: never; Returns: boolean }
       lookup_booking_by_reference: {
         Args: { p_phone: string; p_reference_code: string }
         Returns: {

@@ -388,9 +388,31 @@ utilisables dans ce bac à sable).
 
 ## Sprint 9 — Sécurité avancée & gouvernance
 
-- [ ] **Rôles graduels (support/admin/super_admin)** (`High`) — extension
-      de l'enum `user_role` + matrice de permissions remplaçant le simple
-      `is_admin()` booléen dans les policies RLS sensibles.
+- [x] **Rôles graduels (support/admin/super_admin)** (`High`) — **partiellement
+      livré, hors planning**, en réponse à un besoin concret : un compte ne
+      peut porter qu'un seul `profiles.role` (patient/driver/admin), donc
+      impossible d'être à la fois chauffeur et admin sur le même email sans
+      ce changement. Nouvelle table `admin_grants` (migration 044,
+      `profile_id`, `admin_role` ∈ {admin, super_admin}, `granted_at`,
+      `granted_by`) **découplée** de `profiles.role` : un compte garde son
+      rôle principal (patient/driver) et peut *en plus* avoir un accès
+      admin. `is_admin()` — utilisée dans les policies RLS de
+      `bookings`/`profiles`/`drivers_details`/`booking_ratings` — redéfinie
+      pour vérifier `profiles.role = 'admin'` **OU** une ligne dans
+      `admin_grants`, ce qui propage le nouveau comportement à toutes ces
+      policies d'un coup. Nouvelle fonction `is_super_admin()` (pas encore
+      utilisée dans une policy — aucune action du panel n'est aujourd'hui
+      réservée au tier super_admin, c'est une distinction posée pour plus
+      tard). `checkAdminAccessServerFn` (garde serveur de `/admin`) et le
+      flux de connexion (`connexion.tsx`, redirige vers `/admin` en
+      priorité si l'utilisateur a un grant, même si `role='driver'`) mis à
+      jour en conséquence.
+      **Ce qui manque encore** pour ce point du Sprint 9 : la matrice de
+      permissions par tier (aujourd'hui admin et super_admin ont exactement
+      les mêmes droits dans l'app — seule la donnée `admin_role` existe,
+      rien ne la lit encore côté UI/permissions), et une UI pour
+      gérer les grants (accordés/retirés en SQL direct pour l'instant, pas
+      encore depuis le panel).
 - [ ] **2FA obligatoire pour tout compte admin** (`High`) — Supabase Auth
       MFA (TOTP), enrôlement/challenge forcé avant `/admin`.
 - [ ] **Journal des connexions & des actions admin** (`Medium`) — table

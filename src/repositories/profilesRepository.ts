@@ -18,6 +18,23 @@ export async function getProfileRole(
   return data?.role ?? null;
 }
 
+/**
+ * True if this account has admin panel access, whether via
+ * `profiles.role = 'admin'` or an `admin_grants` row (migration 044) —
+ * the latter lets a 'driver'/'patient' account also be an admin without
+ * changing its primary role. This is a lightweight UX check (drives the
+ * post-login redirect); the authoritative gate is still
+ * checkAdminAccessServerFn (src/server/adminAccess.ts), which also
+ * enforces the ADMIN_EMAILS allowlist server-side.
+ */
+export async function hasAdminAccess(client: SupabaseClient, userId: string): Promise<boolean> {
+  const [{ data: profile }, { data: grant }] = await Promise.all([
+    client.from("profiles").select("role").eq("id", userId).maybeSingle(),
+    client.from("admin_grants").select("profile_id").eq("profile_id", userId).maybeSingle(),
+  ]);
+  return profile?.role === "admin" || !!grant;
+}
+
 export async function fetchMyProfile(
   client: SupabaseClient,
   profileId: string

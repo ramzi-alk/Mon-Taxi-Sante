@@ -39,8 +39,15 @@ async function login(data: LoginSchema) {
     throw new Error("Email ou mot de passe incorrect.");
   }
 
-  const role = await profilesRepository.getProfileRole(supabase, signInData.user.id);
-  return role ?? "patient";
+  // isAdmin checked separately from role: an account can be 'driver' (or
+  // 'patient') as its primary role while also holding admin access via
+  // admin_grants (migration 044) — role alone no longer decides where an
+  // admin-capable account lands after login.
+  const [role, isAdmin] = await Promise.all([
+    profilesRepository.getProfileRole(supabase, signInData.user.id),
+    profilesRepository.hasAdminAccess(supabase, signInData.user.id),
+  ]);
+  return { role: role ?? "patient", isAdmin };
 }
 
 function ConnexionPage() {
@@ -57,8 +64,8 @@ function ConnexionPage() {
 
   const { mutate, isPending } = useMutation({
     mutationFn: login,
-    onSuccess: (role) => {
-      if (role === "admin") navigate({ to: "/admin" });
+    onSuccess: ({ role, isAdmin }) => {
+      if (isAdmin) navigate({ to: "/admin" });
       else if (role === "driver") navigate({ to: "/tableau-de-bord/chauffeur" });
       else navigate({ to: "/" });
     },
