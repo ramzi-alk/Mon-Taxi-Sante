@@ -469,6 +469,9 @@ export type Database = {
           pmr_equipped: boolean
           pool_suspended_until: string | null
           profile_id: string
+          rejected_at: string | null
+          rejected_by: string | null
+          rejection_reason: string | null
           siret: string
           stretcher_equipped: boolean
           stripe_customer_id: string | null
@@ -503,6 +506,9 @@ export type Database = {
           pmr_equipped?: boolean
           pool_suspended_until?: string | null
           profile_id: string
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
           siret: string
           stretcher_equipped?: boolean
           stripe_customer_id?: string | null
@@ -537,6 +543,9 @@ export type Database = {
           pmr_equipped?: boolean
           pool_suspended_until?: string | null
           profile_id?: string
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
           siret?: string
           stretcher_equipped?: boolean
           stripe_customer_id?: string | null
@@ -561,6 +570,13 @@ export type Database = {
             foreignKeyName: "drivers_details_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drivers_details_rejected_by_fkey"
+            columns: ["rejected_by"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -759,6 +775,13 @@ export type Database = {
       est_grande_ville: { Args: { p_address: string }; Returns: boolean }
       est_jour_ferie_fr: { Args: { p_date: string }; Returns: boolean }
       generate_booking_reference_code: { Args: never; Returns: string }
+      get_booking_status_counts: {
+        Args: never
+        Returns: {
+          count: number
+          status: string
+        }[]
+      }
       get_my_bookings: {
         Args: never
         Returns: {

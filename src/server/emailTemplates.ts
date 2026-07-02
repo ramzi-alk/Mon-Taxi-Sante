@@ -313,6 +313,24 @@ export function driverApprovedEmail(params: { driverFullName: string }): EmailCo
   };
 }
 
+export function driverRejectedEmail(params: { driverFullName: string; reason: string }): EmailContent {
+  const { driverFullName, reason } = params;
+  return {
+    subject: "Votre candidature chauffeur — Mon Taxi Santé",
+    html: layout({
+      title: "Candidature non retenue",
+      icon: "📋",
+      bodyHtml: `
+        ${badge("Candidature non retenue", "amber")}
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${driverFullName},</p>
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Après examen de votre dossier, nous ne sommes pas en mesure de valider votre candidature chauffeur pour le moment, pour la raison suivante :</p>
+        ${detailsCard([{ label: "Motif", value: reason }])}
+        <p style="margin:0;font-size:14px;color:#6b7280;line-height:1.5;">Vous pouvez soumettre une nouvelle candidature une fois ce point corrigé. Pour toute question, contactez-nous directement.</p>
+      `,
+    }),
+  };
+}
+
 export function bookingReminderEmail(params: {
   patientFullName: string;
   referenceCode: string;

@@ -13,6 +13,7 @@ import {
   rideUnassignedByDriverEmail,
   bookingCancelledDriverEmail,
   driverApprovedEmail,
+  driverRejectedEmail,
   adminNewDriverApplicationEmail,
 } from "./emailTemplates";
 
@@ -573,7 +574,13 @@ export const notifyAdminNewDriverApplicationServerFn = createServerFn({ method: 
     )
   );
 
-async function notifyDriverApproved(input: { driverDetailsId: string }): Promise<void> {
+/**
+ * Returns whether the email actually went out (still never throws — same
+ * best-effort convention as the rest of this file) so the admin panel can
+ * tell the operator "approved, but the driver wasn't notified" instead of
+ * silently swallowing the failure.
+ */
+async function notifyDriverApproved(input: { driverDetailsId: string }): Promise<boolean> {
   const admin = getSupabaseAdminClient();
   const { data, error } = await admin
     .from("drivers_details")
@@ -588,7 +595,7 @@ async function notifyDriverApproved(input: { driverDetailsId: string }): Promise
   const profile = driver?.profiles;
 
   if (error || !driver || !driver.approved_at || !profile?.email) {
-    return;
+    return false;
   }
 
   try {
@@ -602,11 +609,13 @@ async function notifyDriverApproved(input: { driverDetailsId: string }): Promise
     if (sendApiError) {
       throw new Error(sendApiError.message);
     }
+    return true;
   } catch (sendError) {
     logger.error("email.notifyDriverApproved failed", {
       error: sendError instanceof Error ? sendError.message : String(sendError),
       driverDetailsId: input.driverDetailsId,
     });
+    return false;
   }
 }
 
@@ -615,5 +624,57 @@ export const notifyDriverApprovedServerFn = createServerFn({ method: "POST" })
   .handler(async ({ data: input }) =>
     withServerFnLogging("notifyDriverApproved", { driverDetailsId: input.driverDetailsId }, () =>
       notifyDriverApproved(input)
+    )
+  );
+
+/** Same success-reporting contract as notifyDriverApproved above. */
+async function notifyDriverRejected(input: { driverDetailsId: string }): Promise<boolean> {
+  const admin = getSupabaseAdminClient();
+  const { data, error } = await admin
+    .from("drivers_details")
+    .select("rejected_at, rejection_reason, profiles:profile_id(full_name, email)")
+    .eq("id", input.driverDetailsId)
+    .single();
+
+  const driver = data as unknown as {
+    rejected_at: string | null;
+    rejection_reason: string | null;
+    profiles: { full_name: string; email: string | null } | null;
+  } | null;
+  const profile = driver?.profiles;
+
+  if (error || !driver || !driver.rejected_at || !driver.rejection_reason || !profile?.email) {
+    return false;
+  }
+
+  try {
+    const { subject, html } = driverRejectedEmail({
+      driverFullName: profile.full_name,
+      reason: driver.rejection_reason,
+    });
+    const { error: sendApiError } = await getResendClient().emails.send({
+      from: EMAIL_FROM,
+      to: profile.email,
+      subject,
+      html,
+    });
+    if (sendApiError) {
+      throw new Error(sendApiError.message);
+    }
+    return true;
+  } catch (sendError) {
+    logger.error("email.notifyDriverRejected failed", {
+      error: sendError instanceof Error ? sendError.message : String(sendError),
+      driverDetailsId: input.driverDetailsId,
+    });
+    return false;
+  }
+}
+
+export const notifyDriverRejectedServerFn = createServerFn({ method: "POST" })
+  .validator((input: { driverDetailsId: string }) => input)
+  .handler(async ({ data: input }) =>
+    withServerFnLogging("notifyDriverRejected", { driverDetailsId: input.driverDetailsId }, () =>
+      notifyDriverRejected(input)
     )
   );

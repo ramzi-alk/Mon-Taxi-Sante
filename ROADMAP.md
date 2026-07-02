@@ -125,3 +125,145 @@ types — ce n'est donc pas bloquant, mais à traiter en Sprint 4 (voir plus bas
       cliniques) en plus du flux B2C direct.
 - [ ] Revue de charge / scalabilité de l'infrastructure Supabase à mesure que
       le volume de réservations augmente.
+
+---
+
+# Panel admin — Audit & feuille de route (juillet 2026)
+
+> Issu de l'audit dédié du panel admin (`src/routes/admin.tsx`) : accès &
+> sécurité, fonctionnalités clés, UX/workflows, KPIs, fiabilité. Continue la
+> numérotation des sprints ci-dessus plutôt que d'en redémarrer une nouvelle.
+> Priorités héritées de l'audit : `High` > `Medium` > `Low`.
+
+## Sprint 6 — Sécurité des fondations & fiabilité de l'existant ✅ TERMINÉ
+
+Objectif : durcir l'accès admin et corriger les points de fiabilité du flux
+d'approbation chauffeur, sans attendre la refonte de navigation (Sprint 7).
+
+- [x] **Allowlist `ADMIN_EMAILS` en défense en profondeur** (`High`) —
+      `src/lib/adminAccess.ts` (parsing, insensible à la casse) +
+      `src/server/adminAccess.ts` (`checkAdminAccessServerFn`, qui re-vérifie
+      le token côté serveur via `auth.getUser`, relit `profiles.role` avec le
+      client service-role, puis vérifie l'email dans l'allowlist). Branché sur
+      `src/routes/admin.tsx` à la place de la simple lecture RLS côté client.
+      `.env.example` documenté : si `ADMIN_EMAILS` est absent, seul le rôle DB
+      est vérifié (comportement historique inchangé, pas de risque de
+      lockout accidentel).
+- [x] **Refus motivé des candidatures chauffeur** (`High`) — migration
+      `042_driver_application_rejection.sql` (colonnes `rejected_at`,
+      `rejected_by`, `rejection_reason` sur `drivers_details`, appliquée sur
+      le projet Supabase `Mon-Taxi-Sante`) + `driversRepository.rejectDriver`
+      + filtre `fetchPendingDrivers` sur `rejected_at IS NULL` + email
+      `driverRejectedEmail` (motif inclus) + `notifyDriverRejectedServerFn`.
+      Bouton "Refuser" avec motif obligatoire ajouté à côté d'"Approuver".
+- [x] **Confirmation avant actions à impact** (`Medium`) — composant
+      `src/components/ui/alert-dialog.tsx` (Radix `@radix-ui/react-alert-dialog`,
+      jusque-là en dépendance mais jamais utilisé). Dialogue de confirmation
+      sur "Approuver" et sur "Refuser" (avec le champ motif).
+- [x] **Fiabilité de l'approbation/refus chauffeur** (`High`) —
+      `notifyDriverApproved`/`notifyDriverRejected` retournent désormais un
+      booléen de succès d'envoi au lieu d'avaler l'échec silencieusement (le
+      principe best-effort "ne jamais lever d'exception" du fichier est
+      conservé). Toast "Chauffeur approuvé"/"Candidature refusée" (succès DB)
+      distinct du toast "Email non envoyé" (échec Resend) — l'admin ne
+      confond plus les deux. États `isError` + bouton "Réessayer" ajoutés sur
+      les candidatures et les statistiques (au lieu d'un tableau vide
+      indiscernable d'un "aucune donnée").
+- [x] **Comptage de statuts scalable** (`Medium`) — RPC Postgres
+      `get_booking_status_counts()` (`GROUP BY` côté base, migration 042) ;
+      `bookingsRepository.fetchBookingStatusCounts` appelle la RPC au lieu de
+      rapatrier toute la table `bookings` côté client.
+
+**Fichiers touchés** : `supabase/migrations/042_driver_application_rejection.sql`
+(nouveau), `src/lib/database.types.ts` (régénéré depuis le schéma live),
+`src/lib/adminAccess.ts` (nouveau), `src/server/adminAccess.ts` (nouveau),
+`src/components/ui/alert-dialog.tsx` (nouveau), `src/routes/admin.tsx`
+(réécrit), `src/repositories/driversRepository.ts`,
+`src/repositories/bookingsRepository.ts`, `src/server/email.ts`,
+`src/server/emailTemplates.ts`, `.env.example`.
+
+**Vérification effectuée** : migration appliquée et vérifiée sur le projet
+Supabase live (`list_tables`/`list_migrations` après coup), types
+régénérés (`generate_typescript_types`), `npm install` + `npx tsc --noEmit`
+(aucune nouvelle erreur — les 2 erreurs `ImportMeta.env` restantes dans
+`emailTemplates.ts` sont pré-existantes, confirmées identiques sur la
+branche avant ce sprint) + `npx vite build` (succès complet, client + SSR).
+
+**Action requise côté opérateur** : définir `ADMIN_EMAILS` dans les
+variables d'environnement Vercel pour activer la seconde barrière (sans
+cette variable, le comportement reste celui d'avant ce sprint).
+
+**Constat annexe (hors périmètre, à traiter séparément)** : les Supabase
+advisors signalent RLS désactivée sur `public.booking_reminder_tokens`.
+Non introduit par ce sprint ; la table n'est en principe touchée que par
+des fonctions `SECURITY DEFINER`, mais reste en l'état interrogeable
+directement avec la clé anon. Remédiation proposée (non appliquée) :
+`ALTER TABLE public.booking_reminder_tokens ENABLE ROW LEVEL SECURITY;` —
+à accompagner d'une policy explicite avant activation pour ne pas casser
+le flux de rappel de course.
+
+## Sprint 7 — Navigation & gestion des réservations
+
+- [ ] **Navigation en sidebar par domaine** (`High`) — layout app-shell,
+      sous-routes `/admin/reservations`, `/admin/chauffeurs`, `/admin/avis`,
+      `/admin/reglages`.
+- [ ] **Gestion complète des réservations** (`High`) — table paginée
+      (statut, véhicule, date, PMR/brancard/oxygène), recherche par
+      référence/téléphone/patient, vue détail, actions "réassigner",
+      "annuler avec motif", "marquer urgent".
+- [ ] **Recherche globale Cmd+K** (`High`) — palette de commande
+      (course/chauffeur/patient) accessible depuis tout `/admin/*`.
+- [ ] **File d'attente & alerte SLA** (`High`) — vue "à risque" (courses
+      `available` non attribuées à moins de N heures du départ) + alerte
+      automatique à l'équipe ops.
+- [ ] **Mises à jour en temps réel** (`Medium`) — abonnement Supabase
+      Realtime sur `bookings`/`drivers_details`, invalidation React Query.
+
+## Sprint 8 — Chauffeurs, modération & qualité
+
+- [ ] **Répertoire chauffeurs complet** (`High`) — liste (actifs/suspendus/
+      en attente), fiche détail (stats, note moyenne, historique), actions
+      "suspendre"/"réactiver"/"exiger un document".
+- [ ] **Actions groupées (bulk)** (`Medium`) — sélection multiple
+      (`Checkbox` shadcn) + action groupée "approuver".
+- [ ] **Modération des avis mutuels** (`Medium`) — vue des derniers avis
+      filtrable par note basse, action "masquer le commentaire".
+- [ ] **Recherche & fiche patient** (`Medium`) — recherche nom/téléphone/
+      email, fiche récapitulative (historique, notes, statut CPAM).
+- [ ] **Détection de signaux faibles** (`Medium`) — vue agrégeant
+      suspensions chauffeur, notes basses, annulations tardives.
+- [ ] **Tables responsives mobile** (`Low`) — bascule tableau → cartes
+      empilées sous le breakpoint `sm`.
+
+## Sprint 9 — Sécurité avancée & gouvernance
+
+- [ ] **Rôles graduels (support/admin/super_admin)** (`High`) — extension
+      de l'enum `user_role` + matrice de permissions remplaçant le simple
+      `is_admin()` booléen dans les policies RLS sensibles.
+- [ ] **2FA obligatoire pour tout compte admin** (`High`) — Supabase Auth
+      MFA (TOTP), enrôlement/challenge forcé avant `/admin`.
+- [ ] **Journal des connexions & des actions admin** (`Medium`) — table
+      `admin_activity_log` (acteur, action, cible, avant/après, IP,
+      timestamp), triggers + logging serveur, vue dédiée filtrable.
+- [ ] **Route de connexion admin dédiée** (`Medium`) — `/admin/connexion`
+      séparée de `/connexion`, Turnstile systématique, rate limit renforcé.
+
+## Sprint 10 — Pilotage & productivité
+
+- [ ] **KPIs opérationnels avancés** (`Medium`) — taux d'annulation, délai
+      moyen d'attribution, taux de courses sans chauffeur, note moyenne,
+      répartition géographique, fenêtres 7/30 jours + tendance (vues SQL
+      matérialisées).
+- [ ] **Export de données comptabilité/CPAM** (`Medium`) — export CSV des
+      courses terminées (tarif CPAM 2025, distance, statut mutuelle).
+- [ ] **Centre de notifications internes** (`Low`) — flux in-app (Supabase
+      Realtime), statut lu/traité, en complément des emails existants.
+
+## Backlog panel admin — Idées bonus / différenciation (non planifié)
+
+- Assignation prédictive du chauffeur (scoring distance/équipement/note/charge du jour)
+- Alertes SLA automatiques par SMS/Slack interne
+- Suivi de conformité chauffeur (expiration SIRET, assurance, carte VTC/taxi)
+- NPS patient post-course agrégé par zone/chauffeur
+- Facturation CPAM assistée (génération de justificatifs depuis `cpam_status` + tarif 2025)
+- Mode astreinte (vue mobile allégée, push ciblées)

@@ -86,6 +86,7 @@ export async function fetchPendingDrivers(client: SupabaseClient): Promise<Pendi
       "id, profile_id, siret, company_name, vehicle_type, vehicle_registration, pmr_equipped, parking_municipality, created_at, profiles:profile_id(full_name, email, phone)"
     )
     .is("approved_at", null)
+    .is("rejected_at", null)
     .order("created_at", { ascending: true });
 
   if (error) {
@@ -107,6 +108,33 @@ export async function approveDriver(
 
   if (error) {
     logger.error("drivers.approveDriver failed", { error: error.message, driverDetailsId });
+    throw new Error(error.message);
+  }
+}
+
+/**
+ * Admin refusal of a driver application, with a reason communicated to the
+ * candidate by email (see driverRejectedEmail). Distinct from approval —
+ * both approved_at and rejected_at stay mutually exclusive by convention
+ * (the admin UI only ever offers one action per pending application).
+ */
+export async function rejectDriver(
+  client: SupabaseClient,
+  driverDetailsId: string,
+  rejectedBy: string | null,
+  reason: string
+): Promise<void> {
+  const { error } = await client
+    .from("drivers_details")
+    .update({
+      rejected_at: new Date().toISOString(),
+      rejected_by: rejectedBy,
+      rejection_reason: reason,
+    })
+    .eq("id", driverDetailsId);
+
+  if (error) {
+    logger.error("drivers.rejectDriver failed", { error: error.message, driverDetailsId });
     throw new Error(error.message);
   }
 }
