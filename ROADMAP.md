@@ -230,18 +230,23 @@ le flux de rappel de course.
       réservations (référence/patient/téléphone) pour l'instant : la seule
       zone avec une vue détail complète. Le répertoire chauffeurs (Sprint 8)
       et les fiches patient (Sprint 8) l'étendront naturellement.
-- [x] **File d'attente & alerte SLA** (`High`) — seuil de 4h avant départ.
-      Vue "à risque" intégrée à la vue d'ensemble (`/admin`) plutôt qu'en
+- [x] **File d'attente & alerte SLA** (`High`) — vue "à risque" (seuil 4h
+      avant départ) intégrée à la vue d'ensemble (`/admin`) plutôt qu'en
       page séparée (même filtre `status=available` que Sprint 7 le
       proposait, présenté comme un aperçu avec lien vers la liste complète
       filtrée). Alerte automatique : nouveau cron
-      `/api/cron/at-risk-bookings` (email à `ADMIN_NOTIFICATION_EMAIL` s'il
-      reste des courses non attribuées sous 4h), ajouté à `vercel.json`
-      toutes les 2h. **Pas de déduplication** : le cron réalerte à chaque
-      exécution tant qu'une course reste non résolue (choix assumé — mieux
-      vaut une relance que perdre une alerte manquée en silence). Ajuster
-      la fréquence si le plan Vercel ne permet qu'un cron quotidien
-      (Hobby).
+      `/api/cron/at-risk-bookings`, une fois par jour à midi UTC (compte
+      Vercel confirmé sur le plan **Hobby**, limité à un cron/jour — pas
+      d'option horaire). Comme un seul passage quotidien à heure fixe ne
+      croiserait sinon qu'une tranche de 4h par jour, ce cron utilise
+      délibérément un seuil élargi à **24h** (au lieu des 4h de la vue
+      live) : "signaler tout ce qui pourrait rester non résolu d'ici le
+      prochain passage demain". Email à `ADMIN_NOTIFICATION_EMAIL`. **Pas
+      de déduplication** : le cron réalerte à chaque exécution tant qu'une
+      course reste non résolue (choix assumé — mieux vaut une relance
+      qu'une alerte manquée passée sous silence). À revoir si le compte
+      passe un jour sur un plan Pro (cron plus fréquent + seuil resserré à
+      4h possible).
 - [x] **Mises à jour en temps réel** (`Medium`) — via le hook `useRealtime`
       déjà présent dans le code (`src/hooks/useRealtime.ts`, jusque-là
       utilisé uniquement par le tableau de bord chauffeur) : branché sur la

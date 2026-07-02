@@ -4,13 +4,17 @@ import { getResendClient, EMAIL_FROM, ADMIN_NOTIFICATION_EMAIL } from "~/lib/res
 import { atRiskBookingsAlertEmail } from "~/server/emailTemplates";
 import { logger } from "~/lib/logger";
 
-// Vercel Cron hits this periodically (see vercel.json) to alert the ops team
-// when bookings are still unassigned close to pickup — same threshold as the
-// "à risque" view on /admin/reservations (see AT_RISK_HOURS there). No
-// dedup/tracking column: intentionally re-alerts every run while a booking
-// stays unresolved, since a single alert getting missed shouldn't mean
-// silence until pickup.
-const AT_RISK_HOURS = 4;
+// Vercel Cron hits this once a day (see vercel.json — Hobby plan caps cron
+// frequency at once/day, no hourly option). A wider lookahead than the
+// live in-app "à risque" view (4h, see AT_RISK_HOURS in
+// admin/reservations.tsx and admin/index.tsx) is deliberate: a single daily
+// check at a fixed time would otherwise only ever catch bookings whose
+// pickup happens to fall in that day's narrow 4h slice. 24h means "flag
+// anything that could still be unresolved by the time this runs again
+// tomorrow." No dedup/tracking column: intentionally re-alerts every run
+// while a booking stays unresolved, since a single alert getting missed
+// shouldn't mean silence until pickup.
+const AT_RISK_HOURS = 24;
 
 function isAuthorized(request: Request): boolean {
   const expected = process.env.CRON_SECRET;
