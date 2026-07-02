@@ -82,11 +82,11 @@ function AdminShell() {
     <section className="bg-[#F7F8FC] min-h-[calc(100vh-4rem)]">
       <div className="container py-8 md:py-10">
         <div className="grid gap-6 md:grid-cols-[220px_minmax(0,1fr)]">
-          <aside className="md:sticky md:top-24 md:self-start">
+          <aside className="min-w-0 md:sticky md:top-24 md:self-start">
             <p className="text-xs font-bold tracking-[0.15em] text-[#1244E8] uppercase mb-4 px-1">
               Administration
             </p>
-            <nav className="flex md:flex-col gap-1 overflow-x-auto md:overflow-visible pb-2 md:pb-0">
+            <nav className="flex flex-wrap md:flex-col gap-1">
               {NAV_ITEMS.map(({ to, label, icon: Icon, exact }) => {
                 const isActive = exact ? pathname === to : pathname.startsWith(to);
                 return (
