@@ -386,7 +386,7 @@ patterns que les deux pages déjà vérifiées). Comme pour le Sprint 7,
 aucun test du flux authentifié complet (pas d'identifiants admin
 utilisables dans ce bac à sable).
 
-## Sprint 9 — Sécurité avancée & gouvernance
+## Sprint 9 — Sécurité avancée & gouvernance ✅ TERMINÉ (avec un point volontairement scopé à la baisse, voir ci-dessous)
 
 - [x] **Rôles graduels (support/admin/super_admin)** (`High`) — **partiellement
       livré, hors planning**, en réponse à un besoin concret : un compte ne
@@ -413,13 +413,94 @@ utilisables dans ce bac à sable).
       rien ne la lit encore côté UI/permissions), et une UI pour
       gérer les grants (accordés/retirés en SQL direct pour l'instant, pas
       encore depuis le panel).
-- [ ] **2FA obligatoire pour tout compte admin** (`High`) — Supabase Auth
-      MFA (TOTP), enrôlement/challenge forcé avant `/admin`.
-- [ ] **Journal des connexions & des actions admin** (`Medium`) — table
-      `admin_activity_log` (acteur, action, cible, avant/après, IP,
-      timestamp), triggers + logging serveur, vue dédiée filtrable.
-- [ ] **Route de connexion admin dédiée** (`Medium`) — `/admin/connexion`
-      séparée de `/connexion`, Turnstile systématique, rate limit renforcé.
+- [x] **2FA TOTP pour les comptes admin** (`High`) — **livré à un
+      périmètre volontairement réduit : disponible, pas encore
+      obligatoire.** Nouvelle page `/admin/securite`
+      (`src/routes/admin/securite.tsx`) utilisant l'API MFA native de
+      Supabase Auth (`auth.mfa.enroll/challenge/verify/unenroll/
+      listFactors`, aucune table ni migration nécessaire — l'état des
+      facteurs est géré par Supabase Auth) : affiche le ou les facteurs
+      TOTP déjà vérifiés (avec option de désactivation confirmée par
+      `AlertDialog`), et sinon propose l'enrôlement — QR code (rendu à
+      partir du SVG renvoyé par `enroll()`) + secret en repli texte, puis
+      validation par code à 6 chiffres via `challenge()`/`verify()`.
+      **Ce qui n'est délibérément PAS fait** : aucune étape de challenge
+      MFA n'est imposée à la connexion (ni sur `/connexion`, ni sur
+      `/admin/connexion`), et la garde d'accès `checkAdminAccessServerFn`
+      ne vérifie pas l'AAL (`getAuthenticatorAssuranceLevel`). Autrement
+      dit, un compte admin peut activer et utiliser la double
+      authentification dès aujourd'hui, mais rien ne l'impose encore. Ce
+      choix est volontaire, pas un oubli : ce bac à sable ne permet pas de
+      s'authentifier avec de vrais identifiants admin, donc impossible de
+      tester en conditions réelles le cycle complet enrôlement → challenge
+      → aal2 avant de le rendre bloquant. Une garde d'accès buguée sur ce
+      point aurait un risque concret de verrouillage du panel admin sans
+      filet de récupération simple dans cette session. **Activation de
+      l'obligation à confirmer séparément** une fois le flux testé en
+      conditions réelles (ou implémentée directement par vous si vous
+      préférez ne pas attendre).
+- [x] **Journal des connexions & des actions admin** (`Medium`) — table
+      `admin_activity_log` (migration 045 : `actor_id`, `action`
+      (`TG_OP`), `target_table`, `target_id`, `before`/`after` en jsonb,
+      `created_at`), alimentée par un trigger `SECURITY DEFINER`
+      (`log_admin_activity()`, non appelable directement en RPC — révoqué
+      de `PUBLIC/anon/authenticated`, seul le trigger peut l'invoquer) posé
+      sur `bookings`, `drivers_details`, `booking_ratings` en `AFTER
+      UPDATE`. Les colonnes sensibles (notes médicales, date de naissance,
+      documents d'identité/assurance, coordonnées) sont retirées du
+      before/after avant écriture. Vue dédiée `/admin/journal` : filtre
+      par catégorie, pagination, diff lisible (avant → après) limité à une
+      liste de champs pertinents par table (`TRACKED_FIELDS`), lien direct
+      vers la réservation concernée le cas échéant. Pas de journalisation
+      des connexions elles-mêmes (succès/échec) dans cette table — c'est
+      couvert séparément par `admin_login_attempts` ci-dessous (throttling
+      uniquement, pas un historique consultable).
+- [x] **Route de connexion admin dédiée** (`Medium`) — `/admin/connexion`
+      (`src/routes/admin_.connexion.tsx`, hors du layout `/admin` donc
+      accessible sans passer par la garde d'accès), formulaire email/mot
+      de passe avec Turnstile obligatoire et limitation par email (table
+      `admin_login_attempts`, migration 045 : verrou de 15 minutes après 5
+      échecs, table non accessible en direct — `REVOKE ALL ... FROM
+      PUBLIC, anon, authenticated`). L'authentification effective
+      (`signInWithPassword`) se fait côté serveur (`src/server/
+      adminAuth.ts`), pas dans le navigateur, pour que la vérification
+      Turnstile et le verrou ne puissent pas être contournés en appelant
+      l'API Supabase Auth directement. Message d'erreur volontairement
+      identique entre « mot de passe incorrect » et « compte valide mais
+      sans accès admin » pour ne pas permettre l'énumération de comptes.
+      `/connexion` (login général patients/chauffeurs) reste inchangée et
+      sans ces protections renforcées — c'est un choix : elle sert un
+      public plus large avec un risque différent, et `/admin/connexion`
+      est le point d'entrée recommandé pour les comptes admin.
+
+**Fichiers touchés** : `supabase/migrations/044_admin_grants.sql`,
+`supabase/migrations/045_admin_activity_log_and_login_attempts.sql`
+(nouveaux), `src/lib/database.types.ts` (régénéré),
+`src/repositories/adminActivityRepository.ts`,
+`src/server/adminAuth.ts`, `src/server/turnstile.ts`,
+`src/hooks/useTurnstile.ts` (nouveaux, les deux derniers extraits de
+`bookingLookup.ts`/`BookingLookupForm.tsx` pour être réutilisés par la
+connexion admin), `src/routes/admin/journal.tsx`,
+`src/routes/admin/securite.tsx`, `src/routes/admin_.connexion.tsx`
+(nouveaux), `src/routes/admin.tsx` (nav + accès), `src/routes/connexion.tsx`,
+`src/repositories/profilesRepository.ts`, `src/server/adminAccess.ts`,
+`src/server/bookingLookup.ts`, `src/components/booking/BookingLookupForm.tsx`.
+
+**Vérification effectuée** : migrations 044 et 045 appliquées sur le
+projet Supabase live, types régénérés, `get_advisors` (sécurité) vérifié
+après coup — a révélé `log_admin_activity()` appelable directement en RPC
+malgré `SECURITY DEFINER`, corrigé par un `REVOKE ALL ... FROM PUBLIC,
+anon, authenticated` (les triggers restent fonctionnels, seul l'appel RPC
+direct est bloqué). `npx vite build` : succès complet, `/admin/securite`
+généré comme route enfant de `/admin`. `npx tsc --noEmit` : même nombre
+d'erreurs que la baseline (26), diff ligne à ligne confirmé — aucune
+nouvelle erreur, seulement des décalages de numéro de ligne dus aux
+extractions de `useTurnstile.ts`/`turnstile.ts`. Comme pour les sprints
+précédents, aucun test du flux authentifié complet (connexion admin,
+enrôlement TOTP réel, déverrouillage après lockout) : pas d'identifiants
+admin utilisables dans ce bac à sable, donc pas de service-role key ni de
+mot de passe de compte réel disponibles pour simuler une session
+authentifiée de bout en bout.
 
 ## Sprint 10 — Pilotage & productivité
 

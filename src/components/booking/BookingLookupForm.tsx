@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
@@ -9,10 +9,10 @@ import { lookupBookingServerFn } from "~/server/bookingLookup";
 import type { MyBookingRow } from "~/repositories/bookingsRepository";
 import { BookingStatusCard } from "./BookingStatusCard";
 import { Input } from "~/components/ui/input";
+import { useTurnstile, TURNSTILE_SITE_KEY } from "~/hooks/useTurnstile";
 
 const frenchPhone = /^(\+33|0)[1-9](\d{2}){4}$/;
 const referenceCodePattern = /^[A-Z2-9]{4}-?[A-Z2-9]{4}$/i;
-const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string;
 
 const lookupSchema = z.object({
   reference_code: z
@@ -22,58 +22,6 @@ const lookupSchema = z.object({
 });
 
 type LookupSchema = z.infer<typeof lookupSchema>;
-
-declare global {
-  interface Window {
-    turnstile?: {
-      render: (container: HTMLElement, options: Record<string, unknown>) => string;
-      reset: (widgetId: string) => void;
-    };
-  }
-}
-
-function useTurnstile(siteKey: string) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const widgetIdRef = useRef<string | null>(null);
-  const [token, setToken] = useState("");
-
-  useEffect(() => {
-    if (!siteKey) return;
-
-    const renderWidget = () => {
-      if (!containerRef.current || !window.turnstile) return;
-      widgetIdRef.current = window.turnstile.render(containerRef.current, {
-        sitekey: siteKey,
-        callback: (t: string) => setToken(t),
-        "expired-callback": () => setToken(""),
-      });
-    };
-
-    if (window.turnstile) {
-      renderWidget();
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
-    script.async = true;
-    script.onload = renderWidget;
-    document.body.appendChild(script);
-
-    return () => {
-      script.remove();
-    };
-  }, [siteKey]);
-
-  const reset = () => {
-    if (window.turnstile && widgetIdRef.current) {
-      window.turnstile.reset(widgetIdRef.current);
-    }
-    setToken("");
-  };
-
-  return { containerRef, token, reset };
-}
 
 async function lookupBooking(
   data: LookupSchema & { turnstileToken: string }

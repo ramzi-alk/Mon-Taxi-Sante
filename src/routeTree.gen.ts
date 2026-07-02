@@ -34,8 +34,11 @@ import { Route as ChauffeursInscriptionRouteImport } from './routes/chauffeurs/i
 import { Route as BlogTransportCpamRouteImport } from './routes/blog/transport-cpam'
 import { Route as BlogPmtPrescriptionRouteImport } from './routes/blog/pmt-prescription'
 import { Route as BlogAldTransportRouteImport } from './routes/blog/ald-transport'
+import { Route as AdminConnexionRouteImport } from './routes/admin_.connexion'
+import { Route as AdminSecuriteRouteImport } from './routes/admin/securite'
 import { Route as AdminReservationsRouteImport } from './routes/admin/reservations'
 import { Route as AdminPatientsRouteImport } from './routes/admin/patients'
+import { Route as AdminJournalRouteImport } from './routes/admin/journal'
 import { Route as AdminChauffeursRouteImport } from './routes/admin/chauffeurs'
 import { Route as AdminAvisRouteImport } from './routes/admin/avis'
 import { Route as DepartmentCityRouteImport } from './routes/$department.$city'
@@ -160,6 +163,16 @@ const BlogAldTransportRoute = BlogAldTransportRouteImport.update({
   path: '/blog/ald-transport',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminConnexionRoute = AdminConnexionRouteImport.update({
+  id: '/admin_/connexion',
+  path: '/admin/connexion',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminSecuriteRoute = AdminSecuriteRouteImport.update({
+  id: '/securite',
+  path: '/securite',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminReservationsRoute = AdminReservationsRouteImport.update({
   id: '/reservations',
   path: '/reservations',
@@ -168,6 +181,11 @@ const AdminReservationsRoute = AdminReservationsRouteImport.update({
 const AdminPatientsRoute = AdminPatientsRouteImport.update({
   id: '/patients',
   path: '/patients',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminJournalRoute = AdminJournalRouteImport.update({
+  id: '/journal',
+  path: '/journal',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminChauffeursRoute = AdminChauffeursRouteImport.update({
@@ -221,8 +239,11 @@ export interface FileRoutesByFullPath {
   '/$department/$city': typeof DepartmentCityRoute
   '/admin/avis': typeof AdminAvisRoute
   '/admin/chauffeurs': typeof AdminChauffeursRoute
+  '/admin/journal': typeof AdminJournalRoute
   '/admin/patients': typeof AdminPatientsRoute
   '/admin/reservations': typeof AdminReservationsRoute
+  '/admin/securite': typeof AdminSecuriteRoute
+  '/admin/connexion': typeof AdminConnexionRoute
   '/blog/ald-transport': typeof BlogAldTransportRoute
   '/blog/pmt-prescription': typeof BlogPmtPrescriptionRoute
   '/blog/transport-cpam': typeof BlogTransportCpamRoute
@@ -251,8 +272,11 @@ export interface FileRoutesByTo {
   '/$department/$city': typeof DepartmentCityRoute
   '/admin/avis': typeof AdminAvisRoute
   '/admin/chauffeurs': typeof AdminChauffeursRoute
+  '/admin/journal': typeof AdminJournalRoute
   '/admin/patients': typeof AdminPatientsRoute
   '/admin/reservations': typeof AdminReservationsRoute
+  '/admin/securite': typeof AdminSecuriteRoute
+  '/admin/connexion': typeof AdminConnexionRoute
   '/blog/ald-transport': typeof BlogAldTransportRoute
   '/blog/pmt-prescription': typeof BlogPmtPrescriptionRoute
   '/blog/transport-cpam': typeof BlogTransportCpamRoute
@@ -283,8 +307,11 @@ export interface FileRoutesById {
   '/$department/$city': typeof DepartmentCityRoute
   '/admin/avis': typeof AdminAvisRoute
   '/admin/chauffeurs': typeof AdminChauffeursRoute
+  '/admin/journal': typeof AdminJournalRoute
   '/admin/patients': typeof AdminPatientsRoute
   '/admin/reservations': typeof AdminReservationsRoute
+  '/admin/securite': typeof AdminSecuriteRoute
+  '/admin_/connexion': typeof AdminConnexionRoute
   '/blog/ald-transport': typeof BlogAldTransportRoute
   '/blog/pmt-prescription': typeof BlogPmtPrescriptionRoute
   '/blog/transport-cpam': typeof BlogTransportCpamRoute
@@ -316,8 +343,11 @@ export interface FileRouteTypes {
     | '/$department/$city'
     | '/admin/avis'
     | '/admin/chauffeurs'
+    | '/admin/journal'
     | '/admin/patients'
     | '/admin/reservations'
+    | '/admin/securite'
+    | '/admin/connexion'
     | '/blog/ald-transport'
     | '/blog/pmt-prescription'
     | '/blog/transport-cpam'
@@ -346,8 +376,11 @@ export interface FileRouteTypes {
     | '/$department/$city'
     | '/admin/avis'
     | '/admin/chauffeurs'
+    | '/admin/journal'
     | '/admin/patients'
     | '/admin/reservations'
+    | '/admin/securite'
+    | '/admin/connexion'
     | '/blog/ald-transport'
     | '/blog/pmt-prescription'
     | '/blog/transport-cpam'
@@ -377,8 +410,11 @@ export interface FileRouteTypes {
     | '/$department/$city'
     | '/admin/avis'
     | '/admin/chauffeurs'
+    | '/admin/journal'
     | '/admin/patients'
     | '/admin/reservations'
+    | '/admin/securite'
+    | '/admin_/connexion'
     | '/blog/ald-transport'
     | '/blog/pmt-prescription'
     | '/blog/transport-cpam'
@@ -407,6 +443,7 @@ export interface RootRouteChildren {
   ReinitialiserMotDePasseRoute: typeof ReinitialiserMotDePasseRoute
   TarifsCpamRoute: typeof TarifsCpamRoute
   DepartmentCityRoute: typeof DepartmentCityRoute
+  AdminConnexionRoute: typeof AdminConnexionRoute
   BlogAldTransportRoute: typeof BlogAldTransportRoute
   BlogPmtPrescriptionRoute: typeof BlogPmtPrescriptionRoute
   BlogTransportCpamRoute: typeof BlogTransportCpamRoute
@@ -607,6 +644,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BlogAldTransportRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin_/connexion': {
+      id: '/admin_/connexion'
+      path: '/admin/connexion'
+      fullPath: '/admin/connexion'
+      preLoaderRoute: typeof AdminConnexionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/securite': {
+      id: '/admin/securite'
+      path: '/securite'
+      fullPath: '/admin/securite'
+      preLoaderRoute: typeof AdminSecuriteRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/reservations': {
       id: '/admin/reservations'
       path: '/reservations'
@@ -619,6 +670,13 @@ declare module '@tanstack/react-router' {
       path: '/patients'
       fullPath: '/admin/patients'
       preLoaderRoute: typeof AdminPatientsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/journal': {
+      id: '/admin/journal'
+      path: '/journal'
+      fullPath: '/admin/journal'
+      preLoaderRoute: typeof AdminJournalRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/chauffeurs': {
@@ -673,16 +731,20 @@ declare module '@tanstack/react-start/server' {
 interface AdminRouteChildren {
   AdminAvisRoute: typeof AdminAvisRoute
   AdminChauffeursRoute: typeof AdminChauffeursRoute
+  AdminJournalRoute: typeof AdminJournalRoute
   AdminPatientsRoute: typeof AdminPatientsRoute
   AdminReservationsRoute: typeof AdminReservationsRoute
+  AdminSecuriteRoute: typeof AdminSecuriteRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAvisRoute: AdminAvisRoute,
   AdminChauffeursRoute: AdminChauffeursRoute,
+  AdminJournalRoute: AdminJournalRoute,
   AdminPatientsRoute: AdminPatientsRoute,
   AdminReservationsRoute: AdminReservationsRoute,
+  AdminSecuriteRoute: AdminSecuriteRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
 
@@ -703,6 +765,7 @@ const rootRouteChildren: RootRouteChildren = {
   ReinitialiserMotDePasseRoute: ReinitialiserMotDePasseRoute,
   TarifsCpamRoute: TarifsCpamRoute,
   DepartmentCityRoute: DepartmentCityRoute,
+  AdminConnexionRoute: AdminConnexionRoute,
   BlogAldTransportRoute: BlogAldTransportRoute,
   BlogPmtPrescriptionRoute: BlogPmtPrescriptionRoute,
   BlogTransportCpamRoute: BlogTransportCpamRoute,

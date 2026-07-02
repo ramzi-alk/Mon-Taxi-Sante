@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ShieldAlert, LayoutDashboard, ClipboardList, Users, UserSearch, MessageSquareText } from "lucide-react";
+import { ShieldAlert, LayoutDashboard, ClipboardList, Users, UserSearch, MessageSquareText, History, ShieldCheck } from "lucide-react";
 import { supabase } from "~/lib/supabase";
 import * as authRepository from "~/repositories/authRepository";
 import { checkAdminAccessServerFn } from "~/server/adminAccess";
@@ -34,6 +34,8 @@ const NAV_ITEMS = [
   { to: "/admin/chauffeurs", label: "Chauffeurs", icon: Users, exact: false },
   { to: "/admin/patients", label: "Patients", icon: UserSearch, exact: false },
   { to: "/admin/avis", label: "Avis", icon: MessageSquareText, exact: false },
+  { to: "/admin/journal", label: "Journal", icon: History, exact: false },
+  { to: "/admin/securite", label: "Sécurité", icon: ShieldCheck, exact: false },
 ] as const;
 
 function AdminLayout() {
@@ -62,7 +64,7 @@ function AdminLayout() {
             Cette page est réservée aux administrateurs de Mon Taxi Santé.
           </p>
           <Link
-            to="/connexion"
+            to="/admin/connexion"
             className="btn-cta mt-8 inline-flex bg-[#0B0F1C] text-white hover:bg-[#1244E8] transition-colors"
           >
             Se connecter

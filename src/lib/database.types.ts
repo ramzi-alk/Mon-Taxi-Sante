@@ -17,6 +17,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_activity_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          after: Json | null
+          before: Json | null
+          created_at: string
+          id: string
+          target_id: string
+          target_table: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          after?: Json | null
+          before?: Json | null
+          created_at?: string
+          id?: string
+          target_id: string
+          target_table: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          after?: Json | null
+          before?: Json | null
+          created_at?: string
+          id?: string
+          target_id?: string
+          target_table?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_activity_log_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       admin_grants: {
         Row: {
           admin_role: string
@@ -52,6 +93,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      admin_login_attempts: {
+        Row: {
+          email: string
+          failed_count: number
+          locked_until: string | null
+          updated_at: string
+        }
+        Insert: {
+          email: string
+          failed_count?: number
+          locked_until?: string | null
+          updated_at?: string
+        }
+        Update: {
+          email?: string
+          failed_count?: number
+          locked_until?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       booking_driver_refusals: {
         Row: {
