@@ -146,7 +146,35 @@ function AdminReservationsPage() {
         </div>
       ) : (
         <>
-          <div className="overflow-hidden rounded-xl ring-1 ring-gray-100 bg-white overflow-x-auto">
+          {/* Mobile: stacked cards (a 6-column table doesn't fit a phone screen) */}
+          <ul className="flex flex-col gap-2 sm:hidden">
+            {data.rows.map((booking) => (
+              <li key={booking.id}>
+                <button
+                  type="button"
+                  onClick={() => navigate({ search: (prev) => ({ ...prev, bookingId: booking.id }) })}
+                  className="w-full rounded-xl bg-white p-4 text-left ring-1 ring-gray-100 hover:ring-gray-200 transition-colors"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-mono text-xs font-bold text-gray-400">{formatReferenceCode(booking.reference_code)}</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className={cn("rounded-full px-2.5 py-1 text-[11px] font-semibold whitespace-nowrap", STATUS_BADGE_CLASSES[booking.status])}>
+                        {STATUS_LABELS[booking.status]}
+                      </span>
+                      {isAtRisk(booking) && <AlertTriangle className="h-4 w-4 text-amber-500" aria-hidden="true" />}
+                    </div>
+                  </div>
+                  <p className="mt-1.5 font-semibold text-[#0B0F1C]">{booking.patient_full_name}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {formatDateFr(booking.pickup_datetime)} à {formatTimeFr(booking.pickup_datetime)} · {VEHICLE_LABELS[booking.vehicle_type]}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-0.5">Chauffeur : {booking.driver?.full_name ?? "—"}</p>
+                </button>
+              </li>
+            ))}
+          </ul>
+
+          <div className="hidden sm:block overflow-hidden rounded-xl ring-1 ring-gray-100 bg-white overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-gray-50 text-left">

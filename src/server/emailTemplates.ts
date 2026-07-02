@@ -320,6 +320,24 @@ export function atRiskBookingsAlertEmail(params: {
   };
 }
 
+export function driverDocumentRequestEmail(params: { driverFullName: string; message: string }): EmailContent {
+  const { driverFullName, message } = params;
+  return {
+    subject: "Mise à jour de documents demandée — Mon Taxi Santé",
+    html: layout({
+      title: "Documents à mettre à jour",
+      icon: "📄",
+      bodyHtml: `
+        ${badge("Action requise", "amber")}
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${driverFullName},</p>
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Notre équipe a besoin d'une mise à jour de vos documents pour maintenir votre compte chauffeur actif :</p>
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;background:#FFFBEB;border-radius:10px;padding:14px 16px;">${message}</p>
+        <p style="margin:0;font-size:14px;color:#6b7280;line-height:1.5;">Répondez directement à cet email ou contactez-nous pour transmettre les documents demandés.</p>
+      `,
+    }),
+  };
+}
+
 export function driverApprovedEmail(params: { driverFullName: string }): EmailContent {
   const { driverFullName } = params;
   return {

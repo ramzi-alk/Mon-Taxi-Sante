@@ -90,6 +90,8 @@ export type Database = {
           booking_id: string
           comment: string | null
           created_at: string
+          hidden_at: string | null
+          hidden_by: string | null
           id: string
           rater_role: Database["public"]["Enums"]["booking_rating_role"]
           rating: number
@@ -98,6 +100,8 @@ export type Database = {
           booking_id: string
           comment?: string | null
           created_at?: string
+          hidden_at?: string | null
+          hidden_by?: string | null
           id?: string
           rater_role: Database["public"]["Enums"]["booking_rating_role"]
           rating: number
@@ -106,6 +110,8 @@ export type Database = {
           booking_id?: string
           comment?: string | null
           created_at?: string
+          hidden_at?: string | null
+          hidden_by?: string | null
           id?: string
           rater_role?: Database["public"]["Enums"]["booking_rating_role"]
           rating?: number
@@ -130,6 +136,13 @@ export type Database = {
             columns: ["booking_id"]
             isOneToOne: false
             referencedRelation: "bookings_pool_for_drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_ratings_hidden_by_fkey"
+            columns: ["hidden_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -721,6 +734,10 @@ export type Database = {
       a_majoration_horaire: { Args: { p_datetime: string }; Returns: boolean }
       accept_ride: { Args: { p_booking_id: string }; Returns: undefined }
       accept_series: { Args: { p_booking_id: string }; Returns: undefined }
+      admin_set_driver_suspension: {
+        Args: { p_driver_profile_id: string; p_until: string }
+        Returns: undefined
+      }
       assert_lookup_not_locked: {
         Args: { p_reference_code: string }
         Returns: undefined
@@ -775,6 +792,24 @@ export type Database = {
       est_grande_ville: { Args: { p_address: string }; Returns: boolean }
       est_jour_ferie_fr: { Args: { p_date: string }; Returns: boolean }
       generate_booking_reference_code: { Args: never; Returns: string }
+      get_admin_driver_directory: {
+        Args: never
+        Returns: {
+          approved_at: string
+          availability: Database["public"]["Enums"]["driver_availability"]
+          average_rating: number
+          completed_rides: number
+          email: string
+          full_name: string
+          phone: string
+          pool_suspended_until: string
+          profile_id: string
+          subscription_status: Database["public"]["Enums"]["subscription_status"]
+          suspicious_cancellation_count: number
+          vehicle_registration: string
+          vehicle_type: Database["public"]["Enums"]["vehicle_type"]
+        }[]
+      }
       get_booking_status_counts: {
         Args: never
         Returns: {

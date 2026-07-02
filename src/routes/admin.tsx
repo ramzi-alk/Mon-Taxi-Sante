@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ShieldAlert, LayoutDashboard, ClipboardList, Users } from "lucide-react";
+import { ShieldAlert, LayoutDashboard, ClipboardList, Users, UserSearch, MessageSquareText } from "lucide-react";
 import { supabase } from "~/lib/supabase";
 import * as authRepository from "~/repositories/authRepository";
 import { checkAdminAccessServerFn } from "~/server/adminAccess";
@@ -32,6 +32,8 @@ const NAV_ITEMS = [
   { to: "/admin", label: "Vue d'ensemble", icon: LayoutDashboard, exact: true },
   { to: "/admin/reservations", label: "Réservations", icon: ClipboardList, exact: false },
   { to: "/admin/chauffeurs", label: "Chauffeurs", icon: Users, exact: false },
+  { to: "/admin/patients", label: "Patients", icon: UserSearch, exact: false },
+  { to: "/admin/avis", label: "Avis", icon: MessageSquareText, exact: false },
 ] as const;
 
 function AdminLayout() {

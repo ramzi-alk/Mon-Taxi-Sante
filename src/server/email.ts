@@ -15,6 +15,7 @@ import {
   driverApprovedEmail,
   driverRejectedEmail,
   driverReassignedAwayEmail,
+  driverDocumentRequestEmail,
   adminNewDriverApplicationEmail,
 } from "./emailTemplates";
 
@@ -738,5 +739,58 @@ export const notifyDriverReassignedAwayServerFn = createServerFn({ method: "POST
   .handler(async ({ data: input }) =>
     withServerFnLogging("notifyDriverReassignedAway", { bookingId: input.bookingId }, () =>
       notifyDriverReassignedAway(input)
+    )
+  );
+
+/**
+ * Admin-triggered request to a driver for updated documents (insurance,
+ * CPAM accreditation, etc). Deliberately lightweight: an email only, no
+ * "requested" state tracked on drivers_details — this is a nudge, not a
+ * formal compliance workflow (see ROADMAP.md Sprint 9 for that).
+ */
+async function notifyDriverDocumentRequest(input: {
+  driverProfileId: string;
+  message: string;
+}): Promise<boolean> {
+  const admin = getSupabaseAdminClient();
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("full_name, email")
+    .eq("id", input.driverProfileId)
+    .single();
+
+  if (!profile?.email) {
+    return false;
+  }
+
+  try {
+    const { subject, html } = driverDocumentRequestEmail({
+      driverFullName: profile.full_name ?? "Chauffeur",
+      message: input.message,
+    });
+    const { error: sendApiError } = await getResendClient().emails.send({
+      from: EMAIL_FROM,
+      to: profile.email,
+      subject,
+      html,
+    });
+    if (sendApiError) {
+      throw new Error(sendApiError.message);
+    }
+    return true;
+  } catch (sendError) {
+    logger.error("email.notifyDriverDocumentRequest failed", {
+      error: sendError instanceof Error ? sendError.message : String(sendError),
+      driverProfileId: input.driverProfileId,
+    });
+    return false;
+  }
+}
+
+export const notifyDriverDocumentRequestServerFn = createServerFn({ method: "POST" })
+  .validator((input: { driverProfileId: string; message: string }) => input)
+  .handler(async ({ data: input }) =>
+    withServerFnLogging("notifyDriverDocumentRequest", { driverProfileId: input.driverProfileId }, () =>
+      notifyDriverDocumentRequest(input)
     )
   );

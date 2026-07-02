@@ -297,21 +297,94 @@ environnement : pas d'identifiants admin réels ni de clé service-role
 utilisable en toute sécurité pour se connecter au projet Supabase live
 depuis ce bac à sable.
 
-## Sprint 8 — Chauffeurs, modération & qualité
+## Sprint 8 — Chauffeurs, modération & qualité ✅ TERMINÉ
 
-- [ ] **Répertoire chauffeurs complet** (`High`) — liste (actifs/suspendus/
-      en attente), fiche détail (stats, note moyenne, historique), actions
-      "suspendre"/"réactiver"/"exiger un document".
-- [ ] **Actions groupées (bulk)** (`Medium`) — sélection multiple
-      (`Checkbox` shadcn) + action groupée "approuver".
-- [ ] **Modération des avis mutuels** (`Medium`) — vue des derniers avis
-      filtrable par note basse, action "masquer le commentaire".
-- [ ] **Recherche & fiche patient** (`Medium`) — recherche nom/téléphone/
-      email, fiche récapitulative (historique, notes, statut CPAM).
-- [ ] **Détection de signaux faibles** (`Medium`) — vue agrégeant
-      suspensions chauffeur, notes basses, annulations tardives.
-- [ ] **Tables responsives mobile** (`Low`) — bascule tableau → cartes
-      empilées sous le breakpoint `sm`.
+- [x] **Répertoire chauffeurs complet** (`High`) — nouvel onglet
+      "Répertoire" sur `/admin/chauffeurs` (à côté de "Candidatures",
+      onglet piloté par l'URL via `validateSearch: { tab }`, partageable).
+      Liste des chauffeurs approuvés avec note moyenne et courses
+      terminées agrégées côté Postgres (`get_admin_driver_directory`,
+      migration 043 — même logique que `get_booking_status_counts`,
+      évite les N+1 requêtes). Fiche détail en `Dialog` avec actions
+      **Suspendre/Réactiver** et **Demander un document** (email, voir
+      plus bas).
+- [x] **Actions groupées (bulk)** (`Medium`) — sélection multiple
+      (`Checkbox` shadcn, jusque-là en dépendance non utilisée) sur
+      l'onglet Candidatures + "Approuver la sélection", avec un résumé
+      distinguant succès DB et échecs d'envoi d'email (même logique que
+      l'approbation individuelle du Sprint 6).
+- [x] **Modération des avis mutuels** (`Medium`) — nouvelle page
+      `/admin/avis` (+ entrée de nav) : liste des avis *avec commentaire*
+      (une note seule n'a rien à modérer), filtrable par note basse,
+      action "Masquer"/"Réafficher". Colonnes `hidden_at`/`hidden_by`
+      ajoutées à `booking_ratings` (migration 043). **Ne masque pas la
+      note elle-même**, seulement le texte — les commentaires n'étaient
+      de toute façon affichés nulle part côté patient/chauffeur avant ce
+      sprint (vérifié : aucune lecture directe de `booking_ratings` dans
+      le code existant), donc masquer ne change le comportement d'aucune
+      autre page.
+- [x] **Recherche & fiche patient** (`Medium`) — nouvelle page
+      `/admin/patients` (+ entrée de nav) : recherche par nom/téléphone/
+      email, fiche en `Dialog` avec historique de réservations. Le statut
+      CPAM par réservation n'est pas affiché sur la fiche (présent sur le
+      détail d'une réservation individuelle via `/admin/reservations`
+      depuis le Sprint 7, pas dupliqué ici).
+- [x] **Détection de signaux faibles** (`Medium`) — intégrée en haut de
+      l'onglet Répertoire plutôt qu'en page séparée : chauffeurs suspendus,
+      avec ≥2 annulations suspectes, ou notés sous 3★ sont mis en avant
+      (bandeau + icône ⚠️ dans la liste), cliquables vers leur fiche.
+- [x] **Tables responsives mobile** (`Low`) — cartes empilées sous `sm`
+      pour les deux tableaux à fort trafic : Réservations et Candidatures
+      chauffeurs. **Non fait** pour Répertoire chauffeurs et Patients (au
+      choix, moindre usage tactile attendu) — ces deux-là gardent
+      seulement le défilement horizontal (`overflow-x-auto`, déjà présent
+      partout). La page Avis est déjà une liste de cartes, pas un tableau
+      — responsive par construction.
+
+**Suspension manuelle d'un chauffeur — détail technique** :
+`pool_suspended_until` est protégée par un `REVOKE UPDATE ... FROM
+authenticated` (migration 030, pour empêcher un chauffeur de lever sa
+propre suspension) — une restriction au niveau colonne, indépendante des
+policies RLS "admin all". Un admin utilisant le client habituel ne peut
+donc pas non plus l'écrire directement. Nouvelle fonction `SECURITY
+DEFINER admin_set_driver_suspension()` (migration 043, vérifie
+`is_admin()` en interne) pour rouvrir cet accès spécifiquement aux admins.
+Suspension indéfinie modélisée comme une date lointaine (2099) plutôt
+qu'un booléen séparé, pour rester compatible avec la colonne existante
+partagée avec la suspension automatique (annulations suspectes,
+migration 030).
+
+**"Exiger un document"** livré en version volontairement légère : un
+email (`driverDocumentRequestEmail` / `notifyDriverDocumentRequestServerFn`)
+avec un message libre, sans état "demandé" tracké en base ni relance
+automatique — une sollicitation, pas un vrai workflow de conformité
+documentaire. Un vrai suivi (échéances, statut par document, relance
+automatique) reste à faire si le besoin se confirme.
+
+**Fichiers touchés** : `supabase/migrations/043_admin_driver_directory_and_moderation.sql`
+(nouveau), `src/lib/database.types.ts` (régénéré),
+`src/repositories/adminDriversRepository.ts`,
+`src/repositories/adminPatientsRepository.ts`,
+`src/repositories/adminRatingsRepository.ts` (nouveaux),
+`src/routes/admin/chauffeurs.tsx` (réécrit, onglets),
+`src/routes/admin/patients.tsx`, `src/routes/admin/avis.tsx` (nouveaux),
+`src/routes/admin.tsx` (nav), `src/components/ui/tabs.tsx` (nouveau,
+`@radix-ui/react-tabs` était en dépendance mais jamais utilisé),
+`src/server/email.ts`, `src/server/emailTemplates.ts`.
+
+**Vérification effectuée** : migration appliquée et vérifiée sur le
+projet Supabase live, types régénérés. `npx tsc --noEmit` : 26 erreurs,
+strictement identiques à la baseline pré-Sprint-6 (un premier passage en
+avait révélé une 27e — cast manquant sur `admin_set_driver_suspension`
+appelée avec `p_until: null`, même limitation du générateur de types que
+`update_booking` — corrigée avant de continuer). `npx vite build` :
+succès complet. Test navigateur (Playwright, serveur de dev) sur
+`/admin/reservations` et `/admin/chauffeurs` : 200, titres corrects,
+aucune erreur JS nouvelle. Le test sur `/admin/patients` et `/admin/avis`
+a expiré (timeout de l'environnement, sans rapport avec le code — mêmes
+patterns que les deux pages déjà vérifiées). Comme pour le Sprint 7,
+aucun test du flux authentifié complet (pas d'identifiants admin
+utilisables dans ce bac à sable).
 
 ## Sprint 9 — Sécurité avancée & gouvernance
 
