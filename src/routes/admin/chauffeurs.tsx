@@ -479,7 +479,41 @@ function RepertoireTab() {
             </div>
           )}
 
-          <div className="overflow-hidden rounded-xl ring-1 ring-gray-100 bg-white overflow-x-auto">
+          {/* Mobile: stacked cards */}
+          <ul className="flex flex-col gap-2 sm:hidden">
+            {drivers.map((driver) => {
+              const suspended = !!driver.pool_suspended_until && new Date(driver.pool_suspended_until) > new Date();
+              return (
+                <li key={driver.profile_id}>
+                  <button
+                    type="button"
+                    onClick={() => setDetailDriver(driver)}
+                    className="w-full rounded-xl bg-white p-4 text-left ring-1 ring-gray-100 hover:ring-gray-200 transition-colors"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-semibold text-[#0B0F1C]">
+                        {driver.full_name}
+                        {isWeakSignal(driver) && (
+                          <AlertTriangle className="inline-block h-3.5 w-3.5 text-amber-500 ml-1.5 -mt-0.5" aria-hidden="true" />
+                        )}
+                      </span>
+                      <span className={cn("shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold", suspended ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-700")}>
+                        {suspended ? "Suspendu" : "Actif"}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {driver.vehicle_type === "taxi" ? "Taxi" : driver.vehicle_type === "vsl" ? "VSL" : "Ambulance"} — {driver.vehicle_registration}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {driver.average_rating != null ? `★ ${driver.average_rating}` : "Pas encore noté"} · {driver.completed_rides} course{driver.completed_rides > 1 ? "s" : ""} terminée{driver.completed_rides > 1 ? "s" : ""}
+                    </p>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+
+          <div className="hidden sm:block overflow-hidden rounded-xl ring-1 ring-gray-100 bg-white overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-gray-50 text-left">

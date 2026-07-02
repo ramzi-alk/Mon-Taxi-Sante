@@ -71,32 +71,52 @@ function AdminPatientsPage() {
           Aucun patient ne correspond à cette recherche.
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl ring-1 ring-gray-100 bg-white overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-gray-50 text-left">
-                <th scope="col" className="px-5 py-3 font-semibold text-[#0B0F1C]">Nom</th>
-                <th scope="col" className="px-5 py-3 font-semibold text-[#0B0F1C]">Téléphone</th>
-                <th scope="col" className="px-5 py-3 font-semibold text-[#0B0F1C]">Email</th>
-                <th scope="col" className="px-5 py-3 font-semibold text-[#0B0F1C]">Compte créé le</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {results.map((patient) => (
-                <tr
-                  key={patient.id}
+        <>
+          {/* Mobile: stacked cards */}
+          <ul className="flex flex-col gap-2 sm:hidden">
+            {results.map((patient) => (
+              <li key={patient.id}>
+                <button
+                  type="button"
                   onClick={() => navigate({ search: { patientId: patient.id } })}
-                  className="cursor-pointer hover:bg-gray-50 transition-colors"
+                  className="w-full rounded-xl bg-white p-4 text-left ring-1 ring-gray-100 hover:ring-gray-200 transition-colors"
                 >
-                  <td className="px-5 py-4 font-medium text-[#0B0F1C]">{patient.full_name}</td>
-                  <td className="px-5 py-4 text-gray-500">{patient.phone ?? "—"}</td>
-                  <td className="px-5 py-4 text-gray-500">{patient.email ?? "—"}</td>
-                  <td className="px-5 py-4 text-gray-500">{formatDateFr(patient.created_at)}</td>
+                  <p className="font-semibold text-[#0B0F1C]">{patient.full_name}</p>
+                  {patient.phone && <p className="text-xs text-gray-500 mt-0.5">{patient.phone}</p>}
+                  {patient.email && <p className="text-xs text-gray-500">{patient.email}</p>}
+                  <p className="text-xs text-gray-400 mt-1">Compte créé le {formatDateFr(patient.created_at)}</p>
+                </button>
+              </li>
+            ))}
+          </ul>
+
+          <div className="hidden sm:block overflow-hidden rounded-xl ring-1 ring-gray-100 bg-white overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gray-50 text-left">
+                  <th scope="col" className="px-5 py-3 font-semibold text-[#0B0F1C]">Nom</th>
+                  <th scope="col" className="px-5 py-3 font-semibold text-[#0B0F1C]">Téléphone</th>
+                  <th scope="col" className="px-5 py-3 font-semibold text-[#0B0F1C]">Email</th>
+                  <th scope="col" className="px-5 py-3 font-semibold text-[#0B0F1C]">Compte créé le</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {results.map((patient) => (
+                  <tr
+                    key={patient.id}
+                    onClick={() => navigate({ search: { patientId: patient.id } })}
+                    className="cursor-pointer hover:bg-gray-50 transition-colors"
+                  >
+                    <td className="px-5 py-4 font-medium text-[#0B0F1C]">{patient.full_name}</td>
+                    <td className="px-5 py-4 text-gray-500">{patient.phone ?? "—"}</td>
+                    <td className="px-5 py-4 text-gray-500">{patient.email ?? "—"}</td>
+                    <td className="px-5 py-4 text-gray-500">{formatDateFr(patient.created_at)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
       {patientId && (
