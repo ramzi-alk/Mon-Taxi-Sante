@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { MapPin, Calendar, Car, XCircle, User, Phone, Download, Loader2, Pencil, Repeat } from "lucide-react";
+import { MapPin, Calendar, Car, XCircle, AlertTriangle, User, Phone, Download, Loader2, Pencil, Repeat } from "lucide-react";
 import { formatDateFr, formatTimeFr, formatReferenceCode, cn } from "~/lib/utils";
 import { bookingToPrefillData, storeBookingPrefill } from "~/lib/bookingPrefill";
 import { VEHICLE_LABELS } from "~/lib/vehicle";
@@ -50,6 +50,7 @@ export function BookingStatusCard({
 
   const status = displayBooking.status as BookingStatus;
   const isCancelled = status === "cancelled";
+  const isExpired = status === "expired";
   const [confirmingCancel, setConfirmingCancel] = useState(false);
   const [editing, setEditing] = useState(false);
   const { toast } = useToast();
@@ -235,6 +236,11 @@ export function BookingStatusCard({
               <div className="flex items-start gap-2 rounded-xl bg-red-50 border border-red-100 p-3 text-sm text-red-700">
                 <XCircle className="h-5 w-5 shrink-0" aria-hidden="true" />
                 {STATUS_DESCRIPTIONS.cancelled}
+              </div>
+            ) : isExpired ? (
+              <div className="flex items-start gap-2 rounded-xl bg-amber-50 border border-amber-100 p-3 text-sm text-amber-700">
+                <AlertTriangle className="h-5 w-5 shrink-0" aria-hidden="true" />
+                {STATUS_DESCRIPTIONS.expired}
               </div>
             ) : (
               <div>

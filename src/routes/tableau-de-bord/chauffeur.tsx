@@ -699,14 +699,12 @@ function DriverDashboard() {
                 <StatCard icon={Wallet} label="Gains" value={formatPrice(earnings)} color="bg-brand-blue-50 text-brand-blue-600" />
                 <StatCard icon={Gauge} label="Km parcourus" value={`${km} km`} color="bg-indigo-50 text-indigo-600" />
                 <StatCard
-                  icon={statsPeriod === "total" ? Star : Clock}
-                  label={statsPeriod === "total" ? "Note moyenne" : "Prochaine course"}
+                  icon={Clock}
+                  label="Prochaine course"
                   value={
-                    statsPeriod === "total"
-                      ? (s?.average_rating != null ? `${s.average_rating} / 5` : "—")
-                      : (nextRide
-                          ? new Date(nextRide.pickup_datetime).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
-                          : "—")
+                    nextRide
+                      ? new Date(nextRide.pickup_datetime).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
+                      : "—"
                   }
                   color="bg-amber-50 text-amber-600"
                 />
@@ -716,9 +714,8 @@ function DriverDashboard() {
         </section>
 
         {/* Pool disponible — toujours visible */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+        <div className="grid grid-cols-1 gap-2.5">
           <StatCard icon={Activity} label="Courses disponibles" value={poolRides.length} color="bg-brand-blue-50 text-brand-blue-600" />
-          <StatCard icon={Star} label="Note moyenne" value={statsQuery.data?.average_rating != null ? `${statsQuery.data.average_rating} / 5` : "—"} color="bg-amber-50 text-amber-600" />
         </div>
 
         {/* Acceptance radius setting — chips instantanés */}
