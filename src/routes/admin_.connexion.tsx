@@ -3,22 +3,22 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
-import { Mail, Lock, AlertCircle } from "lucide-react";
+import { ShieldCheck, Mail, Lock, AlertCircle } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "~/lib/supabase";
 import { logger } from "~/lib/logger";
-import * as authRepository from "~/repositories/authRepository";
-import * as profilesRepository from "~/repositories/profilesRepository";
+import { adminLoginServerFn } from "~/server/adminAuth";
 import { Input } from "~/components/ui/input";
+import { useTurnstile, TURNSTILE_SITE_KEY } from "~/hooks/useTurnstile";
 
-export const Route = createFileRoute("/connexion")({
+export const Route = createFileRoute("/admin_/connexion")({
   head: () => ({
     meta: [
-      { title: "Connexion — Mon Taxi Santé" },
-      { name: "robots", content: "noindex" },
+      { title: "Connexion administrateur — Mon Taxi Santé" },
+      { name: "robots", content: "noindex, nofollow" },
     ],
   }),
-  component: ConnexionPage,
+  component: AdminConnexionPage,
 });
 
 const loginSchema = z.object({
@@ -28,31 +28,18 @@ const loginSchema = z.object({
 
 type LoginSchema = z.infer<typeof loginSchema>;
 
-async function login(data: LoginSchema) {
-  const { data: signInData, error } = await authRepository.signInWithPassword(
-    supabase,
-    data.email,
-    data.password
-  );
-  if (error) {
-    logger.warn("auth.login failed", { error: error.message });
-    throw new Error("Email ou mot de passe incorrect.");
-  }
+const ERROR_MESSAGES: Record<string, string> = {
+  too_many_attempts: "Trop de tentatives pour cet email. Réessayez dans 15 minutes.",
+  captcha_invalid: "Vérification anti-robot invalide, réessayez.",
+  invalid_credentials: "Email ou mot de passe incorrect.",
+  not_admin: "Email ou mot de passe incorrect.",
+};
 
-  // isAdmin checked separately from role: an account can be 'driver' (or
-  // 'patient') as its primary role while also holding admin access via
-  // admin_grants (migration 044) — role alone no longer decides where an
-  // admin-capable account lands after login.
-  const [role, isAdmin] = await Promise.all([
-    profilesRepository.getProfileRole(supabase, signInData.user.id),
-    profilesRepository.hasAdminAccess(supabase, signInData.user.id),
-  ]);
-  return { role: role ?? "patient", isAdmin };
-}
-
-function ConnexionPage() {
+function AdminConnexionPage() {
   const navigate = useNavigate();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { containerRef, token, reset } = useTurnstile(TURNSTILE_SITE_KEY);
+  const [captchaRequired, setCaptchaRequired] = useState(false);
 
   const {
     register,
@@ -63,37 +50,50 @@ function ConnexionPage() {
   });
 
   const { mutate, isPending } = useMutation({
-    mutationFn: login,
-    onSuccess: ({ role, isAdmin }) => {
-      if (isAdmin) navigate({ to: "/admin" });
-      else if (role === "driver") navigate({ to: "/tableau-de-bord/chauffeur" });
-      else navigate({ to: "/" });
+    mutationFn: async (data: LoginSchema) =>
+      adminLoginServerFn({ data: { ...data, turnstileToken: token } }),
+    onSuccess: async ({ access_token, refresh_token }) => {
+      const { error } = await supabase.auth.setSession({ access_token, refresh_token });
+      if (error) {
+        logger.error("adminConnexion.setSession failed", { error: error.message });
+        setErrorMessage("Connexion réussie mais impossible d'ouvrir la session. Réessayez.");
+        return;
+      }
+      navigate({ to: "/admin" });
     },
-    onError: (error: Error) => setErrorMessage(error.message),
+    onError: (error: Error) => {
+      setErrorMessage(ERROR_MESSAGES[error.message] ?? "Une erreur est survenue. Réessayez.");
+      reset();
+    },
   });
 
   function onSubmit(data: LoginSchema) {
     setErrorMessage(null);
+    if (!token) {
+      setCaptchaRequired(true);
+      return;
+    }
+    setCaptchaRequired(false);
     mutate(data);
   }
 
   return (
     <section className="bg-[#F7F8FC] min-h-[calc(100vh-4rem)]">
       <div className="container py-16 md:py-24 max-w-md">
-        <p className="text-xs font-bold tracking-[0.15em] text-[#1244E8] uppercase mb-4 text-center">
-          Espace chauffeur
+        <div className="flex justify-center">
+          <ShieldCheck className="h-10 w-10 text-[#1244E8]" aria-hidden="true" />
+        </div>
+        <p className="mt-4 text-xs font-bold tracking-[0.15em] text-[#1244E8] uppercase text-center">
+          Espace administration
         </p>
-        <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-[#0B0F1C] text-center">
+        <h1 className="mt-2 text-3xl sm:text-4xl font-black tracking-tight text-[#0B0F1C] text-center">
           Connexion
         </h1>
-        <p className="mt-3 text-gray-500 text-center leading-relaxed">
-          Accédez à votre tableau de bord chauffeur ou administrateur.
-        </p>
 
         <form
           onSubmit={handleSubmit(onSubmit)}
           noValidate
-          aria-label="Formulaire de connexion"
+          aria-label="Formulaire de connexion administrateur"
           className="mt-8 rounded-2xl bg-white p-6 md:p-8 shadow-sm ring-1 ring-gray-100 space-y-5"
         >
           {errorMessage && (
@@ -160,6 +160,13 @@ function ConnexionPage() {
             )}
           </div>
 
+          {TURNSTILE_SITE_KEY && <div ref={containerRef} />}
+          {captchaRequired && (
+            <p role="alert" className="text-sm text-red-600">
+              Veuillez valider la vérification anti-robot avant de continuer.
+            </p>
+          )}
+
           <div className="text-right">
             <Link
               to="/mot-de-passe-oublie"
@@ -177,13 +184,6 @@ function ConnexionPage() {
             {isPending ? "Connexion en cours…" : "Se connecter"}
           </button>
         </form>
-
-        <p className="mt-6 text-center text-sm text-gray-500">
-          Pas encore inscrit en tant que chauffeur ?{" "}
-          <Link to="/chauffeurs/inscription" className="text-[#1244E8] font-semibold underline">
-            Rejoindre le réseau
-          </Link>
-        </p>
       </div>
     </section>
   );

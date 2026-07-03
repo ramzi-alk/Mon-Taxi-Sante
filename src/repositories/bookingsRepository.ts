@@ -353,17 +353,22 @@ export async function rateBookingAsPatientByReference(
   }
 }
 
+/**
+ * Aggregated server-side via the get_booking_status_counts RPC (GROUP BY in
+ * Postgres) rather than fetching every row and reducing client-side — keeps
+ * this cheap as the bookings table grows (see migration 042).
+ */
 export async function fetchBookingStatusCounts(
   client: SupabaseClient
 ): Promise<Record<string, number>> {
-  const { data, error } = await client.from("bookings").select("status");
+  const { data, error } = await client.rpc("get_booking_status_counts");
   if (error) {
     logger.error("bookings.fetchBookingStatusCounts failed", { error: error.message });
     throw new Error(error.message);
   }
 
   return (data ?? []).reduce<Record<string, number>>((acc, row) => {
-    acc[row.status] = (acc[row.status] ?? 0) + 1;
+    acc[row.status] = row.count;
     return acc;
   }, {});
 }

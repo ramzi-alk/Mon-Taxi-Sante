@@ -3,29 +3,13 @@ import { createClient } from "@supabase/supabase-js";
 import type { Database } from "~/lib/database.types";
 import * as bookingsRepository from "~/repositories/bookingsRepository";
 import type { MyBookingRow } from "~/repositories/bookingsRepository";
-import { logger, withServerFnLogging } from "~/lib/logger";
+import { withServerFnLogging } from "~/lib/logger";
+import { verifyTurnstile } from "./turnstile";
 
 interface LookupBookingInput {
   reference_code: string;
   phone: string;
   turnstileToken: string;
-}
-
-async function verifyTurnstile(token: string): Promise<boolean> {
-  const secret = process.env.TURNSTILE_SECRET_KEY;
-  if (!secret) {
-    logger.error("turnstile.verify skipped: missing TURNSTILE_SECRET_KEY");
-    return false;
-  }
-
-  const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ secret, response: token }),
-  });
-
-  const result = (await response.json()) as { success: boolean };
-  return result.success;
 }
 
 export const lookupBookingServerFn = createServerFn({ method: "POST" })

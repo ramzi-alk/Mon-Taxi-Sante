@@ -13,6 +13,9 @@ import {
   rideUnassignedByDriverEmail,
   bookingCancelledDriverEmail,
   driverApprovedEmail,
+  driverRejectedEmail,
+  driverReassignedAwayEmail,
+  driverDocumentRequestEmail,
   adminNewDriverApplicationEmail,
 } from "./emailTemplates";
 
@@ -573,7 +576,13 @@ export const notifyAdminNewDriverApplicationServerFn = createServerFn({ method: 
     )
   );
 
-async function notifyDriverApproved(input: { driverDetailsId: string }): Promise<void> {
+/**
+ * Returns whether the email actually went out (still never throws — same
+ * best-effort convention as the rest of this file) so the admin panel can
+ * tell the operator "approved, but the driver wasn't notified" instead of
+ * silently swallowing the failure.
+ */
+async function notifyDriverApproved(input: { driverDetailsId: string }): Promise<boolean> {
   const admin = getSupabaseAdminClient();
   const { data, error } = await admin
     .from("drivers_details")
@@ -588,7 +597,7 @@ async function notifyDriverApproved(input: { driverDetailsId: string }): Promise
   const profile = driver?.profiles;
 
   if (error || !driver || !driver.approved_at || !profile?.email) {
-    return;
+    return false;
   }
 
   try {
@@ -602,11 +611,13 @@ async function notifyDriverApproved(input: { driverDetailsId: string }): Promise
     if (sendApiError) {
       throw new Error(sendApiError.message);
     }
+    return true;
   } catch (sendError) {
     logger.error("email.notifyDriverApproved failed", {
       error: sendError instanceof Error ? sendError.message : String(sendError),
       driverDetailsId: input.driverDetailsId,
     });
+    return false;
   }
 }
 
@@ -615,5 +626,171 @@ export const notifyDriverApprovedServerFn = createServerFn({ method: "POST" })
   .handler(async ({ data: input }) =>
     withServerFnLogging("notifyDriverApproved", { driverDetailsId: input.driverDetailsId }, () =>
       notifyDriverApproved(input)
+    )
+  );
+
+/** Same success-reporting contract as notifyDriverApproved above. */
+async function notifyDriverRejected(input: { driverDetailsId: string }): Promise<boolean> {
+  const admin = getSupabaseAdminClient();
+  const { data, error } = await admin
+    .from("drivers_details")
+    .select("rejected_at, rejection_reason, profiles:profile_id(full_name, email)")
+    .eq("id", input.driverDetailsId)
+    .single();
+
+  const driver = data as unknown as {
+    rejected_at: string | null;
+    rejection_reason: string | null;
+    profiles: { full_name: string; email: string | null } | null;
+  } | null;
+  const profile = driver?.profiles;
+
+  if (error || !driver || !driver.rejected_at || !driver.rejection_reason || !profile?.email) {
+    return false;
+  }
+
+  try {
+    const { subject, html } = driverRejectedEmail({
+      driverFullName: profile.full_name,
+      reason: driver.rejection_reason,
+    });
+    const { error: sendApiError } = await getResendClient().emails.send({
+      from: EMAIL_FROM,
+      to: profile.email,
+      subject,
+      html,
+    });
+    if (sendApiError) {
+      throw new Error(sendApiError.message);
+    }
+    return true;
+  } catch (sendError) {
+    logger.error("email.notifyDriverRejected failed", {
+      error: sendError instanceof Error ? sendError.message : String(sendError),
+      driverDetailsId: input.driverDetailsId,
+    });
+    return false;
+  }
+}
+
+export const notifyDriverRejectedServerFn = createServerFn({ method: "POST" })
+  .validator((input: { driverDetailsId: string }) => input)
+  .handler(async ({ data: input }) =>
+    withServerFnLogging("notifyDriverRejected", { driverDetailsId: input.driverDetailsId }, () =>
+      notifyDriverRejected(input)
+    )
+  );
+
+/**
+ * Notifies the outgoing driver when an admin reassigns their accepted ride
+ * to someone else — the booking's driver_id already points to the new
+ * driver by the time this runs, so the outgoing driver is passed in
+ * explicitly rather than read off the booking. Same success-reporting
+ * contract as notifyDriverApproved/notifyDriverRejected above.
+ */
+async function notifyDriverReassignedAway(input: {
+  bookingId: string;
+  previousDriverId: string;
+}): Promise<boolean> {
+  const admin = getSupabaseAdminClient();
+  const [{ data: booking }, { data: driverProfile }] = await Promise.all([
+    admin.from("bookings").select("reference_code, pickup_datetime").eq("id", input.bookingId).single(),
+    admin.from("profiles").select("full_name, email").eq("id", input.previousDriverId).single(),
+  ]);
+
+  if (!booking || !driverProfile?.email) {
+    return false;
+  }
+
+  sendPushToDriver(input.previousDriverId, {
+    title: "Course réattribuée",
+    body: `Votre course du ${new Date(booking.pickup_datetime).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })} a été confiée à un autre chauffeur.`,
+    url: "/tableau-de-bord/chauffeur",
+    tag: `booking-reassigned-${input.bookingId}`,
+  }).catch(() => {});
+
+  try {
+    const { subject, html } = driverReassignedAwayEmail({
+      driverFullName: driverProfile.full_name ?? "Chauffeur",
+      referenceCode: booking.reference_code,
+      pickupDatetime: booking.pickup_datetime,
+    });
+    const { error: sendApiError } = await getResendClient().emails.send({
+      from: EMAIL_FROM,
+      to: driverProfile.email,
+      subject,
+      html,
+    });
+    if (sendApiError) {
+      throw new Error(sendApiError.message);
+    }
+    return true;
+  } catch (sendError) {
+    logger.error("email.notifyDriverReassignedAway failed", {
+      error: sendError instanceof Error ? sendError.message : String(sendError),
+      bookingId: input.bookingId,
+    });
+    return false;
+  }
+}
+
+export const notifyDriverReassignedAwayServerFn = createServerFn({ method: "POST" })
+  .validator((input: { bookingId: string; previousDriverId: string }) => input)
+  .handler(async ({ data: input }) =>
+    withServerFnLogging("notifyDriverReassignedAway", { bookingId: input.bookingId }, () =>
+      notifyDriverReassignedAway(input)
+    )
+  );
+
+/**
+ * Admin-triggered request to a driver for updated documents (insurance,
+ * CPAM accreditation, etc). Deliberately lightweight: an email only, no
+ * "requested" state tracked on drivers_details — this is a nudge, not a
+ * formal compliance workflow (see ROADMAP.md Sprint 9 for that).
+ */
+async function notifyDriverDocumentRequest(input: {
+  driverProfileId: string;
+  message: string;
+}): Promise<boolean> {
+  const admin = getSupabaseAdminClient();
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("full_name, email")
+    .eq("id", input.driverProfileId)
+    .single();
+
+  if (!profile?.email) {
+    return false;
+  }
+
+  try {
+    const { subject, html } = driverDocumentRequestEmail({
+      driverFullName: profile.full_name ?? "Chauffeur",
+      message: input.message,
+    });
+    const { error: sendApiError } = await getResendClient().emails.send({
+      from: EMAIL_FROM,
+      to: profile.email,
+      subject,
+      html,
+    });
+    if (sendApiError) {
+      throw new Error(sendApiError.message);
+    }
+    return true;
+  } catch (sendError) {
+    logger.error("email.notifyDriverDocumentRequest failed", {
+      error: sendError instanceof Error ? sendError.message : String(sendError),
+      driverProfileId: input.driverProfileId,
+    });
+    return false;
+  }
+}
+
+export const notifyDriverDocumentRequestServerFn = createServerFn({ method: "POST" })
+  .validator((input: { driverProfileId: string; message: string }) => input)
+  .handler(async ({ data: input }) =>
+    withServerFnLogging("notifyDriverDocumentRequest", { driverProfileId: input.driverProfileId }, () =>
+      notifyDriverDocumentRequest(input)
     )
   );

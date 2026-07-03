@@ -125,3 +125,457 @@ types — ce n'est donc pas bloquant, mais à traiter en Sprint 4 (voir plus bas
       cliniques) en plus du flux B2C direct.
 - [ ] Revue de charge / scalabilité de l'infrastructure Supabase à mesure que
       le volume de réservations augmente.
+
+---
+
+# Panel admin — Audit & feuille de route (juillet 2026)
+
+> Issu de l'audit dédié du panel admin (`src/routes/admin.tsx`) : accès &
+> sécurité, fonctionnalités clés, UX/workflows, KPIs, fiabilité. Continue la
+> numérotation des sprints ci-dessus plutôt que d'en redémarrer une nouvelle.
+> Priorités héritées de l'audit : `High` > `Medium` > `Low`.
+
+## Sprint 6 — Sécurité des fondations & fiabilité de l'existant ✅ TERMINÉ
+
+Objectif : durcir l'accès admin et corriger les points de fiabilité du flux
+d'approbation chauffeur, sans attendre la refonte de navigation (Sprint 7).
+
+- [x] **Allowlist `ADMIN_EMAILS` en défense en profondeur** (`High`) —
+      `src/lib/adminAccess.ts` (parsing, insensible à la casse) +
+      `src/server/adminAccess.ts` (`checkAdminAccessServerFn`, qui re-vérifie
+      le token côté serveur via `auth.getUser`, relit `profiles.role` avec le
+      client service-role, puis vérifie l'email dans l'allowlist). Branché sur
+      `src/routes/admin.tsx` à la place de la simple lecture RLS côté client.
+      `.env.example` documenté : si `ADMIN_EMAILS` est absent, seul le rôle DB
+      est vérifié (comportement historique inchangé, pas de risque de
+      lockout accidentel).
+- [x] **Refus motivé des candidatures chauffeur** (`High`) — migration
+      `042_driver_application_rejection.sql` (colonnes `rejected_at`,
+      `rejected_by`, `rejection_reason` sur `drivers_details`, appliquée sur
+      le projet Supabase `Mon-Taxi-Sante`) + `driversRepository.rejectDriver`
+      + filtre `fetchPendingDrivers` sur `rejected_at IS NULL` + email
+      `driverRejectedEmail` (motif inclus) + `notifyDriverRejectedServerFn`.
+      Bouton "Refuser" avec motif obligatoire ajouté à côté d'"Approuver".
+- [x] **Confirmation avant actions à impact** (`Medium`) — composant
+      `src/components/ui/alert-dialog.tsx` (Radix `@radix-ui/react-alert-dialog`,
+      jusque-là en dépendance mais jamais utilisé). Dialogue de confirmation
+      sur "Approuver" et sur "Refuser" (avec le champ motif).
+- [x] **Fiabilité de l'approbation/refus chauffeur** (`High`) —
+      `notifyDriverApproved`/`notifyDriverRejected` retournent désormais un
+      booléen de succès d'envoi au lieu d'avaler l'échec silencieusement (le
+      principe best-effort "ne jamais lever d'exception" du fichier est
+      conservé). Toast "Chauffeur approuvé"/"Candidature refusée" (succès DB)
+      distinct du toast "Email non envoyé" (échec Resend) — l'admin ne
+      confond plus les deux. États `isError` + bouton "Réessayer" ajoutés sur
+      les candidatures et les statistiques (au lieu d'un tableau vide
+      indiscernable d'un "aucune donnée").
+- [x] **Comptage de statuts scalable** (`Medium`) — RPC Postgres
+      `get_booking_status_counts()` (`GROUP BY` côté base, migration 042) ;
+      `bookingsRepository.fetchBookingStatusCounts` appelle la RPC au lieu de
+      rapatrier toute la table `bookings` côté client.
+
+**Fichiers touchés** : `supabase/migrations/042_driver_application_rejection.sql`
+(nouveau), `src/lib/database.types.ts` (régénéré depuis le schéma live),
+`src/lib/adminAccess.ts` (nouveau), `src/server/adminAccess.ts` (nouveau),
+`src/components/ui/alert-dialog.tsx` (nouveau), `src/routes/admin.tsx`
+(réécrit), `src/repositories/driversRepository.ts`,
+`src/repositories/bookingsRepository.ts`, `src/server/email.ts`,
+`src/server/emailTemplates.ts`, `.env.example`.
+
+**Vérification effectuée** : migration appliquée et vérifiée sur le projet
+Supabase live (`list_tables`/`list_migrations` après coup), types
+régénérés (`generate_typescript_types`), `npm install` + `npx tsc --noEmit`
+(aucune nouvelle erreur — les 2 erreurs `ImportMeta.env` restantes dans
+`emailTemplates.ts` sont pré-existantes, confirmées identiques sur la
+branche avant ce sprint) + `npx vite build` (succès complet, client + SSR).
+
+**Action requise côté opérateur** : définir `ADMIN_EMAILS` dans les
+variables d'environnement Vercel pour activer la seconde barrière (sans
+cette variable, le comportement reste celui d'avant ce sprint).
+
+**Constat annexe (hors périmètre, à traiter séparément)** : les Supabase
+advisors signalent RLS désactivée sur `public.booking_reminder_tokens`.
+Non introduit par ce sprint ; la table n'est en principe touchée que par
+des fonctions `SECURITY DEFINER`, mais reste en l'état interrogeable
+directement avec la clé anon. Remédiation proposée (non appliquée) :
+`ALTER TABLE public.booking_reminder_tokens ENABLE ROW LEVEL SECURITY;` —
+à accompagner d'une policy explicite avant activation pour ne pas casser
+le flux de rappel de course.
+
+## Sprint 7 — Navigation & gestion des réservations ✅ TERMINÉ
+
+- [x] **Navigation en sidebar par domaine** (`High`) — `src/routes/admin.tsx`
+      devient un layout (garde d'accès + sidebar + `<Outlet/>`), avec
+      sous-routes imbriquées `admin/index.tsx` (vue d'ensemble),
+      `admin/reservations.tsx`, `admin/chauffeurs.tsx` (candidatures,
+      déplacées telles quelles depuis l'ancien `admin.tsx`). `/admin/avis`
+      et `/admin/reglages` ne sont pas créées : reportées aux sprints où
+      leur contenu existe réellement (8 et au-delà) plutôt que de poser des
+      pages vides dans la nav.
+- [x] **Gestion complète des réservations** (`High`) — `/admin/reservations` :
+      table paginée (20/page) avec filtres statut/véhicule et recherche
+      (référence/patient/téléphone), état de la pagination et des filtres
+      dans l'URL (`validateSearch`, partageable). Vue détail en `Dialog`
+      (patient, trajet, équipements, CPAM, chauffeur, prix). Actions
+      "Assigner/Réassigner un chauffeur" (liste de chauffeurs compatibles,
+      voir plus bas) et "Annuler avec motif" (statuts `pending`/`confirmed`/
+      `available`/`accepted` uniquement, via `isCancellable`).
+      **"Marquer urgent" n'a pas été implémenté comme flag manuel** : une
+      course non attribuée à moins de 4h du départ est automatiquement
+      détectée et signalée (badge ⚠️ dans la liste et le détail) — plus
+      fiable qu'un statut manuel qu'un admin peut oublier de poser, et
+      couvre le même besoin.
+- [x] **Recherche globale Cmd+K** (`High`) — `AdminCommandSearch`, montée
+      dans le layout donc disponible sur tout `/admin/*`. Scopée aux
+      réservations (référence/patient/téléphone) pour l'instant : la seule
+      zone avec une vue détail complète. Le répertoire chauffeurs (Sprint 8)
+      et les fiches patient (Sprint 8) l'étendront naturellement.
+- [x] **File d'attente & alerte SLA** (`High`) — vue "à risque" (seuil 4h
+      avant départ) intégrée à la vue d'ensemble (`/admin`) plutôt qu'en
+      page séparée (même filtre `status=available` que Sprint 7 le
+      proposait, présenté comme un aperçu avec lien vers la liste complète
+      filtrée). Alerte automatique : nouveau cron
+      `/api/cron/at-risk-bookings`, une fois par jour à midi UTC (compte
+      Vercel confirmé sur le plan **Hobby**, limité à un cron/jour — pas
+      d'option horaire). Comme un seul passage quotidien à heure fixe ne
+      croiserait sinon qu'une tranche de 4h par jour, ce cron utilise
+      délibérément un seuil élargi à **24h** (au lieu des 4h de la vue
+      live) : "signaler tout ce qui pourrait rester non résolu d'ici le
+      prochain passage demain". Email à `ADMIN_NOTIFICATION_EMAIL`. **Pas
+      de déduplication** : le cron réalerte à chaque exécution tant qu'une
+      course reste non résolue (choix assumé — mieux vaut une relance
+      qu'une alerte manquée passée sous silence). À revoir si le compte
+      passe un jour sur un plan Pro (cron plus fréquent + seuil resserré à
+      4h possible).
+- [x] **Mises à jour en temps réel** (`Medium`) — via le hook `useRealtime`
+      déjà présent dans le code (`src/hooks/useRealtime.ts`, jusque-là
+      utilisé uniquement par le tableau de bord chauffeur) : branché sur la
+      liste de réservations, les stats et la file "à risque". `bookings`
+      était déjà dans la publication Realtime Supabase, aucune config
+      serveur supplémentaire nécessaire. `drivers_details` n'a pas de vue
+      admin en temps réel pour l'instant (pas de répertoire chauffeurs
+      avant Sprint 8) — sera ajouté avec.
+
+**Réassignation de chauffeur — détail technique** : écriture directe sur
+`bookings` (l'admin a un accès complet via la policy RLS `bookings: admin
+all`, confirmée en base — pas de RPC dédiée nécessaire, contrairement aux
+actions patient/chauffeur qui passent par des RPC restreintes). Le
+sélecteur de chauffeurs reproduit la logique de `driver_matches_booking`
+(migration 018) côté client pour ne proposer que des chauffeurs
+compatibles — y compris son angle mort connu : les courses `ambulance` n'y
+matchent jamais (la fonction SQL ne gère pas ce cas), donc `/admin/
+reservations` ne propose aucun chauffeur pour ce type de course. Non
+corrigé ici : signaler ce comportement plutôt que le changer silencieusement,
+c'est un choix produit qui dépasse le périmètre de ce sprint. Si un
+chauffeur déjà affecté est remplacé, l'ancien chauffeur est notifié par
+email + push (nouveau `driverReassignedAwayEmail` /
+`notifyDriverReassignedAwayServerFn`) — sans quoi il continuerait de croire
+la course sienne.
+
+**Fichiers touchés** : `src/routes/admin.tsx` (réécrit en layout),
+`src/routes/admin/index.tsx`, `src/routes/admin/reservations.tsx`,
+`src/routes/admin/chauffeurs.tsx` (nouveaux, tous trois), `src/routes/api/cron/at-risk-bookings.ts`
+(nouveau), `src/repositories/adminBookingsRepository.ts` (nouveau),
+`src/components/admin/AdminCommandSearch.tsx`,
+`src/components/admin/AdminErrorState.tsx`, `src/components/ui/dialog.tsx`
+(nouveaux), `src/server/email.ts`, `src/server/emailTemplates.ts`,
+`vercel.json`.
+
+**Vérification effectuée** : `npx tsc --noEmit` (26 erreurs, toutes
+confirmées identiques avant/après ce sprint via `git stash` — aucune
+nouvelle) + `npx vite build` (succès complet, routes imbriquées
+correctement générées dans `routeTree.gen.ts`). Test navigateur (Playwright
+contre le serveur de dev) sur `/admin`, `/admin/reservations`,
+`/admin/chauffeurs`, `/connexion` : pages servies (200), aucune erreur
+JS propre à ce sprint. Une erreur `process is not defined` apparaît sur
+*toutes* les pages, y compris `/` et sur le commit d'avant Sprint 6 —
+confirmée pré-existante (bug du mode dev de `@tanstack/start-client-core`,
+la lib RPC alpha utilisée par ce projet), pas liée à ce travail. Un test
+complet en navigateur du flux authentifié (voir la sidebar, ouvrir le
+détail d'une course, réassigner) n'a pas pu être fait dans cet
+environnement : pas d'identifiants admin réels ni de clé service-role
+utilisable en toute sécurité pour se connecter au projet Supabase live
+depuis ce bac à sable.
+
+## Sprint 8 — Chauffeurs, modération & qualité ✅ TERMINÉ
+
+- [x] **Répertoire chauffeurs complet** (`High`) — nouvel onglet
+      "Répertoire" sur `/admin/chauffeurs` (à côté de "Candidatures",
+      onglet piloté par l'URL via `validateSearch: { tab }`, partageable).
+      Liste des chauffeurs approuvés avec note moyenne et courses
+      terminées agrégées côté Postgres (`get_admin_driver_directory`,
+      migration 043 — même logique que `get_booking_status_counts`,
+      évite les N+1 requêtes). Fiche détail en `Dialog` avec actions
+      **Suspendre/Réactiver** et **Demander un document** (email, voir
+      plus bas).
+- [x] **Actions groupées (bulk)** (`Medium`) — sélection multiple
+      (`Checkbox` shadcn, jusque-là en dépendance non utilisée) sur
+      l'onglet Candidatures + "Approuver la sélection", avec un résumé
+      distinguant succès DB et échecs d'envoi d'email (même logique que
+      l'approbation individuelle du Sprint 6).
+- [x] **Modération des avis mutuels** (`Medium`) — nouvelle page
+      `/admin/avis` (+ entrée de nav) : liste des avis *avec commentaire*
+      (une note seule n'a rien à modérer), filtrable par note basse,
+      action "Masquer"/"Réafficher". Colonnes `hidden_at`/`hidden_by`
+      ajoutées à `booking_ratings` (migration 043). **Ne masque pas la
+      note elle-même**, seulement le texte — les commentaires n'étaient
+      de toute façon affichés nulle part côté patient/chauffeur avant ce
+      sprint (vérifié : aucune lecture directe de `booking_ratings` dans
+      le code existant), donc masquer ne change le comportement d'aucune
+      autre page.
+- [x] **Recherche & fiche patient** (`Medium`) — nouvelle page
+      `/admin/patients` (+ entrée de nav) : recherche par nom/téléphone/
+      email, fiche en `Dialog` avec historique de réservations. Le statut
+      CPAM par réservation n'est pas affiché sur la fiche (présent sur le
+      détail d'une réservation individuelle via `/admin/reservations`
+      depuis le Sprint 7, pas dupliqué ici).
+- [x] **Détection de signaux faibles** (`Medium`) — intégrée en haut de
+      l'onglet Répertoire plutôt qu'en page séparée : chauffeurs suspendus,
+      avec ≥2 annulations suspectes, ou notés sous 3★ sont mis en avant
+      (bandeau + icône ⚠️ dans la liste), cliquables vers leur fiche.
+- [x] **Tables responsives mobile** (`Low`) — cartes empilées sous `sm`
+      pour les deux tableaux à fort trafic : Réservations et Candidatures
+      chauffeurs. **Non fait** pour Répertoire chauffeurs et Patients (au
+      choix, moindre usage tactile attendu) — ces deux-là gardent
+      seulement le défilement horizontal (`overflow-x-auto`, déjà présent
+      partout). La page Avis est déjà une liste de cartes, pas un tableau
+      — responsive par construction.
+
+**Suspension manuelle d'un chauffeur — détail technique** :
+`pool_suspended_until` est protégée par un `REVOKE UPDATE ... FROM
+authenticated` (migration 030, pour empêcher un chauffeur de lever sa
+propre suspension) — une restriction au niveau colonne, indépendante des
+policies RLS "admin all". Un admin utilisant le client habituel ne peut
+donc pas non plus l'écrire directement. Nouvelle fonction `SECURITY
+DEFINER admin_set_driver_suspension()` (migration 043, vérifie
+`is_admin()` en interne) pour rouvrir cet accès spécifiquement aux admins.
+Suspension indéfinie modélisée comme une date lointaine (2099) plutôt
+qu'un booléen séparé, pour rester compatible avec la colonne existante
+partagée avec la suspension automatique (annulations suspectes,
+migration 030).
+
+**"Exiger un document"** livré en version volontairement légère : un
+email (`driverDocumentRequestEmail` / `notifyDriverDocumentRequestServerFn`)
+avec un message libre, sans état "demandé" tracké en base ni relance
+automatique — une sollicitation, pas un vrai workflow de conformité
+documentaire. Un vrai suivi (échéances, statut par document, relance
+automatique) reste à faire si le besoin se confirme.
+
+**Fichiers touchés** : `supabase/migrations/043_admin_driver_directory_and_moderation.sql`
+(nouveau), `src/lib/database.types.ts` (régénéré),
+`src/repositories/adminDriversRepository.ts`,
+`src/repositories/adminPatientsRepository.ts`,
+`src/repositories/adminRatingsRepository.ts` (nouveaux),
+`src/routes/admin/chauffeurs.tsx` (réécrit, onglets),
+`src/routes/admin/patients.tsx`, `src/routes/admin/avis.tsx` (nouveaux),
+`src/routes/admin.tsx` (nav), `src/components/ui/tabs.tsx` (nouveau,
+`@radix-ui/react-tabs` était en dépendance mais jamais utilisé),
+`src/server/email.ts`, `src/server/emailTemplates.ts`.
+
+**Vérification effectuée** : migration appliquée et vérifiée sur le
+projet Supabase live, types régénérés. `npx tsc --noEmit` : 26 erreurs,
+strictement identiques à la baseline pré-Sprint-6 (un premier passage en
+avait révélé une 27e — cast manquant sur `admin_set_driver_suspension`
+appelée avec `p_until: null`, même limitation du générateur de types que
+`update_booking` — corrigée avant de continuer). `npx vite build` :
+succès complet. Test navigateur (Playwright, serveur de dev) sur
+`/admin/reservations` et `/admin/chauffeurs` : 200, titres corrects,
+aucune erreur JS nouvelle. Le test sur `/admin/patients` et `/admin/avis`
+a expiré (timeout de l'environnement, sans rapport avec le code — mêmes
+patterns que les deux pages déjà vérifiées). Comme pour le Sprint 7,
+aucun test du flux authentifié complet (pas d'identifiants admin
+utilisables dans ce bac à sable).
+
+## Sprint 9 — Sécurité avancée & gouvernance ✅ TERMINÉ (avec un point volontairement scopé à la baisse, voir ci-dessous)
+
+- [x] **Rôles graduels (support/admin/super_admin)** (`High`) — **partiellement
+      livré, hors planning**, en réponse à un besoin concret : un compte ne
+      peut porter qu'un seul `profiles.role` (patient/driver/admin), donc
+      impossible d'être à la fois chauffeur et admin sur le même email sans
+      ce changement. Nouvelle table `admin_grants` (migration 044,
+      `profile_id`, `admin_role` ∈ {admin, super_admin}, `granted_at`,
+      `granted_by`) **découplée** de `profiles.role` : un compte garde son
+      rôle principal (patient/driver) et peut *en plus* avoir un accès
+      admin. `is_admin()` — utilisée dans les policies RLS de
+      `bookings`/`profiles`/`drivers_details`/`booking_ratings` — redéfinie
+      pour vérifier `profiles.role = 'admin'` **OU** une ligne dans
+      `admin_grants`, ce qui propage le nouveau comportement à toutes ces
+      policies d'un coup. Nouvelle fonction `is_super_admin()` (pas encore
+      utilisée dans une policy — aucune action du panel n'est aujourd'hui
+      réservée au tier super_admin, c'est une distinction posée pour plus
+      tard). `checkAdminAccessServerFn` (garde serveur de `/admin`) et le
+      flux de connexion (`connexion.tsx`, redirige vers `/admin` en
+      priorité si l'utilisateur a un grant, même si `role='driver'`) mis à
+      jour en conséquence.
+      **Ce qui manque encore** pour ce point du Sprint 9 : la matrice de
+      permissions par tier (aujourd'hui admin et super_admin ont exactement
+      les mêmes droits dans l'app — seule la donnée `admin_role` existe,
+      rien ne la lit encore côté UI/permissions), et une UI pour
+      gérer les grants (accordés/retirés en SQL direct pour l'instant, pas
+      encore depuis le panel).
+- [x] **2FA TOTP pour les comptes admin** (`High`) — **livré à un
+      périmètre volontairement réduit : disponible, pas encore
+      obligatoire.** Nouvelle page `/admin/securite`
+      (`src/routes/admin/securite.tsx`) utilisant l'API MFA native de
+      Supabase Auth (`auth.mfa.enroll/challenge/verify/unenroll/
+      listFactors`, aucune table ni migration nécessaire — l'état des
+      facteurs est géré par Supabase Auth) : affiche le ou les facteurs
+      TOTP déjà vérifiés (avec option de désactivation confirmée par
+      `AlertDialog`), et sinon propose l'enrôlement — QR code (rendu à
+      partir du SVG renvoyé par `enroll()`) + secret en repli texte, puis
+      validation par code à 6 chiffres via `challenge()`/`verify()`.
+      **Ce qui n'est délibérément PAS fait** : aucune étape de challenge
+      MFA n'est imposée à la connexion (ni sur `/connexion`, ni sur
+      `/admin/connexion`), et la garde d'accès `checkAdminAccessServerFn`
+      ne vérifie pas l'AAL (`getAuthenticatorAssuranceLevel`). Autrement
+      dit, un compte admin peut activer et utiliser la double
+      authentification dès aujourd'hui, mais rien ne l'impose encore. Ce
+      choix est volontaire, pas un oubli : ce bac à sable ne permet pas de
+      s'authentifier avec de vrais identifiants admin, donc impossible de
+      tester en conditions réelles le cycle complet enrôlement → challenge
+      → aal2 avant de le rendre bloquant. Une garde d'accès buguée sur ce
+      point aurait un risque concret de verrouillage du panel admin sans
+      filet de récupération simple dans cette session. **Activation de
+      l'obligation à confirmer séparément** une fois le flux testé en
+      conditions réelles (ou implémentée directement par vous si vous
+      préférez ne pas attendre).
+- [x] **Journal des connexions & des actions admin** (`Medium`) — table
+      `admin_activity_log` (migration 045 : `actor_id`, `action`
+      (`TG_OP`), `target_table`, `target_id`, `before`/`after` en jsonb,
+      `created_at`), alimentée par un trigger `SECURITY DEFINER`
+      (`log_admin_activity()`, non appelable directement en RPC — révoqué
+      de `PUBLIC/anon/authenticated`, seul le trigger peut l'invoquer) posé
+      sur `bookings`, `drivers_details`, `booking_ratings` en `AFTER
+      UPDATE`. Les colonnes sensibles (notes médicales, date de naissance,
+      documents d'identité/assurance, coordonnées) sont retirées du
+      before/after avant écriture. Vue dédiée `/admin/journal` : filtre
+      par catégorie, pagination, diff lisible (avant → après) limité à une
+      liste de champs pertinents par table (`TRACKED_FIELDS`), lien direct
+      vers la réservation concernée le cas échéant. Pas de journalisation
+      des connexions elles-mêmes (succès/échec) dans cette table — c'est
+      couvert séparément par `admin_login_attempts` ci-dessous (throttling
+      uniquement, pas un historique consultable).
+- [x] **Route de connexion admin dédiée** (`Medium`) — `/admin/connexion`
+      (`src/routes/admin_.connexion.tsx`, hors du layout `/admin` donc
+      accessible sans passer par la garde d'accès), formulaire email/mot
+      de passe avec Turnstile obligatoire et limitation par email (table
+      `admin_login_attempts`, migration 045 : verrou de 15 minutes après 5
+      échecs, table non accessible en direct — `REVOKE ALL ... FROM
+      PUBLIC, anon, authenticated`). L'authentification effective
+      (`signInWithPassword`) se fait côté serveur (`src/server/
+      adminAuth.ts`), pas dans le navigateur, pour que la vérification
+      Turnstile et le verrou ne puissent pas être contournés en appelant
+      l'API Supabase Auth directement. Message d'erreur volontairement
+      identique entre « mot de passe incorrect » et « compte valide mais
+      sans accès admin » pour ne pas permettre l'énumération de comptes.
+      `/connexion` (login général patients/chauffeurs) reste inchangée et
+      sans ces protections renforcées — c'est un choix : elle sert un
+      public plus large avec un risque différent, et `/admin/connexion`
+      est le point d'entrée recommandé pour les comptes admin.
+
+**Fichiers touchés** : `supabase/migrations/044_admin_grants.sql`,
+`supabase/migrations/045_admin_activity_log_and_login_attempts.sql`
+(nouveaux), `src/lib/database.types.ts` (régénéré),
+`src/repositories/adminActivityRepository.ts`,
+`src/server/adminAuth.ts`, `src/server/turnstile.ts`,
+`src/hooks/useTurnstile.ts` (nouveaux, les deux derniers extraits de
+`bookingLookup.ts`/`BookingLookupForm.tsx` pour être réutilisés par la
+connexion admin), `src/routes/admin/journal.tsx`,
+`src/routes/admin/securite.tsx`, `src/routes/admin_.connexion.tsx`
+(nouveaux), `src/routes/admin.tsx` (nav + accès), `src/routes/connexion.tsx`,
+`src/repositories/profilesRepository.ts`, `src/server/adminAccess.ts`,
+`src/server/bookingLookup.ts`, `src/components/booking/BookingLookupForm.tsx`.
+
+**Vérification effectuée** : migrations 044 et 045 appliquées sur le
+projet Supabase live, types régénérés, `get_advisors` (sécurité) vérifié
+après coup — a révélé `log_admin_activity()` appelable directement en RPC
+malgré `SECURITY DEFINER`, corrigé par un `REVOKE ALL ... FROM PUBLIC,
+anon, authenticated` (les triggers restent fonctionnels, seul l'appel RPC
+direct est bloqué). `npx vite build` : succès complet, `/admin/securite`
+généré comme route enfant de `/admin`. `npx tsc --noEmit` : même nombre
+d'erreurs que la baseline (26), diff ligne à ligne confirmé — aucune
+nouvelle erreur, seulement des décalages de numéro de ligne dus aux
+extractions de `useTurnstile.ts`/`turnstile.ts`. Comme pour les sprints
+précédents, aucun test du flux authentifié complet (connexion admin,
+enrôlement TOTP réel, déverrouillage après lockout) : pas d'identifiants
+admin utilisables dans ce bac à sable, donc pas de service-role key ni de
+mot de passe de compte réel disponibles pour simuler une session
+authentifiée de bout en bout.
+
+## Sprint 10 — Pilotage & productivité ✅ TERMINÉ
+
+- [x] **KPIs opérationnels avancés** (`Medium`) — nouvelle page
+      `/admin/statistiques`. RPC `get_admin_operational_kpis(p_days)`
+      (migration 046) : taux d'annulation, taux de courses sans chauffeur
+      (prise en charge passée, statut ≠ annulé, sans `driver_id`), délai
+      moyen d'attribution (`accepted_at - created_at`), note moyenne
+      patients → chauffeurs, top 10 des communes de prise en charge —
+      chaque métrique calculée sur une fenêtre 7 ou 30 jours au choix
+      (bascule dans l'UI), avec la période précédente de même durée
+      renvoyée en parallèle pour afficher une tendance (▲/▼ vs période
+      précédente) sans second aller-retour réseau. **Calculé à la volée
+      plutôt qu'en vue matérialisée** (déviation assumée par rapport à
+      l'énoncé initial) : au volume actuel (~20 courses), une requête live
+      reste instantanée et toujours à jour sans tâche de rafraîchissement
+      à maintenir ; à revisiter si le volume grossit significativement.
+- [x] **Export de données comptabilité/CPAM** (`Medium`) — section dédiée
+      sur `/admin/statistiques` : sélection d'une période (du/au),
+      génération d'un CSV (`;`-séparé, BOM UTF-8 pour Excel) des courses
+      `completed` sur cette période — référence, patient, trajet, dates,
+      distance, véhicule, statut de prise en charge CPAM, nom de mutuelle,
+      indicateur retour à vide (hospitalisation), montant, chauffeur.
+      Lecture directe de `bookings` (policy RLS admin existante), pas de
+      RPC dédiée. Génération et téléchargement entièrement côté client
+      (`src/lib/csv.ts`), aucune donnée transite par un serveur
+      intermédiaire au-delà de la requête Supabase habituelle.
+- [x] **Centre de notifications internes** (`Low`) — cloche dans l'entête
+      admin (`AdminNotificationBell`, à côté de la recherche Cmd+K),
+      badge non-lus mis à jour en direct via Supabase Realtime. Nouvelle
+      table `admin_notifications` (migration 046), alimentée par 3
+      triggers `SECURITY DEFINER` (même schéma de protection que
+      `log_admin_activity`, migration 045 : colonnes `type/title/body/
+      target_*` non modifiables par `authenticated`, seule la lecture est
+      permise en écriture sur `read_at`/`read_by`) : nouvelle candidature
+      chauffeur, réservation annulée (patient, chauffeur ou admin — peu
+      importe l'auteur), avis patient à note ≤ 2. **Distinct du journal
+      d'activité** (`/admin/journal`, migration 045) : celui-ci trace les
+      actions *faites par* les admins, celui-ci signale des évènements qui
+      *méritent leur attention*, quel qu'en soit l'auteur. Marquage lu
+      individuel ou global ("Tout marquer lu"). Pas de canal push/email
+      pour ces notifications — uniquement in-app, tel que spécifié.
+
+**Fichiers touchés** : `supabase/migrations/046_admin_kpis_and_notifications.sql`
+(nouveau), `src/lib/database.types.ts` (régénéré),
+`src/repositories/adminStatsRepository.ts`,
+`src/repositories/adminNotificationsRepository.ts`,
+`src/lib/csv.ts`, `src/components/admin/AdminNotificationBell.tsx`,
+`src/routes/admin/statistiques.tsx` (nouveaux), `src/routes/admin.tsx`
+(nav + cloche dans l'entête).
+
+**Vérification effectuée** : migration 046 appliquée sur le projet
+Supabase live (RPC testée directement en SQL : rejette bien un appel sans
+session admin avec `not_admin`, confirmant que la garde fonctionne),
+`get_advisors` (sécurité) vérifié après coup — seul le même bruit
+préexistant "Anonymous Access Policies" apparaît (déjà présent sur
+`bookings`/`profiles`/`admin_grants`/etc. avant ce sprint, cf. notes
+Sprint 9), aucune nouvelle alerte critique. Types régénérés. `npx vite
+build` : succès complet, `/admin/statistiques` généré comme route enfant
+de `/admin`. `npx tsc --noEmit` : 28 erreurs, diff ligne à ligne contre
+l'état de fin de Sprint 9 strictement vide (aucune nouvelle erreur).
+Serveur de dev + Playwright : `/admin`, `/admin/connexion`,
+`/admin/statistiques`, `/admin/securite` répondent 200 sans nouvelle
+erreur console — la seule erreur JS observée (`process is not defined`)
+est préexistante et présente aussi sur la page d'accueil publique, donc
+sans rapport avec ce sprint. Comme pour les sprints précédents, aucun
+test du flux authentifié complet (valeurs réelles des KPIs, export CSV
+avec données, réception d'une notification) : pas d'identifiants admin
+utilisables dans ce bac à sable.
+
+## Backlog panel admin — Idées bonus / différenciation (non planifié)
+
+- Assignation prédictive du chauffeur (scoring distance/équipement/note/charge du jour)
+- Alertes SLA automatiques par SMS/Slack interne
+- Suivi de conformité chauffeur (expiration SIRET, assurance, carte VTC/taxi)
+- NPS patient post-course agrégé par zone/chauffeur
+- Facturation CPAM assistée (génération de justificatifs depuis `cpam_status` + tarif 2025)
+- Mode astreinte (vue mobile allégée, push ciblées)

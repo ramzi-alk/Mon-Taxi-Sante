@@ -17,6 +17,148 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_activity_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          after: Json | null
+          before: Json | null
+          created_at: string
+          id: string
+          target_id: string
+          target_table: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          after?: Json | null
+          before?: Json | null
+          created_at?: string
+          id?: string
+          target_id: string
+          target_table: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          after?: Json | null
+          before?: Json | null
+          created_at?: string
+          id?: string
+          target_id?: string
+          target_table?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_activity_log_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      admin_grants: {
+        Row: {
+          admin_role: string
+          granted_at: string
+          granted_by: string | null
+          profile_id: string
+        }
+        Insert: {
+          admin_role?: string
+          granted_at?: string
+          granted_by?: string | null
+          profile_id: string
+        }
+        Update: {
+          admin_role?: string
+          granted_at?: string
+          granted_by?: string | null
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_grants_granted_by_fkey"
+            columns: ["granted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_grants_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      admin_login_attempts: {
+        Row: {
+          email: string
+          failed_count: number
+          locked_until: string | null
+          updated_at: string
+        }
+        Insert: {
+          email: string
+          failed_count?: number
+          locked_until?: string | null
+          updated_at?: string
+        }
+        Update: {
+          email?: string
+          failed_count?: number
+          locked_until?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      admin_notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          read_at: string | null
+          read_by: string | null
+          target_id: string | null
+          target_table: string | null
+          title: string
+          type: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          read_by?: string | null
+          target_id?: string | null
+          target_table?: string | null
+          title: string
+          type: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          read_by?: string | null
+          target_id?: string | null
+          target_table?: string | null
+          title?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_notifications_read_by_fkey"
+            columns: ["read_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       booking_driver_refusals: {
         Row: {
           booking_id: string
@@ -90,6 +232,8 @@ export type Database = {
           booking_id: string
           comment: string | null
           created_at: string
+          hidden_at: string | null
+          hidden_by: string | null
           id: string
           rater_role: Database["public"]["Enums"]["booking_rating_role"]
           rating: number
@@ -98,6 +242,8 @@ export type Database = {
           booking_id: string
           comment?: string | null
           created_at?: string
+          hidden_at?: string | null
+          hidden_by?: string | null
           id?: string
           rater_role: Database["public"]["Enums"]["booking_rating_role"]
           rating: number
@@ -106,6 +252,8 @@ export type Database = {
           booking_id?: string
           comment?: string | null
           created_at?: string
+          hidden_at?: string | null
+          hidden_by?: string | null
           id?: string
           rater_role?: Database["public"]["Enums"]["booking_rating_role"]
           rating?: number
@@ -130,6 +278,13 @@ export type Database = {
             columns: ["booking_id"]
             isOneToOne: false
             referencedRelation: "bookings_pool_for_drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_ratings_hidden_by_fkey"
+            columns: ["hidden_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -469,6 +624,9 @@ export type Database = {
           pmr_equipped: boolean
           pool_suspended_until: string | null
           profile_id: string
+          rejected_at: string | null
+          rejected_by: string | null
+          rejection_reason: string | null
           siret: string
           stretcher_equipped: boolean
           stripe_customer_id: string | null
@@ -503,6 +661,9 @@ export type Database = {
           pmr_equipped?: boolean
           pool_suspended_until?: string | null
           profile_id: string
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
           siret: string
           stretcher_equipped?: boolean
           stripe_customer_id?: string | null
@@ -537,6 +698,9 @@ export type Database = {
           pmr_equipped?: boolean
           pool_suspended_until?: string | null
           profile_id?: string
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
           siret?: string
           stretcher_equipped?: boolean
           stripe_customer_id?: string | null
@@ -561,6 +725,13 @@ export type Database = {
             foreignKeyName: "drivers_details_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drivers_details_rejected_by_fkey"
+            columns: ["rejected_by"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -705,6 +876,10 @@ export type Database = {
       a_majoration_horaire: { Args: { p_datetime: string }; Returns: boolean }
       accept_ride: { Args: { p_booking_id: string }; Returns: undefined }
       accept_series: { Args: { p_booking_id: string }; Returns: undefined }
+      admin_set_driver_suspension: {
+        Args: { p_driver_profile_id: string; p_until: string }
+        Returns: undefined
+      }
       assert_lookup_not_locked: {
         Args: { p_reference_code: string }
         Returns: undefined
@@ -759,6 +934,32 @@ export type Database = {
       est_grande_ville: { Args: { p_address: string }; Returns: boolean }
       est_jour_ferie_fr: { Args: { p_date: string }; Returns: boolean }
       generate_booking_reference_code: { Args: never; Returns: string }
+      get_admin_driver_directory: {
+        Args: never
+        Returns: {
+          approved_at: string
+          availability: Database["public"]["Enums"]["driver_availability"]
+          average_rating: number
+          completed_rides: number
+          email: string
+          full_name: string
+          phone: string
+          pool_suspended_until: string
+          profile_id: string
+          subscription_status: Database["public"]["Enums"]["subscription_status"]
+          suspicious_cancellation_count: number
+          vehicle_registration: string
+          vehicle_type: Database["public"]["Enums"]["vehicle_type"]
+        }[]
+      }
+      get_admin_operational_kpis: { Args: { p_days: number }; Returns: Json }
+      get_booking_status_counts: {
+        Args: never
+        Returns: {
+          count: number
+          status: string
+        }[]
+      }
       get_my_bookings: {
         Args: never
         Returns: {
@@ -818,6 +1019,7 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_driver: { Args: never; Returns: boolean }
+      is_super_admin: { Args: never; Returns: boolean }
       lookup_booking_by_reference: {
         Args: { p_phone: string; p_reference_code: string }
         Returns: {

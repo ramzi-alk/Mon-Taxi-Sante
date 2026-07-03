@@ -297,6 +297,47 @@ export function adminNewDriverApplicationEmail(params: {
   };
 }
 
+export function atRiskBookingsAlertEmail(params: {
+  bookings: Array<{ referenceCode: string; patientFullName: string; pickupDatetime: string }>;
+  hoursThreshold: number;
+}): EmailContent {
+  const { bookings, hoursThreshold } = params;
+  const rows = bookings.map((b) => ({
+    label: formatReferenceCode(b.referenceCode),
+    value: `${b.patientFullName} — ${formatDateFr(b.pickupDatetime)} à ${formatTimeFr(b.pickupDatetime)}`,
+  }));
+  return {
+    subject: `⚠️ ${bookings.length} course${bookings.length > 1 ? "s" : ""} sans chauffeur à moins de ${hoursThreshold}h`,
+    html: layout({
+      title: "Courses à risque",
+      icon: "⚠️",
+      bodyHtml: `
+        ${badge(`${bookings.length} course${bookings.length > 1 ? "s" : ""} sans chauffeur`, "red")}
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Les réservations suivantes n'ont pas encore de chauffeur alors que le départ est prévu dans moins de ${hoursThreshold}h. Une intervention manuelle (assignation depuis le panel admin) est recommandée.</p>
+        ${detailsCard(rows)}
+      `,
+    }),
+  };
+}
+
+export function driverDocumentRequestEmail(params: { driverFullName: string; message: string }): EmailContent {
+  const { driverFullName, message } = params;
+  return {
+    subject: "Mise à jour de documents demandée — Mon Taxi Santé",
+    html: layout({
+      title: "Documents à mettre à jour",
+      icon: "📄",
+      bodyHtml: `
+        ${badge("Action requise", "amber")}
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${driverFullName},</p>
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Notre équipe a besoin d'une mise à jour de vos documents pour maintenir votre compte chauffeur actif :</p>
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;background:#FFFBEB;border-radius:10px;padding:14px 16px;">${message}</p>
+        <p style="margin:0;font-size:14px;color:#6b7280;line-height:1.5;">Répondez directement à cet email ou contactez-nous pour transmettre les documents demandés.</p>
+      `,
+    }),
+  };
+}
+
 export function driverApprovedEmail(params: { driverFullName: string }): EmailContent {
   const { driverFullName } = params;
   return {
@@ -308,6 +349,24 @@ export function driverApprovedEmail(params: { driverFullName: string }): EmailCo
         ${badge("Compte activé", "green")}
         <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${driverFullName},</p>
         <p style="margin:0;font-size:15px;line-height:1.5;">Bonne nouvelle : votre candidature chauffeur a été validée par notre équipe. Vous pouvez désormais accéder à votre tableau de bord et accepter des courses disponibles dans la file d'attente.</p>
+      `,
+    }),
+  };
+}
+
+export function driverRejectedEmail(params: { driverFullName: string; reason: string }): EmailContent {
+  const { driverFullName, reason } = params;
+  return {
+    subject: "Votre candidature chauffeur — Mon Taxi Santé",
+    html: layout({
+      title: "Candidature non retenue",
+      icon: "📋",
+      bodyHtml: `
+        ${badge("Candidature non retenue", "amber")}
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${driverFullName},</p>
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Après examen de votre dossier, nous ne sommes pas en mesure de valider votre candidature chauffeur pour le moment, pour la raison suivante :</p>
+        ${detailsCard([{ label: "Motif", value: reason }])}
+        <p style="margin:0;font-size:14px;color:#6b7280;line-height:1.5;">Vous pouvez soumettre une nouvelle candidature une fois ce point corrigé. Pour toute question, contactez-nous directement.</p>
       `,
     }),
   };
@@ -397,6 +456,26 @@ export function rideUnassignedByDriverEmail(params: {
         <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${patientFullName},</p>
         <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">${body}</p>
         ${ctaButton("Suivre ma réservation", trackingUrl(referenceCode))}
+      `,
+    }),
+  };
+}
+
+export function driverReassignedAwayEmail(params: {
+  driverFullName: string;
+  referenceCode: string;
+  pickupDatetime: string;
+}): EmailContent {
+  const { driverFullName, referenceCode, pickupDatetime } = params;
+  return {
+    subject: `Course réattribuée — Réf. ${formatReferenceCode(referenceCode)}`,
+    html: layout({
+      title: "Course réattribuée",
+      icon: "🔄",
+      bodyHtml: `
+        ${badge("Retirée de votre planning", "amber")}
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${driverFullName},</p>
+        <p style="margin:0;font-size:15px;line-height:1.5;">Votre course du <strong>${formatDateFr(pickupDatetime)} à ${formatTimeFr(pickupDatetime)}</strong> (réf. ${formatReferenceCode(referenceCode)}) a été réattribuée à un autre chauffeur par notre équipe. Elle n'apparaît plus dans votre tableau de bord. Pour toute question, contactez-nous directement.</p>
       `,
     }),
   };

@@ -1,13 +1,12 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ShieldAlert, CheckCircle2, Clock, Users, Car, ClipboardList } from "lucide-react";
+import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { ShieldAlert, LayoutDashboard, ClipboardList, Users, UserSearch, MessageSquareText, History, ShieldCheck, BarChart3 } from "lucide-react";
 import { supabase } from "~/lib/supabase";
 import * as authRepository from "~/repositories/authRepository";
-import * as profilesRepository from "~/repositories/profilesRepository";
-import * as driversRepository from "~/repositories/driversRepository";
-import * as bookingsRepository from "~/repositories/bookingsRepository";
-import type { PendingDriver } from "~/repositories/driversRepository";
-import { notifyDriverApprovedServerFn } from "~/server/email";
+import { checkAdminAccessServerFn } from "~/server/adminAccess";
+import { AdminCommandSearch } from "~/components/admin/AdminCommandSearch";
+import { AdminNotificationBell } from "~/components/admin/AdminNotificationBell";
+import { cn } from "~/lib/utils";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -16,36 +15,38 @@ export const Route = createFileRoute("/admin")({
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
-  component: AdminPage,
+  component: AdminLayout,
 });
 
-async function fetchCurrentRole(): Promise<"admin" | "driver" | "patient" | null> {
-  const user = await authRepository.getCurrentUser(supabase);
-  if (!user) return null;
-  return profilesRepository.getProfileRole(supabase, user.id);
+/**
+ * Authoritative check: re-verifies the access token and the role+allowlist
+ * server side (see src/server/adminAccess.ts) rather than trusting whatever
+ * `profiles.role` the client happened to read under RLS.
+ */
+async function fetchIsAdmin(): Promise<boolean> {
+  const session = await authRepository.getCurrentSession(supabase);
+  if (!session) return false;
+  return checkAdminAccessServerFn({ data: { accessToken: session.access_token } });
 }
 
-async function fetchPendingDrivers(): Promise<PendingDriver[]> {
-  return driversRepository.fetchPendingDrivers(supabase);
-}
+const NAV_ITEMS = [
+  { to: "/admin", label: "Vue d'ensemble", icon: LayoutDashboard, exact: true },
+  { to: "/admin/reservations", label: "Réservations", icon: ClipboardList, exact: false },
+  { to: "/admin/chauffeurs", label: "Chauffeurs", icon: Users, exact: false },
+  { to: "/admin/patients", label: "Patients", icon: UserSearch, exact: false },
+  { to: "/admin/avis", label: "Avis", icon: MessageSquareText, exact: false },
+  { to: "/admin/journal", label: "Journal", icon: History, exact: false },
+  { to: "/admin/statistiques", label: "Statistiques", icon: BarChart3, exact: false },
+  { to: "/admin/securite", label: "Sécurité", icon: ShieldCheck, exact: false },
+] as const;
 
-async function fetchBookingStats(): Promise<Record<string, number>> {
-  return bookingsRepository.fetchBookingStatusCounts(supabase);
-}
-
-async function approveDriver(driverDetailsId: string) {
-  const user = await authRepository.getCurrentUser(supabase);
-  await driversRepository.approveDriver(supabase, driverDetailsId, user?.id ?? null);
-  await notifyDriverApprovedServerFn({ data: { driverDetailsId } });
-}
-
-function AdminPage() {
-  const { data: role, isLoading: isLoadingRole } = useQuery({
-    queryKey: ["current-role"],
-    queryFn: fetchCurrentRole,
+function AdminLayout() {
+  const { data: isAdmin, isLoading: isLoadingAccess } = useQuery({
+    queryKey: ["admin-access"],
+    queryFn: fetchIsAdmin,
   });
 
-  if (isLoadingRole) {
+  if (isLoadingAccess) {
     return (
       <section className="bg-[#F7F8FC] min-h-[calc(100vh-4rem)]">
         <div className="container py-24 text-center text-gray-400">Chargement…</div>
@@ -53,7 +54,7 @@ function AdminPage() {
     );
   }
 
-  if (role !== "admin") {
+  if (!isAdmin) {
     return (
       <section className="bg-[#F7F8FC] min-h-[calc(100vh-4rem)]">
         <div className="container py-24 max-w-md text-center">
@@ -65,7 +66,7 @@ function AdminPage() {
             Cette page est réservée aux administrateurs de Mon Taxi Santé.
           </p>
           <Link
-            to="/connexion"
+            to="/admin/connexion"
             className="btn-cta mt-8 inline-flex bg-[#0B0F1C] text-white hover:bg-[#1244E8] transition-colors"
           >
             Se connecter
@@ -75,131 +76,49 @@ function AdminPage() {
     );
   }
 
-  return <AdminDashboard />;
+  return <AdminShell />;
 }
 
-function AdminDashboard() {
-  const queryClient = useQueryClient();
-
-  const { data: pendingDrivers, isLoading: isLoadingDrivers } = useQuery({
-    queryKey: ["admin-pending-drivers"],
-    queryFn: fetchPendingDrivers,
-  });
-
-  const { data: bookingStats } = useQuery({
-    queryKey: ["admin-booking-stats"],
-    queryFn: fetchBookingStats,
-  });
-
-  const { mutate: approve, isPending: isApproving } = useMutation({
-    mutationFn: approveDriver,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-pending-drivers"] });
-    },
-  });
-
-  const statCards = [
-    { label: "En attente", value: bookingStats?.pending ?? 0, icon: Clock },
-    { label: "Disponibles", value: bookingStats?.available ?? 0, icon: ClipboardList },
-    { label: "En cours", value: bookingStats?.in_progress ?? 0, icon: Car },
-    { label: "Terminées", value: bookingStats?.completed ?? 0, icon: CheckCircle2 },
-  ];
+function AdminShell() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   return (
     <section className="bg-[#F7F8FC] min-h-[calc(100vh-4rem)]">
-      <div className="container py-12 md:py-16">
-        <p className="text-xs font-bold tracking-[0.15em] text-[#1244E8] uppercase mb-3">
-          Administration
-        </p>
-        <h1 className="text-3xl md:text-4xl font-black tracking-tight text-[#0B0F1C]">
-          Tableau de bord administrateur
-        </h1>
+      <div className="container py-8 md:py-10">
+        <div className="grid gap-6 md:grid-cols-[220px_minmax(0,1fr)]">
+          <aside className="min-w-0 md:sticky md:top-24 md:self-start">
+            <p className="text-xs font-bold tracking-[0.15em] text-[#1244E8] uppercase mb-4 px-1">
+              Administration
+            </p>
+            <nav className="flex flex-wrap md:flex-col gap-1">
+              {NAV_ITEMS.map(({ to, label, icon: Icon, exact }) => {
+                const isActive = exact ? pathname === to : pathname.startsWith(to);
+                return (
+                  <Link
+                    key={to}
+                    to={to}
+                    className={cn(
+                      "flex items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-sm font-semibold whitespace-nowrap transition-colors",
+                      isActive
+                        ? "bg-[#0B0F1C] text-white"
+                        : "text-gray-500 hover:bg-white hover:text-[#0B0F1C]"
+                    )}
+                  >
+                    <Icon className="h-4 w-4" aria-hidden="true" />
+                    {label}
+                  </Link>
+                );
+              })}
+            </nav>
+          </aside>
 
-        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {statCards.map(({ label, value, icon: Icon }) => (
-            <div key={label} className="rounded-xl bg-white p-5 ring-1 ring-gray-100">
-              <div className="flex items-center gap-2 text-gray-400">
-                <Icon className="h-4 w-4" aria-hidden="true" />
-                <span className="text-xs font-semibold uppercase tracking-wide">{label}</span>
-              </div>
-              <p className="mt-2 text-3xl font-black text-[#0B0F1C]">{value}</p>
+          <div className="min-w-0">
+            <div className="mb-6 flex justify-end md:justify-start items-center gap-2">
+              <AdminCommandSearch />
+              <AdminNotificationBell />
             </div>
-          ))}
-        </div>
-
-        <div className="mt-12">
-          <div className="flex items-center gap-2 mb-5">
-            <Users className="h-5 w-5 text-[#1244E8]" aria-hidden="true" />
-            <h2 className="text-xl font-bold text-[#0B0F1C]">
-              Candidatures chauffeurs en attente
-            </h2>
+            <Outlet />
           </div>
-
-          {isLoadingDrivers ? (
-            <p className="text-gray-400">Chargement…</p>
-          ) : !pendingDrivers || pendingDrivers.length === 0 ? (
-            <div className="rounded-xl bg-white p-8 text-center text-gray-400 ring-1 ring-gray-100">
-              Aucune candidature en attente.
-            </div>
-          ) : (
-            <div className="overflow-hidden rounded-xl ring-1 ring-gray-100 bg-white">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-gray-50 text-left">
-                    <th scope="col" className="px-5 py-3 font-semibold text-[#0B0F1C]">Chauffeur</th>
-                    <th scope="col" className="px-5 py-3 font-semibold text-[#0B0F1C]">Contact</th>
-                    <th scope="col" className="px-5 py-3 font-semibold text-[#0B0F1C]">Véhicule</th>
-                    <th scope="col" className="px-5 py-3 font-semibold text-[#0B0F1C]">SIRET</th>
-                    <th scope="col" className="px-5 py-3 font-semibold text-[#0B0F1C]">
-                      <span className="sr-only">Actions</span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {pendingDrivers.map((driver) => (
-                    <tr key={driver.id}>
-                      <td className="px-5 py-4 font-medium text-[#0B0F1C]">
-                        {driver.profiles?.full_name ?? "—"}
-                      </td>
-                      <td className="px-5 py-4 text-gray-500">
-                        <div>{driver.profiles?.email}</div>
-                        {driver.profiles?.phone && <div>{driver.profiles.phone}</div>}
-                      </td>
-                      <td className="px-5 py-4 text-gray-500">
-                        {driver.vehicle_type === "taxi"
-                          ? "Taxi"
-                          : driver.vehicle_type === "vsl"
-                          ? "VSL"
-                          : "Ambulance"}
-                        {driver.pmr_equipped && " · PMR"}
-                        <div className="text-xs text-gray-400">{driver.vehicle_registration}</div>
-                        {driver.parking_municipality && (
-                          <div className="text-xs text-gray-400">{driver.parking_municipality}</div>
-                        )}
-                      </td>
-                      <td className="px-5 py-4 text-gray-500">
-                        {driver.siret}
-                        {driver.company_name && (
-                          <div className="text-xs text-gray-400">{driver.company_name}</div>
-                        )}
-                      </td>
-                      <td className="px-5 py-4 text-right">
-                        <button
-                          type="button"
-                          onClick={() => approve(driver.id)}
-                          disabled={isApproving}
-                          className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3.5 py-2 text-xs font-bold text-emerald-700 hover:bg-emerald-100 disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                        >
-                          <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
-                          Approuver
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
         </div>
       </div>
     </section>
