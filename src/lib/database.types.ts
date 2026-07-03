@@ -359,6 +359,7 @@ export type Database = {
           dropoff_lat: number | null
           dropoff_lng: number | null
           estimated_price: number | null
+          expired_notified_at: string | null
           id: string
           is_hospitalization: boolean
           medical_notes: string | null
@@ -411,6 +412,7 @@ export type Database = {
           dropoff_lat?: number | null
           dropoff_lng?: number | null
           estimated_price?: number | null
+          expired_notified_at?: string | null
           id?: string
           is_hospitalization?: boolean
           medical_notes?: string | null
@@ -463,6 +465,7 @@ export type Database = {
           dropoff_lat?: number | null
           dropoff_lng?: number | null
           estimated_price?: number | null
+          expired_notified_at?: string | null
           id?: string
           is_hospitalization?: boolean
           medical_notes?: string | null
@@ -933,6 +936,7 @@ export type Database = {
       }
       est_grande_ville: { Args: { p_address: string }; Returns: boolean }
       est_jour_ferie_fr: { Args: { p_date: string }; Returns: boolean }
+      expire_overdue_bookings: { Args: never; Returns: undefined }
       generate_booking_reference_code: { Args: never; Returns: string }
       get_admin_driver_directory: {
         Args: never
