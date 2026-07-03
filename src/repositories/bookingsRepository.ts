@@ -398,7 +398,7 @@ export async function fetchDriverRides(
     )
     .eq("driver_id", driverId)
     .in("status", ["accepted", "in_progress", "completed"])
-    .order("pickup_datetime", { ascending: false })
+    .order("pickup_datetime", { ascending: true })
     .limit(20);
 
   if (error) {
