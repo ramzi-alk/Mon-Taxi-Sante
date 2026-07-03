@@ -408,6 +408,31 @@ export async function fetchDriverRides(
   return (data ?? []) as unknown as DriverRideRow[];
 }
 
+/**
+ * Single ride for the driver detail page (/tableau-de-bord/chauffeur/course/$id)
+ * — same columns and view as fetchDriverRides, scoped to one id. The view's
+ * "WHERE driver_id = auth.uid()" (see migration 039) already guarantees a
+ * driver can't fetch another driver's ride by guessing its id.
+ */
+export async function fetchDriverRideById(
+  client: SupabaseClient,
+  rideId: string
+): Promise<DriverRideRow | null> {
+  const { data, error } = await client
+    .from("bookings_active_for_driver")
+    .select(
+      "id, driver_id, patient_full_name, patient_phone, pickup_address, pickup_lat, pickup_lng, dropoff_address, dropoff_lat, dropoff_lng, distance_km, pickup_datetime, return_datetime, vehicle_type, trip_type, requires_wheelchair, requires_stretcher, requires_oxygen, passenger_count, estimated_price, status, created_at, distance_to_driver_km, driver_rating_given, patient_rating_received, patient_rating_avg, pmt_declared, is_hospitalization, series_index, series_total, series_id"
+    )
+    .eq("id", rideId)
+    .maybeSingle();
+
+  if (error) {
+    logger.error("bookings.fetchDriverRideById failed", { error: error.message, rideId });
+    throw new Error(error.message);
+  }
+  return data as unknown as DriverRideRow | null;
+}
+
 function mapRideLifecycleError(error: { message: string }, rideId: string, action: string): Error {
   if (error.message.includes("vehicle_not_compatible")) {
     return new Error("Votre véhicule n'est pas équipé pour cette course (fauteuil/brancard/oxygène).");

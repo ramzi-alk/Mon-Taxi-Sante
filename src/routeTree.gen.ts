@@ -44,6 +44,7 @@ import { Route as AdminChauffeursRouteImport } from './routes/admin/chauffeurs'
 import { Route as AdminAvisRouteImport } from './routes/admin/avis'
 import { Route as DepartmentCityRouteImport } from './routes/$department.$city'
 import { Route as TableauDeBordChauffeurCompteRouteImport } from './routes/tableau-de-bord/chauffeur_.compte'
+import { Route as TableauDeBordChauffeurCourseIdRouteImport } from './routes/tableau-de-bord/chauffeur_.course.$id'
 import { ServerRoute as ApiCronExpireBookingsServerRouteImport } from './routes/api/cron/expire-bookings'
 import { ServerRoute as ApiCronBookingRemindersServerRouteImport } from './routes/api/cron/booking-reminders'
 import { ServerRoute as ApiCronAtRiskBookingsServerRouteImport } from './routes/api/cron/at-risk-bookings'
@@ -216,6 +217,12 @@ const TableauDeBordChauffeurCompteRoute =
     path: '/tableau-de-bord/chauffeur/compte',
     getParentRoute: () => rootRouteImport,
   } as any)
+const TableauDeBordChauffeurCourseIdRoute =
+  TableauDeBordChauffeurCourseIdRouteImport.update({
+    id: '/tableau-de-bord/chauffeur_/course/$id',
+    path: '/tableau-de-bord/chauffeur/course/$id',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiCronExpireBookingsServerRoute =
   ApiCronExpireBookingsServerRouteImport.update({
     id: '/api/cron/expire-bookings',
@@ -269,6 +276,7 @@ export interface FileRoutesByFullPath {
   '/blog': typeof BlogIndexRoute
   '/reservation': typeof ReservationIndexRoute
   '/tableau-de-bord/chauffeur/compte': typeof TableauDeBordChauffeurCompteRoute
+  '/tableau-de-bord/chauffeur/course/$id': typeof TableauDeBordChauffeurCourseIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -303,6 +311,7 @@ export interface FileRoutesByTo {
   '/blog': typeof BlogIndexRoute
   '/reservation': typeof ReservationIndexRoute
   '/tableau-de-bord/chauffeur/compte': typeof TableauDeBordChauffeurCompteRoute
+  '/tableau-de-bord/chauffeur/course/$id': typeof TableauDeBordChauffeurCourseIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -339,6 +348,7 @@ export interface FileRoutesById {
   '/blog/': typeof BlogIndexRoute
   '/reservation/': typeof ReservationIndexRoute
   '/tableau-de-bord/chauffeur_/compte': typeof TableauDeBordChauffeurCompteRoute
+  '/tableau-de-bord/chauffeur_/course/$id': typeof TableauDeBordChauffeurCourseIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -376,6 +386,7 @@ export interface FileRouteTypes {
     | '/blog'
     | '/reservation'
     | '/tableau-de-bord/chauffeur/compte'
+    | '/tableau-de-bord/chauffeur/course/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -410,6 +421,7 @@ export interface FileRouteTypes {
     | '/blog'
     | '/reservation'
     | '/tableau-de-bord/chauffeur/compte'
+    | '/tableau-de-bord/chauffeur/course/$id'
   id:
     | '__root__'
     | '/'
@@ -445,6 +457,7 @@ export interface FileRouteTypes {
     | '/blog/'
     | '/reservation/'
     | '/tableau-de-bord/chauffeur_/compte'
+    | '/tableau-de-bord/chauffeur_/course/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -473,6 +486,7 @@ export interface RootRouteChildren {
   BlogIndexRoute: typeof BlogIndexRoute
   ReservationIndexRoute: typeof ReservationIndexRoute
   TableauDeBordChauffeurCompteRoute: typeof TableauDeBordChauffeurCompteRoute
+  TableauDeBordChauffeurCourseIdRoute: typeof TableauDeBordChauffeurCourseIdRoute
 }
 export interface FileServerRoutesByFullPath {
   '/api/cron/at-risk-bookings': typeof ApiCronAtRiskBookingsServerRoute
@@ -747,6 +761,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TableauDeBordChauffeurCompteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/tableau-de-bord/chauffeur_/course/$id': {
+      id: '/tableau-de-bord/chauffeur_/course/$id'
+      path: '/tableau-de-bord/chauffeur/course/$id'
+      fullPath: '/tableau-de-bord/chauffeur/course/$id'
+      preLoaderRoute: typeof TableauDeBordChauffeurCourseIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 declare module '@tanstack/react-start/server' {
@@ -825,6 +846,7 @@ const rootRouteChildren: RootRouteChildren = {
   BlogIndexRoute: BlogIndexRoute,
   ReservationIndexRoute: ReservationIndexRoute,
   TableauDeBordChauffeurCompteRoute: TableauDeBordChauffeurCompteRoute,
+  TableauDeBordChauffeurCourseIdRoute: TableauDeBordChauffeurCourseIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

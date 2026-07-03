@@ -251,11 +251,15 @@ function buildCalendarLinks(ride: PoolRide) {
     ? new Date(ride.return_datetime)
     : new Date(start.getTime() + 60 * 60 * 1000);
 
+  const appUrl = (import.meta.env.VITE_APP_URL as string | undefined) ?? "https://mon-taxi-sante.com";
+  const rideDetailUrl = `${appUrl}/tableau-de-bord/chauffeur/course/${ride.id}`;
+
   const title = `Course — ${ride.patient_full_name ?? ride.patient_first_name}`;
   const details = [
     `Destination : ${ride.dropoff_address}`,
     ride.patient_phone ? `Téléphone patient : ${ride.patient_phone}` : null,
     `Véhicule : ${ride.vehicle_type.toUpperCase()}`,
+    `Valider la prise en charge : ${rideDetailUrl}`,
   ]
     .filter(Boolean)
     .join("\n");
