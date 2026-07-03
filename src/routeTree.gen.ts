@@ -35,6 +35,7 @@ import { Route as BlogTransportCpamRouteImport } from './routes/blog/transport-c
 import { Route as BlogPmtPrescriptionRouteImport } from './routes/blog/pmt-prescription'
 import { Route as BlogAldTransportRouteImport } from './routes/blog/ald-transport'
 import { Route as AdminConnexionRouteImport } from './routes/admin_.connexion'
+import { Route as AdminStatistiquesRouteImport } from './routes/admin/statistiques'
 import { Route as AdminSecuriteRouteImport } from './routes/admin/securite'
 import { Route as AdminReservationsRouteImport } from './routes/admin/reservations'
 import { Route as AdminPatientsRouteImport } from './routes/admin/patients'
@@ -168,6 +169,11 @@ const AdminConnexionRoute = AdminConnexionRouteImport.update({
   path: '/admin/connexion',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminStatistiquesRoute = AdminStatistiquesRouteImport.update({
+  id: '/statistiques',
+  path: '/statistiques',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminSecuriteRoute = AdminSecuriteRouteImport.update({
   id: '/securite',
   path: '/securite',
@@ -243,6 +249,7 @@ export interface FileRoutesByFullPath {
   '/admin/patients': typeof AdminPatientsRoute
   '/admin/reservations': typeof AdminReservationsRoute
   '/admin/securite': typeof AdminSecuriteRoute
+  '/admin/statistiques': typeof AdminStatistiquesRoute
   '/admin/connexion': typeof AdminConnexionRoute
   '/blog/ald-transport': typeof BlogAldTransportRoute
   '/blog/pmt-prescription': typeof BlogPmtPrescriptionRoute
@@ -276,6 +283,7 @@ export interface FileRoutesByTo {
   '/admin/patients': typeof AdminPatientsRoute
   '/admin/reservations': typeof AdminReservationsRoute
   '/admin/securite': typeof AdminSecuriteRoute
+  '/admin/statistiques': typeof AdminStatistiquesRoute
   '/admin/connexion': typeof AdminConnexionRoute
   '/blog/ald-transport': typeof BlogAldTransportRoute
   '/blog/pmt-prescription': typeof BlogPmtPrescriptionRoute
@@ -311,6 +319,7 @@ export interface FileRoutesById {
   '/admin/patients': typeof AdminPatientsRoute
   '/admin/reservations': typeof AdminReservationsRoute
   '/admin/securite': typeof AdminSecuriteRoute
+  '/admin/statistiques': typeof AdminStatistiquesRoute
   '/admin_/connexion': typeof AdminConnexionRoute
   '/blog/ald-transport': typeof BlogAldTransportRoute
   '/blog/pmt-prescription': typeof BlogPmtPrescriptionRoute
@@ -347,6 +356,7 @@ export interface FileRouteTypes {
     | '/admin/patients'
     | '/admin/reservations'
     | '/admin/securite'
+    | '/admin/statistiques'
     | '/admin/connexion'
     | '/blog/ald-transport'
     | '/blog/pmt-prescription'
@@ -380,6 +390,7 @@ export interface FileRouteTypes {
     | '/admin/patients'
     | '/admin/reservations'
     | '/admin/securite'
+    | '/admin/statistiques'
     | '/admin/connexion'
     | '/blog/ald-transport'
     | '/blog/pmt-prescription'
@@ -414,6 +425,7 @@ export interface FileRouteTypes {
     | '/admin/patients'
     | '/admin/reservations'
     | '/admin/securite'
+    | '/admin/statistiques'
     | '/admin_/connexion'
     | '/blog/ald-transport'
     | '/blog/pmt-prescription'
@@ -651,6 +663,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminConnexionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/statistiques': {
+      id: '/admin/statistiques'
+      path: '/statistiques'
+      fullPath: '/admin/statistiques'
+      preLoaderRoute: typeof AdminStatistiquesRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/securite': {
       id: '/admin/securite'
       path: '/securite'
@@ -735,6 +754,7 @@ interface AdminRouteChildren {
   AdminPatientsRoute: typeof AdminPatientsRoute
   AdminReservationsRoute: typeof AdminReservationsRoute
   AdminSecuriteRoute: typeof AdminSecuriteRoute
+  AdminStatistiquesRoute: typeof AdminStatistiquesRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
@@ -745,6 +765,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminPatientsRoute: AdminPatientsRoute,
   AdminReservationsRoute: AdminReservationsRoute,
   AdminSecuriteRoute: AdminSecuriteRoute,
+  AdminStatistiquesRoute: AdminStatistiquesRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
 

@@ -1,10 +1,11 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ShieldAlert, LayoutDashboard, ClipboardList, Users, UserSearch, MessageSquareText, History, ShieldCheck } from "lucide-react";
+import { ShieldAlert, LayoutDashboard, ClipboardList, Users, UserSearch, MessageSquareText, History, ShieldCheck, BarChart3 } from "lucide-react";
 import { supabase } from "~/lib/supabase";
 import * as authRepository from "~/repositories/authRepository";
 import { checkAdminAccessServerFn } from "~/server/adminAccess";
 import { AdminCommandSearch } from "~/components/admin/AdminCommandSearch";
+import { AdminNotificationBell } from "~/components/admin/AdminNotificationBell";
 import { cn } from "~/lib/utils";
 
 export const Route = createFileRoute("/admin")({
@@ -35,6 +36,7 @@ const NAV_ITEMS = [
   { to: "/admin/patients", label: "Patients", icon: UserSearch, exact: false },
   { to: "/admin/avis", label: "Avis", icon: MessageSquareText, exact: false },
   { to: "/admin/journal", label: "Journal", icon: History, exact: false },
+  { to: "/admin/statistiques", label: "Statistiques", icon: BarChart3, exact: false },
   { to: "/admin/securite", label: "Sécurité", icon: ShieldCheck, exact: false },
 ] as const;
 
@@ -111,8 +113,9 @@ function AdminShell() {
           </aside>
 
           <div className="min-w-0">
-            <div className="mb-6 flex justify-end md:justify-start">
+            <div className="mb-6 flex justify-end md:justify-start items-center gap-2">
               <AdminCommandSearch />
+              <AdminNotificationBell />
             </div>
             <Outlet />
           </div>

@@ -115,6 +115,50 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          read_at: string | null
+          read_by: string | null
+          target_id: string | null
+          target_table: string | null
+          title: string
+          type: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          read_by?: string | null
+          target_id?: string | null
+          target_table?: string | null
+          title: string
+          type: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          read_by?: string | null
+          target_id?: string | null
+          target_table?: string | null
+          title?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_notifications_read_by_fkey"
+            columns: ["read_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       booking_driver_refusals: {
         Row: {
           booking_id: string
@@ -908,6 +952,7 @@ export type Database = {
           vehicle_type: Database["public"]["Enums"]["vehicle_type"]
         }[]
       }
+      get_admin_operational_kpis: { Args: { p_days: number }; Returns: Json }
       get_booking_status_counts: {
         Args: never
         Returns: {

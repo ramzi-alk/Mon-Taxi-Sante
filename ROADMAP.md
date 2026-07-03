@@ -502,16 +502,74 @@ admin utilisables dans ce bac à sable, donc pas de service-role key ni de
 mot de passe de compte réel disponibles pour simuler une session
 authentifiée de bout en bout.
 
-## Sprint 10 — Pilotage & productivité
+## Sprint 10 — Pilotage & productivité ✅ TERMINÉ
 
-- [ ] **KPIs opérationnels avancés** (`Medium`) — taux d'annulation, délai
-      moyen d'attribution, taux de courses sans chauffeur, note moyenne,
-      répartition géographique, fenêtres 7/30 jours + tendance (vues SQL
-      matérialisées).
-- [ ] **Export de données comptabilité/CPAM** (`Medium`) — export CSV des
-      courses terminées (tarif CPAM 2025, distance, statut mutuelle).
-- [ ] **Centre de notifications internes** (`Low`) — flux in-app (Supabase
-      Realtime), statut lu/traité, en complément des emails existants.
+- [x] **KPIs opérationnels avancés** (`Medium`) — nouvelle page
+      `/admin/statistiques`. RPC `get_admin_operational_kpis(p_days)`
+      (migration 046) : taux d'annulation, taux de courses sans chauffeur
+      (prise en charge passée, statut ≠ annulé, sans `driver_id`), délai
+      moyen d'attribution (`accepted_at - created_at`), note moyenne
+      patients → chauffeurs, top 10 des communes de prise en charge —
+      chaque métrique calculée sur une fenêtre 7 ou 30 jours au choix
+      (bascule dans l'UI), avec la période précédente de même durée
+      renvoyée en parallèle pour afficher une tendance (▲/▼ vs période
+      précédente) sans second aller-retour réseau. **Calculé à la volée
+      plutôt qu'en vue matérialisée** (déviation assumée par rapport à
+      l'énoncé initial) : au volume actuel (~20 courses), une requête live
+      reste instantanée et toujours à jour sans tâche de rafraîchissement
+      à maintenir ; à revisiter si le volume grossit significativement.
+- [x] **Export de données comptabilité/CPAM** (`Medium`) — section dédiée
+      sur `/admin/statistiques` : sélection d'une période (du/au),
+      génération d'un CSV (`;`-séparé, BOM UTF-8 pour Excel) des courses
+      `completed` sur cette période — référence, patient, trajet, dates,
+      distance, véhicule, statut de prise en charge CPAM, nom de mutuelle,
+      indicateur retour à vide (hospitalisation), montant, chauffeur.
+      Lecture directe de `bookings` (policy RLS admin existante), pas de
+      RPC dédiée. Génération et téléchargement entièrement côté client
+      (`src/lib/csv.ts`), aucune donnée transite par un serveur
+      intermédiaire au-delà de la requête Supabase habituelle.
+- [x] **Centre de notifications internes** (`Low`) — cloche dans l'entête
+      admin (`AdminNotificationBell`, à côté de la recherche Cmd+K),
+      badge non-lus mis à jour en direct via Supabase Realtime. Nouvelle
+      table `admin_notifications` (migration 046), alimentée par 3
+      triggers `SECURITY DEFINER` (même schéma de protection que
+      `log_admin_activity`, migration 045 : colonnes `type/title/body/
+      target_*` non modifiables par `authenticated`, seule la lecture est
+      permise en écriture sur `read_at`/`read_by`) : nouvelle candidature
+      chauffeur, réservation annulée (patient, chauffeur ou admin — peu
+      importe l'auteur), avis patient à note ≤ 2. **Distinct du journal
+      d'activité** (`/admin/journal`, migration 045) : celui-ci trace les
+      actions *faites par* les admins, celui-ci signale des évènements qui
+      *méritent leur attention*, quel qu'en soit l'auteur. Marquage lu
+      individuel ou global ("Tout marquer lu"). Pas de canal push/email
+      pour ces notifications — uniquement in-app, tel que spécifié.
+
+**Fichiers touchés** : `supabase/migrations/046_admin_kpis_and_notifications.sql`
+(nouveau), `src/lib/database.types.ts` (régénéré),
+`src/repositories/adminStatsRepository.ts`,
+`src/repositories/adminNotificationsRepository.ts`,
+`src/lib/csv.ts`, `src/components/admin/AdminNotificationBell.tsx`,
+`src/routes/admin/statistiques.tsx` (nouveaux), `src/routes/admin.tsx`
+(nav + cloche dans l'entête).
+
+**Vérification effectuée** : migration 046 appliquée sur le projet
+Supabase live (RPC testée directement en SQL : rejette bien un appel sans
+session admin avec `not_admin`, confirmant que la garde fonctionne),
+`get_advisors` (sécurité) vérifié après coup — seul le même bruit
+préexistant "Anonymous Access Policies" apparaît (déjà présent sur
+`bookings`/`profiles`/`admin_grants`/etc. avant ce sprint, cf. notes
+Sprint 9), aucune nouvelle alerte critique. Types régénérés. `npx vite
+build` : succès complet, `/admin/statistiques` généré comme route enfant
+de `/admin`. `npx tsc --noEmit` : 28 erreurs, diff ligne à ligne contre
+l'état de fin de Sprint 9 strictement vide (aucune nouvelle erreur).
+Serveur de dev + Playwright : `/admin`, `/admin/connexion`,
+`/admin/statistiques`, `/admin/securite` répondent 200 sans nouvelle
+erreur console — la seule erreur JS observée (`process is not defined`)
+est préexistante et présente aussi sur la page d'accueil publique, donc
+sans rapport avec ce sprint. Comme pour les sprints précédents, aucun
+test du flux authentifié complet (valeurs réelles des KPIs, export CSV
+avec données, réception d'une notification) : pas d'identifiants admin
+utilisables dans ce bac à sable.
 
 ## Backlog panel admin — Idées bonus / différenciation (non planifié)
 
