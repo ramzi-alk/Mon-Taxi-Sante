@@ -27,7 +27,7 @@ const PAGE_SIZE = 20;
 const AT_RISK_HOURS = 4;
 
 const bookingStatusValues = [
-  "draft", "pending", "confirmed", "available", "accepted", "in_progress", "completed", "cancelled",
+  "draft", "pending", "confirmed", "available", "accepted", "in_progress", "completed", "cancelled", "expired",
 ] as const;
 const vehicleTypeValues = ["taxi", "vsl", "pmr", "ambulance"] as const;
 
@@ -435,7 +435,7 @@ function BookingDetailDialog({ bookingId, onClose }: { bookingId: string; onClos
                   Annuler la course
                 </button>
               )}
-              {(booking.status === "available" || booking.status === "accepted") && (
+              {(booking.status === "available" || booking.status === "accepted" || booking.status === "expired") && (
                 <button
                   type="button"
                   onClick={() => setMode("reassign")}

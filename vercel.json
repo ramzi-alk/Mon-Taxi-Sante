@@ -11,6 +11,10 @@
     {
       "path": "/api/cron/at-risk-bookings",
       "schedule": "0 12 * * *"
+    },
+    {
+      "path": "/api/cron/expire-bookings",
+      "schedule": "0 6 * * *"
     }
   ]
 }

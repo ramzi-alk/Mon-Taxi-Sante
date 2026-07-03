@@ -265,6 +265,27 @@ export function bookingCancellationEmail(params: {
   };
 }
 
+export function bookingExpiredEmail(params: {
+  patientFullName: string;
+  referenceCode: string;
+  pickupDatetime: string;
+}): EmailContent {
+  const { patientFullName, referenceCode, pickupDatetime } = params;
+  return {
+    subject: `Aucun chauffeur trouvé — Réf. ${formatReferenceCode(referenceCode)}`,
+    html: layout({
+      title: "Aucun chauffeur n'a pu être trouvé",
+      icon: "⚠️",
+      bodyHtml: `
+        ${badge("Course expirée", "amber")}
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${patientFullName},</p>
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Nous n'avons malheureusement pas réussi à vous trouver de chauffeur avant l'heure prévue de votre course du <strong>${formatDateFr(pickupDatetime)} à ${formatTimeFr(pickupDatetime)}</strong> (réf. ${formatReferenceCode(referenceCode)}).</p>
+        <p style="margin:0;font-size:14px;color:#6b7280;line-height:1.5;">Contactez-nous directement pour organiser une nouvelle prise en charge, ou créez une nouvelle réservation depuis notre site.</p>
+      `,
+    }),
+  };
+}
+
 export function adminNewDriverApplicationEmail(params: {
   driverFullName: string;
   driverEmail: string;

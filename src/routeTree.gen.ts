@@ -44,6 +44,7 @@ import { Route as AdminChauffeursRouteImport } from './routes/admin/chauffeurs'
 import { Route as AdminAvisRouteImport } from './routes/admin/avis'
 import { Route as DepartmentCityRouteImport } from './routes/$department.$city'
 import { Route as TableauDeBordChauffeurCompteRouteImport } from './routes/tableau-de-bord/chauffeur_.compte'
+import { ServerRoute as ApiCronExpireBookingsServerRouteImport } from './routes/api/cron/expire-bookings'
 import { ServerRoute as ApiCronBookingRemindersServerRouteImport } from './routes/api/cron/booking-reminders'
 import { ServerRoute as ApiCronAtRiskBookingsServerRouteImport } from './routes/api/cron/at-risk-bookings'
 
@@ -214,6 +215,12 @@ const TableauDeBordChauffeurCompteRoute =
     id: '/tableau-de-bord/chauffeur_/compte',
     path: '/tableau-de-bord/chauffeur/compte',
     getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiCronExpireBookingsServerRoute =
+  ApiCronExpireBookingsServerRouteImport.update({
+    id: '/api/cron/expire-bookings',
+    path: '/api/cron/expire-bookings',
+    getParentRoute: () => rootServerRouteImport,
   } as any)
 const ApiCronBookingRemindersServerRoute =
   ApiCronBookingRemindersServerRouteImport.update({
@@ -470,27 +477,41 @@ export interface RootRouteChildren {
 export interface FileServerRoutesByFullPath {
   '/api/cron/at-risk-bookings': typeof ApiCronAtRiskBookingsServerRoute
   '/api/cron/booking-reminders': typeof ApiCronBookingRemindersServerRoute
+  '/api/cron/expire-bookings': typeof ApiCronExpireBookingsServerRoute
 }
 export interface FileServerRoutesByTo {
   '/api/cron/at-risk-bookings': typeof ApiCronAtRiskBookingsServerRoute
   '/api/cron/booking-reminders': typeof ApiCronBookingRemindersServerRoute
+  '/api/cron/expire-bookings': typeof ApiCronExpireBookingsServerRoute
 }
 export interface FileServerRoutesById {
   __root__: typeof rootServerRouteImport
   '/api/cron/at-risk-bookings': typeof ApiCronAtRiskBookingsServerRoute
   '/api/cron/booking-reminders': typeof ApiCronBookingRemindersServerRoute
+  '/api/cron/expire-bookings': typeof ApiCronExpireBookingsServerRoute
 }
 export interface FileServerRouteTypes {
   fileServerRoutesByFullPath: FileServerRoutesByFullPath
-  fullPaths: '/api/cron/at-risk-bookings' | '/api/cron/booking-reminders'
+  fullPaths:
+    | '/api/cron/at-risk-bookings'
+    | '/api/cron/booking-reminders'
+    | '/api/cron/expire-bookings'
   fileServerRoutesByTo: FileServerRoutesByTo
-  to: '/api/cron/at-risk-bookings' | '/api/cron/booking-reminders'
-  id: '__root__' | '/api/cron/at-risk-bookings' | '/api/cron/booking-reminders'
+  to:
+    | '/api/cron/at-risk-bookings'
+    | '/api/cron/booking-reminders'
+    | '/api/cron/expire-bookings'
+  id:
+    | '__root__'
+    | '/api/cron/at-risk-bookings'
+    | '/api/cron/booking-reminders'
+    | '/api/cron/expire-bookings'
   fileServerRoutesById: FileServerRoutesById
 }
 export interface RootServerRouteChildren {
   ApiCronAtRiskBookingsServerRoute: typeof ApiCronAtRiskBookingsServerRoute
   ApiCronBookingRemindersServerRoute: typeof ApiCronBookingRemindersServerRoute
+  ApiCronExpireBookingsServerRoute: typeof ApiCronExpireBookingsServerRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -730,6 +751,13 @@ declare module '@tanstack/react-router' {
 }
 declare module '@tanstack/react-start/server' {
   interface ServerFileRoutesByPath {
+    '/api/cron/expire-bookings': {
+      id: '/api/cron/expire-bookings'
+      path: '/api/cron/expire-bookings'
+      fullPath: '/api/cron/expire-bookings'
+      preLoaderRoute: typeof ApiCronExpireBookingsServerRouteImport
+      parentRoute: typeof rootServerRouteImport
+    }
     '/api/cron/booking-reminders': {
       id: '/api/cron/booking-reminders'
       path: '/api/cron/booking-reminders'
@@ -804,6 +832,7 @@ export const routeTree = rootRouteImport
 const rootServerRouteChildren: RootServerRouteChildren = {
   ApiCronAtRiskBookingsServerRoute: ApiCronAtRiskBookingsServerRoute,
   ApiCronBookingRemindersServerRoute: ApiCronBookingRemindersServerRoute,
+  ApiCronExpireBookingsServerRoute: ApiCronExpireBookingsServerRoute,
 }
 export const serverRouteTree = rootServerRouteImport
   ._addFileChildren(rootServerRouteChildren)

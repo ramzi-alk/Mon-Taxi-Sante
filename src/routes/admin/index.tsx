@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Clock, ClipboardList, Car, CheckCircle2, AlertTriangle, ArrowRight } from "lucide-react";
+import { Clock, ClipboardList, Car, CheckCircle2, AlertTriangle, TimerOff, ArrowRight } from "lucide-react";
 import { supabase } from "~/lib/supabase";
 import * as bookingsRepository from "~/repositories/bookingsRepository";
 import * as adminBookingsRepository from "~/repositories/adminBookingsRepository";
@@ -54,6 +54,7 @@ function AdminOverviewPage() {
     { label: "Disponibles", value: bookingStats?.available ?? 0, icon: ClipboardList },
     { label: "En cours", value: bookingStats?.in_progress ?? 0, icon: Car },
     { label: "Terminées", value: bookingStats?.completed ?? 0, icon: CheckCircle2 },
+    { label: "Expirées", value: bookingStats?.expired ?? 0, icon: TimerOff },
   ];
 
   return (
@@ -69,7 +70,7 @@ function AdminOverviewPage() {
             onRetry={() => refetchStats()}
           />
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             {statCards.map(({ label, value, icon: Icon }) => (
               <div key={label} className="rounded-xl bg-white p-5 ring-1 ring-gray-100">
                 <div className="flex items-center gap-2 text-gray-400">

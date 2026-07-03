@@ -1,0 +1,11 @@
+-- Nouveau statut terminal 'expired' : une réservation restée 'available'
+-- (jamais acceptée par un chauffeur) alors que pickup_datetime est déjà
+-- passé. Avant cette migration, ce cas restait bloqué en 'available'
+-- indéfiniment — visible dans le pool chauffeur, sans notification au
+-- patient ni distinction admin entre "à risque" et "réellement manquée".
+--
+-- ALTER TYPE ... ADD VALUE doit être commité seul (une valeur d'énum ajoutée
+-- ne peut pas être utilisée dans la même transaction) : cette migration ne
+-- contient donc que cet ajout, le reste (vue pool, trigger de notification)
+-- suit dans la migration 048.
+ALTER TYPE public.booking_status ADD VALUE 'expired';

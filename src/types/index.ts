@@ -43,7 +43,8 @@ export type BookingStatus =
   | "accepted"
   | "in_progress"
   | "completed"
-  | "cancelled";
+  | "cancelled"
+  | "expired";
 
 export type TripType = "aller_simple" | "aller_retour" | "multiple";
 export type CpamStatus = "ald" | "cmu" | "css" | "standard" | "none";

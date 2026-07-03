@@ -1176,6 +1176,7 @@ export type Database = {
         | "in_progress"
         | "completed"
         | "cancelled"
+        | "expired"
       booking_vehicle_type: "taxi" | "vsl" | "pmr" | "ambulance"
       cpam_status: "ald" | "cmu" | "css" | "standard" | "none"
       driver_availability: "online" | "paused" | "offline"
@@ -1320,6 +1321,7 @@ export const Constants = {
         "in_progress",
         "completed",
         "cancelled",
+        "expired",
       ],
       booking_vehicle_type: ["taxi", "vsl", "pmr", "ambulance"],
       cpam_status: ["ald", "cmu", "css", "standard", "none"],
