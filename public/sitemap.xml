@@ -51,6 +51,21 @@
     <priority>0.6</priority>
   </url>
   <url>
+    <loc>https://mon-taxi-sante.com/cgv</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://mon-taxi-sante.com/confidentialite</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://mon-taxi-sante.com/mentions-legales</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
     <loc>https://mon-taxi-sante.com/paris/paris</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -89,20 +104,5 @@
     <loc>https://mon-taxi-sante.com/bas-rhin/strasbourg</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://mon-taxi-sante.com/cgv</loc>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>
-  <url>
-    <loc>https://mon-taxi-sante.com/confidentialite</loc>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>
-  <url>
-    <loc>https://mon-taxi-sante.com/mentions-legales</loc>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
   </url>
 </urlset>
