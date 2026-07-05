@@ -1,78 +1,15 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowRight, MapPin, CheckCircle2, Phone } from "lucide-react";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
-
-// Static data store — in production, pull from a CMS or database
-const cityData: Record<string, {
-  department: string;
-  departmentCode: string;
-  region: string;
-  nearbyHospitals: string[];
-  population: number;
-  slug: string;
-}> = {
-  "paris": {
-    department: "Paris", departmentCode: "75", region: "Île-de-France",
-    nearbyHospitals: ["Hôpital Lariboisière", "Hôpital Saint-Louis", "Pitié-Salpêtrière"],
-    population: 2161000, slug: "paris",
-  },
-  "lyon": {
-    department: "Rhône", departmentCode: "69", region: "Auvergne-Rhône-Alpes",
-    nearbyHospitals: ["Hôpital Édouard Herriot", "Hôpital Lyon Sud", "Croix-Rousse"],
-    population: 513275, slug: "lyon",
-  },
-  "marseille": {
-    department: "Bouches-du-Rhône", departmentCode: "13", region: "Provence-Alpes-Côte d'Azur",
-    nearbyHospitals: ["CHU Timone", "Hôpital Nord", "Hôpital Sainte-Marguerite"],
-    population: 861635, slug: "marseille",
-  },
-  "bordeaux": {
-    department: "Gironde", departmentCode: "33", region: "Nouvelle-Aquitaine",
-    nearbyHospitals: ["CHU Bordeaux Pellegrin", "Hôpital Saint-André", "Hôpital Haut-Lévêque"],
-    population: 257804, slug: "bordeaux",
-  },
-  "toulouse": {
-    department: "Haute-Garonne", departmentCode: "31", region: "Occitanie",
-    nearbyHospitals: ["CHU Rangueil", "CHU Purpan", "Hôpital Joseph Ducuing"],
-    population: 471941, slug: "toulouse",
-  },
-  "nice": {
-    department: "Alpes-Maritimes", departmentCode: "06", region: "PACA",
-    nearbyHospitals: ["CHU Nice Pasteur", "Hôpital Saint-Roch", "Hôpital Cimiez"],
-    population: 342669, slug: "nice",
-  },
-  "nantes": {
-    department: "Loire-Atlantique", departmentCode: "44", region: "Pays de la Loire",
-    nearbyHospitals: ["CHU Nantes", "Hôpital Laennec", "Clinique Jules Verne"],
-    population: 320732, slug: "nantes",
-  },
-  "strasbourg": {
-    department: "Bas-Rhin", departmentCode: "67", region: "Grand Est",
-    nearbyHospitals: ["CHU Strasbourg Hautepierre", "Hôpital Civil", "NHC"],
-    population: 284677, slug: "strasbourg",
-  },
-};
-
-function getCityInfo(citySlug: string, departmentSlug: string) {
-  const normalized = citySlug.toLowerCase().replace(/-/g, "");
-  return cityData[citySlug.toLowerCase()] ?? {
-    department: departmentSlug.replace(/-/g, " "),
-    departmentCode: "XX",
-    region: "France",
-    nearbyHospitals: ["Centre hospitalier local"],
-    population: 0,
-    slug: citySlug,
-  };
-}
+import { getCommune, getNearbyHospitals, type Commune, type Hospital } from "~/lib/seoData";
 
 export const Route = createFileRoute("/$department/$city")({
   head: ({ params }) => {
-    const cityName = params.city.replace(/-/g, " ");
-    const deptName = params.department.replace(/-/g, " ");
-    const cityInfo = getCityInfo(params.city, params.department);
+    const commune = getCommune(params.department, params.city);
+    if (!commune) return {};
 
-    const title = `Taxi conventionné Assurance Maladie à ${cityName} (${cityInfo.departmentCode}) — Mon Taxi Santé`;
-    const description = `Réservez votre taxi médical agréé Sécurité Sociale à ${cityName} en ${deptName}. Chauffeurs certifiés Assurance Maladie, Tiers-Payant intégral, zéro avance de frais. Disponible pour dialyse, chimiothérapie, ALD.`;
+    const title = `Taxi conventionné Assurance Maladie à ${commune.nom} (${commune.codeDepartement}) — Mon Taxi Santé`;
+    const description = `Réservez votre taxi médical agréé Sécurité Sociale à ${commune.nom} en ${commune.departementNom}. Chauffeurs certifiés Assurance Maladie, Tiers-Payant intégral, zéro avance de frais. Disponible pour dialyse, chimiothérapie, ALD.`;
 
     return {
       meta: [
@@ -85,14 +22,8 @@ export const Route = createFileRoute("/$department/$city")({
           property: "og:url",
           content: `https://mon-taxi-sante.com/${params.department}/${params.city}`,
         },
-        {
-          name: "geo.region",
-          content: `FR-${cityInfo.departmentCode}`,
-        },
-        {
-          name: "geo.placename",
-          content: cityName,
-        },
+        { name: "geo.region", content: `FR-${commune.codeDepartement}` },
+        { name: "geo.placename", content: commune.nom },
       ],
       links: [
         {
@@ -103,61 +34,58 @@ export const Route = createFileRoute("/$department/$city")({
     };
   },
   component: LocalPage,
-  // SSR cache headers set in vercel.json
+  // SSR cache headers set in vercel.json. Le loader ne sert qu'à valider
+  // l'existence de la commune (404 sinon) — le composant relit les données
+  // via useParams(), comme le reste des routes de ce projet (useLoaderData()
+  // se heurte à un souci d'inférence de type dans cette version alpha du
+  // routeur).
   loader: async ({ params }) => {
-    return { params };
+    const commune = getCommune(params.department, params.city);
+    if (!commune) throw notFound();
   },
 });
 
-function LocalBusinessSchema({
-  cityName,
-  deptName,
-  deptCode,
-  hospitals,
-}: {
-  cityName: string;
-  deptName: string;
-  deptCode: string;
-  hospitals: string[];
-}) {
+function LocalBusinessSchema({ commune, hospitals }: { commune: Commune; hospitals: Hospital[] }) {
   const schema = {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
-    "@id": `https://mon-taxi-sante.com/${deptName.toLowerCase().replace(/ /g, "-")}/${cityName.toLowerCase().replace(/ /g, "-")}#business`,
-    name: `Mon Taxi Santé — ${cityName}`,
-    description: `Service de taxi médical conventionné Assurance Maladie à ${cityName} (${deptCode}). Transport pour dialyse, chimiothérapie, ALD. Tiers-Payant.`,
+    "@id": `https://mon-taxi-sante.com/${commune.departementSlug}/${commune.slug}#business`,
+    name: `Mon Taxi Santé — ${commune.nom}`,
+    description: `Service de taxi médical conventionné Assurance Maladie à ${commune.nom} (${commune.codeDepartement}). Transport pour dialyse, chimiothérapie, ALD. Tiers-Payant.`,
     url: "https://mon-taxi-sante.com",
     telephone: CONTACT_PHONE_TEL,
     priceRange: "Pris en charge Assurance Maladie",
     image: "https://mon-taxi-sante.com/og-image.jpg",
     address: {
       "@type": "PostalAddress",
-      addressLocality: cityName,
-      addressRegion: deptName,
+      addressLocality: commune.nom,
+      addressRegion: commune.departementNom,
       addressCountry: "FR",
     },
     areaServed: {
       "@type": "City",
-      name: cityName,
+      name: commune.nom,
     },
     openingHoursSpecification: [
       {
         "@type": "OpeningHoursSpecification",
-        dayOfWeek: ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
+        dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
         opens: "06:00",
         closes: "22:00",
       },
     ],
-    hasOfferCatalog: {
-      "@type": "OfferCatalog",
-      name: "Transports médicaux",
-      itemListElement: hospitals.map((h, i) => ({
-        "@type": "Offer",
-        position: i + 1,
-        name: `Transport vers ${h}`,
-        description: `Taxi conventionné Assurance Maladie depuis ${cityName} vers ${h}`,
-      })),
-    },
+    ...(hospitals.length > 0 && {
+      hasOfferCatalog: {
+        "@type": "OfferCatalog",
+        name: "Transports médicaux",
+        itemListElement: hospitals.map((h, i) => ({
+          "@type": "Offer",
+          position: i + 1,
+          name: `Transport vers ${h.nom}`,
+          description: `Taxi conventionné Assurance Maladie depuis ${commune.nom} vers ${h.nom}`,
+        })),
+      },
+    }),
   };
 
   return (
@@ -170,13 +98,12 @@ function LocalBusinessSchema({
 
 function LocalPage() {
   const { department: departmentSlug, city: citySlug } = Route.useParams();
-  const cityName = citySlug.replace(/-/g, " ");
-  const deptName = departmentSlug.replace(/-/g, " ");
-  const cityInfo = getCityInfo(citySlug, departmentSlug);
-
-  // Capitalize
-  const City = cityName.charAt(0).toUpperCase() + cityName.slice(1);
-  const Dept = deptName.charAt(0).toUpperCase() + deptName.slice(1);
+  const commune = getCommune(departmentSlug, citySlug);
+  // Le loader a déjà validé l'existence de la commune (notFound() sinon) ;
+  // ce cas ne devrait jamais s'afficher en pratique.
+  if (!commune) return null;
+  const hospitals = getNearbyHospitals(commune);
+  const { nom: City, departementNom: Dept } = commune;
 
   const faqItems = [
     {
@@ -189,7 +116,9 @@ function LocalPage() {
     },
     {
       q: `Quels hôpitaux desservez-vous à ${City} ?`,
-      a: `Nous desservons ${cityInfo.nearbyHospitals.join(", ")} ainsi que tous les cabinets médicaux, centres de dialyse et établissements de santé de ${Dept}.`,
+      a: hospitals.length
+        ? `Nous desservons ${hospitals.map((h) => h.nom).join(", ")} ainsi que tous les cabinets médicaux, centres de dialyse et établissements de santé de ${Dept}.`
+        : `Nous desservons tous les cabinets médicaux, centres de dialyse et établissements de santé de ${City} et de ${Dept}.`,
     },
     {
       q: `Avez-vous des véhicules PMR à ${City} ?`,
@@ -199,12 +128,7 @@ function LocalPage() {
 
   return (
     <>
-      <LocalBusinessSchema
-        cityName={City}
-        deptName={Dept}
-        deptCode={cityInfo.departmentCode}
-        hospitals={cityInfo.nearbyHospitals}
-      />
+      <LocalBusinessSchema commune={commune} hospitals={hospitals} />
 
       {/* Hero */}
       <section className="bg-gradient-to-br from-brand-blue-700 to-brand-blue-600 text-white py-16">
@@ -216,7 +140,11 @@ function LocalPage() {
                 <Link to="/" className="hover:text-white">Accueil</Link>
               </li>
               <li aria-hidden="true">/</li>
-              <li>{Dept}</li>
+              <li>
+                <Link to="/$department" params={{ department: commune.departementSlug }} className="hover:text-white">
+                  {Dept}
+                </Link>
+              </li>
               <li aria-hidden="true">/</li>
               <li className="text-white font-semibold" aria-current="page">{City}</li>
             </ol>
@@ -226,6 +154,7 @@ function LocalPage() {
             <MapPin className="h-5 w-5 text-brand-green-300" aria-hidden="true" />
             <span className="text-brand-green-300 font-semibold">
               Service disponible à {City}
+              {commune.population ? ` — ${commune.population.toLocaleString("fr-FR")} habitants` : ""}
             </span>
           </div>
           <h1 className="text-4xl md:text-5xl font-extrabold mb-4 leading-tight">
@@ -267,9 +196,9 @@ function LocalPage() {
             établissements de santé à {City} et en {Dept}.
           </p>
           <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 list-none">
-            {cityInfo.nearbyHospitals.map((hospital) => (
+            {hospitals.map((hospital) => (
               <li
-                key={hospital}
+                key={hospital.finess ?? hospital.nom}
                 className="flex items-start gap-3 rounded-xl bg-gray-50 p-4 ring-1 ring-gray-100"
               >
                 <CheckCircle2
@@ -277,7 +206,7 @@ function LocalPage() {
                   aria-hidden="true"
                 />
                 <div>
-                  <p className="font-semibold text-gray-900">{hospital}</p>
+                  <p className="font-semibold text-gray-900">{hospital.nom}</p>
                   <p className="text-sm text-muted-foreground mt-0.5">
                     Transport conventionné Assurance Maladie disponible
                   </p>

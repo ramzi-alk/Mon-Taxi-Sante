@@ -27,6 +27,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ReservationIndexRouteImport } from './routes/reservation/index'
 import { Route as BlogIndexRouteImport } from './routes/blog/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as DepartmentIndexRouteImport } from './routes/$department.index'
 import { Route as TableauDeBordChauffeurRouteImport } from './routes/tableau-de-bord/chauffeur'
 import { Route as ReservationConfirmationRouteImport } from './routes/reservation/confirmation'
 import { Route as ChauffeursTarifsRouteImport } from './routes/chauffeurs/tarifs'
@@ -130,6 +131,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminRoute,
+} as any)
+const DepartmentIndexRoute = DepartmentIndexRouteImport.update({
+  id: '/$department/',
+  path: '/$department/',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const TableauDeBordChauffeurRoute = TableauDeBordChauffeurRouteImport.update({
   id: '/tableau-de-bord/chauffeur',
@@ -272,6 +278,7 @@ export interface FileRoutesByFullPath {
   '/chauffeurs/tarifs': typeof ChauffeursTarifsRoute
   '/reservation/confirmation': typeof ReservationConfirmationRoute
   '/tableau-de-bord/chauffeur': typeof TableauDeBordChauffeurRoute
+  '/$department': typeof DepartmentIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/blog': typeof BlogIndexRoute
   '/reservation': typeof ReservationIndexRoute
@@ -307,6 +314,7 @@ export interface FileRoutesByTo {
   '/chauffeurs/tarifs': typeof ChauffeursTarifsRoute
   '/reservation/confirmation': typeof ReservationConfirmationRoute
   '/tableau-de-bord/chauffeur': typeof TableauDeBordChauffeurRoute
+  '/$department': typeof DepartmentIndexRoute
   '/admin': typeof AdminIndexRoute
   '/blog': typeof BlogIndexRoute
   '/reservation': typeof ReservationIndexRoute
@@ -344,6 +352,7 @@ export interface FileRoutesById {
   '/chauffeurs/tarifs': typeof ChauffeursTarifsRoute
   '/reservation/confirmation': typeof ReservationConfirmationRoute
   '/tableau-de-bord/chauffeur': typeof TableauDeBordChauffeurRoute
+  '/$department/': typeof DepartmentIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/blog/': typeof BlogIndexRoute
   '/reservation/': typeof ReservationIndexRoute
@@ -382,6 +391,7 @@ export interface FileRouteTypes {
     | '/chauffeurs/tarifs'
     | '/reservation/confirmation'
     | '/tableau-de-bord/chauffeur'
+    | '/$department'
     | '/admin/'
     | '/blog'
     | '/reservation'
@@ -417,6 +427,7 @@ export interface FileRouteTypes {
     | '/chauffeurs/tarifs'
     | '/reservation/confirmation'
     | '/tableau-de-bord/chauffeur'
+    | '/$department'
     | '/admin'
     | '/blog'
     | '/reservation'
@@ -453,6 +464,7 @@ export interface FileRouteTypes {
     | '/chauffeurs/tarifs'
     | '/reservation/confirmation'
     | '/tableau-de-bord/chauffeur'
+    | '/$department/'
     | '/admin/'
     | '/blog/'
     | '/reservation/'
@@ -483,6 +495,7 @@ export interface RootRouteChildren {
   ChauffeursTarifsRoute: typeof ChauffeursTarifsRoute
   ReservationConfirmationRoute: typeof ReservationConfirmationRoute
   TableauDeBordChauffeurRoute: typeof TableauDeBordChauffeurRoute
+  DepartmentIndexRoute: typeof DepartmentIndexRoute
   BlogIndexRoute: typeof BlogIndexRoute
   ReservationIndexRoute: typeof ReservationIndexRoute
   TableauDeBordChauffeurCompteRoute: typeof TableauDeBordChauffeurCompteRoute
@@ -641,6 +654,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/$department/': {
+      id: '/$department/'
+      path: '/$department'
+      fullPath: '/$department'
+      preLoaderRoute: typeof DepartmentIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/tableau-de-bord/chauffeur': {
       id: '/tableau-de-bord/chauffeur'
@@ -843,6 +863,7 @@ const rootRouteChildren: RootRouteChildren = {
   ChauffeursTarifsRoute: ChauffeursTarifsRoute,
   ReservationConfirmationRoute: ReservationConfirmationRoute,
   TableauDeBordChauffeurRoute: TableauDeBordChauffeurRoute,
+  DepartmentIndexRoute: DepartmentIndexRoute,
   BlogIndexRoute: BlogIndexRoute,
   ReservationIndexRoute: ReservationIndexRoute,
   TableauDeBordChauffeurCompteRoute: TableauDeBordChauffeurCompteRoute,

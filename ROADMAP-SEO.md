@@ -85,23 +85,39 @@ d'une carte.
 
 ---
 
-## Sprint 2 — Pages villes pilotées par les données
+## Sprint 2 — Pages villes pilotées par les données ✅ TERMINÉ
 
-- [ ] Générer `communes.json` / `hospitals.json` réels (voir action requise
-      ci-dessus).
-- [ ] Refondre `src/routes/$department.$city.tsx` pour lire
-      `communes.json` au lieu de l'objet `cityData` codé en dur (8 villes).
-- [ ] **Corriger le contenu fin actuel** : aujourd'hui, n'importe quel slug
-      ville/département inventé retourne une page 200 avec un contenu
-      générique fabriqué (`"Centre hospitalier local"`, `departmentCode: "XX"`).
-      C'est exactement le anti-pattern à éviter. La route doit renvoyer une
-      404 (`notFound()`) pour tout couple département/ville absent du jeu de
-      données.
-- [ ] Lier chaque page ville aux hôpitaux réels les plus proches (via
-      `hospitals.json`) au lieu de la liste actuelle saisie à la main.
-- [ ] Ajouter une page liste par département (`/$department`) pour le
-      maillage interne (Google découvre les villes sans dépendre uniquement
-      du sitemap).
+- [x] Générer `communes.json` (5509 communes) / `hospitals.json` (7474
+      établissements) réels, mergés depuis la branche `chore/refresh-seo-data`
+      générée par le workflow.
+- [x] **`src/lib/seoData.ts`** : module central chargeant `communes.json` /
+      `hospitals.json`, avec index par `département/ville`, par département,
+      et par commune pour les hôpitaux. Normalise les arrondissements
+      Paris/Lyon/Marseille (FINESS utilise des codes INSEE par arrondissement
+      — 75101-75120, 69381-69389, 13201-13216 — alors que `communes.json` n'a
+      qu'une seule entrée par ville ; sans ce repli, ces 3 grandes villes
+      n'auraient affiché aucun hôpital malgré des centaines de résultats).
+- [x] Refondre `src/routes/$department.$city.tsx` pour lire les vraies
+      données au lieu de l'objet `cityData` codé en dur (8 villes).
+- [x] **Corriger le contenu fin** : la route renvoie maintenant `notFound()`
+      (404) pour tout couple département/ville absent du jeu de données, au
+      lieu de fabriquer une page générique pour n'importe quel slug inventé.
+- [x] Lier chaque page ville aux hôpitaux réels les plus proches (via
+      `hospitals.json`) au lieu de la liste saisie à la main.
+- [x] **`src/routes/$department.index.tsx`** : page liste des communes d'un
+      département (triées par population) pour le maillage interne — Google
+      découvre les villes sans dépendre uniquement du sitemap.
+
+**Vérifié** : `pnpm build` passe, `npx tsc --noEmit` ne régresse pas (26
+erreurs contre 28 avant, aucune nouvelle liée à ce sprint — la seule
+attendue, `LoaderFnContext ... => never`, est un défaut préexistant de cette
+version alpha de TanStack Router sur *toute* route combinant `head` + un
+loader non trivial, déjà présent avant ce sprint, indépendant de la forme des
+données retournées). Testé en conditions réelles (serveur de dev + curl) :
+`/rhone/lyon` → 200 avec les vrais hôpitaux lyonnais, `/paris/paris` et
+`/bouches-du-rhone/marseille` → hôpitaux réels également (validant le repli
+arrondissement), `/rhone` → 200 avec 127 communes triées par population,
+`/rhone/ville-qui-nexiste-pas` et `/departement-bidon` → 404.
 
 ## Sprint 3 — Pages maladies (ALD)
 
