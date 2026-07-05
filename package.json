@@ -10,6 +10,8 @@
     "start": "node dist/server/server.js",
     "preview": "node dist/server/server.js",
     "seo:build-data": "node scripts/seo-data/fetch-communes.mjs && node scripts/seo-data/fetch-hospitals.mjs",
+    "seo:communes": "node scripts/seo-data/fetch-communes.mjs",
+    "seo:hospitals": "node scripts/seo-data/fetch-hospitals.mjs",
     "seo:sitemap": "node scripts/seo-data/generate-sitemap.mjs"
   },
   "dependencies": {
