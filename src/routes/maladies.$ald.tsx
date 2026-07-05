@@ -2,6 +2,8 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowRight, HeartPulse, CheckCircle2, Phone } from "lucide-react";
 import aldList from "~/data/seo/ald.json";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
+import { CitySearch } from "~/components/CitySearch";
+import { FaqSchema } from "~/components/FaqSchema";
 
 const aldBySlug = new Map(aldList.map((a) => [a.slug, a]));
 
@@ -60,6 +62,8 @@ function MaladiePage() {
 
   return (
     <>
+      <FaqSchema items={faqItems} />
+
       <section className="bg-gradient-to-br from-brand-blue-700 to-brand-blue-600 text-white py-16">
         <div className="container">
           <nav aria-label="Fil d'Ariane" className="mb-6">
@@ -175,6 +179,18 @@ function MaladiePage() {
               </div>
             ))}
           </dl>
+        </div>
+      </section>
+
+      <section className="section-medical bg-brand-blue-50" aria-labelledby="ville-heading">
+        <div className="container max-w-md text-center">
+          <h2 id="ville-heading" className="text-2xl font-bold text-gray-900 mb-2">
+            Trouvez le service dans votre ville
+          </h2>
+          <p className="text-muted-foreground mb-5">
+            Recherchez votre ville pour voir les hôpitaux desservis et réserver.
+          </p>
+          <CitySearch />
         </div>
       </section>
 

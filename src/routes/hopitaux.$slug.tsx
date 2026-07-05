@@ -1,7 +1,26 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { ArrowRight, Building2, MapPin, Phone, CheckCircle2 } from "lucide-react";
+import { ArrowRight, Building2, MapPin, Phone, CheckCircle2, HeartPulse } from "lucide-react";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
 import { getHospitalPageDataServerFn } from "~/server/seo";
+import { FaqSchema } from "~/components/FaqSchema";
+import aldList from "~/data/seo/ald.json";
+import type { Hospital } from "~/lib/seoData";
+
+// Recoupement catégorie FINESS -> ALD la plus pertinente. Volontairement
+// limité aux libellés de catégorie effectivement présents dans les données
+// (voir hospitals.json) plutôt que d'inventer une correspondance incertaine
+// pour chaque spécialité.
+const CATEGORY_TO_ALD_SLUG: { pattern: RegExp; aldSlug: string }[] = [
+  { pattern: /dialyse/i, aldSlug: "nephropathie-chronique-grave-syndrome-nephrotique" },
+  { pattern: /maladies mentales|psychiatr/i, aldSlug: "affections-psychiatriques-longue-duree" },
+];
+
+function getRelatedAld(hospital: Hospital) {
+  if (!hospital.categorie) return null;
+  const match = CATEGORY_TO_ALD_SLUG.find((c) => c.pattern.test(hospital.categorie ?? ""));
+  if (!match) return null;
+  return aldList.find((a) => a.slug === match.aldSlug) ?? null;
+}
 
 export const Route = createFileRoute("/hopitaux/$slug")({
   loader: async ({ params }) => {
@@ -33,11 +52,63 @@ export const Route = createFileRoute("/hopitaux/$slug")({
   component: HospitalPage,
 });
 
+function HospitalSchema({ hospital, commune }: { hospital: Hospital; commune: ReturnType<typeof Route.useLoaderData>["commune"] }) {
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "MedicalClinic",
+    name: hospital.nom,
+    ...(hospital.telephone && { telephone: hospital.telephone }),
+    ...(hospital.adresse && {
+      address: {
+        "@type": "PostalAddress",
+        streetAddress: hospital.adresse,
+        postalCode: hospital.codePostal ?? undefined,
+        addressLocality: commune?.nom,
+        addressCountry: "FR",
+      },
+    }),
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}
+
 function HospitalPage() {
   const { hospital, commune, otherHospitals } = Route.useLoaderData();
+  const relatedAld = getRelatedAld(hospital);
+
+  const faqItems = [
+    {
+      q: `Le transport vers ${hospital.nom} est-il remboursé par l'Assurance Maladie ?`,
+      a: "Oui, sur prescription médicale de transport (PMT) et selon votre situation (ALD, CMU, ou taux standard de 65%). Le Tiers-Payant s'applique : vous n'avancez aucun frais.",
+    },
+    {
+      q: "Comment réserver un taxi conventionné pour cet établissement ?",
+      a: `Utilisez notre formulaire en ligne en 5 minutes, ou appelez le ${CONTACT_PHONE_DISPLAY} (gratuit). Votre réservation est confirmée immédiatement par SMS.`,
+    },
+    {
+      q: "Proposez-vous des véhicules adaptés (PMR) ?",
+      a: "Oui, nos chauffeurs partenaires disposent de véhicules adaptés aux fauteuils roulants avec rampe d'accès électrique et fixation homologuée, sur demande à la réservation.",
+    },
+    ...(relatedAld
+      ? [
+          {
+            q: `Ce trajet est-il éligible à la prise en charge à 100% ALD ?`,
+            a: `Si votre transport vers cet établissement est en lien avec une ALD comme « ${relatedAld.nomCourt} », il peut être remboursé à 100% sur prescription médicale.`,
+          },
+        ]
+      : []),
+  ];
 
   return (
     <>
+      <HospitalSchema hospital={hospital} commune={commune} />
+      <FaqSchema items={faqItems} />
+
       <section className="bg-gradient-to-br from-brand-blue-700 to-brand-blue-600 text-white py-16">
         <div className="container">
           <nav aria-label="Fil d'Ariane" className="mb-6">
@@ -130,6 +201,24 @@ function HospitalPage() {
               </div>
             )}
           </dl>
+
+          {relatedAld && (
+            <Link
+              to="/maladies/$ald"
+              params={{ ald: relatedAld.slug }}
+              className="mt-6 flex items-center gap-3 rounded-xl bg-brand-blue-50 p-4 ring-1 ring-brand-blue-100 hover:ring-brand-blue-300 transition-colors"
+            >
+              <HeartPulse className="h-5 w-5 text-brand-blue-600 shrink-0" aria-hidden="true" />
+              <div>
+                <p className="font-semibold text-gray-900">
+                  Transport pris en charge à 100% pour {relatedAld.nomCourt.toLowerCase()}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Voir les conditions de prise en charge pour cette ALD →
+                </p>
+              </div>
+            </Link>
+          )}
         </div>
       </section>
 
@@ -192,6 +281,22 @@ function HospitalPage() {
           </div>
         </section>
       )}
+
+      <section className="section-medical bg-white" aria-labelledby="faq-heading">
+        <div className="container max-w-3xl">
+          <h2 id="faq-heading" className="text-3xl font-bold text-gray-900 mb-8">
+            Questions fréquentes
+          </h2>
+          <dl className="space-y-6">
+            {faqItems.map(({ q, a }) => (
+              <div key={q} className="rounded-2xl bg-gray-50 p-6 ring-1 ring-gray-100">
+                <dt className="font-bold text-gray-900 text-lg mb-2">{q}</dt>
+                <dd className="text-muted-foreground">{a}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </section>
 
       <section className="bg-brand-blue-700 text-white py-16">
         <div className="container text-center">

@@ -3,7 +3,19 @@ import { ArrowRight, MapPin, CheckCircle2, Phone } from "lucide-react";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
 import { getCityPageDataServerFn } from "~/server/seo";
 import { HospitalSearch } from "~/components/HospitalSearch";
+import { FaqSchema } from "~/components/FaqSchema";
 import type { Commune, Hospital } from "~/lib/seoData";
+
+// Sélection de pathologies parmi les 30 ALD, à forte notoriété/volume de
+// recherche, pour le maillage croisé ville -> maladie (le lien "toutes les
+// pathologies" ci-dessous couvre les 30).
+const FEATURED_ALD = [
+  { label: "Cancer", slug: "tumeur-maligne-cancer" },
+  { label: "Insuffisance rénale / dialyse", slug: "nephropathie-chronique-grave-syndrome-nephrotique" },
+  { label: "Diabète", slug: "diabete-type-1-et-type-2" },
+  { label: "AVC", slug: "accident-vasculaire-cerebral-invalidant" },
+  { label: "Affections psychiatriques", slug: "affections-psychiatriques-longue-duree" },
+];
 
 export const Route = createFileRoute("/$department/$city")({
   // SSR cache headers set in vercel.json. Les données passent par une
@@ -128,6 +140,7 @@ function LocalPage() {
   return (
     <>
       <LocalBusinessSchema commune={commune} hospitals={hospitals} />
+      <FaqSchema items={faqItems} />
 
       {/* Hero */}
       <section className="bg-gradient-to-br from-brand-blue-700 to-brand-blue-600 text-white py-16">
@@ -295,6 +308,41 @@ function LocalPage() {
               </div>
             ))}
           </dl>
+        </div>
+      </section>
+
+      {/* Maladies (ALD) — maillage croisé */}
+      <section className="section-medical bg-brand-blue-50" aria-labelledby="maladies-heading">
+        <div className="container">
+          <h2 id="maladies-heading" className="text-2xl font-bold text-gray-900 mb-2">
+            Transport pris en charge à 100% selon votre pathologie
+          </h2>
+          <p className="text-muted-foreground mb-6 max-w-2xl">
+            Si votre transport à {City} est en lien avec une Affection de
+            Longue Durée (ALD), il est remboursé à 100% sur prescription
+            médicale.
+          </p>
+          <ul className="flex flex-wrap gap-3 list-none">
+            {FEATURED_ALD.map(({ label, slug }) => (
+              <li key={slug}>
+                <Link
+                  to="/maladies/$ald"
+                  params={{ ald: slug }}
+                  className="inline-block rounded-full bg-white px-4 py-2 text-sm font-medium text-brand-blue-700 ring-1 ring-brand-blue-200 hover:ring-brand-blue-400 transition-colors"
+                >
+                  {label}
+                </Link>
+              </li>
+            ))}
+            <li>
+              <Link
+                to="/maladies"
+                className="inline-block rounded-full bg-brand-blue-700 px-4 py-2 text-sm font-medium text-white hover:bg-brand-blue-800 transition-colors"
+              >
+                Toutes les pathologies →
+              </Link>
+            </li>
+          </ul>
         </div>
       </section>
 

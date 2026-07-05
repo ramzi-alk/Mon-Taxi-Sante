@@ -293,6 +293,39 @@ réelles : `/hopitaux/aural-unite-dialyse-hop-croix-rousse-lyon` → 200, lien
 vers `/rhone/lyon` et vers d'autres établissements lyonnais présents ; page
 ville → liens cliquables vers chaque hôpital ; slug inventé → 404.
 
+## Sprint 4bis — Recherche d'établissement, JSON-LD, maillage croisé ✅ TERMINÉ
+
+- [x] **Accueil** : section "Pour quelles situations médicales ?" — les
+      libellés correspondant à une ALD précise (dialyse, chimio/
+      radiothérapie, soins psychiatriques) deviennent des liens vers leur
+      page `/maladies/$ald` ; "Consultations ALD" renvoie vers l'index
+      `/maladies`.
+- [x] **`HospitalSearch`** (façon `CitySearch`) : remplace la carte statique
+      "+ Tous autres établissements" (qui ne menait nulle part) sur la page
+      ville par une vraie recherche, scopée au département courant.
+      `searchHospitals()` dans `seoData.ts` + `searchHospitalsServerFn`.
+- [x] **`FaqSchema`** (composant partagé, JSON-LD `FAQPage`) appliqué aux
+      trois gabarits (ville, maladie — qui l'avaient sans schema — et
+      hôpital, où une section FAQ a été ajoutée, elle n'existait pas).
+- [x] **JSON-LD `MedicalClinic`** sur la page hôpital (absent jusqu'ici —
+      seule la page ville avait un schema `LocalBusiness`).
+- [x] **Maillage croisé enrichi** :
+      - page maladie → `CitySearch` ("Trouvez le service dans votre ville")
+      - page hôpital → lien vers l'ALD associée quand la catégorie FINESS
+        le permet de façon fiable (`dialyse` → néphropathie chronique,
+        `maladies mentales`/`psychiatr` → affections psychiatriques — les
+        seules catégories de ce type effectivement présentes dans les
+        données ; pas de correspondance oncologie/cardiologie inventée
+        faute de catégorie FINESS distincte pour ces spécialités)
+      - page ville → bloc de 5 ALD à forte notoriété (cancer, dialyse,
+        diabète, AVC, psychiatrie) + lien vers les 30
+
+**Vérifié** : `pnpm build` + `tsc` sans régression (25 erreurs, aucune
+nouvelle). Testé en conditions réelles (build de production) : recherche
+d'hôpital fonctionnelle et scopée au département, JSON-LD `FAQPage`/
+`MedicalClinic` présents sur les 3 gabarits, lien ALD correct sur une page
+hôpital de dialyse.
+
 ## Sprint 5 — Qualité de contenu & anti-duplicate
 
 Le risque principal à cette échelle est la pénalité Google pour pages quasi
