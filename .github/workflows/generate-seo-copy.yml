@@ -1,0 +1,72 @@
+name: Générer les intros SEO par LLM (ville / ALD)
+
+on:
+  workflow_dispatch:
+    inputs:
+      only:
+        description: "Limiter à un jeu de données (villes / maladies), vide = les deux"
+        required: false
+        default: ""
+      limit:
+        description: "Limiter au N premiers éléments (échantillon de test)"
+        required: false
+        default: ""
+      force:
+        description: "Régénérer même les intros déjà présentes"
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  generate-seo-copy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Installer les dépendances
+        run: pnpm install --frozen-lockfile
+
+      - name: Générer les intros (DeepSeek)
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        run: |
+          ARGS=""
+          if [ -n "${{ inputs.only }}" ]; then ARGS="$ARGS --only=${{ inputs.only }}"; fi
+          if [ -n "${{ inputs.limit }}" ]; then ARGS="$ARGS --limit=${{ inputs.limit }}"; fi
+          if [ "${{ inputs.force }}" = "true" ]; then ARGS="$ARGS --force"; fi
+          node scripts/seo-data/generate-copy.mjs $ARGS
+
+      - name: Ouvrir une Pull Request pour relecture
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "chore(seo): génération d'intros ville/ALD par LLM (DeepSeek)"
+          title: "chore(seo): génération d'intros ville/ALD par LLM (DeepSeek)"
+          body: |
+            Contenu généré automatiquement par `scripts/seo-data/generate-copy.mjs`
+            (DeepSeek v4 Pro, endpoint compatible Anthropic).
+
+            Paramètres de ce run : only="${{ inputs.only }}", limit="${{ inputs.limit }}",
+            force="${{ inputs.force }}".
+
+            **À relire avant de merger** : le contenu est piloté par prompt à partir de
+            données réelles (population, rang, villes voisines, ALD), mais reste un
+            texte généré — vérifier qu'aucune formulation ne dérape avant publication
+            large (voir ROADMAP-SEO.md, Sprint 5).
+          branch: chore/generate-seo-copy
+          delete-branch: true
+          add-paths: |
+            src/data/seo/city-copy.json
+            src/data/seo/ald-copy.json

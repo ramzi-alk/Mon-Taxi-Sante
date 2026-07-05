@@ -1,5 +1,6 @@
 import communesData from "~/data/seo/communes.json";
 import hospitalsData from "~/data/seo/hospitals.json";
+import cityCopyData from "~/data/seo/city-copy.json";
 
 export interface Commune {
   codeInsee: string;
@@ -11,6 +12,11 @@ export interface Commune {
   codeRegion: string;
   population: number | null;
   codePostal: string | null;
+  // Introduction générée par LLM (scripts/seo-data/generate-copy.mjs) à partir
+  // des données réelles de la ville — null tant que le script n'a pas encore
+  // été lancé pour cette commune (les pages retombent alors sur un texte
+  // générique, voir $department.$city.tsx).
+  introText: string | null;
 }
 
 export interface Hospital {
@@ -31,7 +37,12 @@ export interface Hospital {
   slug?: string;
 }
 
-export const communes = communesData as Commune[];
+const cityCopy = cityCopyData as Record<string, string>;
+
+export const communes = (communesData as Omit<Commune, "introText">[]).map((c) => ({
+  ...c,
+  introText: cityCopy[c.codeInsee] ?? null,
+})) as Commune[];
 export const hospitals = hospitalsData as Hospital[];
 
 // Paris/Lyon/Marseille sont découpées en arrondissements dans FINESS

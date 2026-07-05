@@ -3,7 +3,7 @@ import { ArrowRight, Building2, MapPin, Phone, CheckCircle2, HeartPulse } from "
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
 import { getHospitalPageDataServerFn } from "~/server/seo";
 import { FaqSchema } from "~/components/FaqSchema";
-import aldList from "~/data/seo/ald.json";
+import { aldList } from "~/lib/aldData";
 import type { Hospital } from "~/lib/seoData";
 
 // Recoupement catégorie FINESS -> ALD la plus pertinente. Volontairement

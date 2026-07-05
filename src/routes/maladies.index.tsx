@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { HeartPulse, ArrowRight, Search } from "lucide-react";
-import ald from "~/data/seo/ald.json";
+import { aldList as ald } from "~/lib/aldData";
 import { Input } from "~/components/ui/input";
 import { slugify } from "~/lib/utils";
 

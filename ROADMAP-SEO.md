@@ -326,7 +326,7 @@ d'hôpital fonctionnelle et scopée au département, JSON-LD `FAQPage`/
 `MedicalClinic` présents sur les 3 gabarits, lien ALD correct sur une page
 hôpital de dialyse.
 
-## Sprint 5 — Qualité de contenu & anti-duplicate ✅ (volet données réelles) TERMINÉ
+## Sprint 5 — Qualité de contenu & anti-duplicate ✅ TERMINÉ
 
 Le risque principal à cette échelle est la pénalité Google pour pages quasi
 identiques (seul le nom change).
@@ -347,19 +347,44 @@ identiques (seul le nom change).
       - Carte "Chauffeurs locaux" de la section "Pourquoi nous choisir"
         mentionne désormais le nombre réel d'établissements desservis
         plutôt qu'une formule générique.
-- [ ] **Option contenu enrichi par LLM** (mentionnée par le porteur de
-      projet) : script `generate-copy.mjs` qui appelle une API (Claude ou
-      Gemini) pour rédiger une intro unique par ville/maladie à partir des
-      données structurées, avec relecture humaine avant publication.
-      Nécessite une clé API et un budget à valider séparément — **en attente
-      d'une décision** (voir échange avec le porteur de projet).
+- [x] **Contenu enrichi par LLM** (mentionnée par le porteur de projet, coût
+      estimé et validé : DeepSeek V4 Pro, ~1-1,70 $ pour l'ensemble des ~5539
+      pages) : `scripts/seo-data/generate-copy.mjs` appelle l'API DeepSeek
+      (endpoint compatible format Anthropic) pour rédiger une intro unique de
+      2-3 phrases par ville et par ALD, à partir des données déjà connues
+      (population, rang, villes voisines, nombre d'établissements, soins
+      associés à l'ALD) — grounding strict (aucun fait hors de ce qui est
+      fourni dans le prompt), pas de recherche web (aucun modèle ne le fait
+      par défaut sans outil dédié).
+      - Sortie : `src/data/seo/city-copy.json` (codeInsee → texte) et
+        `src/data/seo/ald-copy.json` (slug ALD → texte), commités vides
+        (`{}`) tant que le script n'a pas tourné — le site fonctionne sans
+        régression avec le texte générique existant en repli
+        (`commune.introText ?? <texte par défaut>`).
+      - `seoData.ts` fusionne `city-copy.json` dans `Commune.introText` ;
+        `src/lib/aldData.ts` (nouveau) fait de même pour les ALD et remplace
+        l'import direct de `ald.json` dans les 3 routes qui l'utilisaient.
+      - `pnpm seo:copy` en local (nécessite `DEEPSEEK_API_KEY`), ou workflow
+        manuel `.github/workflows/generate-seo-copy.yml`
+        (`workflow_dispatch`, secret `DEEPSEEK_API_KEY`, options
+        only/limit/force) qui ouvre une PR pour **relecture humaine avant
+        merge** — le contenu généré n'atteint jamais `main` sans revue du
+        diff.
+      - Reprise/idempotence : le script ne régénère que les entrées
+        manquantes (sauf `--force`), sauvegarde incrémentale toutes les 50
+        villes, retries avec backoff exponentiel par appel.
 - [ ] Si le nombre total d'URLs dépasse 50 000 (limite d'un fichier
       sitemap), passer à un sitemap index multi-fichiers. Pas urgent : 11 771
       URLs actuellement, loin de la limite.
 
-**Vérifié** : `pnpm build` + `tsc` sans régression (25 erreurs, aucune
-nouvelle). Testé en conditions réelles (build de production) : rang de
-population et villes voisines corrects et différenciés selon la ville.
+**Vérifié** : `pnpm build` + `tsc` sans régression (25 erreurs, identiques
+avant/après comparé explicitement via `git stash`). Testé en conditions
+réelles (build de production) : rang de population et villes voisines
+corrects et différenciés selon la ville, bundle client toujours ~700 Ko
+(aucun retour du bundle bloat). Le script `generate-copy.mjs` n'a pas encore
+été exécuté (nécessite `DEEPSEEK_API_KEY`, à fournir par le porteur de
+projet) — les fichiers `city-copy.json`/`ald-copy.json` sont vides et les
+pages utilisent le texte générique de repli jusqu'à la première génération.
 
 ## Sprint 6 — Suivi & validation
 

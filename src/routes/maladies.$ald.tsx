@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowRight, HeartPulse, CheckCircle2, Phone } from "lucide-react";
-import aldList from "~/data/seo/ald.json";
+import { aldList } from "~/lib/aldData";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
 import { CitySearch } from "~/components/CitySearch";
 import { FaqSchema } from "~/components/FaqSchema";
@@ -90,8 +90,12 @@ function MaladiePage() {
             <span className="text-brand-green-300">{affection.nomCourt}</span>
           </h1>
           <p className="text-xl text-blue-100 max-w-2xl mb-8">
-            Transport médical agréé Sécurité Sociale, remboursé à 100% sur
-            prescription médicale. Tiers-Payant intégral, zéro avance de frais.
+            {affection.introText ?? (
+              <>
+                Transport médical agréé Sécurité Sociale, remboursé à 100% sur
+                prescription médicale. Tiers-Payant intégral, zéro avance de frais.
+              </>
+            )}
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
             <Link

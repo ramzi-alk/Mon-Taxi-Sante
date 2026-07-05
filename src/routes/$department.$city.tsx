@@ -177,9 +177,13 @@ function LocalPage() {
             <span className="text-brand-green-300">à {City}</span>
           </h1>
           <p className="text-xl text-blue-100 max-w-2xl mb-8">
-            Transport médical agréé Sécurité Sociale en {Dept}.
-            Chauffeurs certifiés, Tiers-Payant intégral, zéro avance de frais.
-            Disponible 7j/7 pour tous vos soins médicaux.
+            {commune.introText ?? (
+              <>
+                Transport médical agréé Sécurité Sociale en {Dept}.
+                Chauffeurs certifiés, Tiers-Payant intégral, zéro avance de frais.
+                Disponible 7j/7 pour tous vos soins médicaux.
+              </>
+            )}
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
             <Link
