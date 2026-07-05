@@ -158,6 +158,59 @@ lignes `geolocalisationet` du fichier FINESS aux hôpitaux, (2) un composant
 client qui demande la permission de géolocalisation et calcule la ville/les
 hôpitaux les plus proches.
 
+## Sprint 2bis — Barres de recherche + fix bundle client ✅ TERMINÉ
+
+- [x] **Bug de performance corrigé** : `Footer.tsx` (présent sur toutes les
+      pages) et les pages villes/département important `~/lib/seoData`
+      directement embarquaient communes.json (5509 entrées) et
+      hospitals.json (7474 entrées) dans le bundle JS client — jusqu'à
+      **4,2 Mo** chargés sur chaque page du site, y compris des pages sans
+      aucun rapport (FAQ, tarifs...). Corrigé :
+      - `src/data/seo/top-communes.json` (30 entrées) généré par
+        `scripts/seo-data/derive-summaries.mjs` — `Footer.tsx` l'importe
+        directement au lieu de `~/lib/seoData`.
+      - `departments.json` enrichi d'un champ `nombreCommunes` (même
+        script) — `/villes` n'a plus besoin d'importer le tableau complet
+        des communes pour afficher un compteur.
+      - **`src/server/seo.ts`** : les lookups par ville/département/recherche
+        passent maintenant par des fonctions serveur (`createServerFn`,
+        même mécanisme que `AddressAutocomplete` → Mapbox), qui gardent les
+        gros JSON strictement côté serveur. `$department.$city.tsx` et
+        `$department.index.tsx` utilisent `loader()` + `useLoaderData()` au
+        lieu d'un import direct de `~/lib/seoData` dans le composant.
+      - Bonus inattendu : ce passage par `loader()`/`useLoaderData()` a aussi
+        fait disparaître l'erreur `LoaderFnContext ... => never` notée au
+        Sprint 2 (26 → 24 erreurs `tsc`, aucune sur les routes SEO).
+      - Bundle client vérifié après coup : `main-*.js` est passé de 4,2 Mo à
+        ~700 Ko (le reliquat de 30 entrées `top-communes.json`, voulu).
+- [x] **`src/lib/seoData.ts`** : ajout de `searchCommunes(query, limit)`
+      (préfixe > sous-chaîne, puis population décroissante).
+- [x] **`src/components/CitySearch.tsx`** : champ de recherche ville
+      (debounce 250 ms, navigation clavier, façon `AddressAutocomplete`) qui
+      appelle `searchCommunesServerFn` et redirige vers `/$department/$city`
+      au choix. Intégré sur la page d'accueil (hero) et sur `/villes`.
+- [x] Filtres client-side (déjà en place, pas de fonction serveur nécessaire
+      — données déjà chargées pour la page) : `/villes` filtre les
+      régions/départements affichés, `/$department` filtre ses communes.
+
+**Vérifié** : `pnpm build` + `tsc` sans régression. Testé avec Playwright
+contre le **build de production réel** (`dist/server/server.js`, pas
+`vite dev`) : recherche "lyo" → Lyon/Sainte-Foy-lès-Lyon/Chazelles-sur-Lyon
+triés par pertinence puis population, clic → navigation vers
+`/rhone/lyon` ou `/bouches-du-rhone/marseille` selon le cas. Bundle client
+confirmé sans communes.json/hospitals.json (`grep codeInseeCommune` → 0
+résultat dans `dist/client/assets`).
+
+**Note technique (hors scope, pré-existante, non bloquante)** : en mode
+`pnpm dev` uniquement, tout appel `createServerFn` (le mien comme
+`errorReporting.ts` qui existait déjà) lève `ReferenceError: process is not
+defined` dans `@tanstack/start-client-core`'s `createClientRpc` — ce module
+lit `process.env.TSS_APP_BASE`/`TSS_SERVER_FN_BASE`, correctement remplacés
+au build de production mais pas shimés par le serveur de dev de cette
+version alpha. N'affecte que l'expérience de développement local (le build
+de production, testé ci-dessus, fonctionne normalement) ; à surveiller si
+une mise à jour de `@tanstack/react-start` la corrige.
+
 ## Sprint 3 — Pages maladies (ALD)
 
 - [ ] `/maladies` (index des 30 ALD) + `/maladies/$ald` (une page par

@@ -77,10 +77,35 @@ export function getCommunesForDepartment(departmentSlug: string): Commune[] {
     .sort((a, b) => (b.population ?? 0) - (a.population ?? 0));
 }
 
-const communesByPopulationDesc = communes
-  .slice()
-  .sort((a, b) => (b.population ?? 0) - (a.population ?? 0));
+function normalizeQuery(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .trim();
+}
 
-export function getTopCommunes(limit = 16): Commune[] {
-  return communesByPopulationDesc.slice(0, limit);
+const communesSearchIndex = communes.map((c) => ({
+  commune: c,
+  normalizedNom: normalizeQuery(c.nom),
+}));
+
+// Recherche simple (préfixe > sous-chaîne, puis population décroissante) —
+// suffisant pour un champ de recherche de ville, pas besoin d'une lib de
+// recherche floue pour 5509 entrées.
+export function searchCommunes(query: string, limit = 8): Commune[] {
+  const q = normalizeQuery(query);
+  if (q.length < 2) return [];
+
+  const startsWith: Commune[] = [];
+  const includes: Commune[] = [];
+  for (const { commune, normalizedNom } of communesSearchIndex) {
+    if (normalizedNom.startsWith(q)) startsWith.push(commune);
+    else if (normalizedNom.includes(q)) includes.push(commune);
+  }
+  const byPopulationDesc = (a: Commune, b: Commune) => (b.population ?? 0) - (a.population ?? 0);
+  return [...startsWith.sort(byPopulationDesc), ...includes.sort(byPopulationDesc)].slice(
+    0,
+    limit
+  );
 }

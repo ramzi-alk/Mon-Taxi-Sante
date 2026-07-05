@@ -1,12 +1,24 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowRight, MapPin, CheckCircle2, Phone } from "lucide-react";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
-import { getCommune, getNearbyHospitals, type Commune, type Hospital } from "~/lib/seoData";
+import { getCityPageDataServerFn } from "~/server/seo";
+import type { Commune, Hospital } from "~/lib/seoData";
 
 export const Route = createFileRoute("/$department/$city")({
-  head: ({ params }) => {
-    const commune = getCommune(params.department, params.city);
-    if (!commune) return {};
+  // SSR cache headers set in vercel.json. Les données passent par une
+  // fonction serveur (getCityPageDataServerFn) plutôt qu'un import direct de
+  // ~/lib/seoData ici : sinon communes.json (5509 entrées) et hospitals.json
+  // (7474 entrées) se retrouveraient dans le bundle JS client de cette route.
+  loader: async ({ params }) => {
+    const result = await getCityPageDataServerFn({
+      data: { department: params.department, city: params.city },
+    });
+    if (!result) throw notFound();
+    return result;
+  },
+  head: ({ params, loaderData }) => {
+    if (!loaderData) return {};
+    const { commune } = loaderData;
 
     const title = `Taxi conventionné Assurance Maladie à ${commune.nom} (${commune.codeDepartement}) — Mon Taxi Santé`;
     const description = `Réservez votre taxi médical agréé Sécurité Sociale à ${commune.nom} en ${commune.departementNom}. Chauffeurs certifiés Assurance Maladie, Tiers-Payant intégral, zéro avance de frais. Disponible pour dialyse, chimiothérapie, ALD.`;
@@ -34,15 +46,6 @@ export const Route = createFileRoute("/$department/$city")({
     };
   },
   component: LocalPage,
-  // SSR cache headers set in vercel.json. Le loader ne sert qu'à valider
-  // l'existence de la commune (404 sinon) — le composant relit les données
-  // via useParams(), comme le reste des routes de ce projet (useLoaderData()
-  // se heurte à un souci d'inférence de type dans cette version alpha du
-  // routeur).
-  loader: async ({ params }) => {
-    const commune = getCommune(params.department, params.city);
-    if (!commune) throw notFound();
-  },
 });
 
 function LocalBusinessSchema({ commune, hospitals }: { commune: Commune; hospitals: Hospital[] }) {
@@ -97,12 +100,7 @@ function LocalBusinessSchema({ commune, hospitals }: { commune: Commune; hospita
 }
 
 function LocalPage() {
-  const { department: departmentSlug, city: citySlug } = Route.useParams();
-  const commune = getCommune(departmentSlug, citySlug);
-  // Le loader a déjà validé l'existence de la commune (notFound() sinon) ;
-  // ce cas ne devrait jamais s'afficher en pratique.
-  if (!commune) return null;
-  const hospitals = getNearbyHospitals(commune);
+  const { commune, hospitals } = Route.useLoaderData();
   const { nom: City, departementNom: Dept } = commune;
 
   const faqItems = [

@@ -10,6 +10,7 @@ import {
   Users,
 } from "lucide-react";
 import { TrustBadges } from "~/components/TrustBadges";
+import { CitySearch } from "~/components/CitySearch";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
 
 export const Route = createFileRoute("/")({
@@ -261,6 +262,20 @@ function HeroSection() {
               >
                 {CONTACT_PHONE_DISPLAY}
               </a>
+            </div>
+
+            {/* Recherche de ville */}
+            <div className="mt-6 max-w-md">
+              <p className="text-sm font-medium text-gray-500 mb-2">
+                Ou trouvez directement le service dans votre ville
+              </p>
+              <CitySearch />
+              <Link
+                to="/villes"
+                className="mt-2 inline-block text-sm text-[#1244E8] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+              >
+                Parcourir toutes les villes desservies →
+              </Link>
             </div>
 
             {/* Micro-trust */}

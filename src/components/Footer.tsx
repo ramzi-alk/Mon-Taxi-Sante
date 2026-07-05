@@ -1,9 +1,13 @@
 import { Link } from "@tanstack/react-router";
 import { Phone, Mail, MapPin } from "lucide-react";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL, CONTACT_EMAIL } from "~/lib/contact";
-import { getTopCommunes } from "~/lib/seoData";
+// Fichier dédié (30 villes) plutôt que ~/lib/seoData : ce module est chargé
+// sur TOUTES les pages (Footer est dans le layout racine) — importer
+// seoData.ts embarquerait les 5509 communes + 7474 hôpitaux dans le bundle
+// client de chaque page.
+import topCommunesData from "~/data/seo/top-communes.json";
 
-const topCommunes = getTopCommunes(16);
+const topCommunes = topCommunesData.slice(0, 16);
 
 const footerLinks = {
   services: [
