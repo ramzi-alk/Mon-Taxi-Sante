@@ -26,6 +26,7 @@
 //   node scripts/seo-data/fetch-hospitals.mjs --resource-url=<url-csv>    (télécharge directement cette URL, saute la recherche)
 import { writeFile } from "node:fs/promises";
 import { parseCsv, detectDelimiter } from "./csv.mjs";
+import { slugify } from "./slug.mjs";
 
 const args = Object.fromEntries(
   process.argv.slice(2).map((a) => {
@@ -149,6 +150,20 @@ function buildCodeInsee(depCode, communeLocal) {
   const localLength = 5 - dep.length;
   if (localLength < 2) return null;
   return dep + communeLocal.trim().padStart(localLength, "0");
+}
+
+// Paris/Lyon/Marseille sont découpées en arrondissements dans FINESS (codes
+// INSEE 75101-75120, 69381-69389, 13201-13216) mais en une seule commune
+// côté geo.api.gouv.fr (75056, 69123, 13055). Sans ce repli, ces hôpitaux ne
+// se relient à aucune ville de communes.json (departementSlug resterait
+// null) — même logique que normalizeCodeInsee() dans src/lib/seoData.ts,
+// dupliquée ici car ce script tourne indépendamment du bundle applicatif.
+function normalizeArrondissement(codeInsee) {
+  const n = Number(codeInsee);
+  if (codeInsee.startsWith("751") && n >= 75101 && n <= 75120) return "75056";
+  if (codeInsee.startsWith("693") && n >= 69381 && n <= 69389) return "69123";
+  if (codeInsee.startsWith("132") && n >= 13201 && n <= 13216) return "13055";
+  return codeInsee;
 }
 
 async function fetchDataset(idOrSlug) {
@@ -353,7 +368,9 @@ async function main() {
   const hospitals = rawRecords
     .map((rec) => {
       const codeInseeCommune = buildCodeInsee(rec.depCode, rec.communeLocal);
-      const commune = codeInseeCommune ? communesIndex.get(codeInseeCommune) : null;
+      const commune = codeInseeCommune
+        ? communesIndex.get(normalizeArrondissement(codeInseeCommune))
+        : null;
 
       return {
         finess: rec.finess,
@@ -375,6 +392,18 @@ async function main() {
     })
     .filter((h) => h.nom)
     .filter((h) => !h.categorie || RELEVANT_CATEGORY_PATTERN.test(h.categorie));
+
+  // Slug uniquement pour les établissements reliés à une ville connue (sinon
+  // pas de page /hopitaux/$slug — voir src/routes/hopitaux.$slug.tsx). Dédup
+  // par FINESS en cas de collision (même nom dans la même ville).
+  const seenSlugs = new Set();
+  for (const h of hospitals) {
+    if (!h.departementSlug) continue;
+    let slug = slugify(`${h.nom}-${h.communeNom}`);
+    if (seenSlugs.has(slug)) slug = `${slug}-${h.finess}`;
+    seenSlugs.add(slug);
+    h.slug = slug;
+  }
 
   const linked = hospitals.filter((h) => h.departementSlug).length;
 

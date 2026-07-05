@@ -26,6 +26,9 @@ export interface Hospital {
   lat: number | null;
   lon: number | null;
   telephone: string | null;
+  // Absent pour les établissements non reliés à une ville connue (pas de
+  // page /hopitaux/$slug dans ce cas — voir fetch-hospitals.mjs).
+  slug?: string;
 }
 
 export const communes = communesData as Commune[];
@@ -47,6 +50,10 @@ export const communeByKey = new Map<string, Commune>(
   communes.map((c) => [`${c.departementSlug}/${c.slug}`, c])
 );
 
+export const communeByCodeInsee = new Map<string, Commune>(
+  communes.map((c) => [c.codeInsee, c])
+);
+
 export const communesByDepartment = new Map<string, Commune[]>();
 for (const c of communes) {
   const list = communesByDepartment.get(c.departementSlug) ?? [];
@@ -63,12 +70,32 @@ for (const h of hospitals) {
   hospitalsByCommune.set(key, list);
 }
 
+export const hospitalBySlug = new Map<string, Hospital>(
+  hospitals.filter((h) => h.slug).map((h) => [h.slug as string, h])
+);
+
 export function getCommune(departmentSlug: string, citySlug: string): Commune | null {
   return communeByKey.get(`${departmentSlug}/${citySlug}`) ?? null;
 }
 
+export function getCommuneByCodeInsee(codeInsee: string): Commune | null {
+  return communeByCodeInsee.get(normalizeCodeInsee(codeInsee)) ?? null;
+}
+
 export function getNearbyHospitals(commune: Commune, limit = 6): Hospital[] {
   return (hospitalsByCommune.get(commune.codeInsee) ?? []).slice(0, limit);
+}
+
+export function getHospital(slug: string): Hospital | null {
+  return hospitalBySlug.get(slug) ?? null;
+}
+
+// Autres établissements de la même ville, pour le maillage croisé sur la
+// page hôpital (exclut l'établissement courant).
+export function getOtherHospitalsInCommune(hospital: Hospital, limit = 5): Hospital[] {
+  if (!hospital.codeInseeCommune) return [];
+  const key = normalizeCodeInsee(hospital.codeInseeCommune);
+  return (hospitalsByCommune.get(key) ?? []).filter((h) => h !== hospital).slice(0, limit);
 }
 
 export function getCommunesForDepartment(departmentSlug: string): Commune[] {

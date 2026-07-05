@@ -1,9 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import {
   getCommune,
+  getCommuneByCodeInsee,
   getNearbyHospitals,
   getCommunesForDepartment,
   searchCommunes,
+  getHospital,
+  getOtherHospitalsInCommune,
   type Commune,
   type Hospital,
 } from "~/lib/seoData";
@@ -43,3 +46,18 @@ export const getDepartmentPageDataServerFn = createServerFn({ method: "GET" })
 export const searchCommunesServerFn = createServerFn({ method: "GET" })
   .validator((input: { query: string; limit?: number }) => input)
   .handler(async ({ data }): Promise<Commune[]> => searchCommunes(data.query, data.limit));
+
+export const getHospitalPageDataServerFn = createServerFn({ method: "GET" })
+  .validator((input: { slug: string }) => input)
+  .handler(
+    async ({
+      data,
+    }): Promise<{ hospital: Hospital; commune: Commune | null; otherHospitals: Hospital[] } | null> => {
+      const hospital = getHospital(data.slug);
+      if (!hospital) return null;
+      const commune = hospital.codeInseeCommune
+        ? getCommuneByCodeInsee(hospital.codeInseeCommune)
+        : null;
+      return { hospital, commune, otherHospitals: getOtherHospitalsInCommune(hospital) };
+    }
+  );

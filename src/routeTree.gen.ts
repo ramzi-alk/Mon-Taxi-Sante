@@ -33,6 +33,7 @@ import { Route as DepartmentIndexRouteImport } from './routes/$department.index'
 import { Route as TableauDeBordChauffeurRouteImport } from './routes/tableau-de-bord/chauffeur'
 import { Route as ReservationConfirmationRouteImport } from './routes/reservation/confirmation'
 import { Route as MaladiesAldRouteImport } from './routes/maladies.$ald'
+import { Route as HopitauxSlugRouteImport } from './routes/hopitaux.$slug'
 import { Route as ChauffeursTarifsRouteImport } from './routes/chauffeurs/tarifs'
 import { Route as ChauffeursInscriptionRouteImport } from './routes/chauffeurs/inscription'
 import { Route as BlogTransportCpamRouteImport } from './routes/blog/transport-cpam'
@@ -165,6 +166,11 @@ const MaladiesAldRoute = MaladiesAldRouteImport.update({
   path: '/maladies/$ald',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HopitauxSlugRoute = HopitauxSlugRouteImport.update({
+  id: '/hopitaux/$slug',
+  path: '/hopitaux/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ChauffeursTarifsRoute = ChauffeursTarifsRouteImport.update({
   id: '/chauffeurs/tarifs',
   path: '/chauffeurs/tarifs',
@@ -295,6 +301,7 @@ export interface FileRoutesByFullPath {
   '/blog/transport-cpam': typeof BlogTransportCpamRoute
   '/chauffeurs/inscription': typeof ChauffeursInscriptionRoute
   '/chauffeurs/tarifs': typeof ChauffeursTarifsRoute
+  '/hopitaux/$slug': typeof HopitauxSlugRoute
   '/maladies/$ald': typeof MaladiesAldRoute
   '/reservation/confirmation': typeof ReservationConfirmationRoute
   '/tableau-de-bord/chauffeur': typeof TableauDeBordChauffeurRoute
@@ -334,6 +341,7 @@ export interface FileRoutesByTo {
   '/blog/transport-cpam': typeof BlogTransportCpamRoute
   '/chauffeurs/inscription': typeof ChauffeursInscriptionRoute
   '/chauffeurs/tarifs': typeof ChauffeursTarifsRoute
+  '/hopitaux/$slug': typeof HopitauxSlugRoute
   '/maladies/$ald': typeof MaladiesAldRoute
   '/reservation/confirmation': typeof ReservationConfirmationRoute
   '/tableau-de-bord/chauffeur': typeof TableauDeBordChauffeurRoute
@@ -375,6 +383,7 @@ export interface FileRoutesById {
   '/blog/transport-cpam': typeof BlogTransportCpamRoute
   '/chauffeurs/inscription': typeof ChauffeursInscriptionRoute
   '/chauffeurs/tarifs': typeof ChauffeursTarifsRoute
+  '/hopitaux/$slug': typeof HopitauxSlugRoute
   '/maladies/$ald': typeof MaladiesAldRoute
   '/reservation/confirmation': typeof ReservationConfirmationRoute
   '/tableau-de-bord/chauffeur': typeof TableauDeBordChauffeurRoute
@@ -417,6 +426,7 @@ export interface FileRouteTypes {
     | '/blog/transport-cpam'
     | '/chauffeurs/inscription'
     | '/chauffeurs/tarifs'
+    | '/hopitaux/$slug'
     | '/maladies/$ald'
     | '/reservation/confirmation'
     | '/tableau-de-bord/chauffeur'
@@ -456,6 +466,7 @@ export interface FileRouteTypes {
     | '/blog/transport-cpam'
     | '/chauffeurs/inscription'
     | '/chauffeurs/tarifs'
+    | '/hopitaux/$slug'
     | '/maladies/$ald'
     | '/reservation/confirmation'
     | '/tableau-de-bord/chauffeur'
@@ -496,6 +507,7 @@ export interface FileRouteTypes {
     | '/blog/transport-cpam'
     | '/chauffeurs/inscription'
     | '/chauffeurs/tarifs'
+    | '/hopitaux/$slug'
     | '/maladies/$ald'
     | '/reservation/confirmation'
     | '/tableau-de-bord/chauffeur'
@@ -530,6 +542,7 @@ export interface RootRouteChildren {
   BlogTransportCpamRoute: typeof BlogTransportCpamRoute
   ChauffeursInscriptionRoute: typeof ChauffeursInscriptionRoute
   ChauffeursTarifsRoute: typeof ChauffeursTarifsRoute
+  HopitauxSlugRoute: typeof HopitauxSlugRoute
   MaladiesAldRoute: typeof MaladiesAldRoute
   ReservationConfirmationRoute: typeof ReservationConfirmationRoute
   TableauDeBordChauffeurRoute: typeof TableauDeBordChauffeurRoute
@@ -736,6 +749,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MaladiesAldRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/hopitaux/$slug': {
+      id: '/hopitaux/$slug'
+      path: '/hopitaux/$slug'
+      fullPath: '/hopitaux/$slug'
+      preLoaderRoute: typeof HopitauxSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/chauffeurs/tarifs': {
       id: '/chauffeurs/tarifs'
       path: '/chauffeurs/tarifs'
@@ -922,6 +942,7 @@ const rootRouteChildren: RootRouteChildren = {
   BlogTransportCpamRoute: BlogTransportCpamRoute,
   ChauffeursInscriptionRoute: ChauffeursInscriptionRoute,
   ChauffeursTarifsRoute: ChauffeursTarifsRoute,
+  HopitauxSlugRoute: HopitauxSlugRoute,
   MaladiesAldRoute: MaladiesAldRoute,
   ReservationConfirmationRoute: ReservationConfirmationRoute,
   TableauDeBordChauffeurRoute: TableauDeBordChauffeurRoute,

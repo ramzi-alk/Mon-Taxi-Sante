@@ -204,7 +204,17 @@ function LocalPage() {
                   aria-hidden="true"
                 />
                 <div>
-                  <p className="font-semibold text-gray-900">{hospital.nom}</p>
+                  {hospital.slug ? (
+                    <Link
+                      to="/hopitaux/$slug"
+                      params={{ slug: hospital.slug }}
+                      className="font-semibold text-gray-900 hover:text-brand-blue-700 hover:underline"
+                    >
+                      {hospital.nom}
+                    </Link>
+                  ) : (
+                    <p className="font-semibold text-gray-900">{hospital.nom}</p>
+                  )}
                   <p className="text-sm text-muted-foreground mt-0.5">
                     Transport conventionné Assurance Maladie disponible
                   </p>

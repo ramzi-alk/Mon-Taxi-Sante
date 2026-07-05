@@ -254,14 +254,44 @@ Router, sans impact fonctionnel). Testé en conditions réelles : `/maladies`
 court "Taxi conventionné Cancer — 100% remboursé", `/maladies/avc`
 (slug inventé) → 404.
 
-## Sprint 4 — Pages hôpitaux
+## Sprint 4 — Pages hôpitaux ✅ TERMINÉ
 
-- [ ] `/hopitaux/$slug` par établissement FINESS : nom, adresse, ville liée,
-      CTA "Taxi conventionné vers [Hôpital]".
-- [ ] Maillage croisé : la page ville liste ses hôpitaux, la page hôpital
-      renvoie vers sa ville.
-- [ ] Prioriser CHU/CH/cliniques significatives ; le filtre par catégorie
-      dans `fetch-hospitals.mjs` exclut déjà pharmacies/laboratoires.
+- [x] **`/hopitaux/$slug`** par établissement FINESS : nom, catégorie,
+      adresse, téléphone, ville liée, CTA "Taxi conventionné vers
+      [Hôpital]", et une section "Autres établissements à [ville]".
+      `notFound()` pour tout slug inconnu. Uniquement pour les
+      établissements reliés à une ville connue (`departementSlug` non
+      null) — pas de page orpheline pour les ~1350 restants dont la
+      commune est sous le seuil de population de `communes.json`.
+- [x] Maillage croisé : la page ville lie chaque nom d'hôpital vers sa page
+      `/hopitaux/$slug` (avant : texte brut) ; la page hôpital renvoie vers
+      sa ville et liste les autres établissements du même endroit.
+- [x] `slug` généré (nom + ville, dédoublonné par FINESS en cas de
+      collision) dans `fetch-hospitals.mjs` pour les futurs runs, et
+      backfillé sur `hospitals.json` déjà commité via
+      `scripts/seo-data/backfill-hospital-slugs.mjs` (pas de re-fetch réseau
+      nécessaire).
+- [x] Filtre par catégorie déjà en place dans `fetch-hospitals.mjs` (exclut
+      pharmacies/laboratoires) — inchangé.
+- [x] **Bug trouvé et corrigé en cours de route** : la normalisation des
+      arrondissements Paris/Lyon/Marseille (codes INSEE 75101-75120,
+      69381-69389, 13201-13216 → 75056/69123/13055) n'existait que dans la
+      couche d'affichage (`seoData.ts`, Sprint 2), pas dans
+      `fetch-hospitals.mjs` lui-même. Résultat : 248 hôpitaux de ces trois
+      villes avaient `departementSlug: null` dans les données malgré un
+      `codeInseeCommune` résolu, et n'auraient reçu aucun slug/page. Corrigé
+      dans `fetch-hospitals.mjs` (pour les futurs runs) et rétro-appliqué
+      aux données déjà commitées via le script de backfill (qui répare
+      d'abord le lien ville avant de générer les slugs). Total après
+      correction : **6116 pages hôpitaux** (contre 5868 avant le fix).
+- [x] URLs ajoutées à `generate-sitemap.mjs` (11 771 URLs au total).
+
+**Vérifié** : `pnpm build` + `tsc` sans régression (25 erreurs, aucune
+nouvelle). Bundle client stable (~710 Ko, les hôpitaux passent par
+`getHospitalPageDataServerFn`, pas d'import direct). Testé en conditions
+réelles : `/hopitaux/aural-unite-dialyse-hop-croix-rousse-lyon` → 200, lien
+vers `/rhone/lyon` et vers d'autres établissements lyonnais présents ; page
+ville → liens cliquables vers chaque hôpital ; slug inventé → 404.
 
 ## Sprint 5 — Qualité de contenu & anti-duplicate
 
