@@ -8,6 +8,7 @@
 // rien casser. Dès que communes.json est généré, le sitemap couvre
 // automatiquement toutes les communes retenues.
 import { writeFile } from "node:fs/promises";
+import ald from "../../src/data/seo/ald.json" with { type: "json" };
 
 const BASE_URL = "https://mon-taxi-sante.com";
 
@@ -23,6 +24,7 @@ const STATIC_PAGES = [
   { path: "/blog/pmt-prescription", changefreq: "yearly", priority: "0.6" },
   { path: "/blog/ald-transport", changefreq: "yearly", priority: "0.6" },
   { path: "/villes", changefreq: "monthly", priority: "0.8" },
+  { path: "/maladies", changefreq: "monthly", priority: "0.8" },
   { path: "/cgv", changefreq: "yearly", priority: "0.3" },
   { path: "/confidentialite", changefreq: "yearly", priority: "0.3" },
   { path: "/mentions-legales", changefreq: "yearly", priority: "0.3" },
@@ -84,7 +86,13 @@ async function main() {
     priority: "0.6",
   }));
 
-  const allUrls = [...STATIC_PAGES, ...departmentUrls, ...cityUrls];
+  const aldUrls = ald.map((a) => ({
+    path: `/maladies/${a.slug}`,
+    changefreq: "yearly",
+    priority: "0.6",
+  }));
+
+  const allUrls = [...STATIC_PAGES, ...departmentUrls, ...cityUrls, ...aldUrls];
 
   const body = allUrls
     .map(
@@ -101,7 +109,7 @@ async function main() {
   await writeFile(new URL("../../public/sitemap.xml", import.meta.url), xml);
 
   console.log(
-    `✓ sitemap.xml généré avec ${allUrls.length} URLs (${cityUrls.length} pages villes, source: ${
+    `✓ sitemap.xml généré avec ${allUrls.length} URLs (${cityUrls.length} pages villes, ${aldUrls.length} pages maladies, source: ${
       communes ? "src/data/seo/communes.json" : "liste de secours (communes.json absent)"
     })`
   );

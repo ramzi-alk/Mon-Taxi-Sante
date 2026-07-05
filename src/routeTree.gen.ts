@@ -26,11 +26,13 @@ import { Route as CgvRouteImport } from './routes/cgv'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ReservationIndexRouteImport } from './routes/reservation/index'
+import { Route as MaladiesIndexRouteImport } from './routes/maladies.index'
 import { Route as BlogIndexRouteImport } from './routes/blog/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as DepartmentIndexRouteImport } from './routes/$department.index'
 import { Route as TableauDeBordChauffeurRouteImport } from './routes/tableau-de-bord/chauffeur'
 import { Route as ReservationConfirmationRouteImport } from './routes/reservation/confirmation'
+import { Route as MaladiesAldRouteImport } from './routes/maladies.$ald'
 import { Route as ChauffeursTarifsRouteImport } from './routes/chauffeurs/tarifs'
 import { Route as ChauffeursInscriptionRouteImport } from './routes/chauffeurs/inscription'
 import { Route as BlogTransportCpamRouteImport } from './routes/blog/transport-cpam'
@@ -128,6 +130,11 @@ const ReservationIndexRoute = ReservationIndexRouteImport.update({
   path: '/reservation/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MaladiesIndexRoute = MaladiesIndexRouteImport.update({
+  id: '/maladies/',
+  path: '/maladies/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BlogIndexRoute = BlogIndexRouteImport.update({
   id: '/blog/',
   path: '/blog/',
@@ -151,6 +158,11 @@ const TableauDeBordChauffeurRoute = TableauDeBordChauffeurRouteImport.update({
 const ReservationConfirmationRoute = ReservationConfirmationRouteImport.update({
   id: '/reservation/confirmation',
   path: '/reservation/confirmation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MaladiesAldRoute = MaladiesAldRouteImport.update({
+  id: '/maladies/$ald',
+  path: '/maladies/$ald',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChauffeursTarifsRoute = ChauffeursTarifsRouteImport.update({
@@ -283,11 +295,13 @@ export interface FileRoutesByFullPath {
   '/blog/transport-cpam': typeof BlogTransportCpamRoute
   '/chauffeurs/inscription': typeof ChauffeursInscriptionRoute
   '/chauffeurs/tarifs': typeof ChauffeursTarifsRoute
+  '/maladies/$ald': typeof MaladiesAldRoute
   '/reservation/confirmation': typeof ReservationConfirmationRoute
   '/tableau-de-bord/chauffeur': typeof TableauDeBordChauffeurRoute
   '/$department': typeof DepartmentIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/blog': typeof BlogIndexRoute
+  '/maladies': typeof MaladiesIndexRoute
   '/reservation': typeof ReservationIndexRoute
   '/tableau-de-bord/chauffeur/compte': typeof TableauDeBordChauffeurCompteRoute
   '/tableau-de-bord/chauffeur/course/$id': typeof TableauDeBordChauffeurCourseIdRoute
@@ -320,11 +334,13 @@ export interface FileRoutesByTo {
   '/blog/transport-cpam': typeof BlogTransportCpamRoute
   '/chauffeurs/inscription': typeof ChauffeursInscriptionRoute
   '/chauffeurs/tarifs': typeof ChauffeursTarifsRoute
+  '/maladies/$ald': typeof MaladiesAldRoute
   '/reservation/confirmation': typeof ReservationConfirmationRoute
   '/tableau-de-bord/chauffeur': typeof TableauDeBordChauffeurRoute
   '/$department': typeof DepartmentIndexRoute
   '/admin': typeof AdminIndexRoute
   '/blog': typeof BlogIndexRoute
+  '/maladies': typeof MaladiesIndexRoute
   '/reservation': typeof ReservationIndexRoute
   '/tableau-de-bord/chauffeur/compte': typeof TableauDeBordChauffeurCompteRoute
   '/tableau-de-bord/chauffeur/course/$id': typeof TableauDeBordChauffeurCourseIdRoute
@@ -359,11 +375,13 @@ export interface FileRoutesById {
   '/blog/transport-cpam': typeof BlogTransportCpamRoute
   '/chauffeurs/inscription': typeof ChauffeursInscriptionRoute
   '/chauffeurs/tarifs': typeof ChauffeursTarifsRoute
+  '/maladies/$ald': typeof MaladiesAldRoute
   '/reservation/confirmation': typeof ReservationConfirmationRoute
   '/tableau-de-bord/chauffeur': typeof TableauDeBordChauffeurRoute
   '/$department/': typeof DepartmentIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/blog/': typeof BlogIndexRoute
+  '/maladies/': typeof MaladiesIndexRoute
   '/reservation/': typeof ReservationIndexRoute
   '/tableau-de-bord/chauffeur_/compte': typeof TableauDeBordChauffeurCompteRoute
   '/tableau-de-bord/chauffeur_/course/$id': typeof TableauDeBordChauffeurCourseIdRoute
@@ -399,11 +417,13 @@ export interface FileRouteTypes {
     | '/blog/transport-cpam'
     | '/chauffeurs/inscription'
     | '/chauffeurs/tarifs'
+    | '/maladies/$ald'
     | '/reservation/confirmation'
     | '/tableau-de-bord/chauffeur'
     | '/$department'
     | '/admin/'
     | '/blog'
+    | '/maladies'
     | '/reservation'
     | '/tableau-de-bord/chauffeur/compte'
     | '/tableau-de-bord/chauffeur/course/$id'
@@ -436,11 +456,13 @@ export interface FileRouteTypes {
     | '/blog/transport-cpam'
     | '/chauffeurs/inscription'
     | '/chauffeurs/tarifs'
+    | '/maladies/$ald'
     | '/reservation/confirmation'
     | '/tableau-de-bord/chauffeur'
     | '/$department'
     | '/admin'
     | '/blog'
+    | '/maladies'
     | '/reservation'
     | '/tableau-de-bord/chauffeur/compte'
     | '/tableau-de-bord/chauffeur/course/$id'
@@ -474,11 +496,13 @@ export interface FileRouteTypes {
     | '/blog/transport-cpam'
     | '/chauffeurs/inscription'
     | '/chauffeurs/tarifs'
+    | '/maladies/$ald'
     | '/reservation/confirmation'
     | '/tableau-de-bord/chauffeur'
     | '/$department/'
     | '/admin/'
     | '/blog/'
+    | '/maladies/'
     | '/reservation/'
     | '/tableau-de-bord/chauffeur_/compte'
     | '/tableau-de-bord/chauffeur_/course/$id'
@@ -506,10 +530,12 @@ export interface RootRouteChildren {
   BlogTransportCpamRoute: typeof BlogTransportCpamRoute
   ChauffeursInscriptionRoute: typeof ChauffeursInscriptionRoute
   ChauffeursTarifsRoute: typeof ChauffeursTarifsRoute
+  MaladiesAldRoute: typeof MaladiesAldRoute
   ReservationConfirmationRoute: typeof ReservationConfirmationRoute
   TableauDeBordChauffeurRoute: typeof TableauDeBordChauffeurRoute
   DepartmentIndexRoute: typeof DepartmentIndexRoute
   BlogIndexRoute: typeof BlogIndexRoute
+  MaladiesIndexRoute: typeof MaladiesIndexRoute
   ReservationIndexRoute: typeof ReservationIndexRoute
   TableauDeBordChauffeurCompteRoute: typeof TableauDeBordChauffeurCompteRoute
   TableauDeBordChauffeurCourseIdRoute: typeof TableauDeBordChauffeurCourseIdRoute
@@ -661,6 +687,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReservationIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/maladies/': {
+      id: '/maladies/'
+      path: '/maladies'
+      fullPath: '/maladies'
+      preLoaderRoute: typeof MaladiesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/blog/': {
       id: '/blog/'
       path: '/blog'
@@ -694,6 +727,13 @@ declare module '@tanstack/react-router' {
       path: '/reservation/confirmation'
       fullPath: '/reservation/confirmation'
       preLoaderRoute: typeof ReservationConfirmationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/maladies/$ald': {
+      id: '/maladies/$ald'
+      path: '/maladies/$ald'
+      fullPath: '/maladies/$ald'
+      preLoaderRoute: typeof MaladiesAldRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/chauffeurs/tarifs': {
@@ -882,10 +922,12 @@ const rootRouteChildren: RootRouteChildren = {
   BlogTransportCpamRoute: BlogTransportCpamRoute,
   ChauffeursInscriptionRoute: ChauffeursInscriptionRoute,
   ChauffeursTarifsRoute: ChauffeursTarifsRoute,
+  MaladiesAldRoute: MaladiesAldRoute,
   ReservationConfirmationRoute: ReservationConfirmationRoute,
   TableauDeBordChauffeurRoute: TableauDeBordChauffeurRoute,
   DepartmentIndexRoute: DepartmentIndexRoute,
   BlogIndexRoute: BlogIndexRoute,
+  MaladiesIndexRoute: MaladiesIndexRoute,
   ReservationIndexRoute: ReservationIndexRoute,
   TableauDeBordChauffeurCompteRoute: TableauDeBordChauffeurCompteRoute,
   TableauDeBordChauffeurCourseIdRoute: TableauDeBordChauffeurCourseIdRoute,

@@ -211,19 +211,48 @@ version alpha. N'affecte que l'expérience de développement local (le build
 de production, testé ci-dessus, fonctionne normalement) ; à surveiller si
 une mise à jour de `@tanstack/react-start` la corrige.
 
-## Sprint 3 — Pages maladies (ALD)
+## Sprint 3 — Pages maladies (ALD) ✅ TERMINÉ (contenu à valider avant mise en avant)
 
-- [ ] `/maladies` (index des 30 ALD) + `/maladies/$ald` (une page par
-      affection : contexte, prise en charge du transport, CTA réservation).
-- [ ] **Vérification éditoriale obligatoire** : `ald.json` contient les noms
-      officiels des 30 ALD, mais le contenu rédactionnel de chaque page
-      (taux de prise en charge, conditions) doit être relu et validé contre
-      ameli.fr avant publication — sujet réglementé, données de santé.
-- [ ] Différencier ces pages de l'article de blog généraliste existant
-      (`/blog/ald-transport`) : le blog reste l'angle généraliste, les pages
-      `/maladies/$ald` ciblent chacune une requête longue traîne
-      ("transport [pathologie] remboursé").
-- [ ] Ajouter ces URLs à `generate-sitemap.mjs`.
+- [x] `/maladies` (index des 30 ALD, avec recherche) + `/maladies/$ald`
+      (une page par affection : contexte, prise en charge du transport,
+      soins associés, FAQ, CTA réservation). `notFound()` pour tout slug
+      inconnu, même principe anti-contenu-fin que pour les villes.
+- [x] **`nomCourt` ajouté à `ald.json`** : les noms officiels des 30 ALD
+      sont parfois très longs (jusqu'à 173 caractères — ex. "Insuffisance
+      cardiaque grave, troubles du rythme graves, cardiopathies
+      valvulaires graves, cardiopathies congénitales graves"), ce qui
+      produisait des balises `<title>` bien trop longues pour un bon
+      affichage dans les résultats Google. `nomCourt` est utilisé pour le
+      titre/H1/fil d'Ariane/cartes ; le nom officiel complet reste affiché
+      dans le corps de page (section "Qu'est-ce qu'une ALD") pour
+      l'exactitude. Titres réduits de ~76 caractères en moyenne (max 88)
+      contre jusqu'à 173 avant.
+- [x] Différenciées de l'article de blog généraliste existant
+      (`/blog/ald-transport`, conservé tel quel) : les pages `/maladies/$ald`
+      ciblent chacune une requête longue traîne ("transport [pathologie]
+      remboursé"), avec un champ `soinsAssocies` par ALD (type de soins
+      associés généralement liés à un besoin de transport) pour un contenu
+      réellement différencié plutôt qu'un simple gabarit avec le nom qui
+      change.
+- [x] Ajoutées à `generate-sitemap.mjs` (30 URLs) + lien `/maladies` dans
+      le Footer (section Ressources Assurance Maladie).
+
+**⚠️ Vérification éditoriale toujours recommandée avant mise en avant
+commerciale/publicitaire** : le contenu utilise volontairement une
+formulation générique et prudente (mécanique de prise en charge déjà
+présente et vétée dans `/blog/ald-transport`, `soinsAssocies` limité à des
+associations de soins largement connues, sans détail clinique spécifique
+inventé), mais s'agissant de données de santé réglementées, une relecture
+contre ameli.fr reste recommandée avant toute campagne d'acquisition
+ciblée sur ces pages.
+
+**Vérifié** : `pnpm build` + `tsc` sans régression notable (25 erreurs,
+la seule nouvelle étant la même quirk `LoaderFnContext ... => never`
+déjà documentée au Sprint 2bis, propre à cette version alpha de TanStack
+Router, sans impact fonctionnel). Testé en conditions réelles : `/maladies`
+→ 200 avec recherche, `/maladies/tumeur-maligne-cancer` → 200 avec titre
+court "Taxi conventionné Cancer — 100% remboursé", `/maladies/avc`
+(slug inventé) → 404.
 
 ## Sprint 4 — Pages hôpitaux
 

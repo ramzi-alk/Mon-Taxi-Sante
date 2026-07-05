@@ -25,6 +25,7 @@ const footerLinks = {
     { to: "/blog/transport-cpam", label: "Transport pris en charge Assurance Maladie" },
     { to: "/blog/pmt-prescription", label: "Prescription médicale de transport" },
     { to: "/blog/ald-transport", label: "Transport ALD : tout savoir" },
+    { to: "/maladies", label: "Transport par pathologie (ALD)" },
   ],
 };
 
