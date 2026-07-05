@@ -68,15 +68,15 @@ const howItWorksSteps = [
   },
 ];
 
-const conditions = [
-  "Dialyse rénale",
-  "Chimiothérapie",
-  "Radiothérapie",
-  "Rééducation PMR",
-  "Consultations ALD",
-  "Soins psychiatriques",
-  "Maternité",
-  "Urgences planifiées",
+const conditions: { label: string; aldSlug?: string; toMaladiesIndex?: boolean }[] = [
+  { label: "Dialyse rénale", aldSlug: "nephropathie-chronique-grave-syndrome-nephrotique" },
+  { label: "Chimiothérapie", aldSlug: "tumeur-maligne-cancer" },
+  { label: "Radiothérapie", aldSlug: "tumeur-maligne-cancer" },
+  { label: "Rééducation PMR" },
+  { label: "Consultations ALD", toMaladiesIndex: true },
+  { label: "Soins psychiatriques", aldSlug: "affections-psychiatriques-longue-duree" },
+  { label: "Maternité" },
+  { label: "Urgences planifiées" },
 ];
 
 type HomeFaqBlock =
@@ -439,15 +439,26 @@ function ConditionsSection() {
             </p>
             <ul className="grid grid-cols-2 gap-3 list-none" role="list">
               {conditions.map((c) => (
-                <li
-                  key={c}
-                  className="flex items-center gap-2.5 text-sm text-white/70"
-                >
+                <li key={c.label} className="flex items-center gap-2.5 text-sm">
                   <span
                     className="h-1.5 w-1.5 rounded-full bg-[#1244E8] shrink-0"
                     aria-hidden="true"
                   />
-                  {c}
+                  {c.aldSlug ? (
+                    <Link
+                      to="/maladies/$ald"
+                      params={{ ald: c.aldSlug }}
+                      className="text-white/70 hover:text-white hover:underline"
+                    >
+                      {c.label}
+                    </Link>
+                  ) : c.toMaladiesIndex ? (
+                    <Link to="/maladies" className="text-white/70 hover:text-white hover:underline">
+                      {c.label}
+                    </Link>
+                  ) : (
+                    <span className="text-white/70">{c.label}</span>
+                  )}
                 </li>
               ))}
             </ul>
