@@ -1,6 +1,13 @@
 import { Link } from "@tanstack/react-router";
 import { Phone, Mail, MapPin } from "lucide-react";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL, CONTACT_EMAIL } from "~/lib/contact";
+// Fichier dédié (30 villes) plutôt que ~/lib/seoData : ce module est chargé
+// sur TOUTES les pages (Footer est dans le layout racine) — importer
+// seoData.ts embarquerait les 5509 communes + 7474 hôpitaux dans le bundle
+// client de chaque page.
+import topCommunesData from "~/data/seo/top-communes.json";
+
+const topCommunes = topCommunesData.slice(0, 16);
 
 const footerLinks = {
   services: [
@@ -18,6 +25,7 @@ const footerLinks = {
     { to: "/blog/transport-cpam", label: "Transport pris en charge Assurance Maladie" },
     { to: "/blog/pmt-prescription", label: "Prescription médicale de transport" },
     { to: "/blog/ald-transport", label: "Transport ALD : tout savoir" },
+    { to: "/maladies", label: "Transport par pathologie (ALD)" },
   ],
 };
 
@@ -124,6 +132,34 @@ export function Footer() {
               ))}
             </ul>
           </div>
+        </div>
+
+        {/* Villes principales — maillage interne SEO */}
+        <div className="mt-14 border-t border-white/5 pt-10">
+          <h3 className="font-semibold text-white mb-5 text-sm uppercase tracking-wider">
+            Villes principales
+          </h3>
+          <ul className="flex flex-wrap gap-x-6 gap-y-3 list-none" role="list">
+            {topCommunes.map((commune) => (
+              <li key={commune.codeInsee}>
+                <Link
+                  to="/$department/$city"
+                  params={{ department: commune.departementSlug, city: commune.slug }}
+                  className="text-sm hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+                >
+                  Taxi conventionné {commune.nom}
+                </Link>
+              </li>
+            ))}
+            <li>
+              <Link
+                to="/villes"
+                className="text-sm font-semibold text-[#1244E8] hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+              >
+                Toutes les villes →
+              </Link>
+            </li>
+          </ul>
         </div>
 
         {/* Bottom bar */}

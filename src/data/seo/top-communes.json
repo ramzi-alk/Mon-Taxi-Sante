@@ -1,0 +1,242 @@
+[
+  {
+    "codeInsee": "75056",
+    "nom": "Paris",
+    "slug": "paris",
+    "departementSlug": "paris",
+    "departementNom": "Paris",
+    "population": 2103778
+  },
+  {
+    "codeInsee": "13055",
+    "nom": "Marseille",
+    "slug": "marseille",
+    "departementSlug": "bouches-du-rhone",
+    "departementNom": "Bouches-du-Rhône",
+    "population": 886040
+  },
+  {
+    "codeInsee": "69123",
+    "nom": "Lyon",
+    "slug": "lyon",
+    "departementSlug": "rhone",
+    "departementNom": "Rhône",
+    "population": 519127
+  },
+  {
+    "codeInsee": "31555",
+    "nom": "Toulouse",
+    "slug": "toulouse",
+    "departementSlug": "haute-garonne",
+    "departementNom": "Haute-Garonne",
+    "population": 514819
+  },
+  {
+    "codeInsee": "06088",
+    "nom": "Nice",
+    "slug": "nice",
+    "departementSlug": "alpes-maritimes",
+    "departementNom": "Alpes-Maritimes",
+    "population": 357737
+  },
+  {
+    "codeInsee": "44109",
+    "nom": "Nantes",
+    "slug": "nantes",
+    "departementSlug": "loire-atlantique",
+    "departementNom": "Loire-Atlantique",
+    "population": 327734
+  },
+  {
+    "codeInsee": "34172",
+    "nom": "Montpellier",
+    "slug": "montpellier",
+    "departementSlug": "herault",
+    "departementNom": "Hérault",
+    "population": 310240
+  },
+  {
+    "codeInsee": "67482",
+    "nom": "Strasbourg",
+    "slug": "strasbourg",
+    "departementSlug": "bas-rhin",
+    "departementNom": "Bas-Rhin",
+    "population": 293771
+  },
+  {
+    "codeInsee": "33063",
+    "nom": "Bordeaux",
+    "slug": "bordeaux",
+    "departementSlug": "gironde",
+    "departementNom": "Gironde",
+    "population": 267991
+  },
+  {
+    "codeInsee": "59350",
+    "nom": "Lille",
+    "slug": "lille",
+    "departementSlug": "nord",
+    "departementNom": "Nord",
+    "population": 238246
+  },
+  {
+    "codeInsee": "35238",
+    "nom": "Rennes",
+    "slug": "rennes",
+    "departementSlug": "ille-et-vilaine",
+    "departementNom": "Ille-et-Vilaine",
+    "population": 230890
+  },
+  {
+    "codeInsee": "83137",
+    "nom": "Toulon",
+    "slug": "toulon",
+    "departementSlug": "var",
+    "departementNom": "Var",
+    "population": 179116
+  },
+  {
+    "codeInsee": "51454",
+    "nom": "Reims",
+    "slug": "reims",
+    "departementSlug": "marne",
+    "departementNom": "Marne",
+    "population": 177674
+  },
+  {
+    "codeInsee": "42218",
+    "nom": "Saint-Étienne",
+    "slug": "saint-etienne",
+    "departementSlug": "loire",
+    "departementNom": "Loire",
+    "population": 173136
+  },
+  {
+    "codeInsee": "76351",
+    "nom": "Le Havre",
+    "slug": "le-havre",
+    "departementSlug": "seine-maritime",
+    "departementNom": "Seine-Maritime",
+    "population": 166687
+  },
+  {
+    "codeInsee": "69266",
+    "nom": "Villeurbanne",
+    "slug": "villeurbanne",
+    "departementSlug": "rhone",
+    "departementNom": "Rhône",
+    "population": 163684
+  },
+  {
+    "codeInsee": "21231",
+    "nom": "Dijon",
+    "slug": "dijon",
+    "departementSlug": "cote-d-or",
+    "departementNom": "Côte-d'Or",
+    "population": 161830
+  },
+  {
+    "codeInsee": "49007",
+    "nom": "Angers",
+    "slug": "angers",
+    "departementSlug": "maine-et-loire",
+    "departementNom": "Maine-et-Loire",
+    "population": 159022
+  },
+  {
+    "codeInsee": "38185",
+    "nom": "Grenoble",
+    "slug": "grenoble",
+    "departementSlug": "isere",
+    "departementNom": "Isère",
+    "population": 156140
+  },
+  {
+    "codeInsee": "97411",
+    "nom": "Saint-Denis",
+    "slug": "saint-denis",
+    "departementSlug": "la-reunion",
+    "departementNom": "La Réunion",
+    "population": 155634
+  },
+  {
+    "codeInsee": "30189",
+    "nom": "Nîmes",
+    "slug": "nimes",
+    "departementSlug": "gard",
+    "departementNom": "Gard",
+    "population": 151839
+  },
+  {
+    "codeInsee": "13001",
+    "nom": "Aix-en-Provence",
+    "slug": "aix-en-provence",
+    "departementSlug": "bouches-du-rhone",
+    "departementNom": "Bouches-du-Rhône",
+    "population": 149695
+  },
+  {
+    "codeInsee": "93066",
+    "nom": "Saint-Denis",
+    "slug": "saint-denis",
+    "departementSlug": "seine-saint-denis",
+    "departementNom": "Seine-Saint-Denis",
+    "population": 149077
+  },
+  {
+    "codeInsee": "63113",
+    "nom": "Clermont-Ferrand",
+    "slug": "clermont-ferrand",
+    "departementSlug": "puy-de-dome",
+    "departementNom": "Puy-de-Dôme",
+    "population": 146351
+  },
+  {
+    "codeInsee": "72181",
+    "nom": "Le Mans",
+    "slug": "le-mans",
+    "departementSlug": "sarthe",
+    "departementNom": "Sarthe",
+    "population": 146249
+  },
+  {
+    "codeInsee": "29019",
+    "nom": "Brest",
+    "slug": "brest",
+    "departementSlug": "finistere",
+    "departementNom": "Finistère",
+    "population": 142346
+  },
+  {
+    "codeInsee": "37261",
+    "nom": "Tours",
+    "slug": "tours",
+    "departementSlug": "indre-et-loire",
+    "departementNom": "Indre-et-Loire",
+    "population": 139259
+  },
+  {
+    "codeInsee": "80021",
+    "nom": "Amiens",
+    "slug": "amiens",
+    "departementSlug": "somme",
+    "departementNom": "Somme",
+    "population": 136449
+  },
+  {
+    "codeInsee": "74010",
+    "nom": "Annecy",
+    "slug": "annecy",
+    "departementSlug": "haute-savoie",
+    "departementNom": "Haute-Savoie",
+    "population": 132117
+  },
+  {
+    "codeInsee": "87085",
+    "nom": "Limoges",
+    "slug": "limoges",
+    "departementSlug": "haute-vienne",
+    "departementNom": "Haute-Vienne",
+    "population": 129937
+  }
+]

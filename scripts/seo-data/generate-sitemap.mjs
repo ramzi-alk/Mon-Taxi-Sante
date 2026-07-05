@@ -8,6 +8,7 @@
 // rien casser. Dès que communes.json est généré, le sitemap couvre
 // automatiquement toutes les communes retenues.
 import { writeFile } from "node:fs/promises";
+import ald from "../../src/data/seo/ald.json" with { type: "json" };
 
 const BASE_URL = "https://mon-taxi-sante.com";
 
@@ -22,6 +23,8 @@ const STATIC_PAGES = [
   { path: "/blog/transport-cpam", changefreq: "yearly", priority: "0.6" },
   { path: "/blog/pmt-prescription", changefreq: "yearly", priority: "0.6" },
   { path: "/blog/ald-transport", changefreq: "yearly", priority: "0.6" },
+  { path: "/villes", changefreq: "monthly", priority: "0.8" },
+  { path: "/maladies", changefreq: "monthly", priority: "0.8" },
   { path: "/cgv", changefreq: "yearly", priority: "0.3" },
   { path: "/confidentialite", changefreq: "yearly", priority: "0.3" },
   { path: "/mentions-legales", changefreq: "yearly", priority: "0.3" },
@@ -52,12 +55,25 @@ async function loadCommunes() {
   }
 }
 
+async function loadHospitals() {
+  try {
+    const { default: hospitals } = await import(
+      "../../src/data/seo/hospitals.json",
+      { with: { type: "json" } }
+    );
+    return hospitals;
+  } catch {
+    return null;
+  }
+}
+
 function xmlEscape(str) {
   return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 async function main() {
   const communes = await loadCommunes();
+  const hospitals = await loadHospitals();
 
   const cityUrls = communes
     ? communes.map((c) => ({
@@ -72,7 +88,34 @@ async function main() {
         priority: "0.7",
       }));
 
-  const allUrls = [...STATIC_PAGES, ...cityUrls];
+  // Une page /$department par département ayant au moins une commune
+  // retenue (maillage interne — voir src/routes/$department.index.tsx).
+  const departmentSlugs = communes
+    ? [...new Set(communes.map((c) => c.departementSlug))]
+    : [...new Set(FALLBACK_CITIES.map((c) => c.department))];
+  const departmentUrls = departmentSlugs.map((slug) => ({
+    path: `/${slug}`,
+    changefreq: "monthly",
+    priority: "0.6",
+  }));
+
+  const aldUrls = ald.map((a) => ({
+    path: `/maladies/${a.slug}`,
+    changefreq: "yearly",
+    priority: "0.6",
+  }));
+
+  // Une page /hopitaux/$slug uniquement pour les établissements reliés à une
+  // ville connue (voir fetch-hospitals.mjs) — pas de slug sinon.
+  const hospitalUrls = (hospitals ?? [])
+    .filter((h) => h.slug)
+    .map((h) => ({
+      path: `/hopitaux/${h.slug}`,
+      changefreq: "yearly",
+      priority: "0.5",
+    }));
+
+  const allUrls = [...STATIC_PAGES, ...departmentUrls, ...cityUrls, ...aldUrls, ...hospitalUrls];
 
   const body = allUrls
     .map(
@@ -89,7 +132,7 @@ async function main() {
   await writeFile(new URL("../../public/sitemap.xml", import.meta.url), xml);
 
   console.log(
-    `✓ sitemap.xml généré avec ${allUrls.length} URLs (${cityUrls.length} pages villes, source: ${
+    `✓ sitemap.xml généré avec ${allUrls.length} URLs (${cityUrls.length} pages villes, ${aldUrls.length} pages maladies, ${hospitalUrls.length} pages hôpitaux, source: ${
       communes ? "src/data/seo/communes.json" : "liste de secours (communes.json absent)"
     })`
   );
