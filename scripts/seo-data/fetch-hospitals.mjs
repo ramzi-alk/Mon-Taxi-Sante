@@ -4,14 +4,19 @@
 //
 // Doit être exécuté après fetch-communes.mjs : les hôpitaux sont reliés à une
 // ville canonique (nom, slug, département) par recoupement du code INSEE
-// commune avec src/data/seo/communes.json, plutôt que de faire confiance à un
-// éventuel nom de commune présent dans l'export FINESS (souvent absent ou peu
-// fiable — l'export brut n'expose que des codes).
+// commune avec src/data/seo/communes.json, plutôt que de faire confiance au
+// nom de commune de l'export FINESS (abîmé par la casse/ponctuation "CEDEX",
+// et de toute façon absent en tant que colonne séparée — voir ci-dessous).
 //
-// Le fichier stock FINESS commence parfois par une ligne de préambule avant
-// la vraie ligne d'en-têtes ; ce script scanne les premières lignes pour la
-// retrouver. Si le format change encore, relancez avec --debug pour inspecter
-// les en-têtes et lignes brutes détectés.
+// Le fichier "stock" FINESS (etalab-cs1100507-stock-*.csv) n'a PAS de vraie
+// ligne d'en-têtes : la ligne 1 est un manifeste ("finess;etalab;98;date"),
+// et chaque ligne de données démarre par une étiquette de type
+// d'enregistrement (plusieurs schémas positionnels différents cohabitent
+// dans le même fichier — voir STRUCTUREET_COLS). Ce script détecte d'abord
+// une éventuelle vraie ligne d'en-têtes (au cas où un export différent en
+// fournirait une, ex. --input= d'un CSV exporté depuis la console Explore
+// Opendatasoft) et retombe sinon sur le format positionnel confirmé en
+// production. Si le format change encore, relancez avec --debug.
 //
 // Usage :
 //   node scripts/seo-data/fetch-hospitals.mjs --debug
@@ -71,35 +76,42 @@ function findCsvResource(dataset) {
 const RELEVANT_CATEGORY_PATTERN =
   /hopital|hôpital|hopitaux|chu|chr\b|centre hospitalier|clinique|dialyse|had\b|maison de sant/i;
 
-// Motifs de correspondance pour retrouver les colonnes utiles quels que
-// soient les intitulés exacts de l'export (ils varient selon les millésimes
-// FINESS). Premier motif qui matche un en-tête = colonne retenue.
-//
-// Confirmés contre un exemple réel de l'API Explore (Opendatasoft) du jeu de
-// données FINESS : nofinesset, rs, rslongue, voie, categetab, libcategetab,
-// commune (code local 2-3 chiffres, PAS le nom), com_code (code INSEE complet,
-// ex. "75107"), dep_code, coordxet/coordyet, telephone. Le nom de la commune
-// et le code postal n'apparaissent pas forcément comme colonnes séparées
-// (l'export brut ne semble exposer que des codes) — d'où le recours à
-// communes.json pour résoudre le nom canonique à partir du code INSEE.
-const COLUMN_PATTERNS = {
+// Le fichier "stock" FINESS (etalab-cs1100507-stock-*.csv) n'a PAS de ligne
+// d'en-têtes : la ligne 1 est un manifeste ("finess;etalab;98;2026-05-12"),
+// et chaque ligne de données commence par une étiquette de type
+// d'enregistrement — plusieurs schémas positionnels différents sont
+// concaténés dans le même fichier. Le type qui nous intéresse (identité,
+// adresse, catégorie de l'établissement) est "structureet". Positions
+// confirmées sur un run réel (voir commit history) :
+const STRUCTUREET_TYPE = "structureet";
+const STRUCTUREET_COLS = {
+  finess: 1,
+  rs: 3,
+  rslongue: 4,
+  numvoie: 7,
+  typvoie: 8,
+  voie: 9,
+  communeLocal: 12,
+  depCode: 13,
+  depNom: 14,
+  ligneAcheminement: 15,
+  telephone: 16,
+  categetab: 18,
+  libcategetab: 19,
+};
+
+// Repli si --input pointe vers un CSV différent qui, lui, a une vraie ligne
+// d'en-têtes (ex. export manuel depuis la console Explore Opendatasoft).
+const HEADER_COLUMN_PATTERNS = {
   finess: [/^nofinesset$/i, /^nofiness/i, /finess/i],
   nom: [/^rslongue$/i, /^rs$/i, /raisonsociale/i, /^nomcourt$/i, /^nom$/i],
   categorie: [/^libcategetab$/i, /libcategagretab/i, /categorie/i],
   voie: [/^voie$/i, /adresse/i, /^address$/i],
-  codePostal: [/codepostal/i, /^cp$/i],
-  // ATTENTION : ne pas matcher `/^commune$/i` ici — dans l'export FINESS ce
-  // champ est un code local (ex. "107"), pas un nom de ville.
   communeNom: [/^com_name$/i, /^libcommune$/i, /^ville$/i],
   codeInseeCommune: [/^com_code$/i, /^codecommune$/i, /^inseecommune$/i, /^codeinsee$/i],
-  // Code département (2 car., ou 3 pour les DROM) + code commune local (le
-  // champ `commune` lui-même) : permet de reconstruire le code INSEE complet
-  // quand aucune colonne `com_code`/`codecommune` n'est présente.
   depCode: [/^dep_code$/i, /^departement$/i, /^coddep$/i],
   depNom: [/^dep_name$/i, /^libdepartement$/i],
   communeLocalCode: [/^commune$/i],
-  lat: [/^coordyet$/i, /^latitude$/i, /^lat$/i],
-  lon: [/^coordxet$/i, /^longitude$/i, /^lon(g)?$/i],
   telephone: [/^telephone$/i, /^tel$/i],
 };
 
@@ -111,20 +123,20 @@ function findColumnIndex(headers, patterns) {
   return -1;
 }
 
-// Certains exports gouvernementaux commencent par une ligne de préambule
-// (date de génération, métadonnées) avant la vraie ligne d'en-têtes. On
-// scanne les premières lignes pour trouver celle qui ressemble vraiment à un
-// en-tête FINESS plutôt que de supposer que c'est toujours la ligne 1.
-function findHeaderRowIndex(rows) {
+function looksLikeHeaderRow(row) {
   const looksLikeFiness = (cell) => /^nofinesset$|^nofiness/i.test(cell.trim());
   const looksLikeName = (cell) => /^rslongue$|^rs$|raisonsociale/i.test(cell.trim());
-  for (let i = 0; i < Math.min(rows.length, 20); i++) {
-    const row = rows[i];
-    if (row.some(looksLikeFiness) && row.some(looksLikeName)) {
-      return i;
-    }
-  }
-  return -1;
+  return row.some(looksLikeFiness) && row.some(looksLikeName);
+}
+
+// Extrait code postal + nom de commune brut d'un champ "ligne d'acheminement"
+// type "01440 VIRIAT" (postal + ville, format La Poste utilisé par FINESS en
+// l'absence de colonnes séparées).
+function parseLigneAcheminement(value) {
+  if (!value) return { codePostal: null, communeNomBrut: null };
+  const match = value.trim().match(/^(\d{5})\s+(.+)$/);
+  if (!match) return { codePostal: null, communeNomBrut: value.trim() || null };
+  return { codePostal: match[1], communeNomBrut: match[2] };
 }
 
 // Reconstruit le code INSEE (5 caractères) à partir du code département et du
@@ -243,47 +255,91 @@ async function loadCommunesIndex() {
   }
 }
 
+function extractFromStructureetRows(rows) {
+  const structureRows = rows.filter((r) => r[0] === STRUCTUREET_TYPE);
+  if (DEBUG) {
+    const otherTypes = new Set(
+      rows.filter((r) => r[0] !== STRUCTUREET_TYPE).map((r) => r[0])
+    );
+    console.log(
+      `${structureRows.length} lignes "${STRUCTUREET_TYPE}" trouvées sur ${rows.length} lignes totales.`
+    );
+    console.log("Autres types d'enregistrement rencontrés :", [...otherTypes]);
+    console.log("Exemple de ligne structureet :", structureRows[0]);
+  }
+  return structureRows.map((r) => {
+    const c = STRUCTUREET_COLS;
+    const adresse = [r[c.numvoie], r[c.typvoie], r[c.voie]]
+      .map((v) => v?.trim())
+      .filter(Boolean)
+      .join(" ") || null;
+    const { codePostal, communeNomBrut } = parseLigneAcheminement(r[c.ligneAcheminement]);
+    return {
+      finess: r[c.finess]?.trim() || null,
+      nom: r[c.rslongue]?.trim() || r[c.rs]?.trim() || null,
+      categorie: r[c.libcategetab]?.trim() || null,
+      adresse,
+      codePostal,
+      depCode: r[c.depCode]?.trim() || null,
+      depNom: r[c.depNom]?.trim() || null,
+      communeLocal: r[c.communeLocal]?.trim() || null,
+      communeNomBrut,
+      telephone: r[c.telephone]?.trim() || null,
+    };
+  });
+}
+
+function extractFromHeaderedRows(rows, headerIdx) {
+  const headers = rows[headerIdx].map((h) => h.trim());
+  const dataRows = rows.slice(headerIdx + 1);
+  const cols = Object.fromEntries(
+    Object.entries(HEADER_COLUMN_PATTERNS).map(([key, patterns]) => [
+      key,
+      findColumnIndex(headers, patterns),
+    ])
+  );
+  if (DEBUG) {
+    console.log("En-têtes détectés :", headers);
+    console.log("Exemple de ligne :", dataRows[0]);
+  }
+  if (cols.nom === -1) {
+    console.error("Colonnes détectées :", cols);
+    console.error("En-têtes disponibles :", headers);
+    throw new Error(
+      "Colonne essentielle (nom de l'établissement) introuvable — ajustez HEADER_COLUMN_PATTERNS après inspection avec --debug."
+    );
+  }
+  const get = (row, key) => (cols[key] !== -1 ? row[cols[key]]?.trim() || null : null);
+  return dataRows.map((r) => ({
+    finess: get(r, "finess"),
+    nom: get(r, "nom"),
+    categorie: get(r, "categorie"),
+    adresse: get(r, "voie"),
+    codePostal: null,
+    depCode: get(r, "depCode"),
+    depNom: get(r, "depNom"),
+    communeLocal: get(r, "communeLocalCode"),
+    communeNomBrut: get(r, "communeNom"),
+    telephone: get(r, "telephone"),
+  }));
+}
+
 async function main() {
   const text = await loadCsvText();
   const firstLine = text.slice(0, text.indexOf("\n"));
   const delimiter = detectDelimiter(firstLine);
   const rows = parseCsv(text, delimiter);
 
-  const headerIdx = findHeaderRowIndex(rows);
-  if (headerIdx === -1) {
-    console.error(
-      "Impossible de repérer la ligne d'en-têtes dans les 20 premières lignes."
-    );
+  const headerIdx = rows.findIndex((row, i) => i < 20 && looksLikeHeaderRow(row));
+  const rawRecords =
+    headerIdx !== -1
+      ? extractFromHeaderedRows(rows, headerIdx)
+      : extractFromStructureetRows(rows);
+
+  if (rawRecords.length === 0) {
     console.error("Premières lignes brutes :", rows.slice(0, 5));
     throw new Error(
-      "Ligne d'en-têtes introuvable — le format du fichier a peut-être changé. Inspectez avec --debug."
-    );
-  }
-  if (headerIdx > 0) {
-    console.log(
-      `Note : ${headerIdx} ligne(s) de préambule ignorée(s) avant la vraie ligne d'en-têtes.`
-    );
-  }
-  const headers = rows[headerIdx].map((h) => h.trim());
-  const dataRows = rows.slice(headerIdx + 1);
-
-  if (DEBUG) {
-    console.log("En-têtes détectés :", headers);
-    console.log("Exemple de ligne :", dataRows[0]);
-  }
-
-  const cols = Object.fromEntries(
-    Object.entries(COLUMN_PATTERNS).map(([key, patterns]) => [
-      key,
-      findColumnIndex(headers, patterns),
-    ])
-  );
-
-  if (cols.nom === -1) {
-    console.error("Colonnes détectées :", cols);
-    console.error("En-têtes disponibles :", headers);
-    throw new Error(
-      "Colonne essentielle (nom de l'établissement) introuvable — ajustez COLUMN_PATTERNS dans ce script après inspection avec --debug."
+      `Aucun enregistrement exploitable trouvé (ni ligne d'en-têtes, ni ligne de type "${STRUCTUREET_TYPE}"). Le format du fichier a peut-être encore changé — inspectez avec --debug.`
     );
   }
 
@@ -294,28 +350,27 @@ async function main() {
     );
   }
 
-  const get = (row, key) => (cols[key] !== -1 ? row[cols[key]]?.trim() || null : null);
-
-  const hospitals = dataRows
-    .map((r) => {
-      const directCodeInsee = get(r, "codeInseeCommune");
-      const codeInseeCommune =
-        directCodeInsee || buildCodeInsee(get(r, "depCode"), get(r, "communeLocalCode"));
+  const hospitals = rawRecords
+    .map((rec) => {
+      const codeInseeCommune = buildCodeInsee(rec.depCode, rec.communeLocal);
       const commune = codeInseeCommune ? communesIndex.get(codeInseeCommune) : null;
 
       return {
-        finess: get(r, "finess"),
-        nom: get(r, "nom"),
-        categorie: get(r, "categorie"),
-        adresse: get(r, "voie"),
-        codePostal: get(r, "codePostal"),
+        finess: rec.finess,
+        nom: rec.nom,
+        categorie: rec.categorie,
+        adresse: rec.adresse,
+        codePostal: rec.codePostal,
         codeInseeCommune,
-        communeNom: commune?.nom ?? get(r, "communeNom"),
+        communeNom: commune?.nom ?? rec.communeNomBrut,
         departementSlug: commune?.departementSlug ?? null,
-        departementNom: commune?.departementNom ?? get(r, "depNom"),
-        lat: cols.lat !== -1 ? Number(r[cols.lat]) || null : null,
-        lon: cols.lon !== -1 ? Number(r[cols.lon]) || null : null,
-        telephone: get(r, "telephone"),
+        departementNom: commune?.departementNom ?? rec.depNom,
+        // Coordonnées non présentes dans les lignes "structureet" (elles vivent
+        // dans un autre type d'enregistrement du même fichier) — non
+        // récupérées pour l'instant, voir ROADMAP-SEO.md.
+        lat: null,
+        lon: null,
+        telephone: rec.telephone,
       };
     })
     .filter((h) => h.nom)
@@ -327,11 +382,11 @@ async function main() {
   await writeFile(outPath, JSON.stringify(hospitals, null, 2) + "\n");
 
   console.log(
-    `✓ ${hospitals.length} établissements retenus sur ${dataRows.length} lignes lues (${linked} reliés à une ville de communes.json) → src/data/seo/hospitals.json`
+    `✓ ${hospitals.length} établissements retenus sur ${rawRecords.length} lignes lues (${linked} reliés à une ville de communes.json) → src/data/seo/hospitals.json`
   );
   if (hospitals.length === 0) {
     console.warn(
-      "Aucun établissement retenu : relancez avec --debug et vérifiez RELEVANT_CATEGORY_PATTERN / COLUMN_PATTERNS."
+      "Aucun établissement retenu : relancez avec --debug et vérifiez RELEVANT_CATEGORY_PATTERN."
     );
   }
 }

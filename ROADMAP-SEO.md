@@ -46,6 +46,20 @@ volumineux (le national). Le workflow exécute aussi communes et hôpitaux
 comme deux étapes indépendantes (`continue-on-error`), pour ne plus perdre le
 résultat des communes si les hôpitaux échouent.
 
+Un deuxième run réel a ensuite révélé le vrai format du fichier "stock"
+FINESS : **pas de ligne d'en-têtes du tout**. La ligne 1 est un manifeste
+(`finess;etalab;98;date`), et chaque ligne de données commence par une
+étiquette de type d'enregistrement (`structureet` pour l'identité/adresse de
+l'établissement — d'autres types comme `geolocalisationet` cohabitent dans le
+même fichier). Corrigé avec un mapping positionnel fixe pour les lignes
+`structureet` (voir `STRUCTUREET_COLS` dans `fetch-hospitals.mjs`), validé
+avec les vraies lignes remontées par le workflow (CH de Fleyriat, CH Bugey
+Sud, CH du Pays de Gex...). Point en attente : les coordonnées lat/lon ne
+sont pas dans les lignes `structureet` (probablement dans les lignes
+`geolocalisationet` du même fichier, non exploitées pour l'instant — champs
+laissés à `null`) ; à reprendre en Sprint 4 si les pages hôpitaux ont besoin
+d'une carte.
+
 **Action requise pour finaliser Sprint 1** :
 
 1. Relancer le workflow `refresh-seo-data` ("Run workflow" dans l'onglet
