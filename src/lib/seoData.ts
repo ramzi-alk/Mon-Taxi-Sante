@@ -136,3 +136,27 @@ export function searchCommunes(query: string, limit = 8): Commune[] {
     limit
   );
 }
+
+// Uniquement les établissements avec une page (slug présent) — pas la peine
+// de faire remonter un résultat de recherche qui ne mène nulle part.
+const hospitalsSearchIndex = hospitals
+  .filter((h) => h.slug)
+  .map((h) => ({ hospital: h, normalizedNom: normalizeQuery(h.nom) }));
+
+export function searchHospitals(
+  query: string,
+  opts: { departmentSlug?: string; limit?: number } = {}
+): Hospital[] {
+  const { departmentSlug, limit = 8 } = opts;
+  const q = normalizeQuery(query);
+  if (q.length < 2) return [];
+
+  const startsWith: Hospital[] = [];
+  const includes: Hospital[] = [];
+  for (const { hospital, normalizedNom } of hospitalsSearchIndex) {
+    if (departmentSlug && hospital.departementSlug !== departmentSlug) continue;
+    if (normalizedNom.startsWith(q)) startsWith.push(hospital);
+    else if (normalizedNom.includes(q)) includes.push(hospital);
+  }
+  return [...startsWith, ...includes].slice(0, limit);
+}

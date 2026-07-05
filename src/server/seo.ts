@@ -5,6 +5,7 @@ import {
   getNearbyHospitals,
   getCommunesForDepartment,
   searchCommunes,
+  searchHospitals,
   getHospital,
   getOtherHospitalsInCommune,
   type Commune,
@@ -60,4 +61,11 @@ export const getHospitalPageDataServerFn = createServerFn({ method: "GET" })
         : null;
       return { hospital, commune, otherHospitals: getOtherHospitalsInCommune(hospital) };
     }
+  );
+
+export const searchHospitalsServerFn = createServerFn({ method: "GET" })
+  .validator((input: { query: string; departmentSlug?: string; limit?: number }) => input)
+  .handler(
+    async ({ data }): Promise<Hospital[]> =>
+      searchHospitals(data.query, { departmentSlug: data.departmentSlug, limit: data.limit })
   );

@@ -2,6 +2,7 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowRight, MapPin, CheckCircle2, Phone } from "lucide-react";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
 import { getCityPageDataServerFn } from "~/server/seo";
+import { HospitalSearch } from "~/components/HospitalSearch";
 import type { Commune, Hospital } from "~/lib/seoData";
 
 export const Route = createFileRoute("/$department/$city")({
@@ -221,16 +222,17 @@ function LocalPage() {
                 </div>
               </li>
             ))}
-            <li className="flex items-start gap-3 rounded-xl border-2 border-dashed border-gray-200 p-4">
-              <MapPin className="h-5 w-5 text-gray-400 shrink-0 mt-0.5" aria-hidden="true" />
-              <div>
-                <p className="font-semibold text-gray-700">+ Tous autres établissements</p>
-                <p className="text-sm text-muted-foreground mt-0.5">
-                  Cabinets, cliniques, centres de soin de {Dept}
-                </p>
-              </div>
-            </li>
           </ul>
+
+          <div className="mt-8 rounded-xl border-2 border-dashed border-gray-200 p-5 max-w-md">
+            <p className="font-semibold text-gray-700 mb-1">
+              Vous ne trouvez pas votre établissement ?
+            </p>
+            <p className="text-sm text-muted-foreground mb-3">
+              Cabinets, cliniques et centres de soin de {Dept} : recherchez directement.
+            </p>
+            <HospitalSearch departmentSlug={commune.departementSlug} />
+          </div>
         </div>
       </section>
 
