@@ -113,7 +113,7 @@ function LocalBusinessSchema({ commune, hospitals }: { commune: Commune; hospita
 }
 
 function LocalPage() {
-  const { commune, hospitals } = Route.useLoaderData();
+  const { commune, hospitals, populationRank, neighboringCommunes } = Route.useLoaderData();
   const { nom: City, departementNom: Dept } = commune;
 
   const faqItems = [
@@ -167,6 +167,9 @@ function LocalPage() {
             <span className="text-brand-green-300 font-semibold">
               Service disponible à {City}
               {commune.population ? ` — ${commune.population.toLocaleString("fr-FR")} habitants` : ""}
+              {populationRank
+                ? ` (${populationRank.rank}${populationRank.rank === 1 ? "re" : "e"} ville la plus peuplée de ${Dept})`
+                : ""}
             </span>
           </div>
           <h1 className="text-4xl md:text-5xl font-extrabold mb-4 leading-tight">
@@ -259,7 +262,9 @@ function LocalPage() {
             {[
               {
                 title: `Chauffeurs locaux à ${City}`,
-                desc: `Nos chauffeurs partenaires connaissent parfaitement les routes de ${City} et de ${Dept}. Ponctualité garantie.`,
+                desc: hospitals.length
+                  ? `Nos chauffeurs partenaires desservent les ${hospitals.length} établissement${hospitals.length > 1 ? "s" : ""} de santé de ${City} listés ci-dessus, et connaissent parfaitement les routes de ${Dept}.`
+                  : `Nos chauffeurs partenaires connaissent parfaitement les routes de ${City} et de ${Dept}. Ponctualité garantie.`,
               },
               {
                 title: "Disponible 7j/7",
@@ -291,6 +296,31 @@ function LocalPage() {
           </div>
         </div>
       </section>
+
+      {/* Villes voisines — maillage interne, varie réellement par ville */}
+      {neighboringCommunes.length > 0 && (
+        <section className="section-medical bg-white" aria-labelledby="voisines-heading">
+          <div className="container">
+            <h2 id="voisines-heading" className="text-2xl font-bold text-gray-900 mb-6">
+              Également desservi près de {City}
+            </h2>
+            <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 list-none">
+              {neighboringCommunes.map((c) => (
+                <li key={c.codeInsee}>
+                  <Link
+                    to="/$department/$city"
+                    params={{ department: c.departementSlug, city: c.slug }}
+                    className="flex items-center justify-between gap-2 rounded-xl bg-gray-50 p-4 ring-1 ring-gray-100 hover:ring-brand-blue-300 transition-colors"
+                  >
+                    <span className="font-semibold text-gray-900">{c.nom}</span>
+                    <ArrowRight className="h-4 w-4 text-brand-blue-600 shrink-0" aria-hidden="true" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+      )}
 
       {/* FAQ — SEO-rich structured content */}
       <section className="section-medical bg-white" aria-labelledby="faq-heading">

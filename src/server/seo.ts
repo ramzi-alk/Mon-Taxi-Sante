@@ -4,6 +4,8 @@ import {
   getCommuneByCodeInsee,
   getNearbyHospitals,
   getCommunesForDepartment,
+  getPopulationRank,
+  getNeighboringCommunes,
   searchCommunes,
   searchHospitals,
   getHospital,
@@ -25,10 +27,20 @@ export const getCityPageDataServerFn = createServerFn({ method: "GET" })
   .handler(
     async ({
       data,
-    }): Promise<{ commune: Commune; hospitals: Hospital[] } | null> => {
+    }): Promise<{
+      commune: Commune;
+      hospitals: Hospital[];
+      populationRank: { rank: number; total: number } | null;
+      neighboringCommunes: Commune[];
+    } | null> => {
       const commune = getCommune(data.department, data.city);
       if (!commune) return null;
-      return { commune, hospitals: getNearbyHospitals(commune) };
+      return {
+        commune,
+        hospitals: getNearbyHospitals(commune),
+        populationRank: getPopulationRank(commune),
+        neighboringCommunes: getNeighboringCommunes(commune),
+      };
     }
   );
 

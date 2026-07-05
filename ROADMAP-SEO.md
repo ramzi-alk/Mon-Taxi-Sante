@@ -326,22 +326,40 @@ d'hôpital fonctionnelle et scopée au département, JSON-LD `FAQPage`/
 `MedicalClinic` présents sur les 3 gabarits, lien ALD correct sur une page
 hôpital de dialyse.
 
-## Sprint 5 — Qualité de contenu & anti-duplicate
+## Sprint 5 — Qualité de contenu & anti-duplicate ✅ (volet données réelles) TERMINÉ
 
 Le risque principal à cette échelle est la pénalité Google pour pages quasi
-identiques (seul le nom change). Pistes :
+identiques (seul le nom change).
 
-- [ ] Rendre le contenu réellement variable (hôpitaux réels proches,
-      population, spécificités locales) plutôt qu'un texte figé avec
-      substitution de nom.
+- [x] **Contenu réellement variable, à partir de données déjà disponibles
+      (aucun coût, aucune dépendance externe)** :
+      - `getPopulationRank()` (`seoData.ts`) : rang réel de la commune dans
+        son département (ex. "3e ville la plus peuplée du Rhône"), calculé
+        depuis `communes.json` — affiché dans le hero de la page ville.
+      - `getNeighboringCommunes()` : au lieu d'un simple "top N du
+        département" (qui afficherait les mêmes grandes villes sur toutes
+        les pages), une fenêtre autour du rang de population de la commune
+        courante — le contenu diffère donc réellement selon la ville
+        (vérifié : Lyon voisine de Villeurbanne/Vénissieux/Vaulx-en-Velin/
+        Saint-Priest, une petite commune du Rhône voisine de communes tout
+        aussi petites). Nouvelle section "Également desservi près de
+        {ville}" sur la page ville, avec vrais liens internes.
+      - Carte "Chauffeurs locaux" de la section "Pourquoi nous choisir"
+        mentionne désormais le nombre réel d'établissements desservis
+        plutôt qu'une formule générique.
 - [ ] **Option contenu enrichi par LLM** (mentionnée par le porteur de
       projet) : script `generate-copy.mjs` qui appelle une API (Claude ou
       Gemini) pour rédiger une intro unique par ville/maladie à partir des
       données structurées, avec relecture humaine avant publication.
-      Nécessite une clé API et un budget à valider séparément — à discuter
-      avant implémentation.
+      Nécessite une clé API et un budget à valider séparément — **en attente
+      d'une décision** (voir échange avec le porteur de projet).
 - [ ] Si le nombre total d'URLs dépasse 50 000 (limite d'un fichier
-      sitemap), passer à un sitemap index multi-fichiers.
+      sitemap), passer à un sitemap index multi-fichiers. Pas urgent : 11 771
+      URLs actuellement, loin de la limite.
+
+**Vérifié** : `pnpm build` + `tsc` sans régression (25 erreurs, aucune
+nouvelle). Testé en conditions réelles (build de production) : rang de
+population et villes voisines corrects et différenciés selon la ville.
 
 ## Sprint 6 — Suivi & validation
 

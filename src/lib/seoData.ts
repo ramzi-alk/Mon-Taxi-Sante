@@ -104,6 +104,33 @@ export function getCommunesForDepartment(departmentSlug: string): Commune[] {
     .sort((a, b) => (b.population ?? 0) - (a.population ?? 0));
 }
 
+// Rang de population réel de la commune dans son département (1 = la plus
+// peuplée), pour un contenu vraiment différencié par ville plutôt qu'un
+// texte figé — pas une statistique inventée, calculée depuis communes.json.
+export function getPopulationRank(commune: Commune): { rank: number; total: number } | null {
+  if (commune.population == null) return null;
+  const deptCommunes = getCommunesForDepartment(commune.departementSlug);
+  const rank = deptCommunes.findIndex((c) => c.codeInsee === commune.codeInsee) + 1;
+  return rank > 0 ? { rank, total: deptCommunes.length } : null;
+}
+
+// Villes "voisines" au sens population (proches dans le classement du
+// département, pas géographiquement — on n'a pas de coordonnées) : varie
+// naturellement selon le rang de la commune, contrairement à un simple
+// "top N du département" qui afficherait les mêmes grandes villes partout.
+export function getNeighboringCommunes(commune: Commune, limit = 4): Commune[] {
+  const deptCommunes = getCommunesForDepartment(commune.departementSlug);
+  const index = deptCommunes.findIndex((c) => c.codeInsee === commune.codeInsee);
+  if (index === -1) return [];
+
+  const half = Math.ceil(limit / 2);
+  let start = Math.max(0, index - half);
+  let end = Math.min(deptCommunes.length, start + limit + 1);
+  start = Math.max(0, end - (limit + 1));
+
+  return deptCommunes.slice(start, end).filter((c) => c.codeInsee !== commune.codeInsee);
+}
+
 function normalizeQuery(text: string): string {
   return text
     .toLowerCase()
