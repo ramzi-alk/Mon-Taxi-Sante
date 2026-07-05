@@ -11,6 +11,7 @@
 import { createServerRootRoute } from '@tanstack/react-start/server'
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VillesRouteImport } from './routes/villes'
 import { Route as TarifsCpamRouteImport } from './routes/tarifs-cpam'
 import { Route as ReinitialiserMotDePasseRouteImport } from './routes/reinitialiser-mot-de-passe'
 import { Route as MotDePasseOublieRouteImport } from './routes/mot-de-passe-oublie'
@@ -52,6 +53,11 @@ import { ServerRoute as ApiCronAtRiskBookingsServerRouteImport } from './routes/
 
 const rootServerRouteImport = createServerRootRoute()
 
+const VillesRoute = VillesRouteImport.update({
+  id: '/villes',
+  path: '/villes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TarifsCpamRoute = TarifsCpamRouteImport.update({
   id: '/tarifs-cpam',
   path: '/tarifs-cpam',
@@ -262,6 +268,7 @@ export interface FileRoutesByFullPath {
   '/mot-de-passe-oublie': typeof MotDePasseOublieRoute
   '/reinitialiser-mot-de-passe': typeof ReinitialiserMotDePasseRoute
   '/tarifs-cpam': typeof TarifsCpamRoute
+  '/villes': typeof VillesRoute
   '/$department/$city': typeof DepartmentCityRoute
   '/admin/avis': typeof AdminAvisRoute
   '/admin/chauffeurs': typeof AdminChauffeursRoute
@@ -298,6 +305,7 @@ export interface FileRoutesByTo {
   '/mot-de-passe-oublie': typeof MotDePasseOublieRoute
   '/reinitialiser-mot-de-passe': typeof ReinitialiserMotDePasseRoute
   '/tarifs-cpam': typeof TarifsCpamRoute
+  '/villes': typeof VillesRoute
   '/$department/$city': typeof DepartmentCityRoute
   '/admin/avis': typeof AdminAvisRoute
   '/admin/chauffeurs': typeof AdminChauffeursRoute
@@ -336,6 +344,7 @@ export interface FileRoutesById {
   '/mot-de-passe-oublie': typeof MotDePasseOublieRoute
   '/reinitialiser-mot-de-passe': typeof ReinitialiserMotDePasseRoute
   '/tarifs-cpam': typeof TarifsCpamRoute
+  '/villes': typeof VillesRoute
   '/$department/$city': typeof DepartmentCityRoute
   '/admin/avis': typeof AdminAvisRoute
   '/admin/chauffeurs': typeof AdminChauffeursRoute
@@ -375,6 +384,7 @@ export interface FileRouteTypes {
     | '/mot-de-passe-oublie'
     | '/reinitialiser-mot-de-passe'
     | '/tarifs-cpam'
+    | '/villes'
     | '/$department/$city'
     | '/admin/avis'
     | '/admin/chauffeurs'
@@ -411,6 +421,7 @@ export interface FileRouteTypes {
     | '/mot-de-passe-oublie'
     | '/reinitialiser-mot-de-passe'
     | '/tarifs-cpam'
+    | '/villes'
     | '/$department/$city'
     | '/admin/avis'
     | '/admin/chauffeurs'
@@ -448,6 +459,7 @@ export interface FileRouteTypes {
     | '/mot-de-passe-oublie'
     | '/reinitialiser-mot-de-passe'
     | '/tarifs-cpam'
+    | '/villes'
     | '/$department/$city'
     | '/admin/avis'
     | '/admin/chauffeurs'
@@ -486,6 +498,7 @@ export interface RootRouteChildren {
   MotDePasseOublieRoute: typeof MotDePasseOublieRoute
   ReinitialiserMotDePasseRoute: typeof ReinitialiserMotDePasseRoute
   TarifsCpamRoute: typeof TarifsCpamRoute
+  VillesRoute: typeof VillesRoute
   DepartmentCityRoute: typeof DepartmentCityRoute
   AdminConnexionRoute: typeof AdminConnexionRoute
   BlogAldTransportRoute: typeof BlogAldTransportRoute
@@ -543,6 +556,13 @@ export interface RootServerRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/villes': {
+      id: '/villes'
+      path: '/villes'
+      fullPath: '/villes'
+      preLoaderRoute: typeof VillesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tarifs-cpam': {
       id: '/tarifs-cpam'
       path: '/tarifs-cpam'
@@ -854,6 +874,7 @@ const rootRouteChildren: RootRouteChildren = {
   MotDePasseOublieRoute: MotDePasseOublieRoute,
   ReinitialiserMotDePasseRoute: ReinitialiserMotDePasseRoute,
   TarifsCpamRoute: TarifsCpamRoute,
+  VillesRoute: VillesRoute,
   DepartmentCityRoute: DepartmentCityRoute,
   AdminConnexionRoute: AdminConnexionRoute,
   BlogAldTransportRoute: BlogAldTransportRoute,

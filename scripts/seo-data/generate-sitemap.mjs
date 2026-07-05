@@ -22,6 +22,7 @@ const STATIC_PAGES = [
   { path: "/blog/transport-cpam", changefreq: "yearly", priority: "0.6" },
   { path: "/blog/pmt-prescription", changefreq: "yearly", priority: "0.6" },
   { path: "/blog/ald-transport", changefreq: "yearly", priority: "0.6" },
+  { path: "/villes", changefreq: "monthly", priority: "0.8" },
   { path: "/cgv", changefreq: "yearly", priority: "0.3" },
   { path: "/confidentialite", changefreq: "yearly", priority: "0.3" },
   { path: "/mentions-legales", changefreq: "yearly", priority: "0.3" },
@@ -72,7 +73,18 @@ async function main() {
         priority: "0.7",
       }));
 
-  const allUrls = [...STATIC_PAGES, ...cityUrls];
+  // Une page /$department par département ayant au moins une commune
+  // retenue (maillage interne — voir src/routes/$department.index.tsx).
+  const departmentSlugs = communes
+    ? [...new Set(communes.map((c) => c.departementSlug))]
+    : [...new Set(FALLBACK_CITIES.map((c) => c.department))];
+  const departmentUrls = departmentSlugs.map((slug) => ({
+    path: `/${slug}`,
+    changefreq: "monthly",
+    priority: "0.6",
+  }));
+
+  const allUrls = [...STATIC_PAGES, ...departmentUrls, ...cityUrls];
 
   const body = allUrls
     .map(

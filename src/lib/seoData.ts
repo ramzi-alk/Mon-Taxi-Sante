@@ -76,3 +76,11 @@ export function getCommunesForDepartment(departmentSlug: string): Commune[] {
     .slice()
     .sort((a, b) => (b.population ?? 0) - (a.population ?? 0));
 }
+
+const communesByPopulationDesc = communes
+  .slice()
+  .sort((a, b) => (b.population ?? 0) - (a.population ?? 0));
+
+export function getTopCommunes(limit = 16): Commune[] {
+  return communesByPopulationDesc.slice(0, limit);
+}

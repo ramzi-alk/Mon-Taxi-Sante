@@ -107,6 +107,18 @@ d'une carte.
 - [x] **`src/routes/$department.index.tsx`** : page liste des communes d'un
       département (triées par population) pour le maillage interne — Google
       découvre les villes sans dépendre uniquement du sitemap.
+- [x] **Accès depuis le reste du site** : avant ce point, aucune page ville
+      n'était atteignable en cliquant depuis le site (seulement par URL
+      directe ou sitemap). Ajouté :
+      - `src/routes/villes.tsx` (`/villes`) : hub listant les 18 régions et
+        101 départements, chacun renvoyant vers sa page `/$department`.
+        Complète la pyramide de maillage Accueil → hub → département → ville.
+      - Section "Villes principales" dans `Footer.tsx` (présente sur toutes
+        les pages) : les 16 plus grandes villes par population, plus un lien
+        vers `/villes`.
+      - `generate-sitemap.mjs` inclut maintenant aussi une entrée par page
+        département en plus des pages ville (5624 URLs au total : 14 pages
+        statiques + 101 départements + 5509 villes).
 
 **Vérifié** : `pnpm build` passe, `npx tsc --noEmit` ne régresse pas (26
 erreurs contre 28 avant, aucune nouvelle liée à ce sprint — la seule
@@ -117,7 +129,34 @@ données retournées). Testé en conditions réelles (serveur de dev + curl) :
 `/rhone/lyon` → 200 avec les vrais hôpitaux lyonnais, `/paris/paris` et
 `/bouches-du-rhone/marseille` → hôpitaux réels également (validant le repli
 arrondissement), `/rhone` → 200 avec 127 communes triées par population,
-`/rhone/ville-qui-nexiste-pas` et `/departement-bidon` → 404.
+`/rhone/ville-qui-nexiste-pas` et `/departement-bidon` → 404, `/villes` → 200
+avec les 18 régions, Footer → vraies plus grandes villes (Paris, Marseille,
+Lyon, Toulouse, Nice, Nantes, Montpellier, Strasbourg, Bordeaux...) présentes
+sur la page d'accueil.
+
+### Note — géolocalisation utilisateur (hors périmètre SEO)
+
+Idée évoquée : utiliser la géolocalisation du navigateur pour proposer
+automatiquement les hôpitaux proches de l'utilisateur sur la page d'accueil.
+Mise de côté pour l'instant :
+
+- **Ça n'aide pas le SEO** : Googlebot ne donne jamais sa position, donc un
+  contenu personnalisé côté client n'est jamais indexé — c'est le contenu
+  statique par page (ce que ce roadmap construit) qui compte pour le
+  référencement. La géolocalisation est une feature de conversion/UX
+  distincte, pas un levier SEO.
+- **Bloquant technique actuel** : on n'a pas encore de coordonnées GPS
+  exploitables. `communes.json` n'a pas de lat/lon (le champ `centre` n'a pas
+  été demandé à l'API geo.api.gouv.fr), et les hôpitaux non plus — leurs
+  coordonnées vivent dans un autre type d'enregistrement FINESS
+  (`geolocalisationet`) non récupéré par `fetch-hospitals.mjs` (voir Sprint 1
+  : les lignes `structureet` qu'on lit n'ont pas de coordonnées).
+
+À reprendre comme feature UX séparée si souhaité, après le SEO : il faudrait
+(1) demander `centre` à geo.api.gouv.fr pour les communes et/ou joindre les
+lignes `geolocalisationet` du fichier FINESS aux hôpitaux, (2) un composant
+client qui demande la permission de géolocalisation et calcule la ville/les
+hôpitaux les plus proches.
 
 ## Sprint 3 — Pages maladies (ALD)
 
