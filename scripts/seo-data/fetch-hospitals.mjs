@@ -12,7 +12,10 @@
 //
 // Usage :
 //   node scripts/seo-data/fetch-hospitals.mjs --debug
-//   node scripts/seo-data/fetch-hospitals.mjs --input=./finess.csv   (fichier déjà téléchargé)
+//   node scripts/seo-data/fetch-hospitals.mjs --input=./finess.csv        (fichier déjà téléchargé)
+//   node scripts/seo-data/fetch-hospitals.mjs --list                     (liste les datasets candidats sans télécharger)
+//   node scripts/seo-data/fetch-hospitals.mjs --dataset=<slug-ou-id>      (cible un dataset data.gouv.fr précis)
+//   node scripts/seo-data/fetch-hospitals.mjs --resource-url=<url-csv>    (télécharge directement cette URL, saute la recherche)
 import { writeFile } from "node:fs/promises";
 import { parseCsv, detectDelimiter } from "./csv.mjs";
 
@@ -25,7 +28,38 @@ const args = Object.fromEntries(
 const DEBUG = Boolean(args.debug);
 
 const DATASET_SEARCH_URL =
-  "https://www.data.gouv.fr/api/1/datasets/?q=finess%20etablissements&page_size=5";
+  "https://www.data.gouv.fr/api/1/datasets/?q=finess&page_size=20";
+
+// La recherche data.gouv.fr remonte aussi bien l'extraction nationale
+// officielle que des ré-exports régionaux ou personnels (ex. "Carte
+// Etablissements FINESS 76 dec2025" — un seul département). On score les
+// candidats pour préférer le fichier national complet, mais ça reste
+// heuristique : utilisez --list pour vérifier, ou --dataset=/--resource-url=
+// pour forcer un choix précis une fois le bon dataset identifié manuellement
+// sur data.gouv.fr.
+function scoreDataset(dataset, csvResource) {
+  const title = dataset.title.toLowerCase();
+  let score = 0;
+  if (/\bfiness\b/.test(title)) score += 10;
+  if (/extraction|national|fichier des .{0,20}etablissements/.test(title)) {
+    score += 5;
+  }
+  // Un code département/région isolé dans le titre ("FINESS 76", "FINESS - 44")
+  // signale presque toujours un extrait régional, pas le fichier national.
+  if (/\b\d{2,3}\b/.test(title)) score -= 20;
+  if (/carte|visualisation|export perso/.test(title)) score -= 10;
+  // Départage par taille : le fichier national est nettement plus volumineux
+  // qu'un extrait régional.
+  score += Math.log10((csvResource.filesize || 1) + 1);
+  return score;
+}
+
+function findCsvResource(dataset) {
+  return dataset.resources?.find((r) => {
+    const format = r.format?.toLowerCase() ?? "";
+    return format === "csv" || format.includes("csv") || /\.csv($|\?)/i.test(r.url ?? "");
+  });
+}
 
 // Catégories FINESS pertinentes pour du transport sanitaire (hôpitaux,
 // cliniques, centres de dialyse...). On filtre sur le libellé plutôt que sur
@@ -58,29 +92,80 @@ function findColumnIndex(headers, patterns) {
   return -1;
 }
 
-async function resolveCsvUrl() {
-  console.log(`Recherche du jeu de données FINESS sur data.gouv.fr ...`);
+async function fetchDataset(idOrSlug) {
+  const res = await fetch(
+    `https://www.data.gouv.fr/api/1/datasets/${idOrSlug}/`
+  );
+  if (!res.ok) return null;
+  return res.json();
+}
+
+async function searchCandidates() {
   const res = await fetch(DATASET_SEARCH_URL);
   if (!res.ok) {
     throw new Error(`data.gouv.fr a répondu ${res.status} ${res.statusText}`);
   }
   const data = await res.json();
-  const dataset = data.data?.[0];
-  if (!dataset) {
+  return (data.data ?? [])
+    .map((dataset) => {
+      const csvResource = findCsvResource(dataset);
+      return csvResource ? { dataset, csvResource, score: scoreDataset(dataset, csvResource) } : null;
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.score - a.score);
+}
+
+async function resolveCsvUrl() {
+  if (args["resource-url"]) {
+    console.log(`URL de ressource forcée : ${args["resource-url"]}`);
+    return args["resource-url"];
+  }
+
+  if (args.dataset) {
+    console.log(`Dataset forcé : ${args.dataset}`);
+    const dataset = await fetchDataset(args.dataset);
+    if (!dataset) {
+      throw new Error(`Dataset "${args.dataset}" introuvable sur data.gouv.fr.`);
+    }
+    const resource = findCsvResource(dataset);
+    if (!resource) {
+      throw new Error(
+        `Le dataset "${dataset.title}" ne contient pas de ressource CSV directement exploitable.`
+      );
+    }
+    console.log(`→ ${resource.url}`);
+    return resource.url;
+  }
+
+  console.log(`Recherche du jeu de données FINESS sur data.gouv.fr ...`);
+  const candidates = await searchCandidates();
+
+  if (candidates.length === 0) {
     throw new Error(
-      "Aucun jeu de données FINESS trouvé via l'API de recherche data.gouv.fr."
+      "Aucun dataset FINESS avec une ressource CSV trouvé via l'API de recherche data.gouv.fr. Cherchez manuellement sur https://www.data.gouv.fr et relancez avec --dataset=<slug> ou --resource-url=<url>."
     );
   }
-  const resource = dataset.resources?.find(
-    (r) => r.format?.toLowerCase() === "csv"
+
+  if (args.list) {
+    console.log("Datasets candidats (du plus au moins probable) :");
+    for (const { dataset, csvResource, score } of candidates) {
+      console.log(
+        `  [score ${score.toFixed(1)}] "${dataset.title}" (${dataset.slug || dataset.id}) → ${csvResource.url} (${csvResource.filesize ?? "?"} octets)`
+      );
+    }
+    process.exit(0);
+  }
+
+  const best = candidates[0];
+  console.log(
+    `Dataset retenu : "${best.dataset.title}" (score ${best.score.toFixed(1)}) → ${best.csvResource.url}`
   );
-  if (!resource) {
-    throw new Error(
-      `Le dataset "${dataset.title}" ne contient pas de ressource CSV directement exploitable.`
+  if (candidates.length > 1) {
+    console.log(
+      `(${candidates.length - 1} autre(s) candidat(s) ignoré(s) — relancez avec --list pour les voir, ou --dataset=<slug> pour forcer un choix précis.)`
     );
   }
-  console.log(`Dataset trouvé : "${dataset.title}" → ${resource.url}`);
-  return resource.url;
+  return best.csvResource.url;
 }
 
 async function loadCsvText() {

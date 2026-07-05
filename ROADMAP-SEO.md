@@ -33,27 +33,41 @@
       qui a un accès réseau réel, et ouvre une Pull Request si les données ont
       changé.
 
-**⚠️ Action requise avant de continuer (Sprint 2)** : les scripts de
-récupération n'ont **pas pu être exécutés contre les vraies APIs** dans
-l'environnement où ce pipeline a été écrit (accès réseau sortant restreint
-par la politique de l'organisation — `geo.api.gouv.fr` et `data.gouv.fr` sont
-bloqués). Toute la logique (jointure département, calcul de slug, gestion des
-collisions, parsing CSV, détection de colonnes, filtrage par catégorie) a été
-validée avec des jeux de données simulés, mais **personne n'a encore généré
-les vrais fichiers `communes.json` / `hospitals.json`**. Pour démarrer :
+**Mise à jour — premier run réel effectué** : `fetch-communes.mjs` a été
+exécuté via le workflow et a produit **5509 communes** (seuil 2000 habitants)
+dans `src/data/seo/communes.json` — cette partie fonctionne. `fetch-hospitals.mjs`
+a en revanche pris le premier résultat de la recherche data.gouv.fr, qui
+n'était pas le fichier national officiel mais un ré-export régional
+("Carte Etablissements FINESS 76 dec2025"), et a échoué car ce dataset
+n'exposait pas de ressource CSV exploitable. Corrigé : le script scanne
+maintenant 20 candidats et les classe par un score qui pénalise les titres
+mentionnant un département isolé ou "carte" et favorise le fichier le plus
+volumineux (le national). Le workflow exécute aussi communes et hôpitaux
+comme deux étapes indépendantes (`continue-on-error`), pour ne plus perdre le
+résultat des communes si les hôpitaux échouent.
 
-1. Lancer manuellement le workflow `refresh-seo-data` depuis l'onglet Actions
-   de GitHub ("Run workflow"), **ou** exécuter en local :
+**Action requise pour finaliser Sprint 1** :
+
+1. Relancer le workflow `refresh-seo-data` ("Run workflow" dans l'onglet
+   Actions), **ou** en local :
    ```
-   pnpm run seo:build-data
+   pnpm run seo:communes
+   pnpm run seo:hospitals
    ```
-2. Pour les hôpitaux, relancer une première fois avec `--debug` et vérifier
-   que les colonnes détectées correspondent bien aux en-têtes réels du CSV
-   FINESS (les noms de colonnes varient selon les millésimes) :
+2. Si `fetch-hospitals.mjs` ne trouve toujours pas le bon dataset, lister les
+   candidats sans télécharger :
    ```
-   node scripts/seo-data/fetch-hospitals.mjs --debug
+   node scripts/seo-data/fetch-hospitals.mjs --list
    ```
-   Ajuster `COLUMN_PATTERNS` dans `fetch-hospitals.mjs` si besoin.
+   puis forcer le bon choix une fois identifié sur data.gouv.fr :
+   ```
+   node scripts/seo-data/fetch-hospitals.mjs --dataset=<slug-du-dataset>
+   # ou directement :
+   node scripts/seo-data/fetch-hospitals.mjs --resource-url=<url-du-csv>
+   ```
+3. Vérifier avec `--debug` que les colonnes détectées correspondent bien aux
+   en-têtes réels du CSV (ils varient selon les millésimes FINESS) et ajuster
+   `COLUMN_PATTERNS` dans `fetch-hospitals.mjs` si besoin.
 
 ---
 

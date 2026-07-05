@@ -29,8 +29,18 @@ jobs:
       - name: Installer les dépendances
         run: pnpm install --frozen-lockfile
 
-      - name: Régénérer les données SEO
-        run: pnpm run seo:build-data
+      # Étapes séparées et non bloquantes : si la découverte du dataset FINESS
+      # échoue (le dataset officiel change parfois de slug), on ne veut pas
+      # perdre le rafraîchissement des communes qui, lui, a réussi.
+      - name: Régénérer les communes
+        id: communes
+        run: pnpm run seo:communes
+        continue-on-error: true
+
+      - name: Régénérer les hôpitaux
+        id: hospitals
+        run: pnpm run seo:hospitals
+        continue-on-error: true
 
       - name: Régénérer le sitemap
         run: pnpm run seo:sitemap
@@ -43,13 +53,23 @@ jobs:
           body: |
             Mise à jour automatique générée par le workflow `refresh-seo-data`.
 
-            - Source communes : geo.api.gouv.fr
-            - Source hôpitaux : FINESS (data.gouv.fr)
+            - Source communes : geo.api.gouv.fr (statut : ${{ steps.communes.outcome }})
+            - Source hôpitaux : FINESS, data.gouv.fr (statut : ${{ steps.hospitals.outcome }})
 
             À vérifier avant merge : le diff de `src/data/seo/communes.json` et
-            `src/data/seo/hospitals.json`, et que le build passe toujours.
+            `src/data/seo/hospitals.json`, et que le build passe toujours. Si
+            une étape a échoué, voir les logs du job pour le détail (dataset
+            FINESS introuvable, colonnes CSV inattendues, etc.) — relancer
+            manuellement avec les options `--list` / `--dataset=` /
+            `--resource-url=` de `fetch-hospitals.mjs` si besoin.
           branch: chore/refresh-seo-data
           delete-branch: true
           add-paths: |
             src/data/seo/*.json
             public/sitemap.xml
+
+      - name: Échouer le job si une étape de récupération a échoué
+        if: steps.communes.outcome == 'failure' || steps.hospitals.outcome == 'failure'
+        run: |
+          echo "Au moins une source de données a échoué (voir les étapes ci-dessus)."
+          exit 1
