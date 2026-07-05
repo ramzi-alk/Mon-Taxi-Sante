@@ -1,0 +1,55 @@
+name: Rafraîchir les données SEO (communes / hôpitaux)
+
+on:
+  schedule:
+    # Le 1er de chaque mois à 5h UTC. Les référentiels open data (communes,
+    # FINESS) évoluent peu et lentement — un rafraîchissement mensuel suffit.
+    - cron: "0 5 1 * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  refresh-seo-data:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Installer les dépendances
+        run: pnpm install --frozen-lockfile
+
+      - name: Régénérer les données SEO
+        run: pnpm run seo:build-data
+
+      - name: Régénérer le sitemap
+        run: pnpm run seo:sitemap
+
+      - name: Ouvrir une Pull Request si les données ont changé
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "chore(seo): rafraîchissement mensuel des données communes/hôpitaux"
+          title: "chore(seo): rafraîchissement mensuel des données communes/hôpitaux"
+          body: |
+            Mise à jour automatique générée par le workflow `refresh-seo-data`.
+
+            - Source communes : geo.api.gouv.fr
+            - Source hôpitaux : FINESS (data.gouv.fr)
+
+            À vérifier avant merge : le diff de `src/data/seo/communes.json` et
+            `src/data/seo/hospitals.json`, et que le build passe toujours.
+          branch: chore/refresh-seo-data
+          delete-branch: true
+          add-paths: |
+            src/data/seo/*.json
+            public/sitemap.xml

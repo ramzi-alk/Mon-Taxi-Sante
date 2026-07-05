@@ -5,10 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev --port 3000",
-    "build": "vite build && node scripts/vercel-build.mjs",
+    "build": "node scripts/seo-data/generate-sitemap.mjs && vite build && node scripts/vercel-build.mjs",
     "build:vite": "vite build",
     "start": "node dist/server/server.js",
-    "preview": "node dist/server/server.js"
+    "preview": "node dist/server/server.js",
+    "seo:build-data": "node scripts/seo-data/fetch-communes.mjs && node scripts/seo-data/fetch-hospitals.mjs",
+    "seo:sitemap": "node scripts/seo-data/generate-sitemap.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
