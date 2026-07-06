@@ -3,6 +3,7 @@ import {
   getCommune,
   getCommuneByCodeInsee,
   getNearbyHospitals,
+  getNearestHospitalsByDistance,
   getCommunesForDepartment,
   getPopulationRank,
   getNeighboringCommunes,
@@ -12,6 +13,7 @@ import {
   getOtherHospitalsInCommune,
   type Commune,
   type Hospital,
+  type NearestHospital,
 } from "~/lib/seoData";
 import departments from "~/data/seo/departments.json";
 
@@ -32,6 +34,7 @@ export const getCityPageDataServerFn = createServerFn({ method: "GET" })
       hospitals: Hospital[];
       populationRank: { rank: number; total: number } | null;
       neighboringCommunes: Commune[];
+      nearestHospitals: NearestHospital[];
     } | null> => {
       const commune = getCommune(data.department, data.city);
       if (!commune) return null;
@@ -40,6 +43,7 @@ export const getCityPageDataServerFn = createServerFn({ method: "GET" })
         hospitals: getNearbyHospitals(commune),
         populationRank: getPopulationRank(commune),
         neighboringCommunes: getNeighboringCommunes(commune),
+        nearestHospitals: getNearestHospitalsByDistance(commune),
       };
     }
   );

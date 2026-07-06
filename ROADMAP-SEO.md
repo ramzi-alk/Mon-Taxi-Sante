@@ -81,6 +81,26 @@ réel (2026-07-06)** :
   vraie ligne remontée par le run `--debug` (FINESS `010000024`, dept. 01) :
   conversion → lat 46.22 / lon 5.21, cohérent avec le département de l'Ain.
 
+**Mise à jour — coordonnées exploitées (données réelles fusionnées depuis
+PR #34)** : `communes.json` (5509/5509 avec lat/lon) et `hospitals.json`
+(7193/7474 avec lat/lon, le reste principalement DROM) permettent maintenant
+un vrai calcul de proximité géographique (`seoData.ts`) :
+- `getNeighboringCommunes()` : remplace le classement par rang de population
+  par une vraie distance (haversine) — peut inclure une commune d'un autre
+  département si elle est réellement plus proche (le lien fonctionne dans
+  tous les cas, l'URL vient de la commune trouvée, pas du département
+  courant). Vérifié : Lyon → La Mulatière (3,2 km), Sainte-Foy-lès-Lyon
+  (4,1 km), Villeurbanne (4,5 km)...
+- `getNearestHospitalsByDistance()` (nouvelle fonction) : établissements les
+  plus proches par distance réelle, y compris hors commune, plafonné à 40 km
+  pour éviter un résultat aberrant (ex. DROM, où les hôpitaux n'ont pas de
+  lat/lon convertie). Nouvelle section "Établissements à proximité de
+  {Ville}" sur la page ville, testée en conditions réelles (build de
+  production + serveur local) : une commune sans établissement propre
+  (ex. Bresse Vallons, Ain) affiche désormais 3 vrais établissements proches
+  (Maison de santé de Montrevel-en-Bresse à 4,5 km...) au lieu d'un vide sec
+  suivi seulement de la barre de recherche générique.
+
 **Action requise pour finaliser Sprint 1** :
 
 1. Relancer le workflow `refresh-seo-data` ("Run workflow" dans l'onglet

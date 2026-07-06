@@ -105,6 +105,53 @@ export function getNearbyHospitals(commune: Commune, limit = 6): Hospital[] {
   return (hospitalsByCommune.get(commune.codeInsee) ?? []).slice(0, limit);
 }
 
+// Distance orthodromique (formule de haversine), en km — suffisant à cette
+// échelle (distances de quelques dizaines de km max), pas besoin d'une
+// projection plus précise.
+function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+
+export interface NearestHospital {
+  hospital: Hospital;
+  distanceKm: number;
+}
+
+// Établissements les plus proches par distance réelle (pas seulement dans la
+// même commune) — complète getNearbyHospitals, en particulier utile pour les
+// petites communes sans établissement propre. Plafonné à maxDistanceKm pour
+// éviter d'afficher un résultat absurde (ex. DROM : la conversion GPS des
+// hôpitaux ne couvre que la projection Lambert-93 métropole, voir
+// fetch-hospitals.mjs — sans hôpital converti à proximité réelle, mieux vaut
+// une liste vide que de faire remonter un établissement à des milliers de km).
+export function getNearestHospitalsByDistance(
+  commune: Commune,
+  limit = 4,
+  { excludeSameCommune = true, maxDistanceKm = 40 } = {}
+): NearestHospital[] {
+  if (commune.lat == null || commune.lon == null) return [];
+  const lat = commune.lat;
+  const lon = commune.lon;
+
+  return hospitals
+    .filter((h) => h.lat != null && h.lon != null)
+    .filter(
+      (h) =>
+        !excludeSameCommune ||
+        (h.codeInseeCommune ? normalizeCodeInsee(h.codeInseeCommune) : null) !== commune.codeInsee
+    )
+    .map((h) => ({ hospital: h, distanceKm: haversineKm(lat, lon, h.lat as number, h.lon as number) }))
+    .filter((x) => x.distanceKm <= maxDistanceKm)
+    .sort((a, b) => a.distanceKm - b.distanceKm)
+    .slice(0, limit);
+}
+
 export function getHospital(slug: string): Hospital | null {
   return hospitalBySlug.get(slug) ?? null;
 }
@@ -133,11 +180,26 @@ export function getPopulationRank(commune: Commune): { rank: number; total: numb
   return rank > 0 ? { rank, total: deptCommunes.length } : null;
 }
 
-// Villes "voisines" au sens population (proches dans le classement du
-// département, pas géographiquement — on n'a pas de coordonnées) : varie
-// naturellement selon le rang de la commune, contrairement à un simple
-// "top N du département" qui afficherait les mêmes grandes villes partout.
+// Villes "voisines" au sens géographique réel (distance à vol d'oiseau depuis
+// les coordonnées de fetch-communes.mjs), pas administratif : peut inclure
+// une commune d'un autre département si elle est réellement plus proche que
+// des communes du même département — le lien fonctionne dans tous les cas
+// (params.department vient de c.departementSlug, pas du département courant).
 export function getNeighboringCommunes(commune: Commune, limit = 4): Commune[] {
+  if (commune.lat != null && commune.lon != null) {
+    const lat = commune.lat;
+    const lon = commune.lon;
+    return communes
+      .filter((c) => c.codeInsee !== commune.codeInsee && c.lat != null && c.lon != null)
+      .map((c) => ({ commune: c, distanceKm: haversineKm(lat, lon, c.lat as number, c.lon as number) }))
+      .sort((a, b) => a.distanceKm - b.distanceKm)
+      .slice(0, limit)
+      .map((x) => x.commune);
+  }
+
+  // Repli si lat/lon absents (ne devrait plus arriver après régénération de
+  // communes.json — voir ROADMAP-SEO.md) : classement par rang de population
+  // dans le département, l'ancien algorithme.
   const deptCommunes = getCommunesForDepartment(commune.departementSlug);
   const index = deptCommunes.findIndex((c) => c.codeInsee === commune.codeInsee);
   if (index === -1) return [];
