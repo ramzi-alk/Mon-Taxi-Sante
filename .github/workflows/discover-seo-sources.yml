@@ -1,0 +1,42 @@
+name: Découvrir une nouvelle source de données SEO
+
+# Workflow manuel, sans écriture de données : sert uniquement à explorer la
+# structure réelle d'une nouvelle source (SAE, INSEE local...) via un
+# environnement avec accès réseau réel, avant d'écrire un vrai parseur (voir
+# scripts/seo-data/fetch-sae.mjs et fetch-insee-local.mjs).
+
+on:
+  workflow_dispatch:
+    inputs:
+      script:
+        description: "Script de découverte à lancer"
+        type: choice
+        options:
+          - sae
+          - insee-local
+        required: true
+      args:
+        description: "Arguments (ex. --list, --dataset=<slug>, --resource-url=<url> --debug)"
+        required: false
+        default: "--list"
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Installer les dépendances
+        run: pnpm install --frozen-lockfile
+
+      - name: Lancer la découverte
+        run: node scripts/seo-data/fetch-${{ inputs.script }}.mjs ${{ inputs.args }}
