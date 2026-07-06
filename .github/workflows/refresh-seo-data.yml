@@ -5,7 +5,13 @@ on:
     # Le 1er de chaque mois à 5h UTC. Les référentiels open data (communes,
     # FINESS) évoluent peu et lentement — un rafraîchissement mensuel suffit.
     - cron: "0 5 1 * *"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      debug:
+        description: "Logger le détail du parsing FINESS (--debug), pour diagnostiquer un format inattendu"
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: write
@@ -39,7 +45,7 @@ jobs:
 
       - name: Régénérer les hôpitaux
         id: hospitals
-        run: pnpm run seo:hospitals
+        run: pnpm run seo:hospitals -- ${{ inputs.debug && '--debug' || '' }}
         continue-on-error: true
 
       - name: Régénérer le sitemap
