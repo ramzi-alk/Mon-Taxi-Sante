@@ -56,32 +56,30 @@ même fichier). Corrigé avec un mapping positionnel fixe pour les lignes
 avec les vraies lignes remontées par le workflow (CH de Fleyriat, CH Bugey
 Sud, CH du Pays de Gex...).
 
-**Mise à jour — coordonnées GPS + champs additionnels (ajoutés après coup,
-non testés en conditions réelles)** : cet environnement de développement n'a
-pas d'accès réseau vers `geo.api.gouv.fr`/`data.gouv.fr` (politique réseau de
-l'environnement), donc ces changements n'ont pu être vérifiés que par
-simulation (CSV/réponse API synthétiques), pas sur les jeux de données réels
-— **à confirmer au prochain run réel** (workflow ou local) :
-- `fetch-communes.mjs` demande désormais `centre` (Point GeoJSON, `[lon,
-  lat]`), `surface` (hectares) et `epci` (objet `{nom, code}`) à l'API — champs
-  documentés mais jamais requêtés jusqu'ici. Un `console.log` du premier
-  enregistrement brut reçu permet de vérifier leur forme dès le premier run
-  réel (regarder les logs du workflow).
-- `fetch-hospitals.mjs` joint désormais les lignes `geolocalisationet` (par
-  numéro FINESS, en supposant la même convention de colonnes que
-  `structureet` : type en position 0, FINESS en position 1) aux hôpitaux, via
-  un **scan heuristique** de la ligne à la recherche d'une paire de nombres
-  plausibles pour des coordonnées en France métropolitaine (pas d'index fixe
-  comme `STRUCTUREET_COLS`, faute d'avoir pu observer une vraie ligne
-  `geolocalisationet`). `--debug` logge maintenant un exemple de ligne pour
-  **chaque** type d'enregistrement rencontré (pas seulement `structureet`),
-  pour (a) confirmer/corriger la position des coordonnées et figer des index
-  fixes comme pour `STRUCTUREET_COLS`, et (b) repérer si d'autres champs
-  utiles (capacité, urgences, site web...) existent dans un type
-  d'enregistrement non encore exploité. **Si le prochain run donne 0
-  coordonnées extraites ou des valeurs aberrantes, relancer avec `--debug`,
-  coller le résultat pour ajustement — même méthode que celle qui a permis de
-  fixer `STRUCTUREET_COLS`.**
+**Mise à jour — coordonnées GPS + champs additionnels, confirmées sur un run
+réel (2026-07-06)** :
+- `fetch-communes.mjs` : `centre`/`surface`/`epci` fonctionnent exactement
+  comme documenté. Exemple réel reçu : `{"centre":{"coordinates":[4.9306,
+  46.1517]},"surface":1564.5,"epci":{"nom":"CC de la Dombes"}}`. `communes.json`
+  régénéré avec succès (PR #34, diff propre).
+- `fetch-hospitals.mjs` : le premier essai (jointure `geolocalisationet` par
+  scan heuristique de degrés WGS84) a donné **0 coordonnées** — diagnostiqué
+  via un run `--debug` dédié (ajout d'un input `workflow_dispatch` au
+  workflow). Deux erreurs de supposition initiale :
+  1. Le type d'enregistrement s'appelle **`geolocalisation`**, pas
+     `geolocalisationet` (jamais trouvé, d'où le 0).
+  2. Les coordonnées ne sont **pas en degrés WGS84** mais projetées en
+     **Lambert-93/RGF93 (EPSG:2154, mètres)** — indiqué dans un champ CRS de
+     la ligne elle-même (`"...EPSG:2154 RGF93 / Lambert-93 (Métropole)"`).
+  
+  Corrigé : `GEOLOCALISATION_COLS` (index fixes, comme `STRUCTUREET_COLS`) +
+  `lambert93ToWGS84()` (formule inverse de la projection conique conforme de
+  Lambert, paramètres officiels IGN), avec conversion **uniquement** si le
+  champ CRS mentionne Lambert-93/EPSG:2154 (les DROM utilisent d'autres
+  projections — UTM — non gérées faute d'exemple réel observé : mieux vaut un
+  lat/lon `null` qu'une conversion silencieusement fausse). Vérifié avec la
+  vraie ligne remontée par le run `--debug` (FINESS `010000024`, dept. 01) :
+  conversion → lat 46.22 / lon 5.21, cohérent avec le département de l'Ain.
 
 **Action requise pour finaliser Sprint 1** :
 

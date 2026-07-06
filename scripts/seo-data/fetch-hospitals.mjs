@@ -102,50 +102,97 @@ const STRUCTUREET_COLS = {
 };
 
 // Type d'enregistrement portant la géolocalisation dans le même fichier
-// stock FINESS (structureet n'a pas de coordonnées, voir plus haut). Position
-// des colonnes lat/lon NON confirmée en conditions réelles (contrairement à
-// STRUCTUREET_COLS) : cet environnement n'a pas d'accès réseau pour tester
-// sur le fichier réel (voir en-tête du script). Repli volontairement en
-// scan heuristique (cherche une paire de nombres plausibles pour des
-// coordonnées en France métropolitaine) plutôt qu'un index figé au hasard —
-// à remplacer par des indices fixes dès qu'un run réel (--debug) confirme le
-// format, comme ça a été fait pour STRUCTUREET_COLS.
-const GEOLOCALISATIONET_TYPE = "geolocalisationet";
-const FRANCE_LAT_RANGE = [41, 51.5];
-const FRANCE_LON_RANGE = [-5.5, 10];
+// stock FINESS (structureet n'a pas de coordonnées, voir plus haut). Format
+// confirmé sur un run réel (--debug, 2026-07) : le type s'appelle
+// "geolocalisation" (PAS "geolocalisationet" — supposition initiale erronée),
+// et les coordonnées ne sont PAS en degrés WGS84 mais projetées en
+// Lambert-93/RGF93 (EPSG:2154, mètres), ce qui expliquait les 0 résultats du
+// scan heuristique par plage de degrés. Exemple de ligne réelle :
+// ['geolocalisation', '010000024', '870262.2', '6571540.8',
+//  '1,ATLASANTE,96,BAN,EPSG:2154 RGF93 / Lambert-93 (Métropole)', '2026-05-04']
+// -> converti et vérifié : lat 46.22 / lon 5.21, dans le département de l'Ain
+// (cohérent avec le FINESS commençant par "01").
+const GEOLOCALISATION_TYPE = "geolocalisation";
+const GEOLOCALISATION_COLS = { finess: 1, x: 2, y: 3, crs: 4 };
 
-function looksLikeCoord(value, [min, max]) {
-  const n = Number(value);
-  return Number.isFinite(n) && n >= min && n <= max;
+// Le champ CRS n'a été vu qu'avec "Lambert-93 (Métropole)" jusqu'ici. Les
+// DROM utilisent typiquement d'autres projections (UTM) — non converties ici
+// faute d'avoir observé un exemple réel : mieux vaut un lat/lon absent qu'une
+// conversion silencieusement fausse avec la mauvaise formule de projection.
+const LAMBERT93_CRS_PATTERN = /lambert-93|epsg:?2154/i;
+
+// Inverse de la projection conique conforme de Lambert, paramètres officiels
+// IGN pour le Lambert-93 (ellipsoïde GRS80/RGF93, quasi identique à WGS84
+// aux fins de ce site). Constantes standard, indépendantes du millésime du
+// fichier FINESS.
+function lambert93ToWGS84(x, y) {
+  const n = 0.7256077650;
+  const c = 11754255.426;
+  const xs = 700000.0;
+  const ys = 12655612.05;
+  const e = 0.08181919106;
+  const lon0 = (3 * Math.PI) / 180;
+
+  const r = Math.sqrt((x - xs) ** 2 + (ys - y) ** 2);
+  const gamma = Math.atan((x - xs) / (ys - y));
+  const lon = lon0 + gamma / n;
+
+  const latIso = (-1 / n) * Math.log(Math.abs(r / c));
+  let lat = 2 * Math.atan(Math.exp(latIso)) - Math.PI / 2;
+  for (let i = 0; i < 8; i++) {
+    lat =
+      2 *
+        Math.atan(
+          ((1 + e * Math.sin(lat)) / (1 - e * Math.sin(lat))) ** (e / 2) * Math.exp(latIso)
+        ) -
+      Math.PI / 2;
+  }
+
+  return { lat: (lat * 180) / Math.PI, lon: (lon * 180) / Math.PI };
 }
+
+// Large marge (métropole + Corse), juste un filet de sécurité contre une
+// conversion aberrante plutôt qu'un filtre géographique strict.
+const PLAUSIBLE_LAT_RANGE = [40, 52];
+const PLAUSIBLE_LON_RANGE = [-6, 10];
 
 function extractCoordsFromGeolocalisationRow(row) {
-  for (let i = 0; i < row.length - 1; i++) {
-    const a = row[i]?.trim();
-    const b = row[i + 1]?.trim();
-    if (!a || !b) continue;
-    if (looksLikeCoord(a, FRANCE_LAT_RANGE) && looksLikeCoord(b, FRANCE_LON_RANGE)) {
-      return { lat: Number(a), lon: Number(b) };
-    }
-    if (looksLikeCoord(a, FRANCE_LON_RANGE) && looksLikeCoord(b, FRANCE_LAT_RANGE)) {
-      return { lat: Number(b), lon: Number(a) };
-    }
+  const c = GEOLOCALISATION_COLS;
+  const crs = row[c.crs] ?? "";
+  if (!LAMBERT93_CRS_PATTERN.test(crs)) return { lat: null, lon: null };
+
+  const x = Number(row[c.x]);
+  const y = Number(row[c.y]);
+  if (!Number.isFinite(x) || !Number.isFinite(y)) return { lat: null, lon: null };
+
+  const { lat, lon } = lambert93ToWGS84(x, y);
+  const [latMin, latMax] = PLAUSIBLE_LAT_RANGE;
+  const [lonMin, lonMax] = PLAUSIBLE_LON_RANGE;
+  if (lat < latMin || lat > latMax || lon < lonMin || lon > lonMax) {
+    return { lat: null, lon: null };
   }
-  return { lat: null, lon: null };
+  return { lat, lon };
 }
 
-// FINESS supposé en colonne 1, comme pour structureet (même convention de
-// fichier) — à confirmer avec --debug également.
 function buildCoordsByFiness(rows) {
-  const geoRows = rows.filter((r) => r[0] === GEOLOCALISATIONET_TYPE);
+  const geoRows = rows.filter((r) => r[0] === GEOLOCALISATION_TYPE);
   const coordsByFiness = new Map();
+  const skippedCrs = new Set();
   for (const row of geoRows) {
-    const finess = row[1]?.trim();
+    const finess = row[GEOLOCALISATION_COLS.finess]?.trim();
     if (!finess) continue;
+    const crs = row[GEOLOCALISATION_COLS.crs] ?? "";
+    if (crs && !LAMBERT93_CRS_PATTERN.test(crs)) skippedCrs.add(crs);
     const coords = extractCoordsFromGeolocalisationRow(row);
     if (coords.lat != null && coords.lon != null) {
       coordsByFiness.set(finess, coords);
     }
+  }
+  if (DEBUG && skippedCrs.size > 0) {
+    console.log(
+      `CRS non convertis (ni Lambert-93 ni EPSG:2154), coordonnées laissées à null :`,
+      [...skippedCrs]
+    );
   }
   return { geoRows, coordsByFiness };
 }
@@ -421,7 +468,7 @@ async function main() {
     const { coordsByFiness } = buildCoordsByFiness(rows);
     if (DEBUG) {
       console.log(
-        `${coordsByFiness.size} coordonnées "${GEOLOCALISATIONET_TYPE}" extraites (heuristique, à vérifier).`
+        `${coordsByFiness.size} coordonnées "${GEOLOCALISATION_TYPE}" converties depuis Lambert-93.`
       );
     }
     rawRecords = extractFromStructureetRows(rows, coordsByFiness);
