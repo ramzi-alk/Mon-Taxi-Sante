@@ -13,7 +13,9 @@
     "seo:communes": "node scripts/seo-data/fetch-communes.mjs && node scripts/seo-data/derive-summaries.mjs",
     "seo:hospitals": "node scripts/seo-data/fetch-hospitals.mjs",
     "seo:sitemap": "node scripts/seo-data/generate-sitemap.mjs",
-    "seo:copy": "node scripts/seo-data/generate-copy.mjs"
+    "seo:copy": "node scripts/seo-data/generate-copy.mjs",
+    "seo:discover-sae": "node scripts/seo-data/fetch-sae.mjs",
+    "seo:discover-insee-local": "node scripts/seo-data/fetch-insee-local.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
