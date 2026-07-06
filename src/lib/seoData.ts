@@ -12,6 +12,14 @@ export interface Commune {
   codeRegion: string;
   population: number | null;
   codePostal: string | null;
+  // lat/lon/surfaceHectares/epciNom : ajoutés par fetch-communes.mjs — absents
+  // de communes.json tant que le script n'a pas été relancé après cet ajout
+  // (voir ROADMAP-SEO.md). Traiter comme potentiellement absents malgré le
+  // typage non optionnel.
+  lat: number | null;
+  lon: number | null;
+  surfaceHectares: number | null;
+  epciNom: string | null;
   // Introduction générée par LLM (scripts/seo-data/generate-copy.mjs) à partir
   // des données réelles de la ville — null tant que le script n'a pas encore
   // été lancé pour cette commune (les pages retombent alors sur un texte

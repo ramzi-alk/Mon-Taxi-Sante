@@ -54,11 +54,34 @@ l'établissement — d'autres types comme `geolocalisationet` cohabitent dans le
 même fichier). Corrigé avec un mapping positionnel fixe pour les lignes
 `structureet` (voir `STRUCTUREET_COLS` dans `fetch-hospitals.mjs`), validé
 avec les vraies lignes remontées par le workflow (CH de Fleyriat, CH Bugey
-Sud, CH du Pays de Gex...). Point en attente : les coordonnées lat/lon ne
-sont pas dans les lignes `structureet` (probablement dans les lignes
-`geolocalisationet` du même fichier, non exploitées pour l'instant — champs
-laissés à `null`) ; à reprendre en Sprint 4 si les pages hôpitaux ont besoin
-d'une carte.
+Sud, CH du Pays de Gex...).
+
+**Mise à jour — coordonnées GPS + champs additionnels (ajoutés après coup,
+non testés en conditions réelles)** : cet environnement de développement n'a
+pas d'accès réseau vers `geo.api.gouv.fr`/`data.gouv.fr` (politique réseau de
+l'environnement), donc ces changements n'ont pu être vérifiés que par
+simulation (CSV/réponse API synthétiques), pas sur les jeux de données réels
+— **à confirmer au prochain run réel** (workflow ou local) :
+- `fetch-communes.mjs` demande désormais `centre` (Point GeoJSON, `[lon,
+  lat]`), `surface` (hectares) et `epci` (objet `{nom, code}`) à l'API — champs
+  documentés mais jamais requêtés jusqu'ici. Un `console.log` du premier
+  enregistrement brut reçu permet de vérifier leur forme dès le premier run
+  réel (regarder les logs du workflow).
+- `fetch-hospitals.mjs` joint désormais les lignes `geolocalisationet` (par
+  numéro FINESS, en supposant la même convention de colonnes que
+  `structureet` : type en position 0, FINESS en position 1) aux hôpitaux, via
+  un **scan heuristique** de la ligne à la recherche d'une paire de nombres
+  plausibles pour des coordonnées en France métropolitaine (pas d'index fixe
+  comme `STRUCTUREET_COLS`, faute d'avoir pu observer une vraie ligne
+  `geolocalisationet`). `--debug` logge maintenant un exemple de ligne pour
+  **chaque** type d'enregistrement rencontré (pas seulement `structureet`),
+  pour (a) confirmer/corriger la position des coordonnées et figer des index
+  fixes comme pour `STRUCTUREET_COLS`, et (b) repérer si d'autres champs
+  utiles (capacité, urgences, site web...) existent dans un type
+  d'enregistrement non encore exploité. **Si le prochain run donne 0
+  coordonnées extraites ou des valeurs aberrantes, relancer avec `--debug`,
+  coller le résultat pour ajustement — même méthode que celle qui a permis de
+  fixer `STRUCTUREET_COLS`.**
 
 **Action requise pour finaliser Sprint 1** :
 

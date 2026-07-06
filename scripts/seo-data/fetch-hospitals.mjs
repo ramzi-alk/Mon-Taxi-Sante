@@ -101,6 +101,55 @@ const STRUCTUREET_COLS = {
   libcategetab: 19,
 };
 
+// Type d'enregistrement portant la géolocalisation dans le même fichier
+// stock FINESS (structureet n'a pas de coordonnées, voir plus haut). Position
+// des colonnes lat/lon NON confirmée en conditions réelles (contrairement à
+// STRUCTUREET_COLS) : cet environnement n'a pas d'accès réseau pour tester
+// sur le fichier réel (voir en-tête du script). Repli volontairement en
+// scan heuristique (cherche une paire de nombres plausibles pour des
+// coordonnées en France métropolitaine) plutôt qu'un index figé au hasard —
+// à remplacer par des indices fixes dès qu'un run réel (--debug) confirme le
+// format, comme ça a été fait pour STRUCTUREET_COLS.
+const GEOLOCALISATIONET_TYPE = "geolocalisationet";
+const FRANCE_LAT_RANGE = [41, 51.5];
+const FRANCE_LON_RANGE = [-5.5, 10];
+
+function looksLikeCoord(value, [min, max]) {
+  const n = Number(value);
+  return Number.isFinite(n) && n >= min && n <= max;
+}
+
+function extractCoordsFromGeolocalisationRow(row) {
+  for (let i = 0; i < row.length - 1; i++) {
+    const a = row[i]?.trim();
+    const b = row[i + 1]?.trim();
+    if (!a || !b) continue;
+    if (looksLikeCoord(a, FRANCE_LAT_RANGE) && looksLikeCoord(b, FRANCE_LON_RANGE)) {
+      return { lat: Number(a), lon: Number(b) };
+    }
+    if (looksLikeCoord(a, FRANCE_LON_RANGE) && looksLikeCoord(b, FRANCE_LAT_RANGE)) {
+      return { lat: Number(b), lon: Number(a) };
+    }
+  }
+  return { lat: null, lon: null };
+}
+
+// FINESS supposé en colonne 1, comme pour structureet (même convention de
+// fichier) — à confirmer avec --debug également.
+function buildCoordsByFiness(rows) {
+  const geoRows = rows.filter((r) => r[0] === GEOLOCALISATIONET_TYPE);
+  const coordsByFiness = new Map();
+  for (const row of geoRows) {
+    const finess = row[1]?.trim();
+    if (!finess) continue;
+    const coords = extractCoordsFromGeolocalisationRow(row);
+    if (coords.lat != null && coords.lon != null) {
+      coordsByFiness.set(finess, coords);
+    }
+  }
+  return { geoRows, coordsByFiness };
+}
+
 // Repli si --input pointe vers un CSV différent qui, lui, a une vraie ligne
 // d'en-têtes (ex. export manuel depuis la console Explore Opendatasoft).
 const HEADER_COLUMN_PATTERNS = {
@@ -114,6 +163,8 @@ const HEADER_COLUMN_PATTERNS = {
   depNom: [/^dep_name$/i, /^libdepartement$/i],
   communeLocalCode: [/^commune$/i],
   telephone: [/^telephone$/i, /^tel$/i],
+  latitude: [/^latitude$/i, /^lat$/i, /^y_?wgs84$/i],
+  longitude: [/^longitude$/i, /^lon$/i, /^lng$/i, /^x_?wgs84$/i],
 };
 
 function findColumnIndex(headers, patterns) {
@@ -270,7 +321,7 @@ async function loadCommunesIndex() {
   }
 }
 
-function extractFromStructureetRows(rows) {
+function extractFromStructureetRows(rows, coordsByFiness) {
   const structureRows = rows.filter((r) => r[0] === STRUCTUREET_TYPE);
   if (DEBUG) {
     const otherTypes = new Set(
@@ -281,6 +332,12 @@ function extractFromStructureetRows(rows) {
     );
     console.log("Autres types d'enregistrement rencontrés :", [...otherTypes]);
     console.log("Exemple de ligne structureet :", structureRows[0]);
+    // Un exemple par autre type rencontré : sert à repérer, au prochain run
+    // réel, si des champs comme capacité/urgences/site web existent ailleurs
+    // dans le fichier (voir ROADMAP-SEO.md) avant d'en deviner la position.
+    for (const type of otherTypes) {
+      console.log(`Exemple de ligne "${type}" :`, rows.find((r) => r[0] === type));
+    }
   }
   return structureRows.map((r) => {
     const c = STRUCTUREET_COLS;
@@ -289,8 +346,10 @@ function extractFromStructureetRows(rows) {
       .filter(Boolean)
       .join(" ") || null;
     const { codePostal, communeNomBrut } = parseLigneAcheminement(r[c.ligneAcheminement]);
+    const finess = r[c.finess]?.trim() || null;
+    const coords = (finess && coordsByFiness.get(finess)) || { lat: null, lon: null };
     return {
-      finess: r[c.finess]?.trim() || null,
+      finess,
       nom: r[c.rslongue]?.trim() || r[c.rs]?.trim() || null,
       categorie: r[c.libcategetab]?.trim() || null,
       adresse,
@@ -300,6 +359,8 @@ function extractFromStructureetRows(rows) {
       communeLocal: r[c.communeLocal]?.trim() || null,
       communeNomBrut,
       telephone: r[c.telephone]?.trim() || null,
+      lat: coords.lat,
+      lon: coords.lon,
     };
   });
 }
@@ -325,6 +386,11 @@ function extractFromHeaderedRows(rows, headerIdx) {
     );
   }
   const get = (row, key) => (cols[key] !== -1 ? row[cols[key]]?.trim() || null : null);
+  const getFloat = (row, key) => {
+    const raw = get(row, key);
+    const n = raw != null ? Number(raw) : NaN;
+    return Number.isFinite(n) ? n : null;
+  };
   return dataRows.map((r) => ({
     finess: get(r, "finess"),
     nom: get(r, "nom"),
@@ -336,6 +402,8 @@ function extractFromHeaderedRows(rows, headerIdx) {
     communeLocal: get(r, "communeLocalCode"),
     communeNomBrut: get(r, "communeNom"),
     telephone: get(r, "telephone"),
+    lat: getFloat(r, "latitude"),
+    lon: getFloat(r, "longitude"),
   }));
 }
 
@@ -346,10 +414,18 @@ async function main() {
   const rows = parseCsv(text, delimiter);
 
   const headerIdx = rows.findIndex((row, i) => i < 20 && looksLikeHeaderRow(row));
-  const rawRecords =
-    headerIdx !== -1
-      ? extractFromHeaderedRows(rows, headerIdx)
-      : extractFromStructureetRows(rows);
+  let rawRecords;
+  if (headerIdx !== -1) {
+    rawRecords = extractFromHeaderedRows(rows, headerIdx);
+  } else {
+    const { coordsByFiness } = buildCoordsByFiness(rows);
+    if (DEBUG) {
+      console.log(
+        `${coordsByFiness.size} coordonnées "${GEOLOCALISATIONET_TYPE}" extraites (heuristique, à vérifier).`
+      );
+    }
+    rawRecords = extractFromStructureetRows(rows, coordsByFiness);
+  }
 
   if (rawRecords.length === 0) {
     console.error("Premières lignes brutes :", rows.slice(0, 5));
@@ -382,11 +458,13 @@ async function main() {
         communeNom: commune?.nom ?? rec.communeNomBrut,
         departementSlug: commune?.departementSlug ?? null,
         departementNom: commune?.departementNom ?? rec.depNom,
-        // Coordonnées non présentes dans les lignes "structureet" (elles vivent
-        // dans un autre type d'enregistrement du même fichier) — non
-        // récupérées pour l'instant, voir ROADMAP-SEO.md.
-        lat: null,
-        lon: null,
+        // Jointure heuristique depuis les lignes "geolocalisationet" (voir
+        // buildCoordsByFiness) pour le chemin positionnel, colonnes
+        // latitude/longitude directes pour le chemin --input à en-têtes —
+        // reste null si la ligne géo correspondante est absente ou si le
+        // scan heuristique n'a rien trouvé de plausible.
+        lat: rec.lat ?? null,
+        lon: rec.lon ?? null,
         telephone: rec.telephone,
       };
     })
