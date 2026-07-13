@@ -12,6 +12,7 @@
 //
 // Usage :
 //   node scripts/seo-data/fetch-insee-local.mjs --list
+//   node scripts/seo-data/fetch-insee-local.mjs --list --query="filosofi"    (surcharge les mots-clés de recherche)
 //   node scripts/seo-data/fetch-insee-local.mjs --dataset=<slug-ou-id>            (liste les ressources)
 //   node scripts/seo-data/fetch-insee-local.mjs --resource-url=<url> --debug      (télécharge et affiche la structure réelle)
 import { parseCsv, detectDelimiter } from "./csv.mjs";
@@ -23,8 +24,10 @@ const args = Object.fromEntries(
   })
 );
 
-const DATASET_SEARCH_URL =
-  "https://www.data.gouv.fr/api/1/datasets/?q=filosofi+revenus+pauvrete+niveau+de+vie+communes&page_size=20";
+const DEFAULT_QUERY = "filosofi revenus pauvrete niveau de vie communes";
+const DATASET_SEARCH_URL = `https://www.data.gouv.fr/api/1/datasets/?q=${encodeURIComponent(
+  typeof args.query === "string" ? args.query : DEFAULT_QUERY
+)}&page_size=20`;
 
 function scoreDataset(dataset) {
   const title = dataset.title.toLowerCase();

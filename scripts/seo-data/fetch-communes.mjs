@@ -21,8 +21,13 @@ const POPULATION_THRESHOLD = thresholdArg
   ? Number(thresholdArg.split("=")[1])
   : 2000;
 
+// centre (GeoJSON Point [lon, lat]), surface (hectares) et epci (objet
+// {nom, code}) sont des champs documentés de l'API mais jamais demandés
+// jusqu'ici — non vérifiés en conditions réelles dans cet environnement
+// (accès réseau restreint, voir plus bas) : le log du premier enregistrement
+// juste après la requête sert à confirmer leur forme réelle au premier run.
 const API_URL =
-  "https://geo.api.gouv.fr/communes?fields=nom,code,codeDepartement,codeRegion,population,codesPostaux&format=json";
+  "https://geo.api.gouv.fr/communes?fields=nom,code,codeDepartement,codeRegion,population,codesPostaux,centre,surface,epci&format=json";
 
 async function main() {
   console.log(`Fetching communes from ${API_URL} ...`);
@@ -34,6 +39,10 @@ async function main() {
   }
   const communes = await res.json();
   console.log(`Reçu ${communes.length} communes au total.`);
+  console.log(
+    "Exemple de commune brute reçue (vérifier centre/surface/epci) :",
+    JSON.stringify(communes[0])
+  );
 
   const departments = JSON.parse(
     await readFile(
@@ -65,6 +74,10 @@ async function main() {
       seen.add(slug);
       seenSlugsByDept.set(dept.code, seen);
 
+      // centre est un Point GeoJSON [lon, lat] (ordre GeoJSON standard, pas
+      // [lat, lon]) — absent pour de rares communes sans géométrie connue.
+      const [lon, lat] = c.centre?.coordinates ?? [null, null];
+
       return {
         codeInsee: c.code,
         nom: c.nom,
@@ -75,6 +88,10 @@ async function main() {
         codeRegion: c.codeRegion,
         population: c.population ?? null,
         codePostal: c.codesPostaux?.[0] ?? null,
+        lat: lat ?? null,
+        lon: lon ?? null,
+        surfaceHectares: c.surface ?? null,
+        epciNom: c.epci?.nom ?? null,
       };
     })
     .filter(Boolean)

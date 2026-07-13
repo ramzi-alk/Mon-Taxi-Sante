@@ -113,7 +113,8 @@ function LocalBusinessSchema({ commune, hospitals }: { commune: Commune; hospita
 }
 
 function LocalPage() {
-  const { commune, hospitals, populationRank, neighboringCommunes } = Route.useLoaderData();
+  const { commune, hospitals, populationRank, neighboringCommunes, nearestHospitals } =
+    Route.useLoaderData();
   const { nom: City, departementNom: Dept } = commune;
 
   const faqItems = [
@@ -243,6 +244,44 @@ function LocalPage() {
               </li>
             ))}
           </ul>
+
+          {nearestHospitals.length > 0 && (
+            <div className="mt-8">
+              <h3 className="font-bold text-gray-900 mb-4">
+                Établissements à proximité de {City}
+              </h3>
+              <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 list-none">
+                {nearestHospitals.map(({ hospital, distanceKm }) => (
+                  <li
+                    key={hospital.finess ?? hospital.nom}
+                    className="flex items-start gap-3 rounded-xl bg-gray-50 p-4 ring-1 ring-gray-100"
+                  >
+                    <MapPin
+                      className="h-5 w-5 text-brand-blue-600 shrink-0 mt-0.5"
+                      aria-hidden="true"
+                    />
+                    <div>
+                      {hospital.slug ? (
+                        <Link
+                          to="/hopitaux/$slug"
+                          params={{ slug: hospital.slug }}
+                          className="font-semibold text-gray-900 hover:text-brand-blue-700 hover:underline"
+                        >
+                          {hospital.nom}
+                        </Link>
+                      ) : (
+                        <p className="font-semibold text-gray-900">{hospital.nom}</p>
+                      )}
+                      <p className="text-sm text-muted-foreground mt-0.5">
+                        {hospital.communeNom ? `${hospital.communeNom} — ` : ""}
+                        à environ {Math.round(distanceKm)} km
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           <div className="mt-8 rounded-xl border-2 border-dashed border-gray-200 p-5 max-w-md">
             <p className="font-semibold text-gray-700 mb-1">

@@ -54,11 +54,52 @@ l'établissement — d'autres types comme `geolocalisationet` cohabitent dans le
 même fichier). Corrigé avec un mapping positionnel fixe pour les lignes
 `structureet` (voir `STRUCTUREET_COLS` dans `fetch-hospitals.mjs`), validé
 avec les vraies lignes remontées par le workflow (CH de Fleyriat, CH Bugey
-Sud, CH du Pays de Gex...). Point en attente : les coordonnées lat/lon ne
-sont pas dans les lignes `structureet` (probablement dans les lignes
-`geolocalisationet` du même fichier, non exploitées pour l'instant — champs
-laissés à `null`) ; à reprendre en Sprint 4 si les pages hôpitaux ont besoin
-d'une carte.
+Sud, CH du Pays de Gex...).
+
+**Mise à jour — coordonnées GPS + champs additionnels, confirmées sur un run
+réel (2026-07-06)** :
+- `fetch-communes.mjs` : `centre`/`surface`/`epci` fonctionnent exactement
+  comme documenté. Exemple réel reçu : `{"centre":{"coordinates":[4.9306,
+  46.1517]},"surface":1564.5,"epci":{"nom":"CC de la Dombes"}}`. `communes.json`
+  régénéré avec succès (PR #34, diff propre).
+- `fetch-hospitals.mjs` : le premier essai (jointure `geolocalisationet` par
+  scan heuristique de degrés WGS84) a donné **0 coordonnées** — diagnostiqué
+  via un run `--debug` dédié (ajout d'un input `workflow_dispatch` au
+  workflow). Deux erreurs de supposition initiale :
+  1. Le type d'enregistrement s'appelle **`geolocalisation`**, pas
+     `geolocalisationet` (jamais trouvé, d'où le 0).
+  2. Les coordonnées ne sont **pas en degrés WGS84** mais projetées en
+     **Lambert-93/RGF93 (EPSG:2154, mètres)** — indiqué dans un champ CRS de
+     la ligne elle-même (`"...EPSG:2154 RGF93 / Lambert-93 (Métropole)"`).
+  
+  Corrigé : `GEOLOCALISATION_COLS` (index fixes, comme `STRUCTUREET_COLS`) +
+  `lambert93ToWGS84()` (formule inverse de la projection conique conforme de
+  Lambert, paramètres officiels IGN), avec conversion **uniquement** si le
+  champ CRS mentionne Lambert-93/EPSG:2154 (les DROM utilisent d'autres
+  projections — UTM — non gérées faute d'exemple réel observé : mieux vaut un
+  lat/lon `null` qu'une conversion silencieusement fausse). Vérifié avec la
+  vraie ligne remontée par le run `--debug` (FINESS `010000024`, dept. 01) :
+  conversion → lat 46.22 / lon 5.21, cohérent avec le département de l'Ain.
+
+**Mise à jour — coordonnées exploitées (données réelles fusionnées depuis
+PR #34)** : `communes.json` (5509/5509 avec lat/lon) et `hospitals.json`
+(7193/7474 avec lat/lon, le reste principalement DROM) permettent maintenant
+un vrai calcul de proximité géographique (`seoData.ts`) :
+- `getNeighboringCommunes()` : remplace le classement par rang de population
+  par une vraie distance (haversine) — peut inclure une commune d'un autre
+  département si elle est réellement plus proche (le lien fonctionne dans
+  tous les cas, l'URL vient de la commune trouvée, pas du département
+  courant). Vérifié : Lyon → La Mulatière (3,2 km), Sainte-Foy-lès-Lyon
+  (4,1 km), Villeurbanne (4,5 km)...
+- `getNearestHospitalsByDistance()` (nouvelle fonction) : établissements les
+  plus proches par distance réelle, y compris hors commune, plafonné à 40 km
+  pour éviter un résultat aberrant (ex. DROM, où les hôpitaux n'ont pas de
+  lat/lon convertie). Nouvelle section "Établissements à proximité de
+  {Ville}" sur la page ville, testée en conditions réelles (build de
+  production + serveur local) : une commune sans établissement propre
+  (ex. Bresse Vallons, Ain) affiche désormais 3 vrais établissements proches
+  (Maison de santé de Montrevel-en-Bresse à 4,5 km...) au lieu d'un vide sec
+  suivi seulement de la barre de recherche générique.
 
 **Action requise pour finaliser Sprint 1** :
 
