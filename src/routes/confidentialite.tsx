@@ -23,8 +23,9 @@ function ConfidentialitePage() {
     >
       <h2>Responsable du traitement</h2>
       <p>
-        Mon Taxi Santé SAS est responsable du traitement des données
-        collectées via le site mon-taxi-sante.com. Pour toute question,
+        Ramzi AL KHATEEB, entrepreneur individuel (SIREN 106 941 180 — RCS
+        Compiègne), est responsable du traitement des données collectées via
+        le site mon-taxi-sante.com. Pour toute question,
         contactez notre Délégué à la Protection des Données à l'adresse{" "}
         <a href="mailto:dpo@mon-taxi-sante.com">dpo@mon-taxi-sante.com</a>.
       </p>

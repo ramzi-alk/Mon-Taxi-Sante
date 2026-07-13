@@ -22,11 +22,10 @@ function MentionsLegalesPage() {
       <h2>Éditeur du site</h2>
       <p>Le site mon-taxi-sante.com est édité par :</p>
       <ul>
-        <li>Mon Taxi Santé SAS [forme juridique et capital social à compléter]</li>
-        <li>Siège social : [adresse à compléter]</li>
-        <li>SIRET : [à compléter]</li>
-        <li>RCS : [à compléter]</li>
-        <li>Directeur de la publication : [nom à compléter]</li>
+        <li>Ramzi AL KHATEEB, entrepreneur individuel (micro-entrepreneur)</li>
+        <li>Adresse de l'établissement : 1 Allée Van Gogh, 60100 Creil</li>
+        <li>SIREN : 106 941 180 — RCS Compiègne</li>
+        <li>Directeur de la publication : Ramzi AL KHATEEB</li>
         <li>Contact : {CONTACT_EMAIL} — {CONTACT_PHONE_DISPLAY} (appel gratuit)</li>
       </ul>
 
@@ -45,8 +44,8 @@ function MentionsLegalesPage() {
       <h2>Propriété intellectuelle</h2>
       <p>
         L'ensemble des contenus présents sur ce site (textes, logos,
-        graphismes, structure) est la propriété exclusive de Mon Taxi Santé
-        SAS, sauf mention contraire. Toute reproduction, représentation ou
+        graphismes, structure) est la propriété exclusive de Ramzi AL
+        KHATEEB, sauf mention contraire. Toute reproduction, représentation ou
         diffusion, totale ou partielle, sans autorisation préalable est
         interdite.
       </p>
