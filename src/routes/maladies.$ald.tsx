@@ -4,6 +4,7 @@ import { aldList } from "~/lib/aldData";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
 import { CitySearch } from "~/components/CitySearch";
 import { FaqSchema } from "~/components/FaqSchema";
+import { BreadcrumbSchema } from "~/components/BreadcrumbSchema";
 
 const aldBySlug = new Map(aldList.map((a) => [a.slug, a]));
 
@@ -63,6 +64,13 @@ function MaladiePage() {
   return (
     <>
       <FaqSchema items={faqItems} />
+      <BreadcrumbSchema
+        items={[
+          { name: "Accueil", url: "https://mon-taxi-sante.com/" },
+          { name: "Maladies (ALD)", url: "https://mon-taxi-sante.com/maladies" },
+          { name: affection.nomCourt, url: `https://mon-taxi-sante.com/maladies/${affection.slug}` },
+        ]}
+      />
 
       <section className="bg-gradient-to-br from-brand-blue-700 to-brand-blue-600 text-white py-16">
         <div className="container">

@@ -11,6 +11,7 @@ export const Route = createFileRoute("/blog/ald-transport")({
           "Affection de Longue Durée et transport sanitaire : prise en charge à 100 %, pathologies concernées et démarches à suivre.",
       },
     ],
+    links: [{ rel: "canonical", href: "https://mon-taxi-sante.com/blog/ald-transport" }],
   }),
   component: AldTransportArticle,
 });

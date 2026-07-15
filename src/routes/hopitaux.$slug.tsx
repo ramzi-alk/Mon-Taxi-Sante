@@ -3,6 +3,7 @@ import { ArrowRight, Building2, MapPin, Phone, CheckCircle2, HeartPulse } from "
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
 import { getHospitalPageDataServerFn } from "~/server/seo";
 import { FaqSchema } from "~/components/FaqSchema";
+import { BreadcrumbSchema } from "~/components/BreadcrumbSchema";
 import { aldList } from "~/lib/aldData";
 import type { Hospital } from "~/lib/seoData";
 
@@ -78,6 +79,7 @@ function HospitalSchema({ hospital, commune }: { hospital: Hospital; commune: Re
 }
 
 function HospitalPage() {
+  const { slug } = Route.useParams();
   const { hospital, commune, otherHospitals } = Route.useLoaderData();
   const relatedAld = getRelatedAld(hospital);
 
@@ -108,6 +110,20 @@ function HospitalPage() {
     <>
       <HospitalSchema hospital={hospital} commune={commune} />
       <FaqSchema items={faqItems} />
+      <BreadcrumbSchema
+        items={[
+          { name: "Accueil", url: "https://mon-taxi-sante.com/" },
+          ...(commune
+            ? [
+                {
+                  name: commune.nom,
+                  url: `https://mon-taxi-sante.com/${commune.departementSlug}/${commune.slug}`,
+                },
+              ]
+            : []),
+          { name: hospital.nom, url: `https://mon-taxi-sante.com/hopitaux/${slug}` },
+        ]}
+      />
 
       <section className="bg-gradient-to-br from-brand-blue-700 to-brand-blue-600 text-white py-16">
         <div className="container">

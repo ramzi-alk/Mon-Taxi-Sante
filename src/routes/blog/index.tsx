@@ -12,6 +12,7 @@ export const Route = createFileRoute("/blog/")({
           "Tous nos guides pour comprendre la prise en charge Assurance Maladie de votre transport médical : ALD, prescription médicale de transport, Tiers-Payant.",
       },
     ],
+    links: [{ rel: "canonical", href: "https://mon-taxi-sante.com/blog" }],
   }),
   component: BlogIndexPage,
 });

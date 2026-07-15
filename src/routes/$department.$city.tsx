@@ -4,6 +4,7 @@ import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
 import { getCityPageDataServerFn } from "~/server/seo";
 import { HospitalSearch } from "~/components/HospitalSearch";
 import { FaqSchema } from "~/components/FaqSchema";
+import { BreadcrumbSchema } from "~/components/BreadcrumbSchema";
 import type { Commune, Hospital } from "~/lib/seoData";
 
 // Sélection de pathologies parmi les 30 ALD, à forte notoriété/volume de
@@ -142,6 +143,19 @@ function LocalPage() {
     <>
       <LocalBusinessSchema commune={commune} hospitals={hospitals} />
       <FaqSchema items={faqItems} />
+      <BreadcrumbSchema
+        items={[
+          { name: "Accueil", url: "https://mon-taxi-sante.com/" },
+          {
+            name: Dept,
+            url: `https://mon-taxi-sante.com/${commune.departementSlug}`,
+          },
+          {
+            name: City,
+            url: `https://mon-taxi-sante.com/${commune.departementSlug}/${commune.slug}`,
+          },
+        ]}
+      />
 
       {/* Hero */}
       <section className="bg-gradient-to-br from-brand-blue-700 to-brand-blue-600 text-white py-16">

@@ -11,6 +11,7 @@ export const Route = createFileRoute("/blog/transport-cpam")({
           "Quelles situations médicales ouvrent droit à un transport remboursé, comment fonctionne le Tiers-Payant et quelles démarches effectuer.",
       },
     ],
+    links: [{ rel: "canonical", href: "https://mon-taxi-sante.com/blog/transport-cpam" }],
   }),
   component: TransportCpamArticle,
 });

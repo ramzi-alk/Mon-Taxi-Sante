@@ -14,6 +14,7 @@ export const Route = createFileRoute("/blog/pmt-prescription")({
           "Qu'est-ce qu'une PMT, qui peut la délivrer, sa durée de validité et comment la joindre à votre réservation de taxi conventionné.",
       },
     ],
+    links: [{ rel: "canonical", href: "https://mon-taxi-sante.com/blog/pmt-prescription" }],
   }),
   component: PmtPrescriptionArticle,
 });

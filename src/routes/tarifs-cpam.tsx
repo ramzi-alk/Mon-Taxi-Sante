@@ -11,6 +11,7 @@ export const Route = createFileRoute("/tarifs-cpam")({
           "Tarifs de la nouvelle convention nationale taxi CPAM 2025 : forfait de base, forfait grande ville, tarifs kilométriques par département et majorations.",
       },
     ],
+    links: [{ rel: "canonical", href: "https://mon-taxi-sante.com/tarifs-cpam" }],
   }),
   component: TarifsCpamPage,
 });

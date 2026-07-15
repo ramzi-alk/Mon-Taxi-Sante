@@ -6,6 +6,7 @@ import departments from "~/data/seo/departments.json";
 import { Input } from "~/components/ui/input";
 import { CitySearch } from "~/components/CitySearch";
 import { slugify } from "~/lib/utils";
+import { BreadcrumbSchema } from "~/components/BreadcrumbSchema";
 
 const departmentsByRegion = new Map<string, typeof departments>();
 for (const d of departments) {
@@ -51,6 +52,12 @@ function VillesPage() {
 
   return (
     <>
+      <BreadcrumbSchema
+        items={[
+          { name: "Accueil", url: "https://mon-taxi-sante.com/" },
+          { name: "Villes desservies", url: "https://mon-taxi-sante.com/villes" },
+        ]}
+      />
       <section className="bg-gradient-to-br from-brand-blue-700 to-brand-blue-600 text-white py-16">
         <div className="container">
           <nav aria-label="Fil d'Ariane" className="mb-6">
