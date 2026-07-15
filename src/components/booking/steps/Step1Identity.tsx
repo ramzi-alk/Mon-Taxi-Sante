@@ -1,12 +1,10 @@
+import { useEffect, useState } from "react";
 import { UseFormReturn } from "react-hook-form";
-import { format, parseISO } from "date-fns";
-import { fr } from "date-fns/locale";
-import { User, Phone, Mail, CalendarIcon, Heart, UserCheck } from "lucide-react";
+import { User, Phone, Mail, Heart, UserCheck, Lock } from "lucide-react";
 import type { BookingSchema } from "../schema";
-import { Button } from "~/components/ui/button";
-import { Calendar } from "~/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
 import { Input } from "~/components/ui/input";
+import { Checkbox } from "~/components/ui/checkbox";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "~/components/ui/accordion";
 import { cn } from "~/lib/utils";
 
 interface StepProps {
@@ -22,8 +20,20 @@ export function Step1Identity({ form }: StepProps) {
   } = form;
 
   const bookingForOther = watch("booking_for_other");
-  const birthDate = watch("patient_birth_date");
-  const today = new Date();
+  const bookerPhone = watch("booker_phone");
+  const [patientHasNoPhone, setPatientHasNoPhone] = useState(false);
+
+  // Certains patients âgés n'ont pas de téléphone propre : le numéro du
+  // réservateur (rempli plus bas) sert alors aussi de contact patient,
+  // au lieu de bloquer la soumission faute d'un second numéro à saisir.
+  // shouldValidate n'est activé qu'une fois le numéro du réservateur
+  // renseigné : sinon la case afficherait aussitôt "numéro invalide" sur un
+  // champ que l'utilisateur vient justement de désactiver.
+  useEffect(() => {
+    if (bookingForOther && patientHasNoPhone) {
+      setValue("patient_phone", bookerPhone || "", { shouldValidate: !!bookerPhone });
+    }
+  }, [bookingForOther, patientHasNoPhone, bookerPhone, setValue]);
 
   return (
     <div className="space-y-6">
@@ -149,21 +159,40 @@ export function Step1Identity({ form }: StepProps) {
               autoComplete={bookingForOther ? "off" : "tel"}
               placeholder="06 12 34 56 78"
               aria-required="true"
-              aria-describedby={errors.patient_phone ? "phone-error" : "phone-hint"}
+              aria-describedby={
+                errors.patient_phone && !(bookingForOther && patientHasNoPhone)
+                  ? "phone-error"
+                  : "phone-hint"
+              }
+              disabled={bookingForOther && patientHasNoPhone}
               {...register("patient_phone")}
               className="pl-11 pr-4 py-3.5 text-base"
-              aria-invalid={!!errors.patient_phone}
+              aria-invalid={!!errors.patient_phone && !(bookingForOther && patientHasNoPhone)}
             />
           </div>
           <p id="phone-hint" className="text-xs text-muted-foreground">
-            {bookingForOther
+            {bookingForOther && patientHasNoPhone
+              ? "Sera renseigné avec votre numéro, à saisir plus bas."
+              : bookingForOther
               ? "Utilisé par le chauffeur pour contacter le patient le jour du transport."
               : "Utilisé pour la confirmation de la réservation et le contact chauffeur."}
           </p>
-          {errors.patient_phone && (
+          {errors.patient_phone && !(bookingForOther && patientHasNoPhone) && (
             <p id="phone-error" role="alert" className="text-sm text-red-600">
               {errors.patient_phone.message}
             </p>
+          )}
+          {bookingForOther && (
+            <label htmlFor="patient_has_no_phone" className="flex items-center gap-2.5 pt-1 cursor-pointer">
+              <Checkbox
+                id="patient_has_no_phone"
+                checked={patientHasNoPhone}
+                onCheckedChange={(checked) => setPatientHasNoPhone(checked === true)}
+              />
+              <span className="text-sm text-muted-foreground">
+                Le patient n&apos;a pas de téléphone (utiliser le vôtre, renseigné plus bas)
+              </span>
+            </label>
           )}
         </div>
 
@@ -204,58 +233,6 @@ export function Step1Identity({ form }: StepProps) {
             )}
           </div>
         )}
-
-        {/* Birth date */}
-        <div className="space-y-1.5">
-          <label
-            htmlFor="patient_birth_date"
-            className="flex items-center gap-1.5 text-sm font-semibold text-gray-700"
-          >
-            <CalendarIcon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-            Date de naissance du patient{" "}
-            <span className="text-muted-foreground text-xs font-normal">(optionnel)</span>
-          </label>
-          <input type="hidden" {...register("patient_birth_date")} />
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                id="patient_birth_date"
-                type="button"
-                variant="outline"
-                aria-describedby="birth-hint"
-                className={cn(
-                  "h-auto w-full justify-start rounded-xl px-4 py-3.5 text-left text-base font-normal",
-                  !birthDate && "text-muted-foreground"
-                )}
-              >
-                {birthDate
-                  ? format(parseISO(birthDate), "d MMMM yyyy", { locale: fr })
-                  : "Choisir une date"}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-2" align="start">
-              <Calendar
-                mode="single"
-                locale={fr}
-                selected={birthDate ? parseISO(birthDate) : undefined}
-                onSelect={(date) =>
-                  date &&
-                  setValue("patient_birth_date", format(date, "yyyy-MM-dd"), {
-                    shouldValidate: true,
-                  })
-                }
-                disabled={{ after: today }}
-                defaultMonth={birthDate ? parseISO(birthDate) : undefined}
-                captionLayout="dropdown"
-                startMonth={new Date(today.getFullYear() - 120, 0)}
-                endMonth={today}
-              />
-            </PopoverContent>
-          </Popover>
-          <p id="birth-hint" className="text-xs text-muted-foreground">
-            Peut être requise pour certains types de prise en charge Assurance Maladie.
-          </p>
-        </div>
       </div>
 
       {/* Booker section — shown only when booking for someone else */}
@@ -409,11 +386,21 @@ export function Step1Identity({ form }: StepProps) {
       )}
 
       {/* Privacy notice */}
-      <div className="rounded-xl bg-blue-50 border border-blue-100 p-4 text-sm text-blue-800">
-        <strong>Protection des données&nbsp;:</strong> Ces informations sont
-        chiffrées et stockées sur un hébergement de données de santé certifié HDS,
-        conformément au RGPD. Elles ne sont jamais revendues.
-      </div>
+      <Accordion type="single" collapsible className="rounded-xl bg-blue-50 border border-blue-100 px-4">
+        <AccordionItem value="privacy-notice">
+          <AccordionTrigger className="py-3.5 text-sm text-blue-800">
+            <span className="flex items-center gap-2">
+              <Lock className="h-4 w-4 shrink-0" aria-hidden="true" />
+              Protection des données
+            </span>
+          </AccordionTrigger>
+          <AccordionContent className="pl-6 text-sm text-blue-800">
+            Ces informations sont chiffrées et stockées sur un hébergement de
+            données de santé certifié HDS, conformément au RGPD. Elles ne sont
+            jamais revendues.
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </div>
   );
 }

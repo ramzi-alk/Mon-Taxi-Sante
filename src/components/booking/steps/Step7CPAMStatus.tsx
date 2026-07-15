@@ -1,7 +1,13 @@
 import { UseFormReturn } from "react-hook-form";
-import { ShieldCheck, HelpCircle } from "lucide-react";
+import { format, parseISO } from "date-fns";
+import { fr } from "date-fns/locale";
+import { ShieldCheck, HelpCircle, CalendarIcon } from "lucide-react";
 import { cn } from "~/lib/utils";
 import { Input } from "~/components/ui/input";
+import { Button } from "~/components/ui/button";
+import { Calendar } from "~/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "~/components/ui/accordion";
 import type { BookingSchema } from "../schema";
 
 interface StepProps {
@@ -43,7 +49,8 @@ const cpamOptions = [
   {
     value: "none" as const,
     title: "Sans couverture / Frais personnels",
-    description: "Transport non prescrit ou hors remboursement Assurance Maladie. Paiement direct.",
+    description:
+      "Transport non prescrit ou hors remboursement Assurance Maladie. Le tarif exact vous sera communiqué avant la confirmation de votre réservation — jamais de facturation surprise.",
     coverage: "À votre charge",
     coverageColor: "text-amber-700 bg-amber-50",
   },
@@ -52,6 +59,8 @@ const cpamOptions = [
 export function Step7CPAMStatus({ form }: StepProps) {
   const { watch, setValue, register, formState: { errors } } = form;
   const selected = watch("cpam_status");
+  const birthDate = watch("patient_birth_date");
+  const today = new Date();
 
   return (
     <div className="space-y-6">
@@ -126,6 +135,60 @@ export function Step7CPAMStatus({ form }: StepProps) {
         <p role="alert" className="text-sm text-red-600">{errors.cpam_status.message}</p>
       )}
 
+      {/* Birth date — demandée ici plutôt qu'à l'étape identité : sa raison
+          d'être (vérification ALD/CMU-C/CSS) n'est claire qu'une fois la
+          situation de prise en charge affichée. */}
+      <div className="space-y-1.5">
+        <label
+          htmlFor="patient_birth_date"
+          className="flex items-center gap-1.5 text-sm font-semibold text-gray-700"
+        >
+          <CalendarIcon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+          Date de naissance du patient{" "}
+          <span className="text-muted-foreground text-xs font-normal">(optionnel)</span>
+        </label>
+        <input type="hidden" {...register("patient_birth_date")} />
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              id="patient_birth_date"
+              type="button"
+              variant="outline"
+              aria-describedby="birth-hint"
+              className={cn(
+                "h-auto w-full justify-start rounded-xl px-4 py-3.5 text-left text-base font-normal",
+                !birthDate && "text-muted-foreground"
+              )}
+            >
+              {birthDate
+                ? format(parseISO(birthDate), "d MMMM yyyy", { locale: fr })
+                : "Choisir une date"}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-2" align="start">
+            <Calendar
+              mode="single"
+              locale={fr}
+              selected={birthDate ? parseISO(birthDate) : undefined}
+              onSelect={(date) =>
+                date &&
+                setValue("patient_birth_date", format(date, "yyyy-MM-dd"), {
+                  shouldValidate: true,
+                })
+              }
+              disabled={{ after: today }}
+              defaultMonth={birthDate ? parseISO(birthDate) : undefined}
+              captionLayout="dropdown"
+              startMonth={new Date(today.getFullYear() - 120, 0)}
+              endMonth={today}
+            />
+          </PopoverContent>
+        </Popover>
+        <p id="birth-hint" className="text-xs text-muted-foreground">
+          Demandée pour vérifier certains droits ALD, CMU-C ou CSS auprès de l&apos;Assurance Maladie.
+        </p>
+      </div>
+
       {/* Mutual name */}
       <div className="space-y-1.5">
         <label htmlFor="mutual_name" className="block text-sm font-semibold text-gray-700">
@@ -142,14 +205,21 @@ export function Step7CPAMStatus({ form }: StepProps) {
       </div>
 
       {/* Help block */}
-      <div className="flex gap-3 rounded-xl bg-gray-50 border border-gray-200 p-4">
-        <HelpCircle className="h-5 w-5 text-brand-blue-500 shrink-0 mt-0.5" aria-hidden="true" />
-        <div className="text-sm text-gray-700">
-          <strong>Pas sûr(e) de votre situation&nbsp;?</strong> Vérifiez votre carte
-          Vitale ou demandez à votre médecin. En cas de doute, choisissez
-          &ldquo;Assuré standard&rdquo; — nous rectifierons avec votre prescripteur.
-        </div>
-      </div>
+      <Accordion type="single" collapsible className="rounded-xl bg-gray-50 border border-gray-200 px-4">
+        <AccordionItem value="cpam-help">
+          <AccordionTrigger className="py-3.5 text-sm text-gray-700">
+            <span className="flex items-center gap-2">
+              <HelpCircle className="h-5 w-5 text-brand-blue-500 shrink-0" aria-hidden="true" />
+              Pas sûr(e) de votre situation&nbsp;?
+            </span>
+          </AccordionTrigger>
+          <AccordionContent className="pl-7 text-sm text-gray-700">
+            Vérifiez votre carte Vitale ou demandez à votre médecin. En cas de
+            doute, choisissez &ldquo;Assuré standard&rdquo; — nous rectifierons avec
+            votre prescripteur.
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </div>
   );
 }

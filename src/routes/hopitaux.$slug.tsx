@@ -90,7 +90,7 @@ function HospitalPage() {
     },
     {
       q: "Comment réserver un taxi conventionné pour cet établissement ?",
-      a: `Utilisez notre formulaire en ligne en 5 minutes, ou appelez le ${CONTACT_PHONE_DISPLAY} (gratuit). Votre réservation est confirmée immédiatement par SMS.`,
+      a: `Utilisez notre formulaire en ligne en 5 minutes, ou appelez le ${CONTACT_PHONE_DISPLAY} (gratuit). Votre réservation est confirmée immédiatement par email.`,
     },
     {
       q: "Proposez-vous des véhicules adaptés (PMR) ?",

@@ -46,7 +46,7 @@ const steps = [
     icon: CheckCircle2,
     title: "Recevez votre confirmation",
     description:
-      "Vous recevez une confirmation par SMS et email dès qu'un chauffeur conventionné Assurance Maladie accepte votre course, avec son nom et l'heure de passage.",
+      "Vous recevez une confirmation par email dès qu'un chauffeur conventionné Assurance Maladie accepte votre course, avec son nom et l'heure de passage.",
   },
   {
     step: "04",

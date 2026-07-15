@@ -7,6 +7,7 @@ import type { BookingSchema } from "../schema";
 import { Input } from "~/components/ui/input";
 import { Checkbox } from "~/components/ui/checkbox";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "~/components/ui/select";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "~/components/ui/accordion";
 import { DatePickerField, toDateStr } from "./DatePickerField";
 import { computeSeriesDates, summarizeSeries, MAX_SERIES_SESSIONS } from "~/lib/seriesSchedule";
 
@@ -397,12 +398,24 @@ export function Step5TripType({ form }: StepProps) {
             </div>
           )}
 
-          <p className="text-xs text-muted-foreground">
-            Une réservation distincte est créée et transmise aux chauffeurs pour chaque séance — vous pourrez
-            suivre, modifier ou annuler chacune individuellement depuis « Mes réservations ». La génération
-            automatique de l&apos;ensemble des séances nécessite votre prescription médicale de transport
-            (étape suivante) ; sans elle, seule votre 1ère séance sera enregistrée.
+          <p className="text-xs font-semibold text-amber-700">
+            Important&nbsp;: la génération automatique de l&apos;ensemble des séances
+            nécessite votre prescription médicale de transport (étape suivante) ;
+            sans elle, seule votre 1ère séance sera enregistrée.
           </p>
+
+          <Accordion type="single" collapsible>
+            <AccordionItem value="series-details">
+              <AccordionTrigger className="text-xs text-muted-foreground">
+                Comment fonctionne le suivi de la série&nbsp;?
+              </AccordionTrigger>
+              <AccordionContent className="pl-2 text-xs text-muted-foreground">
+                Une réservation distincte est créée et transmise aux chauffeurs
+                pour chaque séance — vous pourrez suivre, modifier ou annuler
+                chacune individuellement depuis « Mes réservations ».
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </div>
       )}
 

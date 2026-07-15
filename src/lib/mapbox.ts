@@ -117,6 +117,38 @@ export async function retrieveAddress(
   };
 }
 
+/** Résout l'adresse la plus proche de coordonnées GPS (ex: géolocalisation navigateur) via Mapbox Search Box reverse. */
+export async function reverseGeocode(
+  lat: number,
+  lng: number,
+  sessionToken: string
+): Promise<MapboxPlace | null> {
+  const params = new URLSearchParams({
+    longitude: String(lng),
+    latitude: String(lat),
+    access_token: MAPBOX_TOKEN,
+    session_token: sessionToken,
+    language: "fr",
+    country: "fr",
+  });
+
+  const res = await fetch(`${SEARCH_BASE_URL}/reverse?${params}`);
+  if (!res.ok) throw new Error(`Mapbox Search a répondu ${res.status}`);
+  const data: { features: RetrieveFeature[] } = await res.json();
+  const feature = data.features[0];
+  if (!feature) return null;
+
+  const [rlng, rlat] = feature.geometry.coordinates;
+  return {
+    label: [feature.properties.name, feature.properties.place_formatted ?? feature.properties.full_address]
+      .filter(Boolean)
+      .join(", "),
+    lat: rlat,
+    lng: rlng,
+    municipality: deriveMunicipality(feature.properties),
+  };
+}
+
 /** Distance réelle sur route (km, arrondie à 2 décimales) via Mapbox Directions, ou null si indisponible. */
 export async function getDrivingDistanceKm(
   origin: { lat: number; lng: number },

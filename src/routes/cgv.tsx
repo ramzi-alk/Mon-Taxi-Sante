@@ -36,7 +36,7 @@ function CgvPage() {
         La réservation s'effectue en ligne via le formulaire de réservation
         ou par téléphone au {CONTACT_PHONE_DISPLAY}. Le patient s'engage à fournir des
         informations exactes (adresses, créneau souhaité, statut de prise en
-        charge, besoins spécifiques). Une confirmation est envoyée par SMS et
+        charge, besoins spécifiques). Une confirmation est envoyée par
         email dès qu'un chauffeur conventionné accepte la course.
       </p>
 
