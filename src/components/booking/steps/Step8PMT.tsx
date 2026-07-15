@@ -1,7 +1,8 @@
 import { UseFormReturn } from "react-hook-form";
-import { FileText, Upload, CheckCircle2, AlertCircle } from "lucide-react";
+import { FileText, Upload, CheckCircle2, AlertCircle, Lock } from "lucide-react";
 import { useState } from "react";
 import { cn } from "~/lib/utils";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "~/components/ui/accordion";
 import type { BookingSchema } from "../schema";
 
 interface StepProps {
@@ -34,20 +35,22 @@ export function Step8PMT({ form }: StepProps) {
       </div>
 
       {/* What is PMT */}
-      <div className="rounded-xl bg-blue-50 border border-blue-100 p-4">
-        <div className="flex gap-3">
-          <FileText className="h-5 w-5 text-brand-blue-600 shrink-0 mt-0.5" aria-hidden="true" />
-          <div className="text-sm text-blue-900">
-            <p className="font-semibold mb-1">Qu&apos;est-ce que la PMT&nbsp;?</p>
-            <p>
-              La Prescription Médicale de Transport est une ordonnance spéciale que
-              votre médecin remplit pour justifier votre besoin de transport médical
-              auprès de la Sécurité Sociale. Elle précise le motif médical, le type
-              de véhicule et la fréquence des trajets.
-            </p>
-          </div>
-        </div>
-      </div>
+      <Accordion type="single" collapsible className="rounded-xl bg-blue-50 border border-blue-100 px-4">
+        <AccordionItem value="what-is-pmt">
+          <AccordionTrigger className="py-4 text-sm text-blue-900">
+            <span className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-brand-blue-600 shrink-0" aria-hidden="true" />
+              Qu&apos;est-ce que la PMT&nbsp;?
+            </span>
+          </AccordionTrigger>
+          <AccordionContent className="pl-7 text-sm text-blue-900">
+            La Prescription Médicale de Transport est une ordonnance spéciale que
+            votre médecin remplit pour justifier votre besoin de transport médical
+            auprès de la Sécurité Sociale. Elle précise le motif médical, le type
+            de véhicule et la fréquence des trajets.
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
 
       {/* Do you have PMT? */}
       <fieldset>
@@ -165,11 +168,21 @@ export function Step8PMT({ form }: StepProps) {
         </div>
       )}
 
-      <p className="text-xs text-muted-foreground">
-        Vos documents médicaux sont stockés de manière chiffrée sur un serveur HDS
-        certifié. Ils ne sont accessibles qu&apos;au chauffeur assigné et au personnel
-        administratif autorisé.
-      </p>
+      <Accordion type="single" collapsible>
+        <AccordionItem value="pmt-confidentiality">
+          <AccordionTrigger className="text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <Lock className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              Confidentialité de vos documents
+            </span>
+          </AccordionTrigger>
+          <AccordionContent className="pl-5 text-xs text-muted-foreground">
+            Vos documents médicaux sont stockés de manière chiffrée sur un serveur HDS
+            certifié. Ils ne sont accessibles qu&apos;au chauffeur assigné et au personnel
+            administratif autorisé.
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </div>
   );
 }
