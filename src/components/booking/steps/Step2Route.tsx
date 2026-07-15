@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { UseFormReturn } from "react-hook-form";
-import { MapPin, Navigation, ArrowDown, Loader2, Route } from "lucide-react";
+import { MapPin, Navigation, ArrowDown, Loader2, Route, LocateFixed } from "lucide-react";
 import type { BookingSchema } from "../schema";
 import { AddressAutocomplete } from "../AddressAutocomplete";
-import { getDrivingDistanceKm } from "~/lib/mapbox";
+import { getDrivingDistanceKm, reverseGeocode } from "~/lib/mapbox";
 import { logger } from "~/lib/logger";
 
 interface StepProps {
@@ -19,6 +19,8 @@ export function Step2Route({ form }: StepProps) {
   } = form;
 
   const [isComputingDistance, setIsComputingDistance] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
 
   const pickupAddress = watch("pickup_address");
   const dropoffAddress = watch("dropoff_address");
@@ -54,6 +56,44 @@ export function Step2Route({ form }: StepProps) {
     };
   }, [pickupLat, pickupLng, dropoffLat, dropoffLng, setValue]);
 
+  function handleUseCurrentLocation() {
+    if (!navigator.geolocation) {
+      setLocationError("La géolocalisation n'est pas disponible sur cet appareil.");
+      return;
+    }
+    setLocationError(null);
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const place = await reverseGeocode(
+            position.coords.latitude,
+            position.coords.longitude,
+            crypto.randomUUID()
+          );
+          if (place) {
+            setValue("pickup_address", place.label, { shouldValidate: true });
+            setValue("pickup_lat", place.lat);
+            setValue("pickup_lng", place.lng);
+            setValue("pickup_municipality", place.municipality);
+          } else {
+            setLocationError("Impossible de retrouver une adresse à cet emplacement.");
+          }
+        } catch (err) {
+          logger.warn("step2_route.reverse_geocode_failed", { error: (err as Error).message });
+          setLocationError("Impossible de retrouver votre adresse. Saisissez-la manuellement.");
+        } finally {
+          setIsLocating(false);
+        }
+      },
+      () => {
+        setLocationError("Localisation refusée ou indisponible. Saisissez votre adresse manuellement.");
+        setIsLocating(false);
+      },
+      { enableHighAccuracy: true, timeout: 10_000 }
+    );
+  }
+
   function swapAddresses() {
     const pickupMunicipality = watch("pickup_municipality");
     const dropoffMunicipality = watch("dropoff_municipality");
@@ -73,16 +113,31 @@ export function Step2Route({ form }: StepProps) {
         <h2 className="text-2xl font-bold text-gray-900">Adresses de départ et d&apos;arrivée</h2>
         <p className="mt-1 text-muted-foreground">
           Saisissez l&apos;adresse exacte de prise en charge et celle de votre
-          établissement de soin.
+          établissement de soin. Réservation en 3 minutes environ.
         </p>
       </div>
 
       {/* Pickup */}
       <div className="space-y-1.5">
-        <label htmlFor="pickup_address" className="block text-sm font-semibold text-gray-700">
-          Adresse de départ{" "}
-          <span className="text-red-500" aria-hidden="true">*</span>
-        </label>
+        <div className="flex items-center justify-between gap-2">
+          <label htmlFor="pickup_address" className="block text-sm font-semibold text-gray-700">
+            Adresse de départ{" "}
+            <span className="text-red-500" aria-hidden="true">*</span>
+          </label>
+          <button
+            type="button"
+            onClick={handleUseCurrentLocation}
+            disabled={isLocating}
+            className="flex items-center gap-1.5 text-xs font-semibold text-brand-blue-600 hover:text-brand-blue-800 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+          >
+            {isLocating ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+            ) : (
+              <LocateFixed className="h-3.5 w-3.5" aria-hidden="true" />
+            )}
+            Ma position actuelle
+          </button>
+        </div>
         <AddressAutocomplete
           id="pickup_address"
           value={pickupAddress}
@@ -109,6 +164,11 @@ export function Step2Route({ form }: StepProps) {
         <p id="pickup-hint" className="text-xs text-muted-foreground">
           Votre domicile ou autre lieu de prise en charge.
         </p>
+        {locationError && (
+          <p role="alert" className="text-xs text-amber-700">
+            {locationError}
+          </p>
+        )}
         {errors.pickup_address && (
           <p id="pickup-error" role="alert" className="text-sm text-red-600">
             {errors.pickup_address.message}

@@ -219,8 +219,8 @@ export const STEP_FIELDS: Record<number, (keyof BookingSchema)[]> = {
     "series_days_of_week",
     "series_duration_weeks",
   ],
-  5: ["booking_for_other", "patient_full_name", "patient_phone", "patient_email", "patient_birth_date", "booker_full_name", "booker_phone", "booker_email"],
-  6: ["cpam_status"],
+  5: ["booking_for_other", "patient_full_name", "patient_phone", "patient_email", "booker_full_name", "booker_phone", "booker_email"],
+  6: ["cpam_status", "patient_birth_date"],
   7: ["pmt_declared", "medical_notes"],
   8: ["consent"],
 };
