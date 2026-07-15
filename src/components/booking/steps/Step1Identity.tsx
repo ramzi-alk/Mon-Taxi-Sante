@@ -1,7 +1,9 @@
+import { useEffect, useState } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { User, Phone, Mail, Heart, UserCheck } from "lucide-react";
 import type { BookingSchema } from "../schema";
 import { Input } from "~/components/ui/input";
+import { Checkbox } from "~/components/ui/checkbox";
 import { cn } from "~/lib/utils";
 
 interface StepProps {
@@ -17,6 +19,17 @@ export function Step1Identity({ form }: StepProps) {
   } = form;
 
   const bookingForOther = watch("booking_for_other");
+  const bookerPhone = watch("booker_phone");
+  const [patientHasNoPhone, setPatientHasNoPhone] = useState(false);
+
+  // Certains patients âgés n'ont pas de téléphone propre : le numéro du
+  // réservateur (rempli plus bas) sert alors aussi de contact patient,
+  // au lieu de bloquer la soumission faute d'un second numéro à saisir.
+  useEffect(() => {
+    if (bookingForOther && patientHasNoPhone) {
+      setValue("patient_phone", bookerPhone || "", { shouldValidate: true });
+    }
+  }, [bookingForOther, patientHasNoPhone, bookerPhone, setValue]);
 
   return (
     <div className="space-y-6">
@@ -143,6 +156,7 @@ export function Step1Identity({ form }: StepProps) {
               placeholder="06 12 34 56 78"
               aria-required="true"
               aria-describedby={errors.patient_phone ? "phone-error" : "phone-hint"}
+              disabled={bookingForOther && patientHasNoPhone}
               {...register("patient_phone")}
               className="pl-11 pr-4 py-3.5 text-base"
               aria-invalid={!!errors.patient_phone}
@@ -157,6 +171,18 @@ export function Step1Identity({ form }: StepProps) {
             <p id="phone-error" role="alert" className="text-sm text-red-600">
               {errors.patient_phone.message}
             </p>
+          )}
+          {bookingForOther && (
+            <label htmlFor="patient_has_no_phone" className="flex items-center gap-2.5 pt-1 cursor-pointer">
+              <Checkbox
+                id="patient_has_no_phone"
+                checked={patientHasNoPhone}
+                onCheckedChange={(checked) => setPatientHasNoPhone(checked === true)}
+              />
+              <span className="text-sm text-muted-foreground">
+                Le patient n&apos;a pas de téléphone (utiliser le vôtre, renseigné plus bas)
+              </span>
+            </label>
           )}
         </div>
 

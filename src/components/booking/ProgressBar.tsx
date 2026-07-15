@@ -37,9 +37,9 @@ export function ProgressBar({ currentStep }: ProgressBarProps) {
         />
       </div>
 
-      {/* Step dots — hidden on mobile, shown on md+ */}
+      {/* Step dots — compact on mobile, full size from md+ */}
       <nav
-        className="hidden md:flex items-center justify-between mt-4"
+        className="flex items-center justify-between mt-4"
         aria-label="Étapes du formulaire"
       >
         {BOOKING_STEPS.map((step) => {
@@ -54,7 +54,7 @@ export function ProgressBar({ currentStep }: ProgressBarProps) {
             >
               <div
                 className={cn(
-                  "step-dot",
+                  "step-dot h-5 w-5 text-[0.65rem] md:h-8 md:w-8 md:text-sm",
                   isDone && "step-dot-done",
                   isActive && "step-dot-active",
                   !isDone && !isActive && "step-dot-pending"
