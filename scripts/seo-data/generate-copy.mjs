@@ -84,7 +84,12 @@ async function callDeepSeek(userPrompt, { retries = 3 } = {}) {
         },
         body: JSON.stringify({
           model: MODEL,
-          max_tokens: 300,
+          // deepseek-v4-pro raisonne avant de répondre et renvoie un bloc
+          // "thinking" en premier dans content[] (voir plus bas, on l'ignore
+          // et on cherche le bloc "text") : 300 tokens suffisaient à peine au
+          // texte final seul, sans laisser de marge au raisonnement — d'où
+          // des réponses tronquées avant même le bloc texte.
+          max_tokens: 1500,
           system: SYSTEM_PROMPT,
           messages: [{ role: "user", content: userPrompt }],
         }),
@@ -94,7 +99,7 @@ async function callDeepSeek(userPrompt, { retries = 3 } = {}) {
         throw new Error(`DeepSeek a répondu ${res.status} : ${body.slice(0, 300)}`);
       }
       const data = await res.json();
-      const text = data.content?.[0]?.text?.trim();
+      const text = data.content?.find((block) => block.type === "text")?.text?.trim();
       if (!text) {
         throw new Error(
           `Réponse vide ou format inattendu : ${JSON.stringify(data).slice(0, 500)}`
