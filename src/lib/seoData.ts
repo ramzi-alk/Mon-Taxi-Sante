@@ -80,6 +80,33 @@ for (const c of communes) {
   communesByDepartment.set(c.departementSlug, list);
 }
 
+// Priorité d'affichage par catégorie FINESS réelle (voir fetch-hospitals.mjs
+// pour la liste des catégories retenues) : sans ce classement, l'ordre est
+// celui, quasi arbitraire, du fichier FINESS — un CHU pouvait ainsi se
+// retrouver après des dizaines de maisons de santé sur une ville comme Paris.
+// FINESS ne distingue pas CHU de CHR (un CHU est un CHR avec convention
+// universitaire), les deux sont donc traités au même rang.
+const CATEGORY_PRIORITY: Record<string, number> = {
+  "Centre Hospitalier Régional (C.H.R.)": 0,
+  "Centre Hospitalier (C.H.)": 1,
+  "Hôpital des armées": 2,
+  "Centre Hospitalier Spécialisé lutte Maladies Mentales": 3,
+  "Centre hospitalier, ex Hôpital local": 4,
+  "Centre de dialyse": 5,
+  "Structure d'Alternative à la dialyse en centre": 6,
+  "Maison de Santé pour Maladies Mentales": 7,
+  "Maison de santé (L.6223-3)": 8,
+};
+const DEFAULT_CATEGORY_PRIORITY = 9;
+
+function categoryPriority(categorie: string | null): number {
+  return categorie != null ? (CATEGORY_PRIORITY[categorie] ?? DEFAULT_CATEGORY_PRIORITY) : DEFAULT_CATEGORY_PRIORITY;
+}
+
+function byCategoryPriority(a: Hospital, b: Hospital): number {
+  return categoryPriority(a.categorie) - categoryPriority(b.categorie);
+}
+
 const hospitalsByCommune = new Map<string, Hospital[]>();
 for (const h of hospitals) {
   if (!h.codeInseeCommune) continue;
@@ -87,6 +114,11 @@ for (const h of hospitals) {
   const list = hospitalsByCommune.get(key) ?? [];
   list.push(h);
   hospitalsByCommune.set(key, list);
+}
+// Trié une seule fois ici plutôt qu'à chaque appel de getNearbyHospitals /
+// getOtherHospitalsInCommune, qui partagent tous deux cette map.
+for (const list of hospitalsByCommune.values()) {
+  list.sort(byCategoryPriority);
 }
 
 export const hospitalBySlug = new Map<string, Hospital>(
@@ -125,11 +157,18 @@ export interface NearestHospital {
 
 // Établissements les plus proches par distance réelle (pas seulement dans la
 // même commune) — complète getNearbyHospitals, en particulier utile pour les
-// petites communes sans établissement propre. Plafonné à maxDistanceKm pour
-// éviter d'afficher un résultat absurde (ex. DROM : la conversion GPS des
-// hôpitaux ne couvre que la projection Lambert-93 métropole, voir
-// fetch-hospitals.mjs — sans hôpital converti à proximité réelle, mieux vaut
-// une liste vide que de faire remonter un établissement à des milliers de km).
+// 3065 communes (sur 5509, plus de la moitié) sans établissement propre, qui
+// n'affichent que cette liste. Plafonné à maxDistanceKm pour éviter
+// d'afficher un résultat absurde (ex. DROM : la conversion GPS des hôpitaux
+// ne couvre que la projection Lambert-93 métropole, voir fetch-hospitals.mjs
+// — sans hôpital converti à proximité réelle, mieux vaut une liste vide que
+// de faire remonter un établissement à des milliers de km).
+//
+// Trié par priorité clinique (comme getNearbyHospitals) puis par distance en
+// départage : parmi les établissements à moins de maxDistanceKm, un CHU à
+// 30 km doit apparaître avant une maison de santé à 5 km — c'est la même
+// logique que pour une ville qui a ses propres établissements, appliquée ici
+// aux villes qui n'en ont pas.
 export function getNearestHospitalsByDistance(
   commune: Commune,
   limit = 4,
@@ -148,7 +187,7 @@ export function getNearestHospitalsByDistance(
     )
     .map((h) => ({ hospital: h, distanceKm: haversineKm(lat, lon, h.lat as number, h.lon as number) }))
     .filter((x) => x.distanceKm <= maxDistanceKm)
-    .sort((a, b) => a.distanceKm - b.distanceKm)
+    .sort((a, b) => categoryPriority(a.hospital.categorie) - categoryPriority(b.hospital.categorie) || a.distanceKm - b.distanceKm)
     .slice(0, limit);
 }
 
@@ -266,5 +305,8 @@ export function searchHospitals(
     if (normalizedNom.startsWith(q)) startsWith.push(hospital);
     else if (normalizedNom.includes(q)) includes.push(hospital);
   }
-  return [...startsWith, ...includes].slice(0, limit);
+  return [...startsWith.sort(byCategoryPriority), ...includes.sort(byCategoryPriority)].slice(
+    0,
+    limit
+  );
 }
