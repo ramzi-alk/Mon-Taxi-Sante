@@ -51,7 +51,7 @@ const howItWorksSteps = [
     icon: CheckCircle2,
     title: "Confirmation immédiate",
     description:
-      "Votre réservation est confirmée par SMS et email. Un chauffeur conventionné Assurance Maladie accepte votre course.",
+      "Votre réservation est confirmée par email. Un chauffeur conventionné Assurance Maladie accepte votre course.",
   },
   {
     step: "03",
@@ -286,7 +286,7 @@ function HeroSection() {
             >
               {[
                 "Zéro avance de frais",
-                "Confirmation par SMS",
+                "Confirmation par email",
                 "Annulation gratuite 24h avant",
               ].map((item) => (
                 <li key={item} className="flex items-center gap-1.5">

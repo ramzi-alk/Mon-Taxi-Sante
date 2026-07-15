@@ -51,7 +51,7 @@ function ConfidentialitePage() {
       <ul>
         <li>Gestion des réservations et mise en relation avec un chauffeur conventionné</li>
         <li>Facturation et transmission en Tiers-Payant à l'Assurance Maladie</li>
-        <li>Communication relative à la course (confirmation par SMS et email, suivi)</li>
+        <li>Communication relative à la course (confirmation par email, suivi)</li>
         <li>Amélioration du service et statistiques anonymisées</li>
       </ul>
 
@@ -104,7 +104,7 @@ function ConfidentialitePage() {
       <p>
         Dans le cadre de la prestation, certaines données peuvent être
         transmises à nos sous-traitants : hébergeur HDS, base de données
-        sécurisée (Supabase), prestataire d'envoi de SMS/email, et
+        sécurisée (Supabase), prestataire d'envoi d'email, et
         l'Assurance Maladie pour la transmission du Tiers-Payant.
       </p>
 

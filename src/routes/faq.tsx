@@ -34,7 +34,7 @@ const faqCategories: FaqCategory[] = [
       {
         question: "Comment réserver un taxi médical ?",
         answer:
-          "Rendez-vous sur la page Réserver, renseignez votre adresse de départ, votre destination, la date et l'heure de votre rendez-vous médical, puis validez. Vous recevez une confirmation par SMS et email dès qu'un chauffeur accepte la course.",
+          "Rendez-vous sur la page Réserver, renseignez votre adresse de départ, votre destination, la date et l'heure de votre rendez-vous médical, puis validez. Vous recevez une confirmation par email dès qu'un chauffeur accepte la course.",
       },
       {
         question: "Combien de temps avant mon rendez-vous dois-je réserver ?",
@@ -89,7 +89,7 @@ const faqCategories: FaqCategory[] = [
       {
         question: "Que se passe-t-il si mon chauffeur est en retard ?",
         answer:
-          `Vous êtes informé en temps réel par SMS en cas de retard. Notre équipe reste disponible au ${CONTACT_PHONE_DISPLAY} pour vous assister en cas d'imprévu.`,
+          `Vous êtes informé en temps réel dans votre espace "Mes réservations" en cas de retard. Notre équipe reste disponible au ${CONTACT_PHONE_DISPLAY} pour vous assister en cas d'imprévu.`,
       },
     ],
   },

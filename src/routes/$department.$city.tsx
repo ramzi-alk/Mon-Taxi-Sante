@@ -121,7 +121,7 @@ function LocalPage() {
   const faqItems = [
     {
       q: `Comment réserver un taxi conventionné Assurance Maladie à ${City} ?`,
-      a: `Utilisez notre formulaire en ligne en 5 minutes, ou appelez le ${CONTACT_PHONE_DISPLAY} (gratuit). Votre réservation est confirmée immédiatement par SMS.`,
+      a: `Utilisez notre formulaire en ligne en 5 minutes, ou appelez le ${CONTACT_PHONE_DISPLAY} (gratuit). Votre réservation est confirmée immédiatement par email.`,
     },
     {
       q: `Le transport médical est-il vraiment gratuit à ${City} ?`,
@@ -341,7 +341,7 @@ function LocalPage() {
               },
               {
                 title: "Suivi en temps réel",
-                desc: "Vous savez où est votre chauffeur. SMS de confirmation et rappel la veille du trajet.",
+                desc: "Vous savez où est votre chauffeur. Confirmation de votre trajet par email.",
               },
             ].map(({ title, desc }) => (
               <div key={title} className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-100">

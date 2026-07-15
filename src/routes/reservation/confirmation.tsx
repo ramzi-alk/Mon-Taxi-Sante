@@ -69,7 +69,7 @@ function ConfirmationPage() {
             Réservation confirmée
           </h1>
           <p className="mt-3 text-gray-500 leading-relaxed">
-            Vous recevrez une confirmation par SMS et email. Un chauffeur
+            Vous recevrez une confirmation par email. Un chauffeur
             conventionné Assurance Maladie va accepter votre course.
           </p>
           {isSeries && (
@@ -89,7 +89,7 @@ function ConfirmationPage() {
           <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-100 text-center text-muted-foreground">
             Votre réservation a bien été enregistrée. Nous n&apos;avons pas pu
             charger le récapitulatif détaillé, mais vous recevrez toutes les
-            informations par SMS et email.
+            informations par email.
           </div>
         )}
 

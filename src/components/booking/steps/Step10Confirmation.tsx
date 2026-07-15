@@ -213,7 +213,7 @@ export function Step10Confirmation({ form, isSubmitting, submitError }: StepProp
       </button>
 
       <p className="text-center text-xs text-muted-foreground">
-        Vous recevrez une confirmation par SMS et email dans les minutes qui suivent.
+        Vous recevrez une confirmation par email dans les minutes qui suivent.
       </p>
     </div>
   );

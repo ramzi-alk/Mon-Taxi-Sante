@@ -6,7 +6,7 @@ const frenchDate = /^\d{4}-\d{2}-\d{2}$/;
 
 export const bookingSchema = z
   .object({
-    // Step 1 — Identity
+    // Identity
     // Who is booking
     booking_for_other: z.boolean(),
     // Patient (the person who will travel)
@@ -30,7 +30,7 @@ export const bookingSchema = z
     booker_phone: z.string().optional().or(z.literal("")),
     booker_email: z.string().optional().or(z.literal("")),
 
-    // Step 2 — Route
+    // Route
     pickup_address: z.string().min(5, "Adresse de départ requise"),
     pickup_lat: z.number().nullable(),
     pickup_lng: z.number().nullable(),
@@ -43,7 +43,7 @@ export const bookingSchema = z
     dropoff_municipality: z.string().nullable(),
     distance_km: z.number().nullable(),
 
-    // Step 3 — Date/Time
+    // Date/Time
     pickup_date: z.string().regex(frenchDate, "Date de départ invalide"),
     pickup_time: z
       .string()
@@ -52,10 +52,10 @@ export const bookingSchema = z
     return_date: z.string().optional().or(z.literal("")),
     return_time: z.string().optional().or(z.literal("")),
 
-    // Step 4 — Vehicle
+    // Vehicle
     vehicle_type: z.enum(["taxi", "vsl", "pmr", "ambulance"]),
 
-    // Step 5 — Trip type
+    // Trip type
     trip_type: z.enum(["aller_simple", "aller_retour", "multiple"]),
     // Retour à vide éligible (hospitalisation ou soins répétés) — convention 2025 art. 4
     is_hospitalization: z.boolean(),
@@ -65,24 +65,24 @@ export const bookingSchema = z
     series_days_of_week: z.array(z.number().int().min(0).max(6)).optional(),
     series_duration_weeks: z.number().int().min(1).max(26).optional(),
 
-    // Step 6 — Specificities
+    // Specificities
     requires_wheelchair: z.boolean(),
     requires_stretcher: z.boolean(),
     requires_oxygen: z.boolean(),
     passenger_count: z.number().int().min(1).max(8),
 
-    // Step 7 — CPAM
+    // CPAM
     cpam_status: z.enum(["ald", "cmu", "css", "standard", "none"]),
     mutual_name: z.string().optional().or(z.literal("")),
 
-    // Step 8 — PMT
+    // PMT
     pmt_declared: z.boolean(),
     pmt_file: z.any().optional(),
 
-    // Step 9 — Notes
+    // Notes
     medical_notes: z.string().max(500, "Maximum 500 caractères").optional().or(z.literal("")),
 
-    // Step 10 — Consent
+    // Consent
     consent: z.boolean(),
   })
   .refine(
@@ -193,24 +193,25 @@ export const bookingSchema = z
 
 export type BookingSchema = z.infer<typeof bookingSchema>;
 
+// Ordre choisi pour limiter la friction : le trajet et le besoin (valeur
+// perçue) viennent avant l'identité et les informations administratives, et
+// PMT + notes sont regroupées en une seule étape (cf. audit UX sprint 1).
 export const BOOKING_STEPS = [
-  { id: 1, title: "Votre identité", shortTitle: "Identité" },
-  { id: 2, title: "Adresses de trajet", shortTitle: "Trajet" },
-  { id: 3, title: "Date et heure", shortTitle: "Horaire" },
-  { id: 4, title: "Véhicule & besoins", shortTitle: "Véhicule" },
-  { id: 5, title: "Nature du trajet", shortTitle: "Nature" },
+  { id: 1, title: "Adresses de trajet", shortTitle: "Trajet" },
+  { id: 2, title: "Date et heure", shortTitle: "Horaire" },
+  { id: 3, title: "Véhicule & besoins", shortTitle: "Véhicule" },
+  { id: 4, title: "Nature du trajet", shortTitle: "Nature" },
+  { id: 5, title: "Votre identité", shortTitle: "Identité" },
   { id: 6, title: "Prise en charge Assurance Maladie", shortTitle: "Assurance Maladie" },
-  { id: 7, title: "Prescription médicale", shortTitle: "PMT" },
-  { id: 8, title: "Informations complémentaires", shortTitle: "Notes" },
-  { id: 9, title: "Récapitulatif & Confirmation", shortTitle: "Confirmation" },
+  { id: 7, title: "Prescription médicale & notes", shortTitle: "PMT & Notes" },
+  { id: 8, title: "Récapitulatif & Confirmation", shortTitle: "Confirmation" },
 ] as const;
 
 export const STEP_FIELDS: Record<number, (keyof BookingSchema)[]> = {
-  1: ["booking_for_other", "patient_full_name", "patient_phone", "patient_email", "patient_birth_date", "booker_full_name", "booker_phone", "booker_email"],
-  2: ["pickup_address", "dropoff_address"],
-  3: ["pickup_date", "pickup_time"],
-  4: ["vehicle_type", "requires_wheelchair", "requires_stretcher", "requires_oxygen", "passenger_count"],
-  5: [
+  1: ["pickup_address", "dropoff_address"],
+  2: ["pickup_date", "pickup_time"],
+  3: ["vehicle_type", "requires_wheelchair", "requires_stretcher", "requires_oxygen", "passenger_count"],
+  4: [
     "trip_type",
     "is_hospitalization",
     "return_date",
@@ -218,8 +219,8 @@ export const STEP_FIELDS: Record<number, (keyof BookingSchema)[]> = {
     "series_days_of_week",
     "series_duration_weeks",
   ],
+  5: ["booking_for_other", "patient_full_name", "patient_phone", "patient_email", "patient_birth_date", "booker_full_name", "booker_phone", "booker_email"],
   6: ["cpam_status"],
-  7: ["pmt_declared"],
-  8: ["medical_notes"],
-  9: ["consent"],
+  7: ["pmt_declared", "medical_notes"],
+  8: ["consent"],
 };

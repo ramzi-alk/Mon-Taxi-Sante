@@ -1,12 +1,18 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight, Sparkles, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, ShieldCheck, Sparkles, X } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 
 import { bookingSchema, BOOKING_STEPS, STEP_FIELDS, type BookingSchema } from "./schema";
 import { consumeBookingPrefill } from "~/lib/bookingPrefill";
+import {
+  clearBookingDraft,
+  readBookingDraft,
+  saveBookingDraft,
+  type BookingDraft,
+} from "~/lib/bookingDraft";
 import { computeSeriesDates } from "~/lib/seriesSchedule";
 import { ProgressBar } from "./ProgressBar";
 import { Step1Identity } from "./steps/Step1Identity";
@@ -169,6 +175,11 @@ async function submitBooking(data: BookingSchema) {
   });
 }
 
+// Steps whose fields get repopulated by consumeBookingPrefill() (route,
+// vehicle/needs, identity, CPAM) — used to decide when to show the
+// "reprised from your last booking" banner in the new step order.
+const PREFILL_BANNER_STEPS = [1, 3, 5, 6];
+
 export function BookingForm() {
   const [currentStep, setCurrentStep] = useState(1);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -176,6 +187,7 @@ export function BookingForm() {
   const { toast } = useToast();
 
   const [isPrefilled, setIsPrefilled] = useState(false);
+  const [pendingDraft, setPendingDraft] = useState<BookingDraft | null>(() => readBookingDraft());
 
   const form = useForm<BookingSchema>({
     resolver: zodResolver(bookingSchema),
@@ -186,16 +198,42 @@ export function BookingForm() {
   // One-shot: a previous booking's identity/trip fields, handed off via
   // sessionStorage from "Mes réservations" or the reference+phone lookup,
   // so patients don't have to retype information they've already given us.
+  // Skipped while an in-progress draft is awaiting a resume/restart decision.
   useEffect(() => {
+    if (pendingDraft) return;
     const prefill = consumeBookingPrefill();
     if (!prefill) return;
     form.reset({ ...DEFAULT_VALUES, ...prefill });
     setIsPrefilled(true);
-  }, [form]);
+  }, [form, pendingDraft]);
+
+  // Autosave the in-progress form to localStorage so an interrupted booking
+  // (call, app switch, closed tab) can be resumed instead of lost outright.
+  useEffect(() => {
+    if (pendingDraft) return;
+    const subscription = form.watch((values) => {
+      saveBookingDraft(currentStep, values);
+    });
+    return () => subscription.unsubscribe();
+  }, [form, currentStep, pendingDraft]);
+
+  function resumeDraft() {
+    if (!pendingDraft) return;
+    form.reset({ ...DEFAULT_VALUES, ...pendingDraft.values });
+    setCurrentStep(pendingDraft.step);
+    consumeBookingPrefill();
+    setPendingDraft(null);
+  }
+
+  function discardDraft() {
+    clearBookingDraft();
+    setPendingDraft(null);
+  }
 
   const { mutateAsync, isPending } = useMutation({
     mutationFn: submitBooking,
     onSuccess: (booking) => {
+      clearBookingDraft();
       navigate({
         to: "/reservation/confirmation",
         search: { id: booking.id, seriesTotal: booking.seriesTotal },
@@ -213,13 +251,17 @@ export function BookingForm() {
     const fieldsForStep = STEP_FIELDS[currentStep];
     const valid = await form.trigger(fieldsForStep);
     if (valid) {
-      setCurrentStep((s) => Math.min(s + 1, BOOKING_STEPS.length));
+      const nextStep = Math.min(currentStep + 1, BOOKING_STEPS.length);
+      setCurrentStep(nextStep);
+      saveBookingDraft(nextStep, form.getValues());
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }
 
   function handleBack() {
-    setCurrentStep((s) => Math.max(s - 1, 1));
+    const prevStep = Math.max(currentStep - 1, 1);
+    setCurrentStep(prevStep);
+    saveBookingDraft(prevStep, form.getValues());
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -269,83 +311,131 @@ export function BookingForm() {
       </div>
 
       <div className="container py-8 max-w-2xl">
-        {isPrefilled && currentStep <= 2 && (
-          <div
-            role="status"
-            className="mb-6 flex items-start gap-3 rounded-2xl bg-brand-blue-50 border border-brand-blue-100 p-4 text-sm text-brand-blue-900"
-          >
-            <Sparkles className="h-5 w-5 shrink-0 text-brand-blue-600" aria-hidden="true" />
-            <p className="flex-1 leading-relaxed">
-              Nous avons repris les informations de votre dernière réservation.
-              Vérifiez-les, modifiez-les si besoin, ou laissez-les telles quelles.
-            </p>
-            <button
-              type="button"
-              onClick={() => setIsPrefilled(false)}
-              className="shrink-0 text-brand-blue-600 hover:text-brand-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
-              aria-label="Masquer ce message"
-            >
-              <X className="h-4 w-4" aria-hidden="true" />
-            </button>
+        {!isLastStep && (
+          <div className="mb-6 flex items-center gap-2 rounded-xl bg-brand-green-50 border border-brand-green-100 px-4 py-2.5 text-xs sm:text-sm text-brand-green-800">
+            <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <span>
+              <strong>0&nbsp;€ à avancer</strong> — l&apos;Assurance Maladie règle
+              directement le chauffeur via le Tiers-Payant.
+            </span>
           </div>
         )}
 
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (isLastStep) handleSubmit();
-          }}
-          noValidate
-          aria-label="Formulaire de réservation de taxi médical"
-        >
-          {/* Step content */}
-          <div
-            key={currentStep}
-            className="animate-fade-in rounded-2xl bg-white p-6 md:p-8 shadow-sm ring-1 ring-gray-100"
-          >
-            {currentStep === 1 && <Step1Identity form={form} />}
-            {currentStep === 2 && <Step2Route form={form} />}
-            {currentStep === 3 && <Step3DateTime form={form} />}
-            {currentStep === 4 && <Step4VehicleAndNeeds form={form} />}
-            {currentStep === 5 && <Step5TripType form={form} />}
-            {currentStep === 6 && <Step7CPAMStatus form={form} />}
-            {currentStep === 7 && <Step8PMT form={form} />}
-            {currentStep === 8 && <Step9Notes form={form} />}
-            {currentStep === 9 && (
-              <Step10Confirmation
-                form={form}
-                isSubmitting={isPending}
-                submitError={submitError}
-              />
-            )}
-          </div>
-
-          {/* Navigation buttons */}
-          {!isLastStep && (
-            <div className="flex items-center justify-between mt-6 gap-4">
+        {pendingDraft && (
+          <div className="rounded-2xl bg-white p-6 md:p-8 shadow-sm ring-1 ring-gray-100 space-y-4">
+            <h2 className="text-xl font-bold text-gray-900">
+              Reprendre votre réservation en cours&nbsp;?
+            </h2>
+            <p className="text-muted-foreground">
+              Vous aviez commencé une réservation (étape {pendingDraft.step} sur{" "}
+              {BOOKING_STEPS.length}). Voulez-vous la reprendre où vous en étiez,
+              ou repartir de zéro&nbsp;?
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3">
               <button
                 type="button"
-                onClick={handleBack}
-                disabled={currentStep === 1}
-                className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-5 py-3.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                aria-label="Étape précédente"
+                onClick={resumeDraft}
+                className="flex-1 rounded-xl bg-brand-blue-600 px-5 py-3.5 text-sm font-bold text-white hover:bg-brand-blue-700 transition-colors shadow-md shadow-brand-blue-600/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
-                <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-                Précédent
+                Reprendre où j&apos;en étais
               </button>
-
               <button
                 type="button"
-                onClick={handleNext}
-                className="flex items-center gap-2 rounded-xl bg-brand-blue-600 px-7 py-3.5 text-sm font-bold text-white hover:bg-brand-blue-700 transition-colors shadow-md shadow-brand-blue-600/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                aria-label="Étape suivante"
+                onClick={discardDraft}
+                className="flex-1 rounded-xl border border-gray-200 bg-white px-5 py-3.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                Continuer
-                <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                Recommencer à zéro
               </button>
             </div>
-          )}
-        </form>
+          </div>
+        )}
+
+        {!pendingDraft && (
+          <>
+            {isPrefilled && PREFILL_BANNER_STEPS.includes(currentStep) && (
+              <div
+                role="status"
+                className="mb-6 flex items-start gap-3 rounded-2xl bg-brand-blue-50 border border-brand-blue-100 p-4 text-sm text-brand-blue-900"
+              >
+                <Sparkles className="h-5 w-5 shrink-0 text-brand-blue-600" aria-hidden="true" />
+                <p className="flex-1 leading-relaxed">
+                  Nous avons repris les informations de votre dernière réservation.
+                  Vérifiez-les, modifiez-les si besoin, ou laissez-les telles quelles.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setIsPrefilled(false)}
+                  className="shrink-0 text-brand-blue-600 hover:text-brand-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+                  aria-label="Masquer ce message"
+                >
+                  <X className="h-4 w-4" aria-hidden="true" />
+                </button>
+              </div>
+            )}
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (isLastStep) handleSubmit();
+              }}
+              noValidate
+              aria-label="Formulaire de réservation de taxi médical"
+            >
+              {/* Step content */}
+              <div
+                key={currentStep}
+                className="animate-fade-in rounded-2xl bg-white p-6 md:p-8 shadow-sm ring-1 ring-gray-100"
+              >
+                {currentStep === 1 && <Step2Route form={form} />}
+                {currentStep === 2 && <Step3DateTime form={form} />}
+                {currentStep === 3 && <Step4VehicleAndNeeds form={form} />}
+                {currentStep === 4 && <Step5TripType form={form} />}
+                {currentStep === 5 && <Step1Identity form={form} />}
+                {currentStep === 6 && <Step7CPAMStatus form={form} />}
+                {currentStep === 7 && (
+                  <>
+                    <Step8PMT form={form} />
+                    <div className="my-8 h-px bg-gray-100" />
+                    <Step9Notes form={form} />
+                  </>
+                )}
+                {currentStep === 8 && (
+                  <Step10Confirmation
+                    form={form}
+                    isSubmitting={isPending}
+                    submitError={submitError}
+                  />
+                )}
+              </div>
+
+              {/* Navigation buttons */}
+              {!isLastStep && (
+                <div className="flex items-center justify-between mt-6 gap-4">
+                  <button
+                    type="button"
+                    onClick={handleBack}
+                    disabled={currentStep === 1}
+                    className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-5 py-3.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    aria-label="Étape précédente"
+                  >
+                    <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+                    Précédent
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleNext}
+                    className="flex items-center gap-2 rounded-xl bg-brand-blue-600 px-7 py-3.5 text-sm font-bold text-white hover:bg-brand-blue-700 transition-colors shadow-md shadow-brand-blue-600/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    aria-label="Étape suivante"
+                  >
+                    Continuer
+                    <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                </div>
+              )}
+            </form>
+          </>
+        )}
 
         {/* Help callout */}
         <div className="mt-6 flex items-center justify-center gap-2 text-sm text-muted-foreground">
