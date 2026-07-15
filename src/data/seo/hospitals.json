@@ -75950,21 +75950,6 @@
     "slug": "calydial-irigny-irigny"
   },
   {
-    "finess": "690029194",
-    "nom": "HOSPICES CIVILS DE LYON - SIEGE",
-    "categorie": "Centre Hospitalier Régional (C.H.R.)",
-    "adresse": "3 QU DES CELESTINS",
-    "codePostal": "69002",
-    "codeInseeCommune": "69382",
-    "communeNom": "Lyon",
-    "departementSlug": "rhone",
-    "departementNom": "Rhône",
-    "lat": 45.760911627701105,
-    "lon": 4.831492831485884,
-    "telephone": "0472407240",
-    "slug": "hospices-civils-de-lyon-siege-lyon"
-  },
-  {
     "finess": "690030630",
     "nom": "HJ ADULTE TARARE",
     "categorie": "Centre Hospitalier Spécialisé lutte Maladies Mentales",
@@ -83465,21 +83450,6 @@
     "lon": 2.3998756088744106,
     "telephone": "0153626615",
     "slug": "unite-de-dialyse-aura-pelleport-paris"
-  },
-  {
-    "finess": "750000341",
-    "nom": "AGENCE CENTRALE DES EQUIPEMENTS ET DES PRODUITS DE SANTE",
-    "categorie": "Centre Hospitalier Régional (C.H.R.)",
-    "adresse": "7 R DU FER A MOULIN",
-    "codePostal": "75005",
-    "codeInseeCommune": "75105",
-    "communeNom": "Paris",
-    "departementSlug": "paris",
-    "departementNom": "Paris",
-    "lat": 48.83930720602267,
-    "lon": 2.3553071607421807,
-    "telephone": "0146691313",
-    "slug": "agence-centrale-des-equipements-et-des-produits-de-sante-paris"
   },
   {
     "finess": "750000481",
@@ -101615,21 +101585,6 @@
     "lon": 2.4852489141687295,
     "telephone": "0160889014",
     "slug": "unite-de-dialyse-aura-corbeil-corbeil-essonnes"
-  },
-  {
-    "finess": "920000122",
-    "nom": "AGENCE GENERALE DES EQUIPEMENTS ET PRODUITS DE SANTE APHP",
-    "categorie": "Centre Hospitalier Régional (C.H.R.)",
-    "adresse": "13 R LAVOISIER",
-    "codePostal": "92000",
-    "codeInseeCommune": "92050",
-    "communeNom": "Nanterre",
-    "departementSlug": "hauts-de-seine",
-    "departementNom": "Hauts-de-Seine",
-    "lat": 48.896547205328766,
-    "lon": 2.1728875242919843,
-    "telephone": "0146691313",
-    "slug": "agence-generale-des-equipements-et-produits-de-sante-aphp-nanterre"
   },
   {
     "finess": "920000171",

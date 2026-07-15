@@ -77,6 +77,22 @@ function findCsvResource(dataset) {
 const RELEVANT_CATEGORY_PATTERN =
   /hopital|hôpital|hopitaux|chu|chr\b|centre hospitalier|clinique|dialyse|had\b|maison de sant/i;
 
+// Sièges administratifs / agences logistiques catégorisés à tort en "Centre
+// Hospitalier Régional" par FINESS : ce ne sont pas des lieux de soins, mais
+// avec ce classement ils remontaient en tête des listes d'établissements
+// (voir seoData.ts, CATEGORY_PRIORITY) devant les vrais CHU/CHR de la ville.
+// Liste explicite par FINESS plutôt qu'un filtre par mot-clé ("siège",
+// "agence"...) : un test contre les données réelles a montré que ce genre de
+// pattern attrape aussi de vrais sites de soins (ex. une antenne SMUR ou un
+// site de dialyse dont le nom contient "siège" au sens de site principal,
+// pas de direction administrative) — à mettre à jour manuellement si un
+// nouveau cas de ce type apparaît lors d'un rafraîchissement mensuel.
+const ADMINISTRATIVE_ENTITY_FINESS = new Set([
+  "690029194", // HOSPICES CIVILS DE LYON - SIEGE
+  "750000341", // AGENCE CENTRALE DES EQUIPEMENTS ET DES PRODUITS DE SANTE (Paris)
+  "920000122", // AGENCE GENERALE DES EQUIPEMENTS ET PRODUITS DE SANTE APHP (Nanterre)
+]);
+
 // Le fichier "stock" FINESS (etalab-cs1100507-stock-*.csv) n'a PAS de ligne
 // d'en-têtes : la ligne 1 est un manifeste ("finess;etalab;98;2026-05-12"),
 // et chaque ligne de données commence par une étiquette de type
@@ -516,7 +532,8 @@ async function main() {
       };
     })
     .filter((h) => h.nom)
-    .filter((h) => !h.categorie || RELEVANT_CATEGORY_PATTERN.test(h.categorie));
+    .filter((h) => !h.categorie || RELEVANT_CATEGORY_PATTERN.test(h.categorie))
+    .filter((h) => !ADMINISTRATIVE_ENTITY_FINESS.has(h.finess));
 
   // Slug uniquement pour les établissements reliés à une ville connue (sinon
   // pas de page /hopitaux/$slug — voir src/routes/hopitaux.$slug.tsx). Dédup
