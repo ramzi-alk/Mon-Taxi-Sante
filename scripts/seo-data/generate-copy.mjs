@@ -95,7 +95,11 @@ async function callDeepSeek(userPrompt, { retries = 3 } = {}) {
       }
       const data = await res.json();
       const text = data.content?.[0]?.text?.trim();
-      if (!text) throw new Error("Réponse vide ou format inattendu");
+      if (!text) {
+        throw new Error(
+          `Réponse vide ou format inattendu : ${JSON.stringify(data).slice(0, 500)}`
+        );
+      }
       return text;
     } catch (err) {
       if (attempt === retries) throw err;
