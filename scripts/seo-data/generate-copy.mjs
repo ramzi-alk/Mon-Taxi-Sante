@@ -176,6 +176,22 @@ async function generateAldCopy() {
   console.log(`✓ ${Object.keys(existing).length} intros ALD écrites dans src/data/seo/ald-copy.json`);
 }
 
+// Paris/Lyon/Marseille sont découpées en arrondissements dans FINESS (codes
+// INSEE 75101-75120, 69381-69389, 13201-13216) mais en une seule commune
+// côté geo.api.gouv.fr (75056, 69123, 13055) — même repli que
+// normalizeCodeInsee() dans src/lib/seoData.ts (dupliqué ici plutôt
+// qu'importé : ce script Node ESM ne transpile pas le .ts de l'app). Sans
+// ce repli, ces 3 villes se voyaient attribuer 0 établissement de santé
+// dans le prompt alors qu'elles en comptent des dizaines, ce qui produisait
+// des intros factuellement fausses ("aucun établissement de santé" à Paris).
+function normalizeCodeInsee(codeInsee) {
+  const n = Number(codeInsee);
+  if (codeInsee.startsWith("751") && n >= 75101 && n <= 75120) return "75056";
+  if (codeInsee.startsWith("693") && n >= 69381 && n <= 69389) return "69123";
+  if (codeInsee.startsWith("132") && n >= 13201 && n <= 13216) return "13055";
+  return codeInsee;
+}
+
 async function generateCityCopy() {
   const communes = JSON.parse(
     await readFile(new URL("../../src/data/seo/communes.json", import.meta.url))
@@ -187,10 +203,8 @@ async function generateCityCopy() {
   const hospitalCountByCommune = new Map();
   for (const h of hospitals) {
     if (!h.codeInseeCommune) continue;
-    hospitalCountByCommune.set(
-      h.codeInseeCommune,
-      (hospitalCountByCommune.get(h.codeInseeCommune) ?? 0) + 1
-    );
+    const key = normalizeCodeInsee(h.codeInseeCommune);
+    hospitalCountByCommune.set(key, (hospitalCountByCommune.get(key) ?? 0) + 1);
   }
 
   const byDept = new Map();
