@@ -220,7 +220,7 @@ export function BookingForm() {
   function resumeDraft() {
     if (!pendingDraft) return;
     form.reset({ ...DEFAULT_VALUES, ...pendingDraft.values });
-    setCurrentStep(pendingDraft.step);
+    setCurrentStep(Math.min(Math.max(pendingDraft.step, 1), BOOKING_STEPS.length));
     consumeBookingPrefill();
     setPendingDraft(null);
   }

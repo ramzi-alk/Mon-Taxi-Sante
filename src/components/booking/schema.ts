@@ -189,6 +189,19 @@ export const bookingSchema = z
       message: "Votre numéro de téléphone est requis (ex : 06 12 34 56 78)",
       path: ["booker_phone"],
     }
+  )
+  .refine(
+    (data) => {
+      if (data.pmt_declared) {
+        return typeof File !== "undefined" && data.pmt_file instanceof File;
+      }
+      return true;
+    },
+    {
+      message:
+        "Merci de joindre votre PMT, ou indiquez que vous ne l'avez pas encore.",
+      path: ["pmt_file"],
+    }
   );
 
 export type BookingSchema = z.infer<typeof bookingSchema>;
@@ -221,6 +234,6 @@ export const STEP_FIELDS: Record<number, (keyof BookingSchema)[]> = {
   ],
   5: ["booking_for_other", "patient_full_name", "patient_phone", "patient_email", "booker_full_name", "booker_phone", "booker_email"],
   6: ["cpam_status", "patient_birth_date"],
-  7: ["pmt_declared", "medical_notes"],
+  7: ["pmt_declared", "pmt_file", "medical_notes"],
   8: ["consent"],
 };
