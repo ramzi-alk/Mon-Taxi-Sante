@@ -4,6 +4,7 @@ import { ArrowRight, MapPin, Search } from "lucide-react";
 import { getDepartmentPageDataServerFn } from "~/server/seo";
 import { Input } from "~/components/ui/input";
 import { slugify } from "~/lib/utils";
+import { BreadcrumbSchema } from "~/components/BreadcrumbSchema";
 
 export const Route = createFileRoute("/$department/")({
   // Voir le commentaire équivalent dans $department.$city.tsx : la fonction
@@ -49,6 +50,13 @@ function DepartmentPage() {
 
   return (
     <>
+      <BreadcrumbSchema
+        items={[
+          { name: "Accueil", url: "https://mon-taxi-sante.com/" },
+          { name: "Villes desservies", url: "https://mon-taxi-sante.com/villes" },
+          { name: department.nom, url: `https://mon-taxi-sante.com/${department.slug}` },
+        ]}
+      />
       <section className="bg-gradient-to-br from-brand-blue-700 to-brand-blue-600 text-white py-16">
         <div className="container">
           <nav aria-label="Fil d'Ariane" className="mb-6">

@@ -4,6 +4,7 @@ import { HeartPulse, ArrowRight, Search } from "lucide-react";
 import { aldList as ald } from "~/lib/aldData";
 import { Input } from "~/components/ui/input";
 import { slugify } from "~/lib/utils";
+import { BreadcrumbSchema } from "~/components/BreadcrumbSchema";
 
 export const Route = createFileRoute("/maladies/")({
   head: () => ({
@@ -34,6 +35,12 @@ function MaladiesPage() {
 
   return (
     <>
+      <BreadcrumbSchema
+        items={[
+          { name: "Accueil", url: "https://mon-taxi-sante.com/" },
+          { name: "Maladies (ALD)", url: "https://mon-taxi-sante.com/maladies" },
+        ]}
+      />
       <section className="bg-gradient-to-br from-brand-blue-700 to-brand-blue-600 text-white py-16">
         <div className="container">
           <nav aria-label="Fil d'Ariane" className="mb-6">
