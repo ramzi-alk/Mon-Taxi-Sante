@@ -157,11 +157,18 @@ export interface NearestHospital {
 
 // Établissements les plus proches par distance réelle (pas seulement dans la
 // même commune) — complète getNearbyHospitals, en particulier utile pour les
-// petites communes sans établissement propre. Plafonné à maxDistanceKm pour
-// éviter d'afficher un résultat absurde (ex. DROM : la conversion GPS des
-// hôpitaux ne couvre que la projection Lambert-93 métropole, voir
-// fetch-hospitals.mjs — sans hôpital converti à proximité réelle, mieux vaut
-// une liste vide que de faire remonter un établissement à des milliers de km).
+// 3065 communes (sur 5509, plus de la moitié) sans établissement propre, qui
+// n'affichent que cette liste. Plafonné à maxDistanceKm pour éviter
+// d'afficher un résultat absurde (ex. DROM : la conversion GPS des hôpitaux
+// ne couvre que la projection Lambert-93 métropole, voir fetch-hospitals.mjs
+// — sans hôpital converti à proximité réelle, mieux vaut une liste vide que
+// de faire remonter un établissement à des milliers de km).
+//
+// Trié par priorité clinique (comme getNearbyHospitals) puis par distance en
+// départage : parmi les établissements à moins de maxDistanceKm, un CHU à
+// 30 km doit apparaître avant une maison de santé à 5 km — c'est la même
+// logique que pour une ville qui a ses propres établissements, appliquée ici
+// aux villes qui n'en ont pas.
 export function getNearestHospitalsByDistance(
   commune: Commune,
   limit = 4,
@@ -180,7 +187,7 @@ export function getNearestHospitalsByDistance(
     )
     .map((h) => ({ hospital: h, distanceKm: haversineKm(lat, lon, h.lat as number, h.lon as number) }))
     .filter((x) => x.distanceKm <= maxDistanceKm)
-    .sort((a, b) => a.distanceKm - b.distanceKm)
+    .sort((a, b) => categoryPriority(a.hospital.categorie) - categoryPriority(b.hospital.categorie) || a.distanceKm - b.distanceKm)
     .slice(0, limit);
 }
 
