@@ -26,9 +26,12 @@ export function Step1Identity({ form }: StepProps) {
   // Certains patients âgés n'ont pas de téléphone propre : le numéro du
   // réservateur (rempli plus bas) sert alors aussi de contact patient,
   // au lieu de bloquer la soumission faute d'un second numéro à saisir.
+  // shouldValidate n'est activé qu'une fois le numéro du réservateur
+  // renseigné : sinon la case afficherait aussitôt "numéro invalide" sur un
+  // champ que l'utilisateur vient justement de désactiver.
   useEffect(() => {
     if (bookingForOther && patientHasNoPhone) {
-      setValue("patient_phone", bookerPhone || "", { shouldValidate: true });
+      setValue("patient_phone", bookerPhone || "", { shouldValidate: !!bookerPhone });
     }
   }, [bookingForOther, patientHasNoPhone, bookerPhone, setValue]);
 
@@ -156,19 +159,25 @@ export function Step1Identity({ form }: StepProps) {
               autoComplete={bookingForOther ? "off" : "tel"}
               placeholder="06 12 34 56 78"
               aria-required="true"
-              aria-describedby={errors.patient_phone ? "phone-error" : "phone-hint"}
+              aria-describedby={
+                errors.patient_phone && !(bookingForOther && patientHasNoPhone)
+                  ? "phone-error"
+                  : "phone-hint"
+              }
               disabled={bookingForOther && patientHasNoPhone}
               {...register("patient_phone")}
               className="pl-11 pr-4 py-3.5 text-base"
-              aria-invalid={!!errors.patient_phone}
+              aria-invalid={!!errors.patient_phone && !(bookingForOther && patientHasNoPhone)}
             />
           </div>
           <p id="phone-hint" className="text-xs text-muted-foreground">
-            {bookingForOther
+            {bookingForOther && patientHasNoPhone
+              ? "Sera renseigné avec votre numéro, à saisir plus bas."
+              : bookingForOther
               ? "Utilisé par le chauffeur pour contacter le patient le jour du transport."
               : "Utilisé pour la confirmation de la réservation et le contact chauffeur."}
           </p>
-          {errors.patient_phone && (
+          {errors.patient_phone && !(bookingForOther && patientHasNoPhone) && (
             <p id="phone-error" role="alert" className="text-sm text-red-600">
               {errors.patient_phone.message}
             </p>
