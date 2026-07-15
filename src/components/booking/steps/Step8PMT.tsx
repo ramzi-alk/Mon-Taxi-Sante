@@ -92,14 +92,22 @@ export function Step8PMT({ form }: StepProps) {
 
       {/* If no PMT — guidance */}
       {pmtDeclared === false && (
-        <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 text-sm text-amber-900">
-          <p className="font-semibold mb-2">Comment obtenir votre PMT&nbsp;?</p>
-          <ol className="list-decimal list-inside space-y-1 text-amber-800">
-            <li>Demandez à votre médecin traitant lors de votre prochain rendez-vous</li>
-            <li>Précisez votre destination médicale et la fréquence des soins</li>
-            <li>Transmettez-nous la prescription avant votre premier trajet</li>
-          </ol>
-          <p className="mt-2">
+        <div className="rounded-xl bg-amber-50 border border-amber-200 text-sm text-amber-900">
+          <Accordion type="single" collapsible className="px-4">
+            <AccordionItem value="how-to-get-pmt">
+              <AccordionTrigger className="py-4 font-semibold">
+                Comment obtenir votre PMT&nbsp;?
+              </AccordionTrigger>
+              <AccordionContent>
+                <ol className="list-decimal list-inside space-y-1 text-amber-800">
+                  <li>Demandez à votre médecin traitant lors de votre prochain rendez-vous</li>
+                  <li>Précisez votre destination médicale et la fréquence des soins</li>
+                  <li>Transmettez-nous la prescription avant votre premier trajet</li>
+                </ol>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+          <p className="px-4 pb-4">
             Vous pouvez tout de même finaliser votre réservation. Nous vous
             contacterons pour récupérer la PMT.
           </p>

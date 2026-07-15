@@ -7,6 +7,7 @@ import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
 import { Calendar } from "~/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "~/components/ui/accordion";
 import type { BookingSchema } from "../schema";
 
 interface StepProps {
@@ -204,14 +205,21 @@ export function Step7CPAMStatus({ form }: StepProps) {
       </div>
 
       {/* Help block */}
-      <div className="flex gap-3 rounded-xl bg-gray-50 border border-gray-200 p-4">
-        <HelpCircle className="h-5 w-5 text-brand-blue-500 shrink-0 mt-0.5" aria-hidden="true" />
-        <div className="text-sm text-gray-700">
-          <strong>Pas sûr(e) de votre situation&nbsp;?</strong> Vérifiez votre carte
-          Vitale ou demandez à votre médecin. En cas de doute, choisissez
-          &ldquo;Assuré standard&rdquo; — nous rectifierons avec votre prescripteur.
-        </div>
-      </div>
+      <Accordion type="single" collapsible className="rounded-xl bg-gray-50 border border-gray-200 px-4">
+        <AccordionItem value="cpam-help">
+          <AccordionTrigger className="py-3.5 text-sm text-gray-700">
+            <span className="flex items-center gap-2">
+              <HelpCircle className="h-5 w-5 text-brand-blue-500 shrink-0" aria-hidden="true" />
+              Pas sûr(e) de votre situation&nbsp;?
+            </span>
+          </AccordionTrigger>
+          <AccordionContent className="pl-7 text-sm text-gray-700">
+            Vérifiez votre carte Vitale ou demandez à votre médecin. En cas de
+            doute, choisissez &ldquo;Assuré standard&rdquo; — nous rectifierons avec
+            votre prescripteur.
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </div>
   );
 }

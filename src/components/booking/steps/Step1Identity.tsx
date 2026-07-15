@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { UseFormReturn } from "react-hook-form";
-import { User, Phone, Mail, Heart, UserCheck } from "lucide-react";
+import { User, Phone, Mail, Heart, UserCheck, Lock } from "lucide-react";
 import type { BookingSchema } from "../schema";
 import { Input } from "~/components/ui/input";
 import { Checkbox } from "~/components/ui/checkbox";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "~/components/ui/accordion";
 import { cn } from "~/lib/utils";
 
 interface StepProps {
@@ -376,11 +377,21 @@ export function Step1Identity({ form }: StepProps) {
       )}
 
       {/* Privacy notice */}
-      <div className="rounded-xl bg-blue-50 border border-blue-100 p-4 text-sm text-blue-800">
-        <strong>Protection des données&nbsp;:</strong> Ces informations sont
-        chiffrées et stockées sur un hébergement de données de santé certifié HDS,
-        conformément au RGPD. Elles ne sont jamais revendues.
-      </div>
+      <Accordion type="single" collapsible className="rounded-xl bg-blue-50 border border-blue-100 px-4">
+        <AccordionItem value="privacy-notice">
+          <AccordionTrigger className="py-3.5 text-sm text-blue-800">
+            <span className="flex items-center gap-2">
+              <Lock className="h-4 w-4 shrink-0" aria-hidden="true" />
+              Protection des données
+            </span>
+          </AccordionTrigger>
+          <AccordionContent className="pl-6 text-sm text-blue-800">
+            Ces informations sont chiffrées et stockées sur un hébergement de
+            données de santé certifié HDS, conformément au RGPD. Elles ne sont
+            jamais revendues.
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </div>
   );
 }
