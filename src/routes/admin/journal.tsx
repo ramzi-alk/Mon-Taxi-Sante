@@ -19,7 +19,7 @@ const journalSearchSchema = z.object({
 export const Route = createFileRoute("/admin/journal")({
   validateSearch: journalSearchSchema,
   head: () => ({
-    meta: [{ title: "Journal — Administration — Mon Taxi Santé" }],
+    meta: [{ title: "Journal — Administration — Docteur Taxi" }],
   }),
   component: AdminJournalPage,
 });

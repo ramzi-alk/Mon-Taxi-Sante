@@ -6,7 +6,7 @@ export const Route = createFileRoute("/blog/pmt-prescription")({
     meta: [
       {
         title:
-          "Prescription médicale de transport (PMT) : mode d'emploi — Mon Taxi Santé",
+          "Prescription médicale de transport (PMT) : mode d'emploi — Docteur Taxi",
       },
       {
         name: "description",
@@ -62,7 +62,7 @@ function PmtPrescriptionArticle() {
 
       <h2>Comment la joindre à votre réservation ?</h2>
       <p>
-        Lors de la réservation sur Mon Taxi Santé, déclarez votre
+        Lors de la réservation sur Docteur Taxi, déclarez votre
         prescription dans le formulaire et joignez une photo ou un scan du
         document. Le jour du transport, gardez l'original avec vous : le
         chauffeur en a besoin pour facturer l'Assurance Maladie en

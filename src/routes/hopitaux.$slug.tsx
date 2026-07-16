@@ -33,7 +33,7 @@ export const Route = createFileRoute("/hopitaux/$slug")({
     if (!loaderData) return {};
     const { hospital, commune } = loaderData;
     const villeSuffix = commune ? ` à ${commune.nom}` : "";
-    const title = `Taxi conventionné vers ${hospital.nom}${villeSuffix} — Mon Taxi Santé`;
+    const title = `Taxi conventionné vers ${hospital.nom}${villeSuffix} — Docteur Taxi`;
     const description = `Réservez votre taxi médical conventionné Assurance Maladie pour vous rendre à ${hospital.nom}${villeSuffix}. Tiers-Payant intégral, zéro avance de frais.`;
     return {
       meta: [
@@ -241,7 +241,7 @@ function HospitalPage() {
       <section className="section-medical bg-brand-blue-50" aria-labelledby="why-heading">
         <div className="container max-w-3xl">
           <h2 id="why-heading" className="text-3xl font-bold text-gray-900 mb-6">
-            Pourquoi réserver avec Mon Taxi Santé&nbsp;?
+            Pourquoi réserver avec Docteur Taxi&nbsp;?
           </h2>
           <div className="grid gap-6 sm:grid-cols-2">
             {[

@@ -10,7 +10,7 @@ import { AdminErrorState } from "~/components/admin/AdminErrorState";
 
 export const Route = createFileRoute("/admin/")({
   head: () => ({
-    meta: [{ title: "Vue d'ensemble — Administration — Mon Taxi Santé" }],
+    meta: [{ title: "Vue d'ensemble — Administration — Docteur Taxi" }],
   }),
   component: AdminOverviewPage,
 });

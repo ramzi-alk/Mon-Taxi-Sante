@@ -4,9 +4,9 @@ self.addEventListener("push", function (event) {
   try {
     data = event.data.json();
   } catch {
-    data = { title: "Mon Taxi Santé", body: event.data.text() };
+    data = { title: "Docteur Taxi", body: event.data.text() };
   }
-  const { title = "Mon Taxi Santé", body = "", url = "/tableau-de-bord/chauffeur", tag } = data;
+  const { title = "Docteur Taxi", body = "", url = "/tableau-de-bord/chauffeur", tag } = data;
   event.waitUntil(
     self.registration.showNotification(title, {
       body,

@@ -4,7 +4,7 @@ import { BlogLayout } from "~/components/BlogLayout";
 export const Route = createFileRoute("/blog/transport-cpam")({
   head: () => ({
     meta: [
-      { title: "Transport pris en charge Assurance Maladie : tout savoir — Mon Taxi Santé" },
+      { title: "Transport pris en charge Assurance Maladie : tout savoir — Docteur Taxi" },
       {
         name: "description",
         content:

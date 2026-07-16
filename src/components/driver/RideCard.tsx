@@ -282,7 +282,7 @@ function buildCalendarLinks(ride: PoolRide) {
   const icsContent = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Mon Taxi Sante//FR",
+    "PRODID:-//Docteur Taxi//FR",
     "BEGIN:VEVENT",
     `UID:${ride.id}@mon-taxi-sante`,
     `DTSTAMP:${formatICSDate(new Date())}`,

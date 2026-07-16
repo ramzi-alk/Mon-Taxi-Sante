@@ -28,7 +28,7 @@ export const Route = createFileRoute("/mes-reservations")({
   validateSearch: myBookingsSearchSchema,
   head: () => ({
     meta: [
-      { title: "Mes réservations — Mon Taxi Santé" },
+      { title: "Mes réservations — Docteur Taxi" },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),

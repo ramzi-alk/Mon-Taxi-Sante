@@ -13,7 +13,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "~
 
 export const Route = createFileRoute("/admin/avis")({
   head: () => ({
-    meta: [{ title: "Avis — Administration — Mon Taxi Santé" }],
+    meta: [{ title: "Avis — Administration — Docteur Taxi" }],
   }),
   component: AdminAvisPage,
 });

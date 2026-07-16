@@ -14,7 +14,7 @@ import { CONTACT_PHONE_DISPLAY } from "~/lib/contact";
 export const Route = createFileRoute("/comment-ca-marche")({
   head: () => ({
     meta: [
-      { title: "Comment ça marche — Mon Taxi Santé" },
+      { title: "Comment ça marche — Docteur Taxi" },
       {
         name: "description",
         content:
@@ -94,8 +94,8 @@ function CommentCaMarchePage() {
             Réservez votre taxi médical en 5 étapes simples
           </h1>
           <p className="mt-5 text-lg text-gray-500 max-w-xl leading-relaxed">
-            Aucune avance de frais, aucune démarche administrative. Mon Taxi
-            Santé gère la réservation, le chauffeur conventionné et la
+            Aucune avance de frais, aucune démarche administrative. Docteur
+            Taxi gère la réservation, le chauffeur conventionné et la
             facturation à l'Assurance Maladie.
           </p>
           <div className="mt-8">

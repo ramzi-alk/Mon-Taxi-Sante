@@ -4,7 +4,7 @@ import { ArrowRight, CheckCircle2, Info } from "lucide-react";
 export const Route = createFileRoute("/tarifs-cpam")({
   head: () => ({
     meta: [
-      { title: "Tarifs et remboursements Assurance Maladie — Mon Taxi Santé" },
+      { title: "Tarifs et remboursements Assurance Maladie — Docteur Taxi" },
       {
         name: "description",
         content:

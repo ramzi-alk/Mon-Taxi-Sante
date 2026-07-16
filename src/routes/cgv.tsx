@@ -5,11 +5,11 @@ import { CONTACT_PHONE_DISPLAY } from "~/lib/contact";
 export const Route = createFileRoute("/cgv")({
   head: () => ({
     meta: [
-      { title: "Conditions Générales de Vente — Mon Taxi Santé" },
+      { title: "Conditions Générales de Vente — Docteur Taxi" },
       {
         name: "description",
         content:
-          "Conditions Générales de Vente de Mon Taxi Santé : réservation, prise en charge Assurance Maladie, annulation et responsabilité.",
+          "Conditions Générales de Vente de Docteur Taxi : réservation, prise en charge Assurance Maladie, annulation et responsabilité.",
       },
     ],
   }),
@@ -65,7 +65,7 @@ function CgvPage() {
       <p>
         Le chauffeur conventionné s'engage à se présenter à l'heure convenue.
         En cas de retard ou d'imprévu, le patient est informé dans les plus
-        brefs délais. Mon Taxi Santé met en œuvre les moyens nécessaires pour
+        brefs délais. Docteur Taxi met en œuvre les moyens nécessaires pour
         garantir la ponctualité, sans pouvoir être tenue responsable des cas
         de force majeure (conditions de circulation exceptionnelles,
         intempéries, etc.).
@@ -73,7 +73,7 @@ function CgvPage() {
 
       <h2>Article 6 — Responsabilité</h2>
       <p>
-        Mon Taxi Santé agit en tant que plateforme de mise en relation entre
+        Docteur Taxi agit en tant que plateforme de mise en relation entre
         les patients et des chauffeurs conventionnés indépendants. La
         responsabilité civile et le respect des normes sanitaires applicables
         au transport incombent au chauffeur exécutant la prestation, qui

@@ -54,7 +54,7 @@ export function TrustBadges({ className }: TrustBadgesProps) {
             className="text-4xl md:text-5xl font-black text-[#0B0F1C] tracking-tight leading-tight"
           >
             Pourquoi choisir<br />
-            Mon Taxi Santé&nbsp;?
+            Docteur Taxi&nbsp;?
           </h2>
         </div>
 

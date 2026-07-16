@@ -25,13 +25,13 @@ export function Navbar() {
           <Link
             to="/"
             className="flex items-center gap-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md"
-            aria-label="Mon Taxi Santé — Accueil"
+            aria-label="Docteur Taxi — Accueil"
           >
             <span className="font-black text-[1.15rem] tracking-tight text-[#0B0F1C]">
-              Mon Taxi
+              Docteur
             </span>
             <span className="font-black text-[1.15rem] tracking-tight text-[#1244E8] ml-1.5">
-              Santé
+              Taxi
             </span>
           </Link>
 

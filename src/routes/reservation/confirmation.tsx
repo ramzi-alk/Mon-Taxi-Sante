@@ -19,7 +19,7 @@ export const Route = createFileRoute("/reservation/confirmation")({
   validateSearch: confirmationSearchSchema,
   head: () => ({
     meta: [
-      { title: "Réservation confirmée — Mon Taxi Santé" },
+      { title: "Réservation confirmée — Docteur Taxi" },
       { name: "robots", content: "noindex" },
     ],
   }),

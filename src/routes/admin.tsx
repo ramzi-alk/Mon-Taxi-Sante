@@ -11,7 +11,7 @@ import { cn } from "~/lib/utils";
 export const Route = createFileRoute("/admin")({
   head: () => ({
     meta: [
-      { title: "Administration — Mon Taxi Santé" },
+      { title: "Administration — Docteur Taxi" },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
@@ -63,7 +63,7 @@ function AdminLayout() {
             Accès réservé
           </h1>
           <p className="mt-3 text-gray-500 leading-relaxed">
-            Cette page est réservée aux administrateurs de Mon Taxi Santé.
+            Cette page est réservée aux administrateurs de Docteur Taxi.
           </p>
           <Link
             to="/admin/connexion"

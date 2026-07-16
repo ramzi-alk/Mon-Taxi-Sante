@@ -38,10 +38,10 @@ export function Footer() {
           <div className="lg:col-span-1">
             <div className="flex items-center gap-0 mb-5">
               <span className="font-black text-[1.1rem] tracking-tight text-white">
-                Mon Taxi
+                Docteur
               </span>
               <span className="font-black text-[1.1rem] tracking-tight text-[#1244E8] ml-1.5">
-                Santé
+                Taxi
               </span>
             </div>
             <p className="text-sm leading-relaxed text-gray-500 mb-6">
@@ -164,7 +164,7 @@ export function Footer() {
 
         {/* Bottom bar */}
         <div className="mt-14 border-t border-white/5 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-600">
-          <p>© {new Date().getFullYear()} Mon Taxi Santé. Tous droits réservés.</p>
+          <p>© {new Date().getFullYear()} Docteur Taxi. Tous droits réservés.</p>
           <div className="flex items-center gap-6">
             <Link
               to="/mentions-legales"

@@ -55,7 +55,7 @@ const chauffeursSearchSchema = z.object({
 export const Route = createFileRoute("/admin/chauffeurs")({
   validateSearch: chauffeursSearchSchema,
   head: () => ({
-    meta: [{ title: "Chauffeurs — Administration — Mon Taxi Santé" }],
+    meta: [{ title: "Chauffeurs — Administration — Docteur Taxi" }],
   }),
   component: AdminChauffeursPage,
 });

@@ -4,7 +4,7 @@ import { ArrowRight, CheckCircle2 } from "lucide-react";
 export const Route = createFileRoute("/chauffeurs/tarifs")({
   head: () => ({
     meta: [
-      { title: "Tarifs abonnement chauffeur — Mon Taxi Santé" },
+      { title: "Tarifs abonnement chauffeur — Docteur Taxi" },
       {
         name: "description",
         content:

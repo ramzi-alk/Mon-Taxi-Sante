@@ -14,7 +14,7 @@ import { useTurnstile, TURNSTILE_SITE_KEY } from "~/hooks/useTurnstile";
 export const Route = createFileRoute("/admin_/connexion")({
   head: () => ({
     meta: [
-      { title: "Connexion administrateur — Mon Taxi Santé" },
+      { title: "Connexion administrateur — Docteur Taxi" },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),

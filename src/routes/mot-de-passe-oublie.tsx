@@ -13,7 +13,7 @@ import { Input } from "~/components/ui/input";
 export const Route = createFileRoute("/mot-de-passe-oublie")({
   head: () => ({
     meta: [
-      { title: "Mot de passe oublié — Mon Taxi Santé" },
+      { title: "Mot de passe oublié — Docteur Taxi" },
       { name: "robots", content: "noindex" },
     ],
   }),

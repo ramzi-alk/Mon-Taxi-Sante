@@ -5,11 +5,11 @@ import { CONTACT_PHONE_DISPLAY, CONTACT_EMAIL } from "~/lib/contact";
 export const Route = createFileRoute("/mentions-legales")({
   head: () => ({
     meta: [
-      { title: "Mentions légales — Mon Taxi Santé" },
+      { title: "Mentions légales — Docteur Taxi" },
       {
         name: "description",
         content:
-          "Mentions légales du site Mon Taxi Santé : éditeur, hébergement, propriété intellectuelle et droit applicable.",
+          "Mentions légales du site Docteur Taxi : éditeur, hébergement, propriété intellectuelle et droit applicable.",
       },
     ],
   }),
@@ -52,7 +52,7 @@ function MentionsLegalesPage() {
 
       <h2>Responsabilité</h2>
       <p>
-        Mon Taxi Santé met tout en œuvre pour assurer l'exactitude des
+        Docteur Taxi met tout en œuvre pour assurer l'exactitude des
         informations diffusées sur le site, mais ne peut garantir l'absence
         d'erreur ou d'omission. L'utilisation des informations du site se
         fait sous la seule responsabilité de l'utilisateur.
@@ -60,7 +60,7 @@ function MentionsLegalesPage() {
 
       <h2>Liens hypertextes</h2>
       <p>
-        Le site peut contenir des liens vers des sites tiers. Mon Taxi Santé
+        Le site peut contenir des liens vers des sites tiers. Docteur Taxi
         n'exerce aucun contrôle sur ces sites et décline toute responsabilité
         quant à leur contenu.
       </p>

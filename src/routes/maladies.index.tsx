@@ -11,7 +11,7 @@ export const Route = createFileRoute("/maladies/")({
     meta: [
       {
         title:
-          "Transport médical par affection (ALD) : liste des 30 pathologies — Mon Taxi Santé",
+          "Transport médical par affection (ALD) : liste des 30 pathologies — Docteur Taxi",
       },
       {
         name: "description",

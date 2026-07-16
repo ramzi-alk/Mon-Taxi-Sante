@@ -4,7 +4,7 @@ import { BlogLayout } from "~/components/BlogLayout";
 export const Route = createFileRoute("/blog/ald-transport")({
   head: () => ({
     meta: [
-      { title: "Transport ALD : tout savoir — Mon Taxi Santé" },
+      { title: "Transport ALD : tout savoir — Docteur Taxi" },
       {
         name: "description",
         content:

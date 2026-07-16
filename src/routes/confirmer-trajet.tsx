@@ -17,7 +17,7 @@ export const Route = createFileRoute("/confirmer-trajet")({
   validateSearch: confirmerTrajetSearchSchema,
   head: () => ({
     meta: [
-      { title: "Confirmer mon trajet — Mon Taxi Santé" },
+      { title: "Confirmer mon trajet — Docteur Taxi" },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),

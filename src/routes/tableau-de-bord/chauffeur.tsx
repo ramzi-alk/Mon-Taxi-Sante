@@ -45,7 +45,7 @@ type DriverAvailability = Database["public"]["Enums"]["driver_availability"];
 export const Route = createFileRoute("/tableau-de-bord/chauffeur")({
   head: () => ({
     meta: [
-      { title: "Tableau de bord chauffeur — Mon Taxi Santé" },
+      { title: "Tableau de bord chauffeur — Docteur Taxi" },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
@@ -547,7 +547,7 @@ function DriverDashboard() {
             <div>
               <h1 className="text-2xl font-bold">Tableau de bord chauffeur</h1>
               <p className="text-blue-200 text-sm mt-0.5">
-                Bienvenue — Mon Taxi Santé
+                Bienvenue — Docteur Taxi
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">

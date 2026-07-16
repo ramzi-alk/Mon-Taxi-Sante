@@ -17,11 +17,11 @@ import type { CompanySuggestion } from "~/lib/siren";
 export const Route = createFileRoute("/chauffeurs/inscription")({
   head: () => ({
     meta: [
-      { title: "Devenir chauffeur conventionné — Mon Taxi Santé" },
+      { title: "Devenir chauffeur conventionné — Docteur Taxi" },
       {
         name: "description",
         content:
-          "Rejoignez le réseau Mon Taxi Santé : chauffeurs de taxi et VSL conventionnés Assurance Maladie. Inscription en ligne, validation par notre équipe.",
+          "Rejoignez le réseau Docteur Taxi : chauffeurs de taxi et VSL conventionnés Assurance Maladie. Inscription en ligne, validation par notre équipe.",
       },
     ],
   }),

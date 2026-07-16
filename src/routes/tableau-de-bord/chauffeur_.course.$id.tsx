@@ -10,7 +10,7 @@ import { useToast } from "~/components/ui/toast";
 export const Route = createFileRoute("/tableau-de-bord/chauffeur_/course/$id")({
   head: () => ({
     meta: [
-      { title: "Détail de la course — Mon Taxi Santé" },
+      { title: "Détail de la course — Docteur Taxi" },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
