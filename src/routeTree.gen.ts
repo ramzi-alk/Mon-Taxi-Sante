@@ -32,6 +32,7 @@ import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as DepartmentIndexRouteImport } from './routes/$department.index'
 import { Route as TableauDeBordChauffeurRouteImport } from './routes/tableau-de-bord/chauffeur'
 import { Route as ReservationConfirmationRouteImport } from './routes/reservation/confirmation'
+import { Route as PreviewDocteurTaxiRouteImport } from './routes/preview.docteur-taxi'
 import { Route as MaladiesAldRouteImport } from './routes/maladies.$ald'
 import { Route as HopitauxSlugRouteImport } from './routes/hopitaux.$slug'
 import { Route as ChauffeursTarifsRouteImport } from './routes/chauffeurs/tarifs'
@@ -159,6 +160,11 @@ const TableauDeBordChauffeurRoute = TableauDeBordChauffeurRouteImport.update({
 const ReservationConfirmationRoute = ReservationConfirmationRouteImport.update({
   id: '/reservation/confirmation',
   path: '/reservation/confirmation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PreviewDocteurTaxiRoute = PreviewDocteurTaxiRouteImport.update({
+  id: '/preview/docteur-taxi',
+  path: '/preview/docteur-taxi',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MaladiesAldRoute = MaladiesAldRouteImport.update({
@@ -303,6 +309,7 @@ export interface FileRoutesByFullPath {
   '/chauffeurs/tarifs': typeof ChauffeursTarifsRoute
   '/hopitaux/$slug': typeof HopitauxSlugRoute
   '/maladies/$ald': typeof MaladiesAldRoute
+  '/preview/docteur-taxi': typeof PreviewDocteurTaxiRoute
   '/reservation/confirmation': typeof ReservationConfirmationRoute
   '/tableau-de-bord/chauffeur': typeof TableauDeBordChauffeurRoute
   '/$department': typeof DepartmentIndexRoute
@@ -343,6 +350,7 @@ export interface FileRoutesByTo {
   '/chauffeurs/tarifs': typeof ChauffeursTarifsRoute
   '/hopitaux/$slug': typeof HopitauxSlugRoute
   '/maladies/$ald': typeof MaladiesAldRoute
+  '/preview/docteur-taxi': typeof PreviewDocteurTaxiRoute
   '/reservation/confirmation': typeof ReservationConfirmationRoute
   '/tableau-de-bord/chauffeur': typeof TableauDeBordChauffeurRoute
   '/$department': typeof DepartmentIndexRoute
@@ -385,6 +393,7 @@ export interface FileRoutesById {
   '/chauffeurs/tarifs': typeof ChauffeursTarifsRoute
   '/hopitaux/$slug': typeof HopitauxSlugRoute
   '/maladies/$ald': typeof MaladiesAldRoute
+  '/preview/docteur-taxi': typeof PreviewDocteurTaxiRoute
   '/reservation/confirmation': typeof ReservationConfirmationRoute
   '/tableau-de-bord/chauffeur': typeof TableauDeBordChauffeurRoute
   '/$department/': typeof DepartmentIndexRoute
@@ -428,6 +437,7 @@ export interface FileRouteTypes {
     | '/chauffeurs/tarifs'
     | '/hopitaux/$slug'
     | '/maladies/$ald'
+    | '/preview/docteur-taxi'
     | '/reservation/confirmation'
     | '/tableau-de-bord/chauffeur'
     | '/$department'
@@ -468,6 +478,7 @@ export interface FileRouteTypes {
     | '/chauffeurs/tarifs'
     | '/hopitaux/$slug'
     | '/maladies/$ald'
+    | '/preview/docteur-taxi'
     | '/reservation/confirmation'
     | '/tableau-de-bord/chauffeur'
     | '/$department'
@@ -509,6 +520,7 @@ export interface FileRouteTypes {
     | '/chauffeurs/tarifs'
     | '/hopitaux/$slug'
     | '/maladies/$ald'
+    | '/preview/docteur-taxi'
     | '/reservation/confirmation'
     | '/tableau-de-bord/chauffeur'
     | '/$department/'
@@ -544,6 +556,7 @@ export interface RootRouteChildren {
   ChauffeursTarifsRoute: typeof ChauffeursTarifsRoute
   HopitauxSlugRoute: typeof HopitauxSlugRoute
   MaladiesAldRoute: typeof MaladiesAldRoute
+  PreviewDocteurTaxiRoute: typeof PreviewDocteurTaxiRoute
   ReservationConfirmationRoute: typeof ReservationConfirmationRoute
   TableauDeBordChauffeurRoute: typeof TableauDeBordChauffeurRoute
   DepartmentIndexRoute: typeof DepartmentIndexRoute
@@ -740,6 +753,13 @@ declare module '@tanstack/react-router' {
       path: '/reservation/confirmation'
       fullPath: '/reservation/confirmation'
       preLoaderRoute: typeof ReservationConfirmationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/preview/docteur-taxi': {
+      id: '/preview/docteur-taxi'
+      path: '/preview/docteur-taxi'
+      fullPath: '/preview/docteur-taxi'
+      preLoaderRoute: typeof PreviewDocteurTaxiRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/maladies/$ald': {
@@ -944,6 +964,7 @@ const rootRouteChildren: RootRouteChildren = {
   ChauffeursTarifsRoute: ChauffeursTarifsRoute,
   HopitauxSlugRoute: HopitauxSlugRoute,
   MaladiesAldRoute: MaladiesAldRoute,
+  PreviewDocteurTaxiRoute: PreviewDocteurTaxiRoute,
   ReservationConfirmationRoute: ReservationConfirmationRoute,
   TableauDeBordChauffeurRoute: TableauDeBordChauffeurRoute,
   DepartmentIndexRoute: DepartmentIndexRoute,

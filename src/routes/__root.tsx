@@ -3,6 +3,7 @@ import {
   Outlet,
   HeadContent,
   Scripts,
+  useRouterState,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -193,6 +194,11 @@ function RootComponent() {
 
 function RootDocument({ children }: { children: ReactNode }) {
   const { queryClient } = Route.useRouteContext();
+  // Pages d'aperçu autonomes (ex. rebranding) : elles composent leur propre
+  // habillage de bout en bout, le chrome public ne doit pas s'y superposer.
+  const hideChrome = useRouterState({
+    select: (s) => s.location.pathname.startsWith("/preview/"),
+  });
 
   return (
     <html lang="fr" className="scroll-smooth">
@@ -204,9 +210,9 @@ function RootDocument({ children }: { children: ReactNode }) {
           <ToastProvider>
             <GlobalErrorListener />
             <AuthRedirectListener />
-            <Navbar />
+            {!hideChrome && <Navbar />}
             <main id="main-content">{children}</main>
-            <Footer />
+            {!hideChrome && <Footer />}
             {import.meta.env.DEV && <ReactQueryDevtools />}
           </ToastProvider>
         </QueryClientProvider>
