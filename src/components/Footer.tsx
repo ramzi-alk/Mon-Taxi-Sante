@@ -36,13 +36,12 @@ export function Footer() {
         <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-4">
           {/* Brand */}
           <div className="lg:col-span-1">
-            <div className="flex items-center gap-0 mb-5">
-              <span className="font-black text-[1.1rem] tracking-tight text-white">
-                Docteur
-              </span>
-              <span className="font-black text-[1.1rem] tracking-tight text-[#1244E8] ml-1.5">
-                Taxi
-              </span>
+            <div className="flex items-center mb-5">
+              <img
+                src="/brand/docteur-taxi-logo-light.svg"
+                alt="Docteur Taxi"
+                className="h-8 w-auto"
+              />
             </div>
             <p className="text-sm leading-relaxed text-gray-500 mb-6">
               La plateforme de réservation de taxis conventionnés agréée

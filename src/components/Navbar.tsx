@@ -21,18 +21,17 @@ export function Navbar() {
 
       <nav aria-label="Navigation principale">
         <div className="container flex h-16 items-center justify-between">
-          {/* Logo — typographic wordmark */}
+          {/* Logo */}
           <Link
             to="/"
-            className="flex items-center gap-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md"
+            className="flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md"
             aria-label="Docteur Taxi — Accueil"
           >
-            <span className="font-black text-[1.15rem] tracking-tight text-[#0B0F1C]">
-              Docteur
-            </span>
-            <span className="font-black text-[1.15rem] tracking-tight text-[#1244E8] ml-1.5">
-              Taxi
-            </span>
+            <img
+              src="/brand/docteur-taxi-logo.svg"
+              alt=""
+              className="h-9 w-auto sm:h-10"
+            />
           </Link>
 
           {/* Desktop nav */}

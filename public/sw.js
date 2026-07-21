@@ -10,8 +10,8 @@ self.addEventListener("push", function (event) {
   event.waitUntil(
     self.registration.showNotification(title, {
       body,
-      icon: "/favicon.ico",
-      badge: "/favicon.ico",
+      icon: "/icons/icon-192.png",
+      badge: "/icons/icon-96.png",
       tag: tag ?? "mts-default",
       renotify: true,
       data: { url },
