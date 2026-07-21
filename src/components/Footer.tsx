@@ -40,7 +40,7 @@ export function Footer() {
               <img
                 src="/brand/docteur-taxi-logo-light.svg"
                 alt="Docteur Taxi"
-                className="h-8 w-auto"
+                className="h-14 w-auto"
               />
             </div>
             <p className="text-sm leading-relaxed text-gray-500 mb-6">

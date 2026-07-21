@@ -30,7 +30,7 @@ export function Navbar() {
             <img
               src="/brand/docteur-taxi-logo.svg"
               alt=""
-              className="h-9 w-auto sm:h-10"
+              className="h-11 w-auto sm:h-12"
             />
           </Link>
 
