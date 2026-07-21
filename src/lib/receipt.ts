@@ -48,7 +48,7 @@ export function openBookingReceipt(booking: MyBookingRow): void {
     ${booking.estimated_price ? `<tr><td>Montant</td><td>${escapeHtml(formatPrice(booking.estimated_price))}</td></tr>` : ""}
     <tr><td>Statut</td><td>Trajet terminé</td></tr>
   </table>
-  <p class="footer">Mon Taxi Santé — document généré le ${escapeHtml(new Date().toLocaleDateString("fr-FR"))}, à des fins de justification auprès de votre caisse d'assurance maladie.</p>
+  <p class="footer">Docteur Taxi — document généré le ${escapeHtml(new Date().toLocaleDateString("fr-FR"))}, à des fins de justification auprès de votre caisse d'assurance maladie.</p>
   <script>window.onload = () => window.print();</script>
 </body>
 </html>`;

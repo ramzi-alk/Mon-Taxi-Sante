@@ -5,7 +5,7 @@ import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
 export const Route = createFileRoute("/faq")({
   head: () => ({
     meta: [
-      { title: "Questions fréquentes — Mon Taxi Santé" },
+      { title: "Questions fréquentes — Docteur Taxi" },
       {
         name: "description",
         content:
@@ -97,7 +97,7 @@ const faqCategories: FaqCategory[] = [
     category: "Chauffeurs partenaires",
     items: [
       {
-        question: "Comment devenir chauffeur partenaire Mon Taxi Santé ?",
+        question: "Comment devenir chauffeur partenaire Docteur Taxi ?",
         answer:
           "Rendez-vous sur notre page « Devenir chauffeur partenaire » pour déposer votre candidature. Une convention Assurance Maladie valide et les certifications requises sont nécessaires.",
       },

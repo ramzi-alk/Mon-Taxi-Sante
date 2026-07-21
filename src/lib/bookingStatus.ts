@@ -31,7 +31,7 @@ export const STATUS_DESCRIPTIONS: Record<BookingStatus, string> = {
   available: "Votre course est proposée aux chauffeurs conventionnés du réseau.",
   accepted: "Un chauffeur a accepté votre course.",
   in_progress: "Votre chauffeur est en route ou le trajet est en cours.",
-  completed: "Le trajet est terminé. Merci d'avoir utilisé Mon Taxi Santé.",
+  completed: "Le trajet est terminé. Merci d'avoir utilisé Docteur Taxi.",
   cancelled: "Cette réservation a été annulée.",
   expired: "Aucun chauffeur n'a pu être trouvé avant l'heure prévue. Contactez-nous pour une nouvelle prise en charge.",
 };

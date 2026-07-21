@@ -1,4 +1,4 @@
-# Mon Taxi Santé
+# Docteur Taxi
 
 > Plateforme française de réservation en ligne de transport sanitaire (taxi conventionné, VSL, véhicule PMR) pris en charge par l'Assurance Maladie. Permet à un patient de réserver un trajet médical avec Tiers-Payant (zéro avance de frais pour les assurés ALD, CMU-C, CSS ou standard) et aux chauffeurs conventionnés CPAM de recevoir des courses.
 

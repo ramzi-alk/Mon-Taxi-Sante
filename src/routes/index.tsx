@@ -17,14 +17,14 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       {
-        title: "Mon Taxi Santé — Réservez votre taxi conventionné Assurance Maladie en ligne",
+        title: "Docteur Taxi — Réservez votre taxi conventionné Assurance Maladie en ligne",
       },
       {
         name: "description",
         content:
           "Réservez votre taxi médical agréé Sécurité Sociale en 2 minutes. Tiers-Payant intégral, chauffeurs certifiés Assurance Maladie. Zéro avance de frais pour ALD, dialyse, chimiothérapie.",
       },
-      { property: "og:title", content: "Mon Taxi Santé — Taxi conventionné Assurance Maladie" },
+      { property: "og:title", content: "Docteur Taxi — Taxi conventionné Assurance Maladie" },
       {
         property: "og:description",
         content:
@@ -618,7 +618,7 @@ function HomeStructuredData() {
       {
         "@type": "Organization",
         "@id": "https://mon-taxi-sante.com/#organization",
-        name: "Mon Taxi Santé",
+        name: "Docteur Taxi",
         url: "https://mon-taxi-sante.com",
         description:
           "Plateforme de réservation de taxis conventionnés agréés Sécurité Sociale pour le transport médical en France.",
@@ -631,7 +631,7 @@ function HomeStructuredData() {
         "@type": "WebSite",
         "@id": "https://mon-taxi-sante.com/#website",
         url: "https://mon-taxi-sante.com",
-        name: "Mon Taxi Santé",
+        name: "Docteur Taxi",
         publisher: { "@id": "https://mon-taxi-sante.com/#organization" },
         potentialAction: {
           "@type": "SearchAction",

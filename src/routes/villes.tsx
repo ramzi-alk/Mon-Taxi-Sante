@@ -21,7 +21,7 @@ for (const list of departmentsByRegion.values()) {
 export const Route = createFileRoute("/villes")({
   head: () => ({
     meta: [
-      { title: "Taxi conventionné Assurance Maladie partout en France — Mon Taxi Santé" },
+      { title: "Taxi conventionné Assurance Maladie partout en France — Docteur Taxi" },
       {
         name: "description",
         content:

@@ -42,7 +42,7 @@ const reservationsSearchSchema = z.object({
 export const Route = createFileRoute("/admin/reservations")({
   validateSearch: reservationsSearchSchema,
   head: () => ({
-    meta: [{ title: "Réservations — Administration — Mon Taxi Santé" }],
+    meta: [{ title: "Réservations — Administration — Docteur Taxi" }],
   }),
   component: AdminReservationsPage,
 });

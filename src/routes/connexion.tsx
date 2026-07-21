@@ -14,7 +14,7 @@ import { Input } from "~/components/ui/input";
 export const Route = createFileRoute("/connexion")({
   head: () => ({
     meta: [
-      { title: "Connexion — Mon Taxi Santé" },
+      { title: "Connexion — Docteur Taxi" },
       { name: "robots", content: "noindex" },
     ],
   }),

@@ -4,7 +4,7 @@ import { BookingForm } from "~/components/booking/BookingForm";
 export const Route = createFileRoute("/reservation/")({
   head: () => ({
     meta: [
-      { title: "Réserver mon taxi médical Assurance Maladie — Mon Taxi Santé" },
+      { title: "Réserver mon taxi médical Assurance Maladie — Docteur Taxi" },
       {
         name: "description",
         content:

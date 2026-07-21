@@ -165,7 +165,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { name: "theme-color", content: "#1D6FD6" },
+      { name: "theme-color", content: "#1244E8" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
@@ -175,7 +175,9 @@ export const Route = createRootRouteWithContext<RouterContext>()({
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap",
       },
-      { rel: "icon", href: "/favicon.ico" },
+      { rel: "icon", href: "/favicon.ico", sizes: "any" },
+      { rel: "icon", type: "image/svg+xml", href: "/brand/docteur-taxi-badge.svg" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
     ],
   }),
   notFoundComponent: NotFound,

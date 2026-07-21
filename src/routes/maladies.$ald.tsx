@@ -12,7 +12,7 @@ export const Route = createFileRoute("/maladies/$ald")({
   head: ({ params }) => {
     const affection = aldBySlug.get(params.ald);
     if (!affection) return {};
-    const title = `Taxi conventionné ${affection.nomCourt} — 100% remboursé | Mon Taxi Santé`;
+    const title = `Taxi conventionné ${affection.nomCourt} — 100% remboursé | Docteur Taxi`;
     const description = `Taxi conventionné Assurance Maladie pour ${affection.nom.toLowerCase()} : prise en charge à 100% du transport, Tiers-Payant, zéro avance de frais.`;
     return {
       meta: [

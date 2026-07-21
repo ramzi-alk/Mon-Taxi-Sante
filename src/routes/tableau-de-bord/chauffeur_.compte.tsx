@@ -31,7 +31,7 @@ import type { Database } from "~/lib/database.types";
 export const Route = createFileRoute("/tableau-de-bord/chauffeur_/compte")({
   head: () => ({
     meta: [
-      { title: "Mon compte — Mon Taxi Santé" },
+      { title: "Mon compte — Docteur Taxi" },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),

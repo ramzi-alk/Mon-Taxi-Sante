@@ -18,7 +18,7 @@ export const Route = createFileRoute("/$department/")({
   head: ({ params, loaderData }) => {
     if (!loaderData) return {};
     const { department } = loaderData;
-    const title = `Taxi conventionné Assurance Maladie en ${department.nom} — Mon Taxi Santé`;
+    const title = `Taxi conventionné Assurance Maladie en ${department.nom} — Docteur Taxi`;
     const description = `Transport médical agréé Sécurité Sociale dans tout le département ${department.nom} (${department.code}). Tiers-Payant intégral, chauffeurs conventionnés Assurance Maladie.`;
     return {
       meta: [

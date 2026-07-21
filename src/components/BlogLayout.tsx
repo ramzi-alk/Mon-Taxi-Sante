@@ -1,10 +1,12 @@
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import { BreadcrumbSchema } from "~/components/BreadcrumbSchema";
 
 interface BlogLayoutProps {
   category: string;
   title: string;
+  slug: string;
   readingTime: string;
   publishedAt: string;
   children: ReactNode;
@@ -13,21 +15,36 @@ interface BlogLayoutProps {
 export function BlogLayout({
   category,
   title,
+  slug,
   readingTime,
   publishedAt,
   children,
 }: BlogLayoutProps) {
   return (
     <>
+      <BreadcrumbSchema
+        items={[
+          { name: "Accueil", url: "https://mon-taxi-sante.com/" },
+          { name: "Guides patients", url: "https://mon-taxi-sante.com/blog" },
+          { name: title, url: `https://mon-taxi-sante.com/blog/${slug}` },
+        ]}
+      />
+
       <section className="bg-[#0B0F1C] text-white">
         <div className="container max-w-3xl py-16 md:py-20">
-          <Link
-            to="/blog"
-            className="inline-flex items-center gap-1.5 text-sm text-white/50 hover:text-white transition-colors mb-6"
-          >
-            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-            Tous les guides patients
-          </Link>
+          <nav aria-label="Fil d'Ariane" className="mb-6">
+            <ol className="flex items-center gap-2 text-sm text-white/50 list-none">
+              <li>
+                <Link to="/" className="hover:text-white">Accueil</Link>
+              </li>
+              <li aria-hidden="true">/</li>
+              <li>
+                <Link to="/blog" className="hover:text-white">Guides patients</Link>
+              </li>
+              <li aria-hidden="true">/</li>
+              <li className="text-white font-semibold" aria-current="page">{title}</li>
+            </ol>
+          </nav>
           <p className="text-xs font-bold tracking-[0.15em] text-[#4F6EF7] uppercase mb-4">
             {category}
           </p>

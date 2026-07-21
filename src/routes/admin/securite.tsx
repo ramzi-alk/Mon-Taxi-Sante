@@ -18,7 +18,7 @@ import {
 
 export const Route = createFileRoute("/admin/securite")({
   head: () => ({
-    meta: [{ title: "Sécurité — Administration — Mon Taxi Santé" }],
+    meta: [{ title: "Sécurité — Administration — Docteur Taxi" }],
   }),
   component: AdminSecuritePage,
 });
@@ -42,7 +42,7 @@ function EnrollForm({ onDone }: { onDone: () => void }) {
     mutationFn: async () => {
       const { data, error } = await supabase.auth.mfa.enroll({
         factorType: "totp",
-        issuer: "Mon Taxi Santé Admin",
+        issuer: "Docteur Taxi Admin",
       });
       if (error) throw error;
       return data;

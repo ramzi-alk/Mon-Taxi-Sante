@@ -34,7 +34,7 @@ export const Route = createFileRoute("/$department/$city")({
     if (!loaderData) return {};
     const { commune } = loaderData;
 
-    const title = `Taxi conventionné Assurance Maladie à ${commune.nom} (${commune.codeDepartement}) — Mon Taxi Santé`;
+    const title = `Taxi conventionné Assurance Maladie à ${commune.nom} (${commune.codeDepartement}) — Docteur Taxi`;
     const description = `Réservez votre taxi médical agréé Sécurité Sociale à ${commune.nom} en ${commune.departementNom}. Chauffeurs certifiés Assurance Maladie, Tiers-Payant intégral, zéro avance de frais. Disponible pour dialyse, chimiothérapie, ALD.`;
 
     return {
@@ -67,7 +67,7 @@ function LocalBusinessSchema({ commune, hospitals }: { commune: Commune; hospita
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
     "@id": `https://mon-taxi-sante.com/${commune.departementSlug}/${commune.slug}#business`,
-    name: `Mon Taxi Santé — ${commune.nom}`,
+    name: `Docteur Taxi — ${commune.nom}`,
     description: `Service de taxi médical conventionné Assurance Maladie à ${commune.nom} (${commune.codeDepartement}). Transport pour dialyse, chimiothérapie, ALD. Tiers-Payant.`,
     url: "https://mon-taxi-sante.com",
     telephone: CONTACT_PHONE_TEL,
@@ -313,7 +313,7 @@ function LocalPage() {
       <section className="section-medical bg-brand-blue-50" aria-labelledby="why-local-heading">
         <div className="container">
           <h2 id="why-local-heading" className="text-3xl font-bold text-gray-900 mb-4">
-            Pourquoi choisir Mon Taxi Santé à {City}&nbsp;?
+            Pourquoi choisir Docteur Taxi à {City}&nbsp;?
           </h2>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {[

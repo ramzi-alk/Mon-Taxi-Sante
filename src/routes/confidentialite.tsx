@@ -4,11 +4,11 @@ import { LegalPageLayout } from "~/components/LegalPageLayout";
 export const Route = createFileRoute("/confidentialite")({
   head: () => ({
     meta: [
-      { title: "Confidentialité & RGPD — Mon Taxi Santé" },
+      { title: "Confidentialité & RGPD — Docteur Taxi" },
       {
         name: "description",
         content:
-          "Politique de confidentialité de Mon Taxi Santé : données collectées, hébergement HDS, durée de conservation et vos droits RGPD.",
+          "Politique de confidentialité de Docteur Taxi : données collectées, hébergement HDS, durée de conservation et vos droits RGPD.",
       },
     ],
   }),

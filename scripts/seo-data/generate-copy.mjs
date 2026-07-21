@@ -35,7 +35,7 @@ const CONCURRENCY = Number(
 // en cache le préfixe répété (voir tarification DeepSeek, "cache hit" vs
 // "cache miss"), ça maximise les chances que ce bloc soit facturé au tarif
 // réduit sur l'ensemble des ~5500 appels.
-const SYSTEM_PROMPT = `Tu rédiges de courtes introductions pour un site de taxi médical conventionné par l'Assurance Maladie (Mon Taxi Santé), pour des pages locales SEO.
+const SYSTEM_PROMPT = `Tu rédiges de courtes introductions pour un site de taxi médical conventionné par l'Assurance Maladie (Docteur Taxi), pour des pages locales SEO.
 
 Règles strictes :
 - 2 à 3 phrases, 45 à 70 mots, en français, vouvoiement.

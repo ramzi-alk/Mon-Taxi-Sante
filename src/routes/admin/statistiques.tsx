@@ -20,7 +20,7 @@ import { Input } from "~/components/ui/input";
 
 export const Route = createFileRoute("/admin/statistiques")({
   head: () => ({
-    meta: [{ title: "Statistiques — Administration — Mon Taxi Santé" }],
+    meta: [{ title: "Statistiques — Administration — Docteur Taxi" }],
   }),
   component: AdminStatistiquesPage,
 });

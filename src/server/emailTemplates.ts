@@ -16,7 +16,7 @@ function layout(params: { title: string; icon: string; bodyHtml: string }): stri
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;margin:0 auto;border-collapse:collapse;font-family:-apple-system,Helvetica,Arial,sans-serif;color:#0B0F1C;">
       <tr>
         <td style="background:#1244E8;color:#fff;padding:28px 24px;border-radius:14px 14px 0 0;">
-          <p style="margin:0;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;opacity:0.85;">Mon Taxi Santé</p>
+          <p style="margin:0;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;opacity:0.85;">Docteur Taxi</p>
           <h1 style="margin:10px 0 0;font-size:21px;line-height:1.35;">
             <span style="font-size:20px;vertical-align:-2px;">${icon}</span>&nbsp; ${title}
           </h1>
@@ -344,7 +344,7 @@ export function atRiskBookingsAlertEmail(params: {
 export function driverDocumentRequestEmail(params: { driverFullName: string; message: string }): EmailContent {
   const { driverFullName, message } = params;
   return {
-    subject: "Mise à jour de documents demandée — Mon Taxi Santé",
+    subject: "Mise à jour de documents demandée — Docteur Taxi",
     html: layout({
       title: "Documents à mettre à jour",
       icon: "📄",
@@ -362,7 +362,7 @@ export function driverDocumentRequestEmail(params: { driverFullName: string; mes
 export function driverApprovedEmail(params: { driverFullName: string }): EmailContent {
   const { driverFullName } = params;
   return {
-    subject: "Votre candidature a été approuvée — Mon Taxi Santé",
+    subject: "Votre candidature a été approuvée — Docteur Taxi",
     html: layout({
       title: "Candidature approuvée",
       icon: "🎉",
@@ -378,7 +378,7 @@ export function driverApprovedEmail(params: { driverFullName: string }): EmailCo
 export function driverRejectedEmail(params: { driverFullName: string; reason: string }): EmailContent {
   const { driverFullName, reason } = params;
   return {
-    subject: "Votre candidature chauffeur — Mon Taxi Santé",
+    subject: "Votre candidature chauffeur — Docteur Taxi",
     html: layout({
       title: "Candidature non retenue",
       icon: "📋",
