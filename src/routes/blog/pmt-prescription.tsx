@@ -104,7 +104,12 @@ function PmtPrescriptionArticle() {
         Oui, vous pouvez réserver sans PMT, mais le transport sera alors à
         votre charge jusqu'à ce que vous puissiez fournir le document, ou
         remboursé a posteriori selon les modalités de votre caisse
-        d'assurance maladie.
+        d'assurance maladie. Le détail de cette situation est expliqué dans
+        notre guide{" "}
+        <Link to="/blog/taxi-sans-prescription">
+          Taxi conventionné sans prescription médicale : est-ce possible ?
+        </Link>
+        .
       </p>
       <p>
         Pour mieux comprendre les taux de remboursement applicables,

@@ -39,4 +39,34 @@ export const blogPosts: BlogPost[] = [
     readingTime: "5 min",
     publishedAt: "9 avril 2026",
   },
+  {
+    slug: "vsl-ou-taxi-conventionne",
+    to: "/blog/vsl-ou-taxi-conventionne",
+    category: "Transport sanitaire",
+    title: "Taxi conventionné, VSL ou ambulance : quelle différence ?",
+    excerpt:
+      "Véhicule, conducteur, tarif : les différences entre taxi conventionné, VSL et ambulance, et comment choisir selon votre état de santé.",
+    readingTime: "4 min",
+    publishedAt: "21 juillet 2026",
+  },
+  {
+    slug: "taxi-sans-prescription",
+    to: "/blog/taxi-sans-prescription",
+    category: "Démarches",
+    title: "Taxi conventionné sans prescription médicale : est-ce possible ?",
+    excerpt:
+      "Ce qui change pour votre remboursement si vous n'avez pas encore de Prescription Médicale de Transport, et comment régulariser votre dossier.",
+    readingTime: "3 min",
+    publishedAt: "21 juillet 2026",
+  },
+  {
+    slug: "transport-pmr-personnes-agees",
+    to: "/blog/transport-pmr-personnes-agees",
+    category: "Accessibilité",
+    title: "Taxi PMR : transport médical pour fauteuil roulant",
+    excerpt:
+      "Véhicule adapté au fauteuil roulant, prise en charge Assurance Maladie et démarches pour réserver un Taxi PMR.",
+    readingTime: "3 min",
+    publishedAt: "21 juillet 2026",
+  },
 ];

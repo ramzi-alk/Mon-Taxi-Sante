@@ -202,6 +202,17 @@ function TarifsCpamPage() {
               </div>
             ))}
           </div>
+          <p className="mt-4 text-sm text-gray-400">
+            Besoin d'un véhicule adapté à un fauteuil roulant ? Voir notre guide{" "}
+            <Link to="/blog/transport-pmr-personnes-agees" className="text-[#1244E8] underline">
+              Taxi PMR
+            </Link>
+            . Vous hésitez entre taxi conventionné, VSL et ambulance ?{" "}
+            <Link to="/blog/vsl-ou-taxi-conventionne" className="text-[#1244E8] underline">
+              Voir les différences
+            </Link>
+            .
+          </p>
         </div>
       </section>
 
