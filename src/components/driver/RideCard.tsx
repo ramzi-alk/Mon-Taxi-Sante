@@ -251,7 +251,7 @@ function buildCalendarLinks(ride: PoolRide) {
     ? new Date(ride.return_datetime)
     : new Date(start.getTime() + 60 * 60 * 1000);
 
-  const appUrl = (import.meta.env.VITE_APP_URL as string | undefined) ?? "https://mon-taxi-sante.com";
+  const appUrl = (import.meta.env.VITE_APP_URL as string | undefined) ?? "https://docteurtaxi.fr";
   const rideDetailUrl = `${appUrl}/tableau-de-bord/chauffeur/course/${ride.id}`;
 
   const title = `Course — ${ride.patient_full_name ?? ride.patient_first_name}`;

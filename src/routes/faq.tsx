@@ -12,7 +12,7 @@ export const Route = createFileRoute("/faq")({
           "Toutes les réponses à vos questions sur la réservation, la prise en charge Assurance Maladie, le Tiers-Payant et les chauffeurs partenaires.",
       },
     ],
-    links: [{ rel: "canonical", href: "https://mon-taxi-sante.com/faq" }],
+    links: [{ rel: "canonical", href: "https://docteurtaxi.fr/faq" }],
   }),
   component: FaqPage,
 });

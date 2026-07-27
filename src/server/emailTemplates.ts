@@ -46,7 +46,7 @@ function layout(params: { title: string; icon: string; bodyHtml: string }): stri
 // type in by hand on /mes-reservations. That way a forwarded or leaked
 // email link is useless on its own for reading a booking.
 function trackingUrl(referenceCode: string): string {
-  const appUrl = (import.meta.env.VITE_APP_URL as string | undefined) ?? "https://mon-taxi-sante.com";
+  const appUrl = (import.meta.env.VITE_APP_URL as string | undefined) ?? "https://docteurtaxi.fr";
   return `${appUrl}/mes-reservations?ref=${encodeURIComponent(formatReferenceCode(referenceCode))}`;
 }
 
@@ -55,7 +55,7 @@ function trackingUrl(referenceCode: string): string {
 // and hashed at rest server-side (see migration 020). The raw token only
 // ever exists here, in this one email.
 function reminderUrl(token: string): string {
-  const appUrl = (import.meta.env.VITE_APP_URL as string | undefined) ?? "https://mon-taxi-sante.com";
+  const appUrl = (import.meta.env.VITE_APP_URL as string | undefined) ?? "https://docteurtaxi.fr";
   return `${appUrl}/confirmer-trajet?token=${encodeURIComponent(token)}`;
 }
 

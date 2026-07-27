@@ -30,7 +30,7 @@ export const Route = createFileRoute("/$department/")({
       links: [
         {
           rel: "canonical",
-          href: `https://mon-taxi-sante.com/${params.department}`,
+          href: `https://docteurtaxi.fr/${params.department}`,
         },
       ],
     };
@@ -52,9 +52,9 @@ function DepartmentPage() {
     <>
       <BreadcrumbSchema
         items={[
-          { name: "Accueil", url: "https://mon-taxi-sante.com/" },
-          { name: "Villes desservies", url: "https://mon-taxi-sante.com/villes" },
-          { name: department.nom, url: `https://mon-taxi-sante.com/${department.slug}` },
+          { name: "Accueil", url: "https://docteurtaxi.fr/" },
+          { name: "Villes desservies", url: "https://docteurtaxi.fr/villes" },
+          { name: department.nom, url: `https://docteurtaxi.fr/${department.slug}` },
         ]}
       />
       <section className="bg-gradient-to-br from-brand-blue-700 to-brand-blue-600 text-white py-16">

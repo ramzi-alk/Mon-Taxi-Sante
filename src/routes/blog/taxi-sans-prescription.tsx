@@ -12,7 +12,7 @@ export const Route = createFileRoute("/blog/taxi-sans-prescription")({
           "Puis-je réserver un taxi conventionné sans Prescription Médicale de Transport ? Ce qui change pour votre remboursement et comment régulariser votre dossier.",
       },
     ],
-    links: [{ rel: "canonical", href: "https://mon-taxi-sante.com/blog/taxi-sans-prescription" }],
+    links: [{ rel: "canonical", href: "https://docteurtaxi.fr/blog/taxi-sans-prescription" }],
   }),
   component: TaxiSansPrescriptionArticle,
 });

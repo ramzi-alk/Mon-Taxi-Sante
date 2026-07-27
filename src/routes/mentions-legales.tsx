@@ -20,7 +20,7 @@ function MentionsLegalesPage() {
   return (
     <LegalPageLayout title="Mentions légales" lastUpdated="25 juin 2026">
       <h2>Éditeur du site</h2>
-      <p>Le site mon-taxi-sante.com est édité par :</p>
+      <p>Le site docteurtaxi.fr est édité par :</p>
       <ul>
         <li>Ramzi AL KHATEEB, entrepreneur individuel (micro-entrepreneur)</li>
         <li>Adresse de l'établissement : 1 Allée Van Gogh, 60100 Creil</li>

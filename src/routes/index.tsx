@@ -33,7 +33,7 @@ export const Route = createFileRoute("/")({
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
-    links: [{ rel: "canonical", href: "https://mon-taxi-sante.com/" }],
+    links: [{ rel: "canonical", href: "https://docteurtaxi.fr/" }],
   }),
   component: HomePage,
 });
@@ -617,9 +617,9 @@ function HomeStructuredData() {
     "@graph": [
       {
         "@type": "Organization",
-        "@id": "https://mon-taxi-sante.com/#organization",
+        "@id": "https://docteurtaxi.fr/#organization",
         name: "Docteur Taxi",
-        url: "https://mon-taxi-sante.com",
+        url: "https://docteurtaxi.fr",
         description:
           "Plateforme de réservation de taxis conventionnés agréés Sécurité Sociale pour le transport médical en France.",
         telephone: CONTACT_PHONE_TEL,
@@ -629,13 +629,13 @@ function HomeStructuredData() {
       },
       {
         "@type": "WebSite",
-        "@id": "https://mon-taxi-sante.com/#website",
-        url: "https://mon-taxi-sante.com",
+        "@id": "https://docteurtaxi.fr/#website",
+        url: "https://docteurtaxi.fr",
         name: "Docteur Taxi",
-        publisher: { "@id": "https://mon-taxi-sante.com/#organization" },
+        publisher: { "@id": "https://docteurtaxi.fr/#organization" },
         potentialAction: {
           "@type": "SearchAction",
-          target: "https://mon-taxi-sante.com/search?q={search_term_string}",
+          target: "https://docteurtaxi.fr/search?q={search_term_string}",
           "query-input": "required name=search_term_string",
         },
       },

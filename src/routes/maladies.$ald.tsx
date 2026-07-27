@@ -24,7 +24,7 @@ export const Route = createFileRoute("/maladies/$ald")({
       links: [
         {
           rel: "canonical",
-          href: `https://mon-taxi-sante.com/maladies/${params.ald}`,
+          href: `https://docteurtaxi.fr/maladies/${params.ald}`,
         },
       ],
     };
@@ -66,9 +66,9 @@ function MaladiePage() {
       <FaqSchema items={faqItems} />
       <BreadcrumbSchema
         items={[
-          { name: "Accueil", url: "https://mon-taxi-sante.com/" },
-          { name: "Maladies (ALD)", url: "https://mon-taxi-sante.com/maladies" },
-          { name: affection.nomCourt, url: `https://mon-taxi-sante.com/maladies/${affection.slug}` },
+          { name: "Accueil", url: "https://docteurtaxi.fr/" },
+          { name: "Maladies (ALD)", url: "https://docteurtaxi.fr/maladies" },
+          { name: affection.nomCourt, url: `https://docteurtaxi.fr/maladies/${affection.slug}` },
         ]}
       />
 

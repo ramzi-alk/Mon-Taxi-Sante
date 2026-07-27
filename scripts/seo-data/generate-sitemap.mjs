@@ -13,7 +13,7 @@ import ald from "../../src/data/seo/ald.json" with { type: "json" };
 // Ce script tourne en Node pur (avant `vite build`), donc pas d'accès à
 // `import.meta.env` : on lit directement `process.env`, que Vercel (et les
 // autres CI) peuplent avec les variables VITE_* définies dans le projet.
-const BASE_URL = process.env.VITE_APP_URL ?? "https://mon-taxi-sante.com";
+const BASE_URL = process.env.VITE_APP_URL ?? "https://docteurtaxi.fr";
 
 const STATIC_PAGES = [
   { path: "/", changefreq: "weekly", priority: "1.0" },

@@ -12,7 +12,7 @@ export const Route = createFileRoute("/blog/transport-cpam")({
           "Dialyse, chimiothérapie, ALD, maternité : quelles situations ouvrent droit à un transport remboursé à 100% ou 65%, comment fonctionne le Tiers-Payant et les démarches à suivre.",
       },
     ],
-    links: [{ rel: "canonical", href: "https://mon-taxi-sante.com/blog/transport-cpam" }],
+    links: [{ rel: "canonical", href: "https://docteurtaxi.fr/blog/transport-cpam" }],
   }),
   component: TransportCpamArticle,
 });
