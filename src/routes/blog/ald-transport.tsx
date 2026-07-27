@@ -12,7 +12,7 @@ export const Route = createFileRoute("/blog/ald-transport")({
           "ALD et transport sanitaire : prise en charge à 100% avec Prescription Médicale de Transport, pathologies concernées, démarches et Tiers-Payant sans avance de frais.",
       },
     ],
-    links: [{ rel: "canonical", href: "https://mon-taxi-sante.com/blog/ald-transport" }],
+    links: [{ rel: "canonical", href: "https://docteurtaxi.fr/blog/ald-transport" }],
   }),
   component: AldTransportArticle,
 });

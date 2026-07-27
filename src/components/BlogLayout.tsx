@@ -24,9 +24,9 @@ export function BlogLayout({
     <>
       <BreadcrumbSchema
         items={[
-          { name: "Accueil", url: "https://mon-taxi-sante.com/" },
-          { name: "Guides patients", url: "https://mon-taxi-sante.com/blog" },
-          { name: title, url: `https://mon-taxi-sante.com/blog/${slug}` },
+          { name: "Accueil", url: "https://docteurtaxi.fr/" },
+          { name: "Guides patients", url: "https://docteurtaxi.fr/blog" },
+          { name: title, url: `https://docteurtaxi.fr/blog/${slug}` },
         ]}
       />
 

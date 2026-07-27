@@ -28,7 +28,7 @@ export const Route = createFileRoute("/villes")({
           "Trouvez votre taxi médical conventionné Assurance Maladie par région et département, partout en France métropolitaine et outre-mer.",
       },
     ],
-    links: [{ rel: "canonical", href: "https://mon-taxi-sante.com/villes" }],
+    links: [{ rel: "canonical", href: "https://docteurtaxi.fr/villes" }],
   }),
   component: VillesPage,
 });
@@ -54,8 +54,8 @@ function VillesPage() {
     <>
       <BreadcrumbSchema
         items={[
-          { name: "Accueil", url: "https://mon-taxi-sante.com/" },
-          { name: "Villes desservies", url: "https://mon-taxi-sante.com/villes" },
+          { name: "Accueil", url: "https://docteurtaxi.fr/" },
+          { name: "Villes desservies", url: "https://docteurtaxi.fr/villes" },
         ]}
       />
       <section className="bg-gradient-to-br from-brand-blue-700 to-brand-blue-600 text-white py-16">

@@ -19,7 +19,7 @@ export const Route = createFileRoute("/maladies/")({
           "Transport pris en charge à 100% pour les 30 Affections de Longue Durée (ALD) : dialyse, cancer, diabète, sclérose en plaques... Trouvez votre pathologie.",
       },
     ],
-    links: [{ rel: "canonical", href: "https://mon-taxi-sante.com/maladies" }],
+    links: [{ rel: "canonical", href: "https://docteurtaxi.fr/maladies" }],
   }),
   component: MaladiesPage,
 });
@@ -37,8 +37,8 @@ function MaladiesPage() {
     <>
       <BreadcrumbSchema
         items={[
-          { name: "Accueil", url: "https://mon-taxi-sante.com/" },
-          { name: "Maladies (ALD)", url: "https://mon-taxi-sante.com/maladies" },
+          { name: "Accueil", url: "https://docteurtaxi.fr/" },
+          { name: "Maladies (ALD)", url: "https://docteurtaxi.fr/maladies" },
         ]}
       />
       <section className="bg-gradient-to-br from-brand-blue-700 to-brand-blue-600 text-white py-16">

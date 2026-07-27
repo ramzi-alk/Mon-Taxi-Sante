@@ -45,7 +45,7 @@ export const Route = createFileRoute("/hopitaux/$slug")({
       links: [
         {
           rel: "canonical",
-          href: `https://mon-taxi-sante.com/hopitaux/${params.slug}`,
+          href: `https://docteurtaxi.fr/hopitaux/${params.slug}`,
         },
       ],
     };
@@ -112,16 +112,16 @@ function HospitalPage() {
       <FaqSchema items={faqItems} />
       <BreadcrumbSchema
         items={[
-          { name: "Accueil", url: "https://mon-taxi-sante.com/" },
+          { name: "Accueil", url: "https://docteurtaxi.fr/" },
           ...(commune
             ? [
                 {
                   name: commune.nom,
-                  url: `https://mon-taxi-sante.com/${commune.departementSlug}/${commune.slug}`,
+                  url: `https://docteurtaxi.fr/${commune.departementSlug}/${commune.slug}`,
                 },
               ]
             : []),
-          { name: hospital.nom, url: `https://mon-taxi-sante.com/hopitaux/${slug}` },
+          { name: hospital.nom, url: `https://docteurtaxi.fr/hopitaux/${slug}` },
         ]}
       />
 

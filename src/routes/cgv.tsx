@@ -27,7 +27,7 @@ function CgvPage() {
         Les présentes Conditions Générales de Vente (CGV) régissent les
         modalités de réservation et de fourniture des prestations de
         transport sanitaire conventionné proposées via le site
-        mon-taxi-sante.com. Toute réservation implique l'acceptation pleine et
+        docteurtaxi.fr. Toute réservation implique l'acceptation pleine et
         entière des présentes CGV.
       </p>
 

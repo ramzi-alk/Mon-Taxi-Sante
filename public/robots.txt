@@ -6,4 +6,4 @@ Disallow: /tableau-de-bord/
 Disallow: /connexion
 Disallow: /reservation/
 
-Sitemap: https://mon-taxi-sante.com/sitemap.xml
+Sitemap: https://docteurtaxi.fr/sitemap.xml

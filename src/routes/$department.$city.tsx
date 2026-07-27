@@ -46,7 +46,7 @@ export const Route = createFileRoute("/$department/$city")({
         { property: "og:type", content: "website" },
         {
           property: "og:url",
-          content: `https://mon-taxi-sante.com/${params.department}/${params.city}`,
+          content: `https://docteurtaxi.fr/${params.department}/${params.city}`,
         },
         { name: "geo.region", content: `FR-${commune.codeDepartement}` },
         { name: "geo.placename", content: commune.nom },
@@ -54,7 +54,7 @@ export const Route = createFileRoute("/$department/$city")({
       links: [
         {
           rel: "canonical",
-          href: `https://mon-taxi-sante.com/${params.department}/${params.city}`,
+          href: `https://docteurtaxi.fr/${params.department}/${params.city}`,
         },
       ],
     };
@@ -66,13 +66,13 @@ function LocalBusinessSchema({ commune, hospitals }: { commune: Commune; hospita
   const schema = {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
-    "@id": `https://mon-taxi-sante.com/${commune.departementSlug}/${commune.slug}#business`,
+    "@id": `https://docteurtaxi.fr/${commune.departementSlug}/${commune.slug}#business`,
     name: `Docteur Taxi — ${commune.nom}`,
     description: `Service de taxi médical conventionné Assurance Maladie à ${commune.nom} (${commune.codeDepartement}). Transport pour dialyse, chimiothérapie, ALD. Tiers-Payant.`,
-    url: "https://mon-taxi-sante.com",
+    url: "https://docteurtaxi.fr",
     telephone: CONTACT_PHONE_TEL,
     priceRange: "Pris en charge Assurance Maladie",
-    image: "https://mon-taxi-sante.com/og-image.jpg",
+    image: "https://docteurtaxi.fr/og-image.jpg",
     address: {
       "@type": "PostalAddress",
       addressLocality: commune.nom,
@@ -145,14 +145,14 @@ function LocalPage() {
       <FaqSchema items={faqItems} />
       <BreadcrumbSchema
         items={[
-          { name: "Accueil", url: "https://mon-taxi-sante.com/" },
+          { name: "Accueil", url: "https://docteurtaxi.fr/" },
           {
             name: Dept,
-            url: `https://mon-taxi-sante.com/${commune.departementSlug}`,
+            url: `https://docteurtaxi.fr/${commune.departementSlug}`,
           },
           {
             name: City,
-            url: `https://mon-taxi-sante.com/${commune.departementSlug}/${commune.slug}`,
+            url: `https://docteurtaxi.fr/${commune.departementSlug}/${commune.slug}`,
           },
         ]}
       />
