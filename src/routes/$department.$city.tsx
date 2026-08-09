@@ -19,7 +19,7 @@ const FEATURED_ALD = [
 ];
 
 export const Route = createFileRoute("/$department/$city")({
-  // SSR cache headers set in vercel.json. Les données passent par une
+  // SSR cache headers set in src/server.tsx. Les données passent par une
   // fonction serveur (getCityPageDataServerFn) plutôt qu'un import direct de
   // ~/lib/seoData ici : sinon communes.json (5509 entrées) et hospitals.json
   // (7474 entrées) se retrouveraient dans le bundle JS client de cette route.
