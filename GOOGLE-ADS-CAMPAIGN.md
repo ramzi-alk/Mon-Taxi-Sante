@@ -70,16 +70,16 @@ peuvent déclencher une revue automatique).
 
 ## 3. Extensions
 
-**Liens annexes (6)** :
+**Liens annexes (6)** — texte ≤25 caractères, chaque ligne de description ≤35 :
 
-| Titre | Destination |
-|---|---|
-| Tarifs CPAM 2025 | `/tarifs-cpam` |
-| Comment ça marche | `/comment-ca-marche` |
-| Villes desservies | `/villes` |
-| Questions fréquentes | `/faq` |
-| Réserver maintenant | `/reservation` |
-| Chauffeur partenaire ? | `/chauffeurs/inscription` |
+| Texte du lien | Ligne de description 1 | Ligne de description 2 | URL finale |
+|---|---|---|---|
+| Tarifs CPAM 2025 | Forfait 13€, tarif par km | 100% remboursé en ALD/maternité | `/tarifs-cpam` |
+| Comment ça marche | Réservation, prise en charge | Le déroulement de votre trajet | `/comment-ca-marche` |
+| Villes desservies | Toute la France, ville par ville | Trouvez le service près de vous | `/villes` |
+| Questions fréquentes | Prescription, remboursement | Annulation et prise en charge | `/faq` |
+| Réserver maintenant | Formulaire en ligne, 5 minutes | Zéro avance de frais garantie | `/reservation` |
+| Chauffeur partenaire ? | Rejoignez notre réseau | Devenez chauffeur conventionné | `/chauffeurs/inscription` |
 
 Le dernier lien cible un public différent (recrutement) — le sortir en
 campagne séparée s'il dilue le message patient.
