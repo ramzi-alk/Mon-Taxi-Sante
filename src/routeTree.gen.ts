@@ -53,6 +53,8 @@ import { Route as AdminAvisRouteImport } from './routes/admin/avis'
 import { Route as DepartmentCityRouteImport } from './routes/$department.$city'
 import { Route as TableauDeBordChauffeurCompteRouteImport } from './routes/tableau-de-bord/chauffeur_.compte'
 import { Route as TableauDeBordChauffeurCourseIdRouteImport } from './routes/tableau-de-bord/chauffeur_.course.$id'
+import { ServerRoute as ApiWebhooksStripeServerRouteImport } from './routes/api/webhooks/stripe'
+import { ServerRoute as ApiCronExpireDriverTrialsServerRouteImport } from './routes/api/cron/expire-driver-trials'
 import { ServerRoute as ApiCronExpireBookingsServerRouteImport } from './routes/api/cron/expire-bookings'
 import { ServerRoute as ApiCronBookingRemindersServerRouteImport } from './routes/api/cron/booking-reminders'
 import { ServerRoute as ApiCronAtRiskBookingsServerRouteImport } from './routes/api/cron/at-risk-bookings'
@@ -273,6 +275,17 @@ const TableauDeBordChauffeurCourseIdRoute =
     id: '/tableau-de-bord/chauffeur_/course/$id',
     path: '/tableau-de-bord/chauffeur/course/$id',
     getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiWebhooksStripeServerRoute = ApiWebhooksStripeServerRouteImport.update({
+  id: '/api/webhooks/stripe',
+  path: '/api/webhooks/stripe',
+  getParentRoute: () => rootServerRouteImport,
+} as any)
+const ApiCronExpireDriverTrialsServerRoute =
+  ApiCronExpireDriverTrialsServerRouteImport.update({
+    id: '/api/cron/expire-driver-trials',
+    path: '/api/cron/expire-driver-trials',
+    getParentRoute: () => rootServerRouteImport,
   } as any)
 const ApiCronExpireBookingsServerRoute =
   ApiCronExpireBookingsServerRouteImport.update({
@@ -599,17 +612,23 @@ export interface FileServerRoutesByFullPath {
   '/api/cron/at-risk-bookings': typeof ApiCronAtRiskBookingsServerRoute
   '/api/cron/booking-reminders': typeof ApiCronBookingRemindersServerRoute
   '/api/cron/expire-bookings': typeof ApiCronExpireBookingsServerRoute
+  '/api/cron/expire-driver-trials': typeof ApiCronExpireDriverTrialsServerRoute
+  '/api/webhooks/stripe': typeof ApiWebhooksStripeServerRoute
 }
 export interface FileServerRoutesByTo {
   '/api/cron/at-risk-bookings': typeof ApiCronAtRiskBookingsServerRoute
   '/api/cron/booking-reminders': typeof ApiCronBookingRemindersServerRoute
   '/api/cron/expire-bookings': typeof ApiCronExpireBookingsServerRoute
+  '/api/cron/expire-driver-trials': typeof ApiCronExpireDriverTrialsServerRoute
+  '/api/webhooks/stripe': typeof ApiWebhooksStripeServerRoute
 }
 export interface FileServerRoutesById {
   __root__: typeof rootServerRouteImport
   '/api/cron/at-risk-bookings': typeof ApiCronAtRiskBookingsServerRoute
   '/api/cron/booking-reminders': typeof ApiCronBookingRemindersServerRoute
   '/api/cron/expire-bookings': typeof ApiCronExpireBookingsServerRoute
+  '/api/cron/expire-driver-trials': typeof ApiCronExpireDriverTrialsServerRoute
+  '/api/webhooks/stripe': typeof ApiWebhooksStripeServerRoute
 }
 export interface FileServerRouteTypes {
   fileServerRoutesByFullPath: FileServerRoutesByFullPath
@@ -617,22 +636,30 @@ export interface FileServerRouteTypes {
     | '/api/cron/at-risk-bookings'
     | '/api/cron/booking-reminders'
     | '/api/cron/expire-bookings'
+    | '/api/cron/expire-driver-trials'
+    | '/api/webhooks/stripe'
   fileServerRoutesByTo: FileServerRoutesByTo
   to:
     | '/api/cron/at-risk-bookings'
     | '/api/cron/booking-reminders'
     | '/api/cron/expire-bookings'
+    | '/api/cron/expire-driver-trials'
+    | '/api/webhooks/stripe'
   id:
     | '__root__'
     | '/api/cron/at-risk-bookings'
     | '/api/cron/booking-reminders'
     | '/api/cron/expire-bookings'
+    | '/api/cron/expire-driver-trials'
+    | '/api/webhooks/stripe'
   fileServerRoutesById: FileServerRoutesById
 }
 export interface RootServerRouteChildren {
   ApiCronAtRiskBookingsServerRoute: typeof ApiCronAtRiskBookingsServerRoute
   ApiCronBookingRemindersServerRoute: typeof ApiCronBookingRemindersServerRoute
   ApiCronExpireBookingsServerRoute: typeof ApiCronExpireBookingsServerRoute
+  ApiCronExpireDriverTrialsServerRoute: typeof ApiCronExpireDriverTrialsServerRoute
+  ApiWebhooksStripeServerRoute: typeof ApiWebhooksStripeServerRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -935,6 +962,20 @@ declare module '@tanstack/react-router' {
 }
 declare module '@tanstack/react-start/server' {
   interface ServerFileRoutesByPath {
+    '/api/webhooks/stripe': {
+      id: '/api/webhooks/stripe'
+      path: '/api/webhooks/stripe'
+      fullPath: '/api/webhooks/stripe'
+      preLoaderRoute: typeof ApiWebhooksStripeServerRouteImport
+      parentRoute: typeof rootServerRouteImport
+    }
+    '/api/cron/expire-driver-trials': {
+      id: '/api/cron/expire-driver-trials'
+      path: '/api/cron/expire-driver-trials'
+      fullPath: '/api/cron/expire-driver-trials'
+      preLoaderRoute: typeof ApiCronExpireDriverTrialsServerRouteImport
+      parentRoute: typeof rootServerRouteImport
+    }
     '/api/cron/expire-bookings': {
       id: '/api/cron/expire-bookings'
       path: '/api/cron/expire-bookings'
@@ -1026,6 +1067,8 @@ const rootServerRouteChildren: RootServerRouteChildren = {
   ApiCronAtRiskBookingsServerRoute: ApiCronAtRiskBookingsServerRoute,
   ApiCronBookingRemindersServerRoute: ApiCronBookingRemindersServerRoute,
   ApiCronExpireBookingsServerRoute: ApiCronExpireBookingsServerRoute,
+  ApiCronExpireDriverTrialsServerRoute: ApiCronExpireDriverTrialsServerRoute,
+  ApiWebhooksStripeServerRoute: ApiWebhooksStripeServerRoute,
 }
 export const serverRouteTree = rootServerRouteImport
   ._addFileChildren(rootServerRouteChildren)

@@ -15,6 +15,10 @@
     {
       "path": "/api/cron/expire-bookings",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/expire-driver-trials",
+      "schedule": "0 5 * * *"
     }
   ]
 }
