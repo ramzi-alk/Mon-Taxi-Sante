@@ -101,6 +101,46 @@ nuit/week-end (`/tarifs-cpam`) — un prix fixe affiché serait trompeur.
 
 ## 4. Mots-clés
 
+### Liste consolidée — 25 mots-clés prêts à importer
+
+| # | Mot-clé | Correspondance | Groupe d'annonces |
+|---|---|---|---|
+| 1 | taxi conventionné | Requête exacte | Taxi conventionné |
+| 2 | taxi conventionné | Requête large | Taxi conventionné (découverte, avec enchères intelligentes) |
+| 3 | taxi conventionné cpam | Requête exacte | Taxi conventionné |
+| 4 | taxi conventionné assurance maladie | Expression exacte | Taxi conventionné |
+| 5 | taxi médical remboursé | Requête exacte | Taxi conventionné |
+| 6 | transport assis professionnalisé | Expression exacte | Taxi conventionné |
+| 7 | réserver taxi conventionné | Requête exacte | Réservation |
+| 8 | réserver taxi médical en ligne | Requête exacte | Réservation |
+| 9 | taxi conventionné hôpital | Expression exacte | Réservation |
+| 10 | vsl taxi | Expression exacte | VSL / Transport médical |
+| 11 | véhicule sanitaire léger | Expression exacte | VSL / Transport médical |
+| 12 | transport médical remboursé | Expression exacte | VSL / Transport médical |
+| 13 | prescription médicale de transport | Expression exacte | Tarifs / prescription |
+| 14 | tarif taxi conventionné cpam | Expression exacte | Tarifs / prescription |
+| 15 | prix taxi conventionné | Expression exacte | Tarifs / prescription |
+| 16 | docteur taxi | Requête exacte | Marque |
+| 17 | docteur taxi | Expression exacte | Marque |
+| 18 | docteurtaxi.fr | Requête exacte | Marque |
+| 19 | taxi dialyse | Expression exacte | ALD — Dialyse |
+| 20 | transport dialyse remboursé | Expression exacte | ALD — Dialyse |
+| 21 | taxi chimiothérapie | Expression exacte | ALD — Chimio/Radio |
+| 22 | transport radiothérapie remboursé | Expression exacte | ALD — Chimio/Radio |
+| 23 | taxi conventionné maternité | Expression exacte | ALD — Maternité |
+| 24 | taxi pmr fauteuil roulant | Expression exacte | PMR |
+| 25 | véhicule adapté handicap taxi | Expression exacte | PMR |
+
+**Logique** : Requête exacte sur les intentions les plus qualifiées (marque,
+"réserver", "cpam") — aucune dérive de sens tolérée. Expression exacte en
+volume principal. Une seule ligne en Requête large (#2), isolée dans son
+propre groupe pour découvrir de nouvelles requêtes sans diluer les enchères
+des mots-clés exacts — à n'activer qu'une fois le suivi de conversion
+(section 7) et les négatifs (section 5) en place. `docteur taxi` en double
+(exacte + expression) est volontaire : l'exacte protège le nom de marque au
+CPC le plus bas possible, l'expression capte les variantes ("docteur taxi
+avis", "docteur taxi paris"...).
+
 ### Campagne B — Générique national
 
 | Groupe d'annonces | Mots-clés | Correspondance | Destination |
