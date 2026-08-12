@@ -36,6 +36,7 @@ export interface MyDriverAccount {
   company_name: string | null;
   subscription_status: Database["public"]["Enums"]["subscription_status"];
   subscription_ends_at: string | null;
+  stripe_customer_id: string | null;
 }
 
 export interface MyDriverStats {
@@ -96,14 +97,30 @@ export async function fetchPendingDrivers(client: SupabaseClient): Promise<Pendi
   return (data ?? []) as unknown as PendingDriver[];
 }
 
+/**
+ * Approval starts the 30-day free trial clock (see /chauffeurs/tarifs) —
+ * subscription_ends_at was left NULL at signup (src/server/drivers.ts) since
+ * a driver isn't actually usable until approved. Past this date without a
+ * paid Stripe subscription, cron/expire-driver-trials flips the status to
+ * 'past_due' (a paid Stripe subscription overrides this via the webhook,
+ * see src/routes/api/webhooks/stripe.ts, whichever happens first).
+ */
 export async function approveDriver(
   client: SupabaseClient,
   driverDetailsId: string,
   approvedBy: string | null
 ): Promise<void> {
+  const approvedAt = new Date();
+  const trialEndsAt = new Date(approvedAt);
+  trialEndsAt.setDate(trialEndsAt.getDate() + 30);
+
   const { error } = await client
     .from("drivers_details")
-    .update({ approved_at: new Date().toISOString(), approved_by: approvedBy })
+    .update({
+      approved_at: approvedAt.toISOString(),
+      approved_by: approvedBy,
+      subscription_ends_at: trialEndsAt.toISOString(),
+    })
     .eq("id", driverDetailsId);
 
   if (error) {
@@ -217,7 +234,7 @@ export async function fetchMyAccountDetails(
   const { data, error } = await client
     .from("drivers_details")
     .select(
-      "vehicle_type, vehicle_registration, vehicle_brand, vehicle_model, vehicle_year, pmr_equipped, stretcher_equipped, oxygen_equipped, parking_municipality, parking_lat, parking_lng, siret, company_name, subscription_status, subscription_ends_at"
+      "vehicle_type, vehicle_registration, vehicle_brand, vehicle_model, vehicle_year, pmr_equipped, stretcher_equipped, oxygen_equipped, parking_municipality, parking_lat, parking_lng, siret, company_name, subscription_status, subscription_ends_at, stripe_customer_id"
     )
     .eq("profile_id", profileId)
     .maybeSingle();

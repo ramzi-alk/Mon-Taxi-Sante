@@ -14,6 +14,8 @@ import {
   Building2,
   CreditCard,
   CheckCircle2,
+  Loader2,
+  ExternalLink,
 } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "~/lib/supabase";
@@ -22,6 +24,11 @@ import { formatDateFr } from "~/lib/utils";
 import * as authRepository from "~/repositories/authRepository";
 import * as profilesRepository from "~/repositories/profilesRepository";
 import * as driversRepository from "~/repositories/driversRepository";
+import {
+  createDriverCheckoutSessionServerFn,
+  createDriverPortalSessionServerFn,
+} from "~/server/billing";
+import type { DriverSubscriptionPlan } from "~/lib/stripe";
 import { Input } from "~/components/ui/input";
 import { Checkbox } from "~/components/ui/checkbox";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "~/components/ui/select";
@@ -71,6 +78,25 @@ async function updateMyAccountDetails(
   const user = await authRepository.getCurrentUser(supabase);
   if (!user) throw new Error("Non authentifié");
   await driversRepository.updateMyAccountDetails(supabase, user.id, fields);
+}
+
+async function getAccessTokenOrThrow(): Promise<string> {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) throw new Error("Non authentifié");
+  return token;
+}
+
+async function startDriverCheckout(plan: DriverSubscriptionPlan): Promise<void> {
+  const accessToken = await getAccessTokenOrThrow();
+  const { url } = await createDriverCheckoutSessionServerFn({ data: { accessToken, plan } });
+  window.location.href = url;
+}
+
+async function openDriverPortal(): Promise<void> {
+  const accessToken = await getAccessTokenOrThrow();
+  const { url } = await createDriverPortalSessionServerFn({ data: { accessToken } });
+  window.location.href = url;
 }
 
 // ─── Shared bits ─────────────────────────────────────────────────────────────
@@ -559,6 +585,90 @@ function ParkingCard({ details }: { details: driversRepository.MyDriverAccount }
 
 // ─── Read-only company / subscription block ─────────────────────────────────
 
+function SubscriptionActions({ details }: { details: driversRepository.MyDriverAccount }) {
+  const [pendingPlan, setPendingPlan] = useState<DriverSubscriptionPlan | "portal" | null>(null);
+
+  async function handleSubscribe(plan: DriverSubscriptionPlan) {
+    setPendingPlan(plan);
+    try {
+      await startDriverCheckout(plan);
+    } catch (error) {
+      logger.error("driver.startDriverCheckout failed", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      alert(`Erreur : ${error instanceof Error ? error.message : String(error)}`);
+      setPendingPlan(null);
+    }
+  }
+
+  async function handlePortal() {
+    setPendingPlan("portal");
+    try {
+      await openDriverPortal();
+    } catch (error) {
+      logger.error("driver.openDriverPortal failed", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      alert(`Erreur : ${error instanceof Error ? error.message : String(error)}`);
+      setPendingPlan(null);
+    }
+  }
+
+  const isActive = details.subscription_status === "active";
+
+  return (
+    <div className="space-y-3 pt-1">
+      {!isActive && (
+        <div className="flex flex-wrap gap-2.5">
+          <button
+            type="button"
+            disabled={pendingPlan !== null}
+            onClick={() => handleSubscribe("mensuel")}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-brand-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-blue-700 disabled:opacity-60 transition-colors"
+          >
+            {pendingPlan === "mensuel" && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+            S'abonner — Mensuel (39 €/mois)
+          </button>
+          <button
+            type="button"
+            disabled={pendingPlan !== null}
+            onClick={() => handleSubscribe("annuel")}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-brand-blue-700 ring-1 ring-inset ring-brand-blue-200 hover:bg-brand-blue-50 disabled:opacity-60 transition-colors"
+          >
+            {pendingPlan === "annuel" && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+            S'abonner — Annuel (348 €/an)
+          </button>
+        </div>
+      )}
+      {isActive && (
+        <button
+          type="button"
+          disabled={pendingPlan !== null}
+          onClick={handlePortal}
+          className="inline-flex items-center gap-1.5 rounded-xl bg-brand-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-blue-700 disabled:opacity-60 transition-colors"
+        >
+          {pendingPlan === "portal" ? (
+            <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+          ) : (
+            <ExternalLink className="h-4 w-4" aria-hidden="true" />
+          )}
+          Gérer mon abonnement
+        </button>
+      )}
+      {!isActive && details.stripe_customer_id && (
+        <button
+          type="button"
+          disabled={pendingPlan !== null}
+          onClick={handlePortal}
+          className="text-sm font-medium text-brand-blue-700 hover:underline disabled:opacity-60"
+        >
+          Gérer un abonnement précédent (moyen de paiement, factures)
+        </button>
+      )}
+    </div>
+  );
+}
+
 function CompanyCard({ details }: { details: driversRepository.MyDriverAccount }) {
   return (
     <Card icon={Building2} title="Entreprise & abonnement">
@@ -585,14 +695,52 @@ function CompanyCard({ details }: { details: driversRepository.MyDriverAccount }
           </dd>
         </div>
       </dl>
+      <SubscriptionActions details={details} />
       <p className="text-xs text-muted-foreground">
-        Pour modifier ces informations, contactez notre équipe.
+        SIRET et entreprise : pour modifier ces informations, contactez notre équipe. L'abonnement se
+        gère directement ci-dessus.
       </p>
     </Card>
   );
 }
 
 // ─── Page ────────────────────────────────────────────────────────────────────
+
+function CheckoutReturnBanner() {
+  const [status, setStatus] = useState<"succes" | "annule" | null>(null);
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const abonnement = params.get("abonnement");
+    if (abonnement === "succes" || abonnement === "annule") {
+      setStatus(abonnement);
+      // Le webhook Stripe peut mettre quelques secondes à traiter
+      // checkout.session.completed ; on revérifie l'état une fois.
+      if (abonnement === "succes") {
+        queryClient.invalidateQueries({ queryKey: ["my-account-details"] });
+      }
+      params.delete("abonnement");
+      const newSearch = params.toString();
+      window.history.replaceState({}, "", window.location.pathname + (newSearch ? `?${newSearch}` : ""));
+    }
+  }, [queryClient]);
+
+  if (!status) return null;
+
+  return (
+    <div
+      role="status"
+      className={`rounded-xl px-4 py-3 text-sm font-medium ${
+        status === "succes" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
+      }`}
+    >
+      {status === "succes"
+        ? "Paiement confirmé — votre abonnement sera à jour dans quelques instants."
+        : "Souscription annulée, aucun paiement n'a été effectué."}
+    </div>
+  );
+}
 
 function DriverAccountPage() {
   const profileQuery = useQuery({ queryKey: ["my-profile"], queryFn: fetchMyProfile });
@@ -617,6 +765,7 @@ function DriverAccountPage() {
       </div>
 
       <div className="container py-8 max-w-2xl space-y-6">
+        <CheckoutReturnBanner />
         {/* Chargement progressif : chaque section s'affiche dès que sa query est prête */}
         {profileQuery.isLoading ? <SkeletonSection /> : profileQuery.data ? <PersonalInfoCard profile={profileQuery.data} /> : null}
         <PasswordCard />

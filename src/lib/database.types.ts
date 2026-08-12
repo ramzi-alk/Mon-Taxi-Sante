@@ -570,6 +570,7 @@ export type Database = {
           plan: string
           started_at: string
           status: Database["public"]["Enums"]["subscription_status"]
+          stripe_price_id: string | null
           stripe_sub_id: string | null
         }
         Insert: {
@@ -581,6 +582,7 @@ export type Database = {
           plan?: string
           started_at?: string
           status?: Database["public"]["Enums"]["subscription_status"]
+          stripe_price_id?: string | null
           stripe_sub_id?: string | null
         }
         Update: {
@@ -592,6 +594,7 @@ export type Database = {
           plan?: string
           started_at?: string
           status?: Database["public"]["Enums"]["subscription_status"]
+          stripe_price_id?: string | null
           stripe_sub_id?: string | null
         }
         Relationships: [
@@ -770,6 +773,24 @@ export type Database = {
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
+        }
+        Relationships: []
+      }
+      stripe_webhook_events: {
+        Row: {
+          created_at: string
+          id: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          type?: string
         }
         Relationships: []
       }
