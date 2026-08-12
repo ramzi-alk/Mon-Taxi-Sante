@@ -171,10 +171,59 @@ entrées, déjà triées par population) :
 
 ## 5. Mots-clés négatifs (niveau compte)
 
-- **Intention non médicale** : uber, bolt, blablacar, vtc, chauffeur privé, aéroport, gare, soirée, mariage, location voiture
-- **Emploi / recrutement** (sauf campagne dédiée) : emploi, recrutement, offre d'emploi, salaire, devenir chauffeur, formation taxi
-- **Gratuité mal comprise** : gratuit, sans ordonnance, covoiturage, bénévole, association transport gratuit
-- **Réputation/support — à surveiller, pas forcément à exclure** : avis, arnaque, réclamation (un chercheur d'"avis Docteur Taxi" est souvent un prospect en vérification)
+Correspondance par défaut : **Requête large** (bloque toute recherche
+contenant ces mots, peu importe l'ordre). À poser au niveau du **compte**
+(pas juste d'une campagne) pour protéger les 5 campagnes en une fois.
+
+**Intention non médicale (VTC, loisirs, événements)**
+```
+uber
+bolt
+blablacar
+vtc
+chauffeur privé
+aéroport
+roissy
+orly
+gare
+sncf
+soirée
+mariage
+anniversaire
+location voiture
+voiture occasion
+```
+
+**Emploi / recrutement** (sauf campagne recrutement dédiée — voir sitelink 6)
+```
+emploi
+recrutement
+offre d'emploi
+salaire
+cv chauffeur
+candidature
+devenir chauffeur
+formation taxi
+permis taxi
+licence taxi prix
+```
+
+**Gratuité mal comprise / hors offre**
+```
+gratuit
+sans ordonnance
+covoiturage
+bénévole
+association transport gratuit
+```
+
+**Réputation/support — à surveiller, pas forcément à exclure tout de suite**
+
+| Terme | Pourquoi ne pas exclure tout de suite |
+|---|---|
+| avis | Souvent un prospect en phase de vérification avant de réserver |
+| arnaque | Idem, à observer plutôt qu'exclure par défaut |
+| réclamation | Peut venir d'un client existant cherchant le contact |
 
 ## 6. Ciblage, enchères, budget
 
