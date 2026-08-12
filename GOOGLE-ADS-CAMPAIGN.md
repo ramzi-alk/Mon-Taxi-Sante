@@ -27,8 +27,13 @@ les routes admin/compte.
 
 ## 2. Annonce prête à coller — groupe "Taxi conventionné, générique"
 
-**URL finale** : `https://www.docteurtaxi.fr/`
-**Chemin à afficher** : `taxi-cpam` / `reservation` → `www.docteurtaxi.fr/taxi-cpam/reservation`
+**URL finale** : `https://www.docteurtaxi.fr/reservation`
+**Chemin à afficher** : `reservation` (second champ laissé vide) → `www.docteurtaxi.fr/reservation`
+
+Le chemin affiché dans Google Ads est purement cosmétique — il n'est pas
+cliquable et n'a pas besoin de correspondre à un dossier réel du site. Ici il
+correspond quand même à un vrai segment de route (`src/routes/reservation/index.tsx`)
+plutôt qu'un chemin inventé, pour rester cohérent avec le reste du site.
 
 ### Titres (15, ≤30 caractères)
 
