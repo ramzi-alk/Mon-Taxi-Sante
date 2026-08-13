@@ -189,19 +189,6 @@ export const bookingSchema = z
       message: "Votre numéro de téléphone est requis (ex : 06 12 34 56 78)",
       path: ["booker_phone"],
     }
-  )
-  .refine(
-    (data) => {
-      if (data.pmt_declared) {
-        return typeof File !== "undefined" && data.pmt_file instanceof File;
-      }
-      return true;
-    },
-    {
-      message:
-        "Merci de joindre votre PMT, ou indiquez que vous ne l'avez pas encore.",
-      path: ["pmt_file"],
-    }
   );
 
 export type BookingSchema = z.infer<typeof bookingSchema>;
