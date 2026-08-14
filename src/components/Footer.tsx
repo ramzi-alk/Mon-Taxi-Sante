@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Phone, Mail, MapPin } from "lucide-react";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL, CONTACT_EMAIL } from "~/lib/contact";
+import { openCookiePreferences } from "~/components/CookieConsent";
 // Fichier dédié (30 villes) plutôt que ~/lib/seoData : ce module est chargé
 // sur TOUTES les pages (Footer est dans le layout racine) — importer
 // seoData.ts embarquerait les 5509 communes + 7474 hôpitaux dans le bundle
@@ -183,6 +184,13 @@ export function Footer() {
             >
               CGV
             </Link>
+            <button
+              type="button"
+              onClick={openCookiePreferences}
+              className="hover:text-gray-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+            >
+              Gérer les cookies
+            </button>
           </div>
         </div>
       </div>

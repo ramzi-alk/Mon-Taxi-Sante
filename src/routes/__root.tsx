@@ -10,11 +10,39 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { useEffect, type ReactNode } from "react";
 import { Navbar } from "~/components/Navbar";
 import { Footer } from "~/components/Footer";
+import { CookieConsent } from "~/components/CookieConsent";
 import { ToastProvider, useToast } from "~/components/ui/toast";
 import { logger } from "~/lib/logger";
 import { logClientErrorServerFn } from "~/server/errorReporting";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
+import { GOOGLE_ADS_ID } from "~/lib/googleAds";
 import appCss from "~/styles/app.css?url";
+
+/**
+ * Google Consent Mode v2 default state, read from localStorage before
+ * gtag.js loads. Must ship "denied" unless a prior explicit choice was
+ * stored — /confidentialite already promises no advertising cookie is set
+ * without consent, so this can't default to granted.
+ */
+const CONSENT_DEFAULT_SCRIPT = `
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+window.gtag = gtag;
+var storedConsent = null;
+try { storedConsent = localStorage.getItem('dt_cookie_consent'); } catch (e) {}
+var granted = storedConsent === 'granted';
+gtag('consent', 'default', {
+  ad_storage: granted ? 'granted' : 'denied',
+  ad_user_data: granted ? 'granted' : 'denied',
+  ad_personalization: granted ? 'granted' : 'denied',
+  analytics_storage: granted ? 'granted' : 'denied'
+});
+`;
+
+const GTAG_CONFIG_SCRIPT = `
+gtag('js', new Date());
+gtag('config', '${GOOGLE_ADS_ID}');
+`;
 
 interface RouterContext {
   queryClient: QueryClient;
@@ -200,6 +228,10 @@ function RootDocument({ children }: { children: ReactNode }) {
     <html lang="fr" className="scroll-smooth">
       <head>
         <HeadContent />
+        {/* Google Consent Mode default must be pushed before gtag.js loads. */}
+        <script dangerouslySetInnerHTML={{ __html: CONSENT_DEFAULT_SCRIPT }} />
+        <script async src={`https://www.googletagmanager.com/gtag/js?id=${GOOGLE_ADS_ID}`} />
+        <script dangerouslySetInnerHTML={{ __html: GTAG_CONFIG_SCRIPT }} />
       </head>
       <body className="min-h-screen bg-background font-sans antialiased">
         <QueryClientProvider client={queryClient}>
@@ -209,6 +241,7 @@ function RootDocument({ children }: { children: ReactNode }) {
             <Navbar />
             <main id="main-content">{children}</main>
             <Footer />
+            <CookieConsent />
             {import.meta.env.DEV && <ReactQueryDevtools />}
           </ToastProvider>
         </QueryClientProvider>
