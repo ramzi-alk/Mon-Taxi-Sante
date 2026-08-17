@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { applyPostHogConsent, initPostHog } from "~/lib/posthog";
 
 const CONSENT_KEY = "dt_cookie_consent";
 const OPEN_EVENT = "dt:open-cookie-preferences";
@@ -41,6 +42,8 @@ export function CookieConsent() {
   function choose(value: ConsentValue) {
     localStorage.setItem(CONSENT_KEY, value);
     pushConsentUpdate(value);
+    initPostHog();
+    applyPostHogConsent(value === "granted");
     setVisible(false);
   }
 

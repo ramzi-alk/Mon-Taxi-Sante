@@ -47,6 +47,8 @@
     "date-fns": "^4.1.0",
     "lucide-react": "^0.454.0",
     "pino": "^10.3.1",
+    "posthog-js": "^1.417.3",
+    "posthog-node": "^5.49.1",
     "react": "^19.0.0",
     "react-day-picker": "^10.0.1",
     "react-dom": "^19.0.0",

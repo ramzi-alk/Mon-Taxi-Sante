@@ -7,6 +7,7 @@ import { getSupabaseAdminClient } from "~/lib/supabaseAdmin";
 import { sendBookingConfirmationEmail } from "./email";
 import { sendPushToAllDrivers } from "./pushSend";
 import { logger, withServerFnLogging } from "~/lib/logger";
+import { captureServerEvent } from "~/lib/posthogServer";
 
 interface SubmitBookingPayload {
   patient_id: string;
@@ -92,6 +93,30 @@ export const submitBookingServerFn = createServerFn({ method: "POST" })
         }
 
         const [firstBooking] = bookings;
+
+        // Événement métier fiable (indépendant d'un éventuel bloqueur de pub
+        // côté navigateur) — aucune donnée d'identité ou de santé (nom,
+        // téléphone, adresse, medical_notes) dans les properties, seulement
+        // des caractéristiques de la course. Fire-and-forget : ne doit pas
+        // retarder la confirmation de réservation.
+        captureServerEvent(firstPayload.patient_id, "booking_created", {
+          vehicle_type: firstPayload.vehicle_type,
+          trip_type: firstPayload.trip_type,
+          is_hospitalization: firstPayload.is_hospitalization,
+          requires_wheelchair: firstPayload.requires_wheelchair,
+          requires_stretcher: firstPayload.requires_stretcher,
+          requires_oxygen: firstPayload.requires_oxygen,
+          passenger_count: firstPayload.passenger_count,
+          cpam_status: firstPayload.cpam_status,
+          pmt_declared: firstPayload.pmt_declared,
+          pickup_municipality: firstPayload.pickup_municipality,
+          distance_km: firstPayload.distance_km,
+          booking_for_other: firstPayload.booking_for_other,
+          is_series: isSeries,
+          series_total: isSeries ? data.payloads.length : undefined,
+        }).catch(() => {
+          // Best-effort — voir captureServerEvent, déjà loggé en interne.
+        });
 
         const confirmationEmail =
           firstPayload.booking_for_other && firstPayload.booker_email

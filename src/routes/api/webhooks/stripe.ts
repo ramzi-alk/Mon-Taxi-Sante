@@ -3,6 +3,7 @@ import type Stripe from "stripe";
 import { getSupabaseAdminClient } from "~/lib/supabaseAdmin";
 import { getStripeClient } from "~/lib/stripe";
 import { logger } from "~/lib/logger";
+import { captureServerEvent } from "~/lib/posthogServer";
 
 // Synchronise l'état d'abonnement chauffeur (drivers_details.subscription_status
 // / subscription_ends_at / stripe_customer_id + driver_subscriptions) avec les
@@ -108,6 +109,14 @@ async function syncSubscriptionToDriver(
     });
     if (error) throw new Error(error.message);
   }
+
+  captureServerEvent(driver.profile_id, "driver_subscription_status_changed", {
+    plan,
+    status: localStatus,
+    amount_eur: (item.price.unit_amount ?? 0) / 100,
+  }).catch(() => {
+    // Best-effort — voir captureServerEvent, déjà loggé en interne.
+  });
 }
 
 export const ServerRoute = createServerFileRoute("/api/webhooks/stripe").methods({

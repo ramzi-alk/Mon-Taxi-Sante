@@ -5,6 +5,7 @@ import type { Database } from "~/lib/database.types";
 import { getSupabaseAdminClient } from "~/lib/supabaseAdmin";
 import { getStripeClient, stripePriceIdForPlan, type DriverSubscriptionPlan } from "~/lib/stripe";
 import { withServerFnLogging, logger } from "~/lib/logger";
+import { captureServerEvent } from "~/lib/posthogServer";
 
 function appUrl(): string {
   return (import.meta.env.VITE_APP_URL as string | undefined) ?? "https://docteurtaxi.fr";
@@ -83,6 +84,10 @@ export const createDriverCheckoutSessionServerFn = createServerFn({ method: "POS
         logger.error("billing.createDriverCheckoutSession missing url", { sessionId: session.id });
         throw new Error("Impossible de créer la session de paiement.");
       }
+
+      captureServerEvent(user.id, "driver_checkout_started", { plan: data.plan }).catch(() => {
+        // Best-effort — voir captureServerEvent, déjà loggé en interne.
+      });
 
       return { url: session.url };
     })

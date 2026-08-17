@@ -5,6 +5,7 @@ import * as driversRepository from "~/repositories/driversRepository";
 import * as profilesRepository from "~/repositories/profilesRepository";
 import { logger, withServerFnLogging } from "~/lib/logger";
 import { notifyAdminNewDriverApplicationServerFn } from "./email";
+import { captureServerEvent } from "~/lib/posthogServer";
 
 const siretRegex = /^\d{14}$/;
 
@@ -65,6 +66,14 @@ export const submitDriverApplicationServerFn = createServerFn({ method: "POST" }
       });
 
       await notifyAdminNewDriverApplicationServerFn({ data: { driverDetailsId: driverDetails.id } });
+
+      captureServerEvent(data.profile_id, "driver_application_submitted", {
+        vehicle_type: data.vehicle_type,
+        pmr_equipped: data.pmr_equipped,
+        parking_municipality: data.parking_municipality,
+      }).catch(() => {
+        // Best-effort — voir captureServerEvent, déjà loggé en interne.
+      });
 
       return driverDetails;
     })

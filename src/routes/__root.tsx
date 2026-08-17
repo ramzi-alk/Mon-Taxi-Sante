@@ -3,6 +3,7 @@ import {
   Outlet,
   HeadContent,
   Scripts,
+  useRouterState,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -16,6 +17,7 @@ import { logger } from "~/lib/logger";
 import { logClientErrorServerFn } from "~/server/errorReporting";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
 import { GOOGLE_ADS_ID } from "~/lib/googleAds";
+import { initPostHog, posthog } from "~/lib/posthog";
 import appCss from "~/styles/app.css?url";
 
 /**
@@ -140,6 +142,23 @@ function GlobalErrorListener() {
 }
 
 /**
+ * Démarre PostHog au montage (client only) puis capture un $pageview manuel
+ * à chaque changement d'URL — TanStack Router navigue en SPA sans
+ * rechargement complet, donc l'autocapture de pageview de posthog-js
+ * (capture_pageview: false, voir src/lib/posthog.ts) ne suffit pas seule.
+ */
+function PostHogTracker() {
+  const href = useRouterState({ select: (s) => s.location.href });
+
+  useEffect(() => {
+    initPostHog();
+    posthog.capture("$pageview");
+  }, [href]);
+
+  return null;
+}
+
+/**
  * Supabase Auth (GoTrue) redirects here after /auth/v1/verify with the
  * outcome appended as a URL hash fragment (#access_token=... on success,
  * #error=...&error_code=...&error_description=... on failure). Without
@@ -238,6 +257,7 @@ function RootDocument({ children }: { children: ReactNode }) {
           <ToastProvider>
             <GlobalErrorListener />
             <AuthRedirectListener />
+            <PostHogTracker />
             <Navbar />
             <main id="main-content">{children}</main>
             <Footer />
