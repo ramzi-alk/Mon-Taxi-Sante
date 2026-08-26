@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
-import { AlertTriangle, ArrowLeft, ArrowRight, ClipboardList, UserCog, XCircle } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowRight, ClipboardList, ExternalLink, UserCog, XCircle } from "lucide-react";
 import { supabase } from "~/lib/supabase";
 import * as adminBookingsRepository from "~/repositories/adminBookingsRepository";
 import type { AdminBookingRow, EligibleDriver } from "~/repositories/adminBookingsRepository";
@@ -27,7 +27,7 @@ const PAGE_SIZE = 20;
 const AT_RISK_HOURS = 4;
 
 const bookingStatusValues = [
-  "draft", "pending", "confirmed", "available", "accepted", "in_progress", "completed", "cancelled", "expired",
+  "draft", "pending", "confirmed", "available", "accepted", "in_progress", "completed", "cancelled", "expired", "external_provider",
 ] as const;
 const vehicleTypeValues = ["taxi", "vsl", "pmr", "ambulance"] as const;
 
@@ -261,7 +261,7 @@ function AdminReservationsPage() {
 
 // ─── Detail dialog ───────────────────────────────────────────────────────────
 
-type DialogMode = "view" | "reassign" | "cancel";
+type DialogMode = "view" | "reassign" | "cancel" | "external";
 
 function BookingDetailDialog({ bookingId, onClose }: { bookingId: string; onClose: () => void }) {
   const queryClient = useQueryClient();
@@ -323,6 +323,16 @@ function BookingDetailDialog({ bookingId, onClose }: { bookingId: string; onClos
     onError: () => toast({ title: "Échec de l'assignation", description: "Réessayez dans un instant.", variant: "error" }),
   });
 
+  const { mutate: markExternalProvider, isPending: isMarkingExternal } = useMutation({
+    mutationFn: () => adminBookingsRepository.adminMarkExternalProvider(supabase, bookingId),
+    onSuccess: () => {
+      invalidateList();
+      toast({ title: "Course marquée prise en charge par un prestataire externe", variant: "success" });
+      setMode("view");
+    },
+    onError: () => toast({ title: "Échec de l'opération", description: "Réessayez dans un instant.", variant: "error" }),
+  });
+
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
@@ -361,6 +371,33 @@ function BookingDetailDialog({ bookingId, onClose }: { bookingId: string; onClos
               >
                 <XCircle className="h-4 w-4" aria-hidden="true" />
                 {isCancelling ? "Annulation…" : "Confirmer l'annulation"}
+              </button>
+            </DialogFooter>
+          </>
+        ) : mode === "external" ? (
+          <>
+            <DialogHeader>
+              <DialogTitle>Marquer comme prise en charge par un prestataire externe ?</DialogTitle>
+              <DialogDescription>
+                Cette course sortira du réseau Docteur Taxi{booking.driver ? " et le chauffeur assigné sera retiré" : ""}. Cette action est définitive.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <button
+                type="button"
+                onClick={() => setMode("view")}
+                className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Retour
+              </button>
+              <button
+                type="button"
+                disabled={isMarkingExternal}
+                onClick={() => markExternalProvider()}
+                className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-purple-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-purple-700 disabled:opacity-50 transition-colors"
+              >
+                <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                {isMarkingExternal ? "Enregistrement…" : "Confirmer"}
               </button>
             </DialogFooter>
           </>
@@ -433,6 +470,16 @@ function BookingDetailDialog({ bookingId, onClose }: { bookingId: string; onClos
                 >
                   <XCircle className="h-4 w-4" aria-hidden="true" />
                   Annuler la course
+                </button>
+              )}
+              {(booking.status === "available" || booking.status === "accepted" || booking.status === "expired") && (
+                <button
+                  type="button"
+                  onClick={() => setMode("external")}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-purple-200 px-4 py-2.5 text-sm font-bold text-purple-700 hover:bg-purple-50 transition-colors"
+                >
+                  <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                  Prestataire externe
                 </button>
               )}
               {(booking.status === "available" || booking.status === "accepted" || booking.status === "expired") && (
