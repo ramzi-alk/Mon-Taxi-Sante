@@ -4,10 +4,14 @@ import { ArrowDown, ArrowRight, Calculator, Loader2, MapPin, Navigation, Route }
 import { AddressAutocomplete } from "~/components/booking/AddressAutocomplete";
 import { Checkbox } from "~/components/ui/checkbox";
 import { Input } from "~/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { getDrivingDistanceKm } from "~/lib/mapbox";
 import { supabase } from "~/lib/supabase";
 import { formatPrice } from "~/lib/utils";
 import { logger } from "~/lib/logger";
+import departments from "~/data/seo/departments.json";
+
+const AUTO_DEPARTMENT = "auto";
 
 function nowForDatetimeLocal(): string {
   const d = new Date();
@@ -35,6 +39,7 @@ export function FareEstimateForm() {
   const [pickupDatetime, setPickupDatetime] = useState(nowForDatetimeLocal);
   const [requiresWheelchair, setRequiresWheelchair] = useState(false);
   const [isHospitalization, setIsHospitalization] = useState(false);
+  const [departmentOverride, setDepartmentOverride] = useState(AUTO_DEPARTMENT);
 
   const [price, setPrice] = useState<number | null>(null);
   const [isEstimating, setIsEstimating] = useState(false);
@@ -89,6 +94,8 @@ export function FareEstimateForm() {
           p_is_hospitalization: isHospitalization,
           p_pickup_address: pickupAddress,
           p_dropoff_address: dropoffAddress,
+          p_departement_override:
+            departmentOverride === AUTO_DEPARTMENT ? undefined : departmentOverride,
         });
         if (cancelled) return;
         if (error) {
@@ -107,7 +114,15 @@ export function FareEstimateForm() {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [distanceKm, pickupAddress, dropoffAddress, pickupDatetime, requiresWheelchair, isHospitalization]);
+  }, [
+    distanceKm,
+    pickupAddress,
+    dropoffAddress,
+    pickupDatetime,
+    requiresWheelchair,
+    isHospitalization,
+    departmentOverride,
+  ]);
 
   function swapAddresses() {
     setPickupAddress(dropoffAddress);
@@ -202,25 +217,45 @@ export function FareEstimateForm() {
               className="text-sm"
             />
           </div>
-          <div className="flex flex-col justify-end gap-2 pb-1">
-            <label htmlFor="estimate-wheelchair" className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
-              <Checkbox
-                id="estimate-wheelchair"
-                checked={requiresWheelchair}
-                onCheckedChange={(checked) => setRequiresWheelchair(checked === true)}
-              />
-              Fauteuil roulant (+30 €)
+          <div className="space-y-1.5">
+            <label htmlFor="estimate-department" className="block text-xs font-semibold text-gray-700">
+              Département de rattachement CPAM
             </label>
-            <label htmlFor="estimate-hospitalization" className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
-              <Checkbox
-                id="estimate-hospitalization"
-                checked={isHospitalization}
-                onCheckedChange={(checked) => setIsHospitalization(checked === true)}
-              />
-              Retour à vide (hospitalisation, dialyse, chimio…)
-            </label>
+            <Select value={departmentOverride} onValueChange={setDepartmentOverride}>
+              <SelectTrigger id="estimate-department" className="text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={AUTO_DEPARTMENT}>Automatique (déduit de l&apos;adresse)</SelectItem>
+                {departments.map((d) => (
+                  <SelectItem key={d.code} value={d.code}>
+                    {d.code} — {d.nom}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
+          <label htmlFor="estimate-wheelchair" className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
+            <Checkbox
+              id="estimate-wheelchair"
+              checked={requiresWheelchair}
+              onCheckedChange={(checked) => setRequiresWheelchair(checked === true)}
+            />
+            Fauteuil roulant (+30 €)
+          </label>
+          <label htmlFor="estimate-hospitalization" className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
+            <Checkbox
+              id="estimate-hospitalization"
+              checked={isHospitalization}
+              onCheckedChange={(checked) => setIsHospitalization(checked === true)}
+            />
+            Retour à vide (hospitalisation, dialyse, chimio…)
+          </label>
         </div>
+        <p className="text-xs text-gray-400">
+          Par défaut, le tarif/km est déduit du code postal de l&apos;adresse de départ. Choisissez
+          explicitement le département si votre chauffeur est rattaché à une ADS différente.
+        </p>
       </div>
 
       {/* Résultat */}

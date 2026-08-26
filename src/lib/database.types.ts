@@ -943,6 +943,7 @@ export type Database = {
       complete_ride: { Args: { p_booking_id: string }; Returns: undefined }
       compute_booking_price: {
         Args: {
+          p_departement_override?: string
           p_distance_km: number
           p_dropoff_address?: string
           p_is_hospitalization?: boolean
