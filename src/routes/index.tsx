@@ -12,6 +12,7 @@ import {
 import { TrustBadges } from "~/components/TrustBadges";
 import { CitySearch } from "~/components/CitySearch";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
+import { trackCallButtonClick } from "~/lib/trackCallClick";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -258,6 +259,7 @@ function HeroSection() {
               </Link>
               <a
                 href={`tel:${CONTACT_PHONE_TEL}`}
+                onClick={() => trackCallButtonClick("home_hero")}
                 className="btn-cta inline-flex items-center justify-center gap-2 border-2 border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 aria-label={`Appeler le ${CONTACT_PHONE_DISPLAY} (gratuit)`}
               >
@@ -600,6 +602,7 @@ function CtaBanner() {
             </Link>
             <a
               href={`tel:${CONTACT_PHONE_TEL}`}
+              onClick={() => trackCallButtonClick("home_bottom_cta")}
               className="btn-cta inline-flex items-center justify-center gap-2 border-2 border-white/30 text-white hover:border-white/60 hover:bg-white/10 transition-colors"
             >
               Ou appeler le {CONTACT_PHONE_DISPLAY}

@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronDown } from "lucide-react";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
+import { trackCallButtonClick } from "~/lib/trackCallClick";
 
 export const Route = createFileRoute("/faq")({
   head: () => ({
@@ -123,7 +124,11 @@ function FaqPage() {
           </h1>
           <p className="mt-5 text-lg text-gray-500 max-w-xl leading-relaxed">
             Vous ne trouvez pas votre réponse ? Appelez-nous au{" "}
-            <a href={`tel:${CONTACT_PHONE_TEL}`} className="text-[#1244E8] underline">
+            <a
+              href={`tel:${CONTACT_PHONE_TEL}`}
+              onClick={() => trackCallButtonClick("faq")}
+              className="text-[#1244E8] underline"
+            >
               {CONTACT_PHONE_DISPLAY}
             </a>{" "}
             (gratuit) ou écrivez à{" "}

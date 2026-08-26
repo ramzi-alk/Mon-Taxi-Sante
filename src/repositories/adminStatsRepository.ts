@@ -45,6 +45,27 @@ export async function fetchOperationalKpis(
   return data as unknown as AdminOperationalKpis;
 }
 
+export interface AdminCallClickSource {
+  source: string;
+  count: number;
+}
+
+export interface AdminCallClickStats {
+  total: number;
+  last_30_days: number;
+  by_source: AdminCallClickSource[];
+}
+
+/**
+ * Nombre de clics sur les CTA "Appeler" du site (numéro standard), toutes
+ * pages confondues. Calculé par get_admin_call_click_stats (migration 052).
+ */
+export async function fetchCallClickStats(client: SupabaseClient): Promise<AdminCallClickStats> {
+  const { data, error } = await client.rpc("get_admin_call_click_stats");
+  if (error) throw error;
+  return data as unknown as AdminCallClickStats;
+}
+
 export interface CpamExportRow {
   reference_code: string;
   patient_full_name: string;
