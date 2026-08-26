@@ -14,6 +14,19 @@ export function slugify(text: string): string {
     .replace(/(^-|-$)/g, "");
 }
 
+// Combines a "YYYY-MM-DD" date and "HH:MM" time — both picked by the user
+// in their browser's local time (Europe/Paris in practice) — into a real
+// UTC instant for a TIMESTAMPTZ column. Building the ISO string by naive
+// concatenation (`${date}T${time}:00`) omits the UTC offset, so Postgres
+// interprets it as UTC instead of Europe/Paris: every booking ends up
+// stored 1-2h later than the time the patient actually picked (visible as
+// a shifted pickup/return time everywhere it's later displayed).
+export function combineLocalDateTimeToIso(dateStr: string, timeStr: string): string {
+  const [year, month, day] = dateStr.split("-").map(Number);
+  const [hour, minute] = timeStr.split(":").map(Number);
+  return new Date(year, month - 1, day, hour, minute, 0, 0).toISOString();
+}
+
 export function formatDateFr(dateStr: string): string {
   return new Intl.DateTimeFormat("fr-FR", {
     day: "numeric",

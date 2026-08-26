@@ -10,6 +10,7 @@ import { Textarea } from "~/components/ui/textarea";
 import { Checkbox } from "~/components/ui/checkbox";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "~/components/ui/select";
 import { supabase } from "~/lib/supabase";
+import { combineLocalDateTimeToIso } from "~/lib/utils";
 import { useToast } from "~/components/ui/toast";
 import { logger } from "~/lib/logger";
 import { getDrivingDistanceKm } from "~/lib/mapbox";
@@ -134,10 +135,10 @@ export function BookingEditForm({ booking, lookupCredentials, onClose, onSaved }
         dropoff_lat: data.dropoff_lat,
         dropoff_lng: data.dropoff_lng,
         distance_km: data.distance_km,
-        pickup_datetime: `${data.pickup_date}T${data.pickup_time}:00`,
+        pickup_datetime: combineLocalDateTimeToIso(data.pickup_date, data.pickup_time),
         return_datetime:
           isReturnTrip && data.return_date && data.return_time
-            ? `${data.return_date}T${data.return_time}:00`
+            ? combineLocalDateTimeToIso(data.return_date, data.return_time)
             : null,
         vehicle_type: data.vehicle_type,
         trip_type: data.trip_type,
