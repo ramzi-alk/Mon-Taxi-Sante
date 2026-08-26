@@ -1,6 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowDown, ArrowRight, Calculator, Loader2, MapPin, Navigation, Route } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowRight,
+  Calculator,
+  Loader2,
+  MapPin,
+  Navigation,
+  RefreshCw,
+  Route,
+} from "lucide-react";
 import { AddressAutocomplete } from "~/components/booking/AddressAutocomplete";
 import { Checkbox } from "~/components/ui/checkbox";
 import { Input } from "~/components/ui/input";
@@ -12,6 +21,11 @@ import { logger } from "~/lib/logger";
 import departments from "~/data/seo/departments.json";
 
 const AUTO_DEPARTMENT = "auto";
+
+const TRIP_TYPE_OPTIONS = [
+  { value: "aller_simple" as const, label: "Aller simple" },
+  { value: "aller_retour" as const, label: "Aller-retour" },
+];
 
 function nowForDatetimeLocal(): string {
   const d = new Date();
@@ -36,6 +50,7 @@ export function FareEstimateForm() {
   const [distanceKm, setDistanceKm] = useState<number | null>(null);
   const [isComputingDistance, setIsComputingDistance] = useState(false);
 
+  const [tripType, setTripType] = useState<"aller_simple" | "aller_retour">("aller_simple");
   const [pickupDatetime, setPickupDatetime] = useState(nowForDatetimeLocal);
   const [requiresWheelchair, setRequiresWheelchair] = useState(false);
   const [isHospitalization, setIsHospitalization] = useState(false);
@@ -88,7 +103,7 @@ export function FareEstimateForm() {
         const { data, error } = await supabase.rpc("compute_booking_price", {
           p_distance_km: distanceKm,
           p_vehicle_type: "taxi",
-          p_trip_type: "aller_simple",
+          p_trip_type: tripType,
           p_requires_wheelchair: requiresWheelchair,
           p_pickup_datetime: new Date(pickupDatetime).toISOString(),
           p_is_hospitalization: isHospitalization,
@@ -103,7 +118,12 @@ export function FareEstimateForm() {
           setEstimateError("Impossible de calculer une estimation pour le moment.");
           setPrice(null);
         } else {
-          setPrice(data as number);
+          // compute_booking_price ne tarife qu'un seul trajet (trip_type n'est
+          // pas utilisé dans la formule, y compris pour une vraie réservation) :
+          // on double nous-mêmes côté simulateur pour approximer un
+          // aller-retour (le chauffeur refait le trajet retour).
+          const oneWay = data as number;
+          setPrice(tripType === "aller_retour" ? Math.round(oneWay * 2 * 100) / 100 : oneWay);
         }
       } finally {
         if (!cancelled) setIsEstimating(false);
@@ -118,6 +138,7 @@ export function FareEstimateForm() {
     distanceKm,
     pickupAddress,
     dropoffAddress,
+    tripType,
     pickupDatetime,
     requiresWheelchair,
     isHospitalization,
@@ -201,6 +222,26 @@ export function FareEstimateForm() {
             placeholder="Ex : Hôpital Lariboisière, Paris"
             icon={<MapPin className="h-5 w-5 text-red-500" aria-hidden="true" />}
           />
+        </div>
+
+        {/* Nature du trajet */}
+        <div className="space-y-1.5">
+          <span className="block text-xs font-semibold text-gray-700">Nature du trajet</span>
+          <div className="inline-flex rounded-xl bg-[#F7F8FC] p-1 ring-1 ring-gray-200">
+            {TRIP_TYPE_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setTripType(opt.value)}
+                className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-bold transition-colors ${
+                  tripType === opt.value ? "bg-[#0B0F1C] text-white" : "text-gray-500 hover:bg-gray-100"
+                }`}
+              >
+                {opt.value === "aller_retour" && <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />}
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Options affectant le tarif */}
@@ -292,7 +333,12 @@ export function FareEstimateForm() {
               Calcul du tarif…
             </span>
           ) : price != null ? (
-            <p className="text-3xl font-black text-[#1244E8]">{formatPrice(price)}</p>
+            <>
+              <p className="text-3xl font-black text-[#1244E8]">{formatPrice(price)}</p>
+              {tripType === "aller_retour" && (
+                <p className="text-xs text-gray-400 mt-0.5">Aller-retour (aller × 2)</p>
+              )}
+            </>
           ) : null}
         </div>
       </div>
