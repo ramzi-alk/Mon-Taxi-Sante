@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
+import { trackCallButtonClick } from "~/lib/trackCallClick";
 
 const navLinks = [
   { to: "/comment-ca-marche", label: "Comment ça marche" },
@@ -52,6 +53,7 @@ export function Navbar() {
           <div className="hidden md:flex items-center gap-4">
             <a
               href={`tel:${CONTACT_PHONE_TEL}`}
+              onClick={() => trackCallButtonClick("navbar")}
               className="text-sm font-medium text-gray-500 hover:text-[#0B0F1C] transition-colors"
               aria-label={`Appeler le ${CONTACT_PHONE_DISPLAY} (gratuit)`}
             >

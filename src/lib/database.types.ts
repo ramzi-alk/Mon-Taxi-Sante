@@ -525,6 +525,24 @@ export type Database = {
           },
         ]
       }
+      call_button_clicks: {
+        Row: {
+          created_at: string
+          id: string
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          source: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          source?: string
+        }
+        Relationships: []
+      }
       driver_push_subscriptions: {
         Row: {
           auth: string
@@ -959,6 +977,7 @@ export type Database = {
       est_jour_ferie_fr: { Args: { p_date: string }; Returns: boolean }
       expire_overdue_bookings: { Args: never; Returns: undefined }
       generate_booking_reference_code: { Args: never; Returns: string }
+      get_admin_call_click_stats: { Args: never; Returns: Json }
       get_admin_driver_directory: {
         Args: never
         Returns: {
@@ -1137,6 +1156,7 @@ export type Database = {
       show_trgm: { Args: { "": string }; Returns: string[] }
       start_ride: { Args: { p_booking_id: string }; Returns: undefined }
       tarif_km_departement: { Args: { p_code: string }; Returns: number }
+      track_call_button_click: { Args: { p_source: string }; Returns: undefined }
       update_booking: {
         Args: {
           p_booking_id: string

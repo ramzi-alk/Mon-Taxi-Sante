@@ -6,6 +6,7 @@ import { supabase } from "~/lib/supabase";
 import { formatDateFr, formatTimeFr, formatReferenceCode, cn } from "~/lib/utils";
 import { logger } from "~/lib/logger";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
+import { trackCallButtonClick } from "~/lib/trackCallClick";
 import { useRealtime } from "~/hooks/useRealtime";
 import { STATUS_LABELS, STATUS_BADGE_CLASSES, type BookingStatus } from "~/lib/bookingStatus";
 import { CPAM_LABELS } from "~/lib/cpam";
@@ -156,6 +157,7 @@ function ConfirmationPage() {
           </Link>
           <a
             href={`tel:${CONTACT_PHONE_TEL}`}
+            onClick={() => trackCallButtonClick("booking_confirmation")}
             className="btn-cta inline-flex items-center justify-center gap-2 border-2 border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50 transition-colors"
           >
             <Phone className="h-4 w-4" aria-hidden="true" />

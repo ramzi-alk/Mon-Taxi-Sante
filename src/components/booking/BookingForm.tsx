@@ -26,6 +26,7 @@ import { Step9Notes } from "./steps/Step9Notes";
 import { Step10Confirmation } from "./steps/Step10Confirmation";
 import { supabase } from "~/lib/supabase";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
+import { trackCallButtonClick } from "~/lib/trackCallClick";
 import { logger } from "~/lib/logger";
 import { submitBookingServerFn } from "~/server/booking";
 import * as authRepository from "~/repositories/authRepository";
@@ -442,6 +443,7 @@ export function BookingForm() {
           <span>Besoin d&apos;aide pour remplir le formulaire&nbsp;?</span>
           <a
             href={`tel:${CONTACT_PHONE_TEL}`}
+            onClick={() => trackCallButtonClick("booking_form_help")}
             className="font-semibold text-brand-blue-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
           >
             Appelez le {CONTACT_PHONE_DISPLAY}

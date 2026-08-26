@@ -1,6 +1,7 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowRight, MapPin, CheckCircle2, Phone } from "lucide-react";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
+import { trackCallButtonClick } from "~/lib/trackCallClick";
 import { getCityPageDataServerFn } from "~/server/seo";
 import { HospitalSearch } from "~/components/HospitalSearch";
 import { FaqSchema } from "~/components/FaqSchema";
@@ -210,6 +211,7 @@ function LocalPage() {
             </Link>
             <a
               href={`tel:${CONTACT_PHONE_TEL}`}
+              onClick={() => trackCallButtonClick("city_page")}
               className="btn-cta inline-flex items-center justify-center gap-2 border-2 border-white/40 bg-white/10 hover:bg-white/20 rounded-xl transition-colors"
             >
               <Phone className="h-4 w-4" aria-hidden="true" />

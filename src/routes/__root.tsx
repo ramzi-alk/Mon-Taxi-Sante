@@ -15,6 +15,7 @@ import { ToastProvider, useToast } from "~/components/ui/toast";
 import { logger } from "~/lib/logger";
 import { logClientErrorServerFn } from "~/server/errorReporting";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
+import { trackCallButtonClick } from "~/lib/trackCallClick";
 import { GOOGLE_ADS_ID } from "~/lib/googleAds";
 import appCss from "~/styles/app.css?url";
 
@@ -91,6 +92,7 @@ function RouteError({ error, reset }: ErrorComponentProps) {
         </button>
         <a
           href={`tel:${CONTACT_PHONE_TEL}`}
+          onClick={() => trackCallButtonClick("error_boundary")}
           className="rounded-xl border border-gray-200 px-6 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
         >
           Appeler le {CONTACT_PHONE_DISPLAY}

@@ -2,6 +2,7 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowRight, HeartPulse, CheckCircle2, Phone } from "lucide-react";
 import { aldList } from "~/lib/aldData";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
+import { trackCallButtonClick } from "~/lib/trackCallClick";
 import { CitySearch } from "~/components/CitySearch";
 import { FaqSchema } from "~/components/FaqSchema";
 import { BreadcrumbSchema } from "~/components/BreadcrumbSchema";
@@ -115,6 +116,7 @@ function MaladiePage() {
             </Link>
             <a
               href={`tel:${CONTACT_PHONE_TEL}`}
+              onClick={() => trackCallButtonClick("ald_page")}
               className="btn-cta inline-flex items-center justify-center gap-2 border-2 border-white/40 bg-white/10 hover:bg-white/20 rounded-xl transition-colors"
             >
               <Phone className="h-4 w-4" aria-hidden="true" />

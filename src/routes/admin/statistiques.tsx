@@ -8,6 +8,7 @@ import {
   Minus,
   Download,
   MapPin,
+  Phone,
 } from "lucide-react";
 import { supabase } from "~/lib/supabase";
 import * as adminStatsRepository from "~/repositories/adminStatsRepository";
@@ -168,6 +169,65 @@ function KpiSection() {
   );
 }
 
+const CALL_SOURCE_LABELS: Record<string, string> = {
+  navbar: "Menu (haut de page)",
+  footer: "Pied de page",
+  booking_form_help: "Aide au formulaire de réservation",
+  error_boundary: "Écran d'erreur",
+  home_hero: "Accueil — bandeau principal",
+  home_bottom_cta: "Accueil — bas de page",
+  city_page: "Pages villes",
+  hospital_page: "Pages hôpitaux",
+  ald_page: "Pages ALD",
+  faq: "FAQ",
+  my_bookings: "Mes réservations",
+  booking_confirmation: "Confirmation de réservation",
+};
+
+function CallClicksSection() {
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: ["admin-call-click-stats"],
+    queryFn: () => adminStatsRepository.fetchCallClickStats(supabase),
+  });
+
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-5">
+        <Phone className="h-5 w-5 text-[#1244E8]" aria-hidden="true" />
+        <h2 className="text-xl font-bold text-[#0B0F1C]">Clics sur "Appeler"</h2>
+      </div>
+
+      {isError ? (
+        <AdminErrorState message="Impossible de charger les statistiques d'appel." onRetry={() => refetch()} />
+      ) : isLoading || !data ? (
+        <p className="text-gray-400">Chargement…</p>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <KpiCard label="Total (depuis le lancement)" value={String(data.total)} />
+          <KpiCard label="30 derniers jours" value={String(data.last_30_days)} />
+          <div className="rounded-xl bg-white p-5 ring-1 ring-gray-100">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">
+              Par emplacement
+            </p>
+            {data.by_source.length === 0 ? (
+              <p className="text-sm text-gray-400">Aucun clic enregistré pour le moment.</p>
+            ) : (
+              <ul className="flex flex-col gap-1.5">
+                {data.by_source.map((s) => (
+                  <li key={s.source} className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">{CALL_SOURCE_LABELS[s.source] ?? s.source}</span>
+                    <span className="font-bold text-[#0B0F1C]">{s.count}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
@@ -290,6 +350,7 @@ function AdminStatistiquesPage() {
   return (
     <div className="flex flex-col gap-10">
       <KpiSection />
+      <CallClicksSection />
       <ExportSection />
     </div>
   );
