@@ -235,6 +235,27 @@ export async function adminAssignDriver(
   }
 }
 
+/**
+ * Marks a booking as handled by a taxi provider outside the Docteur Taxi
+ * network — the admin gives up on finding a network driver and hands the
+ * patient off to a third party. Clears any assigned driver, since the ride
+ * no longer belongs to the network.
+ */
+export async function adminMarkExternalProvider(
+  client: SupabaseClient,
+  bookingId: string
+): Promise<void> {
+  const { error } = await client
+    .from("bookings")
+    .update({ status: "external_provider", driver_id: null })
+    .eq("id", bookingId);
+
+  if (error) {
+    logger.error("adminBookings.adminMarkExternalProvider failed", { error: error.message, bookingId });
+    throw new Error(error.message);
+  }
+}
+
 export async function adminCancelBooking(
   client: SupabaseClient,
   bookingId: string,

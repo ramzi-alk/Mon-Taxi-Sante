@@ -1223,6 +1223,7 @@ export type Database = {
         | "completed"
         | "cancelled"
         | "expired"
+        | "external_provider"
       booking_vehicle_type: "taxi" | "vsl" | "pmr" | "ambulance"
       cpam_status: "ald" | "cmu" | "css" | "standard" | "none"
       driver_availability: "online" | "paused" | "offline"
@@ -1368,6 +1369,7 @@ export const Constants = {
         "completed",
         "cancelled",
         "expired",
+        "external_provider",
       ],
       booking_vehicle_type: ["taxi", "vsl", "pmr", "ambulance"],
       cpam_status: ["ald", "cmu", "css", "standard", "none"],

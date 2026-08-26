@@ -22,6 +22,7 @@ export const STATUS_LABELS: Record<BookingStatus, string> = {
   completed: "Trajet terminé",
   cancelled: "Annulée",
   expired: "Expirée",
+  external_provider: "Prestataire externe",
 };
 
 export const STATUS_DESCRIPTIONS: Record<BookingStatus, string> = {
@@ -34,6 +35,7 @@ export const STATUS_DESCRIPTIONS: Record<BookingStatus, string> = {
   completed: "Le trajet est terminé. Merci d'avoir utilisé Docteur Taxi.",
   cancelled: "Cette réservation a été annulée.",
   expired: "Aucun chauffeur n'a pu être trouvé avant l'heure prévue. Contactez-nous pour une nouvelle prise en charge.",
+  external_provider: "Cette course est prise en charge par un prestataire externe à Docteur Taxi.",
 };
 
 export const STATUS_BADGE_CLASSES: Record<BookingStatus, string> = {
@@ -46,10 +48,16 @@ export const STATUS_BADGE_CLASSES: Record<BookingStatus, string> = {
   completed: "bg-brand-green-50 text-brand-green-700",
   cancelled: "bg-red-50 text-red-700",
   expired: "bg-amber-50 text-amber-700",
+  external_provider: "bg-purple-50 text-purple-700",
 };
 
 export function isTerminalStatus(status: BookingStatus): boolean {
-  return status === "completed" || status === "cancelled" || status === "expired";
+  return (
+    status === "completed" ||
+    status === "cancelled" ||
+    status === "expired" ||
+    status === "external_provider"
+  );
 }
 
 const CANCELLABLE_STATUSES: BookingStatus[] = ["pending", "confirmed", "available", "accepted"];
