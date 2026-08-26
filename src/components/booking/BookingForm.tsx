@@ -25,6 +25,7 @@ import { Step8PMT } from "./steps/Step8PMT";
 import { Step9Notes } from "./steps/Step9Notes";
 import { Step10Confirmation } from "./steps/Step10Confirmation";
 import { supabase } from "~/lib/supabase";
+import { combineLocalDateTimeToIso } from "~/lib/utils";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
 import { trackCallButtonClick } from "~/lib/trackCallClick";
 import { logger } from "~/lib/logger";
@@ -161,10 +162,10 @@ async function submitBooking(data: BookingSchema) {
 
   const payloads = sessionDates.map((date) => ({
     ...basePayload,
-    pickup_datetime: `${date}T${data.pickup_time}:00`,
+    pickup_datetime: combineLocalDateTimeToIso(date, data.pickup_time),
     return_datetime:
       !isPmtSeries && data.has_return && data.return_date && data.return_time
-        ? `${data.return_date}T${data.return_time}:00`
+        ? combineLocalDateTimeToIso(data.return_date, data.return_time)
         : null,
   }));
 
