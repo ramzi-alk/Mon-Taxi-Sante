@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, CheckCircle2, Info } from "lucide-react";
 import { FaqSchema } from "~/components/FaqSchema";
 import { BreadcrumbSchema } from "~/components/BreadcrumbSchema";
+import { FareEstimateForm } from "~/components/FareEstimateForm";
 
 export const Route = createFileRoute("/tarifs-cpam")({
   head: () => ({
@@ -169,6 +170,25 @@ function TarifsCpamPage() {
               <Info className="h-4 w-4 shrink-0 mt-0.5" aria-hidden="true" />
               <span>Les frais d'approche (trajet du chauffeur jusqu'au patient) ne sont pas facturables.</span>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Estimateur de prix */}
+      <section className="bg-white" aria-labelledby="estimate-heading">
+        <div className="container py-16 md:py-20">
+          <h2
+            id="estimate-heading"
+            className="text-2xl md:text-3xl font-black text-[#0B0F1C] tracking-tight mb-2"
+          >
+            Simulateur de prix
+          </h2>
+          <p className="text-gray-500 mb-8 max-w-xl">
+            Entre deux adresses, obtenez une estimation immédiate basée sur la distance réelle du
+            trajet et la formule tarifaire de la convention 2025.
+          </p>
+          <div className="max-w-2xl">
+            <FareEstimateForm />
           </div>
         </div>
       </section>
