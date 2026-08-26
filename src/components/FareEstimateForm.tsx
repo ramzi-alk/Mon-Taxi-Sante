@@ -100,9 +100,8 @@ export function FareEstimateForm() {
       setIsEstimating(true);
       setEstimateError(null);
       try {
-        const { data, error } = await supabase.rpc("compute_booking_price", {
-          p_distance_km: distanceKm,
-          p_vehicle_type: "taxi",
+        const basePayload = {
+          p_vehicle_type: "taxi" as const,
           p_trip_type: tripType,
           p_requires_wheelchair: requiresWheelchair,
           p_pickup_datetime: new Date(pickupDatetime).toISOString(),
@@ -111,19 +110,49 @@ export function FareEstimateForm() {
           p_dropoff_address: dropoffAddress,
           p_departement_override:
             departmentOverride === AUTO_DEPARTMENT ? undefined : departmentOverride,
+        };
+
+        const oneWayCall = supabase.rpc("compute_booking_price", {
+          ...basePayload,
+          p_distance_km: distanceKm,
         });
+
+        // compute_booking_price ne tarife qu'un seul trajet (trip_type n'est
+        // pas utilisé dans sa formule, y compris pour une vraie réservation).
+        // Pour approximer un aller-retour sans réimplémenter la formule
+        // côté client, on fait un 2e appel à distance 0 : ça isole tout ce qui
+        // ne dépend PAS de la distance (forfait de base, forfait grande
+        // ville, TPMR — facturés une fois, pas deux) de ce qui en dépend (le
+        // tarif/km, qui lui est bien parcouru deux fois). Le doublement ne
+        // porte donc que sur la partie kilométrique :
+        //   total_AR = prix(distance) + [prix(distance) - prix(0)]
+        //            = 2 × prix(distance) − prix(0)
+        // Reste une approximation : la convention distingue en réalité un
+        // chauffeur qui attend sur place (facturation d'un temps d'attente,
+        // non modélisée ici) d'un chauffeur qui repart puis revient (plus
+        // proche de deux courses distinctes) — non disponible dans ce repo.
+        const zeroDistanceCall =
+          tripType === "aller_retour"
+            ? supabase.rpc("compute_booking_price", { ...basePayload, p_distance_km: 0 })
+            : null;
+
+        const [oneWayResult, zeroDistanceResult] = await Promise.all([
+          oneWayCall,
+          zeroDistanceCall,
+        ]);
         if (cancelled) return;
+
+        const error = oneWayResult.error ?? zeroDistanceResult?.error;
         if (error) {
           logger.warn("fare_estimate.price_failed", { error: error.message });
           setEstimateError("Impossible de calculer une estimation pour le moment.");
           setPrice(null);
+        } else if (zeroDistanceResult) {
+          const oneWay = oneWayResult.data as number;
+          const zeroDistance = zeroDistanceResult.data as number;
+          setPrice(Math.round((2 * oneWay - zeroDistance) * 100) / 100);
         } else {
-          // compute_booking_price ne tarife qu'un seul trajet (trip_type n'est
-          // pas utilisé dans la formule, y compris pour une vraie réservation) :
-          // on double nous-mêmes côté simulateur pour approximer un
-          // aller-retour (le chauffeur refait le trajet retour).
-          const oneWay = data as number;
-          setPrice(tripType === "aller_retour" ? Math.round(oneWay * 2 * 100) / 100 : oneWay);
+          setPrice(oneWayResult.data as number);
         }
       } finally {
         if (!cancelled) setIsEstimating(false);
@@ -232,7 +261,13 @@ export function FareEstimateForm() {
               <button
                 key={opt.value}
                 type="button"
-                onClick={() => setTripType(opt.value)}
+                onClick={() => {
+                  setTripType(opt.value);
+                  // Un aller-retour suppose que le patient revient avec le
+                  // chauffeur : incompatible avec "retour à vide", qui décrit
+                  // au contraire l'absence de passager au retour.
+                  if (opt.value === "aller_retour") setIsHospitalization(false);
+                }}
                 className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-bold transition-colors ${
                   tripType === opt.value ? "bg-[#0B0F1C] text-white" : "text-gray-500 hover:bg-gray-100"
                 }`}
@@ -284,10 +319,16 @@ export function FareEstimateForm() {
             />
             Fauteuil roulant (+30 €)
           </label>
-          <label htmlFor="estimate-hospitalization" className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
+          <label
+            htmlFor="estimate-hospitalization"
+            className={`flex items-center gap-2 text-xs text-gray-700 ${
+              tripType === "aller_retour" ? "opacity-40" : "cursor-pointer"
+            }`}
+          >
             <Checkbox
               id="estimate-hospitalization"
               checked={isHospitalization}
+              disabled={tripType === "aller_retour"}
               onCheckedChange={(checked) => setIsHospitalization(checked === true)}
             />
             Retour à vide (hospitalisation, dialyse, chimio…)
@@ -336,7 +377,9 @@ export function FareEstimateForm() {
             <>
               <p className="text-3xl font-black text-[#1244E8]">{formatPrice(price)}</p>
               {tripType === "aller_retour" && (
-                <p className="text-xs text-gray-400 mt-0.5">Aller-retour (aller × 2)</p>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  Aller-retour — forfait compté une fois, kilomètres doublés
+                </p>
               )}
             </>
           ) : null}
@@ -347,6 +390,14 @@ export function FareEstimateForm() {
         Estimation indicative hors frais de péage — le tarif définitif reste celui du compteur
         horokilométrique agréé le jour du transport. En ALD, maternité ou CMU-C avec Prescription
         Médicale de Transport, ce montant est pris en charge à 100 % par le Tiers-Payant.
+        {tripType === "aller_retour" && (
+          <>
+            {" "}
+            Pour l&apos;aller-retour, un éventuel temps d&apos;attente sur place n&apos;est pas
+            inclus dans cette estimation — le montant réel peut varier selon que le chauffeur vous
+            attend ou revient vous chercher.
+          </>
+        )}
       </p>
 
       <Link
