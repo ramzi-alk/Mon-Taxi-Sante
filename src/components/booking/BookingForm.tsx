@@ -1,11 +1,10 @@
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight, ShieldCheck, Sparkles, X } from "lucide-react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight, Loader2, ShieldCheck, Sparkles, X } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 
-import { bookingSchema, BOOKING_STEPS, STEP_FIELDS, type BookingSchema } from "./schema";
+import { bookingResolver, BOOKING_STEPS, STEP_FIELDS, type BookingSchema } from "./schema";
 import { consumeBookingPrefill } from "~/lib/bookingPrefill";
 import {
   clearBookingDraft,
@@ -15,15 +14,34 @@ import {
 } from "~/lib/bookingDraft";
 import { computeSeriesDates } from "~/lib/seriesSchedule";
 import { ProgressBar } from "./ProgressBar";
-import { Step1Identity } from "./steps/Step1Identity";
+// Step1Route is the only step visible on first paint; the rest are
+// code-split so the initial bundle doesn't pay for steps the user may
+// never reach (PMT upload, CPAM, confirmation, etc.).
 import { Step2Route } from "./steps/Step2Route";
-import { Step3DateTime } from "./steps/Step3DateTime";
-import { Step4VehicleAndNeeds } from "./steps/Step4VehicleAndNeeds";
-import { Step5TripType } from "./steps/Step5TripType";
-import { Step7CPAMStatus } from "./steps/Step7CPAMStatus";
-import { Step8PMT } from "./steps/Step8PMT";
-import { Step9Notes } from "./steps/Step9Notes";
-import { Step10Confirmation } from "./steps/Step10Confirmation";
+const Step1Identity = lazy(() =>
+  import("./steps/Step1Identity").then((m) => ({ default: m.Step1Identity }))
+);
+const Step3DateTime = lazy(() =>
+  import("./steps/Step3DateTime").then((m) => ({ default: m.Step3DateTime }))
+);
+const Step4VehicleAndNeeds = lazy(() =>
+  import("./steps/Step4VehicleAndNeeds").then((m) => ({ default: m.Step4VehicleAndNeeds }))
+);
+const Step5TripType = lazy(() =>
+  import("./steps/Step5TripType").then((m) => ({ default: m.Step5TripType }))
+);
+const Step7CPAMStatus = lazy(() =>
+  import("./steps/Step7CPAMStatus").then((m) => ({ default: m.Step7CPAMStatus }))
+);
+const Step8PMT = lazy(() =>
+  import("./steps/Step8PMT").then((m) => ({ default: m.Step8PMT }))
+);
+const Step9Notes = lazy(() =>
+  import("./steps/Step9Notes").then((m) => ({ default: m.Step9Notes }))
+);
+const Step10Confirmation = lazy(() =>
+  import("./steps/Step10Confirmation").then((m) => ({ default: m.Step10Confirmation }))
+);
 import { supabase } from "~/lib/supabase";
 import { combineLocalDateTimeToIso } from "~/lib/utils";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
@@ -183,6 +201,14 @@ async function submitBooking(data: BookingSchema) {
 // "reprised from your last booking" banner in the new step order.
 const PREFILL_BANNER_STEPS = [1, 3, 5, 6];
 
+function StepFallback() {
+  return (
+    <div className="flex items-center justify-center py-16 text-muted-foreground">
+      <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+    </div>
+  );
+}
+
 export function BookingForm() {
   const [currentStep, setCurrentStep] = useState(1);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -194,7 +220,7 @@ export function BookingForm() {
   const [pendingDraft, setPendingDraft] = useState<BookingDraft | null>(() => readBookingDraft());
 
   const form = useForm<BookingSchema>({
-    resolver: zodResolver(bookingSchema),
+    resolver: bookingResolver,
     defaultValues: DEFAULT_VALUES,
     mode: "onBlur",
   });
@@ -213,12 +239,22 @@ export function BookingForm() {
 
   // Autosave the in-progress form to localStorage so an interrupted booking
   // (call, app switch, closed tab) can be resumed instead of lost outright.
+  // Debounced: localStorage.setItem is synchronous, and writing the whole
+  // draft on every keystroke (e.g. in the medical notes textarea) is a
+  // direct source of input lag, especially on lower-end mobile devices.
+  const draftSaveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => {
     if (pendingDraft) return;
     const subscription = form.watch((values) => {
-      saveBookingDraft(currentStep, values);
+      clearTimeout(draftSaveTimer.current);
+      draftSaveTimer.current = setTimeout(() => {
+        saveBookingDraft(currentStep, values);
+      }, 600);
     });
-    return () => subscription.unsubscribe();
+    return () => {
+      clearTimeout(draftSaveTimer.current);
+      subscription.unsubscribe();
+    };
   }, [form, currentStep, pendingDraft]);
 
   function resumeDraft() {
@@ -390,26 +426,28 @@ export function BookingForm() {
                 key={currentStep}
                 className="animate-fade-in rounded-2xl bg-white p-6 md:p-8 shadow-sm ring-1 ring-gray-100"
               >
-                {currentStep === 1 && <Step2Route form={form} />}
-                {currentStep === 2 && <Step3DateTime form={form} />}
-                {currentStep === 3 && <Step4VehicleAndNeeds form={form} />}
-                {currentStep === 4 && <Step5TripType form={form} />}
-                {currentStep === 5 && <Step1Identity form={form} />}
-                {currentStep === 6 && <Step7CPAMStatus form={form} />}
-                {currentStep === 7 && (
-                  <>
-                    <Step8PMT form={form} />
-                    <div className="my-8 h-px bg-gray-100" />
-                    <Step9Notes form={form} />
-                  </>
-                )}
-                {currentStep === 8 && (
-                  <Step10Confirmation
-                    form={form}
-                    isSubmitting={isPending}
-                    submitError={submitError}
-                  />
-                )}
+                <Suspense fallback={<StepFallback />}>
+                  {currentStep === 1 && <Step2Route form={form} />}
+                  {currentStep === 2 && <Step3DateTime form={form} />}
+                  {currentStep === 3 && <Step4VehicleAndNeeds form={form} />}
+                  {currentStep === 4 && <Step5TripType form={form} />}
+                  {currentStep === 5 && <Step1Identity form={form} />}
+                  {currentStep === 6 && <Step7CPAMStatus form={form} />}
+                  {currentStep === 7 && (
+                    <>
+                      <Step8PMT form={form} />
+                      <div className="my-8 h-px bg-gray-100" />
+                      <Step9Notes form={form} />
+                    </>
+                  )}
+                  {currentStep === 8 && (
+                    <Step10Confirmation
+                      form={form}
+                      isSubmitting={isPending}
+                      submitError={submitError}
+                    />
+                  )}
+                </Suspense>
               </div>
 
               {/* Navigation buttons */}
