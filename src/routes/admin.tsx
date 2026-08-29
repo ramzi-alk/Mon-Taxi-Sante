@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ShieldAlert, LayoutDashboard, ClipboardList, Users, UserSearch, MessageSquareText, History, ShieldCheck, BarChart3 } from "lucide-react";
+import { ShieldAlert, LayoutDashboard, ClipboardList, Users, UserSearch, MessageSquareText, History, ShieldCheck, BarChart3, Settings } from "lucide-react";
 import { supabase } from "~/lib/supabase";
 import * as authRepository from "~/repositories/authRepository";
 import { checkAdminAccessServerFn } from "~/server/adminAccess";
@@ -38,6 +38,7 @@ const NAV_ITEMS = [
   { to: "/admin/journal", label: "Journal", icon: History, exact: false },
   { to: "/admin/statistiques", label: "Statistiques", icon: BarChart3, exact: false },
   { to: "/admin/securite", label: "Sécurité", icon: ShieldCheck, exact: false },
+  { to: "/admin/parametres", label: "Paramètres", icon: Settings, exact: false },
 ] as const;
 
 function AdminLayout() {

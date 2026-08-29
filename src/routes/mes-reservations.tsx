@@ -1,14 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ClipboardList, History, Phone } from "lucide-react";
+import { ClipboardList, History, Phone, Mail } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "~/lib/supabase";
 import { useRealtime } from "~/hooks/useRealtime";
 import { BookingStatusCard } from "~/components/booking/BookingStatusCard";
 import { BookingLookupForm } from "~/components/booking/BookingLookupForm";
 import { useToast } from "~/components/ui/toast";
-import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
+import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL, CONTACT_EMAIL } from "~/lib/contact";
 import { trackCallButtonClick } from "~/lib/trackCallClick";
+import { usePhoneVisibility } from "~/hooks/usePhoneVisibility";
 import * as bookingsRepository from "~/repositories/bookingsRepository";
 import { STATUS_LABELS, isTerminalStatus, type BookingStatus } from "~/lib/bookingStatus";
 
@@ -44,6 +45,7 @@ function MyBookingsPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { ref } = Route.useSearch();
+  const phoneVisible = usePhoneVisibility();
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["my-bookings"],
@@ -121,14 +123,24 @@ function MyBookingsPage() {
               >
                 Réserver un taxi
               </Link>
-              <a
-                href={`tel:${CONTACT_PHONE_TEL}`}
-                onClick={() => trackCallButtonClick("my_bookings")}
-                className="btn-cta inline-flex items-center justify-center gap-2 border-2 border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50 transition-colors"
-              >
-                <Phone className="h-4 w-4" aria-hidden="true" />
-                {CONTACT_PHONE_DISPLAY}
-              </a>
+              {phoneVisible ? (
+                <a
+                  href={`tel:${CONTACT_PHONE_TEL}`}
+                  onClick={() => trackCallButtonClick("my_bookings")}
+                  className="btn-cta inline-flex items-center justify-center gap-2 border-2 border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50 transition-colors"
+                >
+                  <Phone className="h-4 w-4" aria-hidden="true" />
+                  {CONTACT_PHONE_DISPLAY}
+                </a>
+              ) : (
+                <a
+                  href={`mailto:${CONTACT_EMAIL}`}
+                  className="btn-cta inline-flex items-center justify-center gap-2 border-2 border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50 transition-colors"
+                >
+                  <Mail className="h-4 w-4" aria-hidden="true" />
+                  Nous écrire
+                </a>
+              )}
             </div>
           </div>
         )}

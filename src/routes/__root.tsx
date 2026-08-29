@@ -16,6 +16,7 @@ import { logger } from "~/lib/logger";
 import { logClientErrorServerFn } from "~/server/errorReporting";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
 import { trackCallButtonClick } from "~/lib/trackCallClick";
+import { usePhoneVisibility } from "~/hooks/usePhoneVisibility";
 import { GOOGLE_ADS_ID } from "~/lib/googleAds";
 import appCss from "~/styles/app.css?url";
 
@@ -62,6 +63,8 @@ function NotFound() {
 }
 
 function RouteError({ error, reset }: ErrorComponentProps) {
+  const phoneVisible = usePhoneVisibility();
+
   logger.error("route.render failed", {
     error: error instanceof Error ? error.message : String(error),
   });
@@ -90,13 +93,15 @@ function RouteError({ error, reset }: ErrorComponentProps) {
         <button onClick={reset} className="btn-cta px-6 py-3 text-white">
           Réessayer
         </button>
-        <a
-          href={`tel:${CONTACT_PHONE_TEL}`}
-          onClick={() => trackCallButtonClick("error_boundary")}
-          className="rounded-xl border border-gray-200 px-6 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-        >
-          Appeler le {CONTACT_PHONE_DISPLAY}
-        </a>
+        {phoneVisible && (
+          <a
+            href={`tel:${CONTACT_PHONE_TEL}`}
+            onClick={() => trackCallButtonClick("error_boundary")}
+            className="rounded-xl border border-gray-200 px-6 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+          >
+            Appeler le {CONTACT_PHONE_DISPLAY}
+          </a>
+        )}
       </div>
     </div>
   );

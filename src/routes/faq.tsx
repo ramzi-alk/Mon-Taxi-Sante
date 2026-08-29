@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronDown } from "lucide-react";
-import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
+import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL, CONTACT_EMAIL } from "~/lib/contact";
 import { trackCallButtonClick } from "~/lib/trackCallClick";
+import { usePhoneVisibility } from "~/hooks/usePhoneVisibility";
 
 export const Route = createFileRoute("/faq")({
   head: () => ({
@@ -28,90 +29,97 @@ interface FaqCategory {
   items: FaqItem[];
 }
 
-const faqCategories: FaqCategory[] = [
-  {
-    category: "Réservation",
-    items: [
-      {
-        question: "Comment réserver un taxi médical ?",
-        answer:
-          "Rendez-vous sur la page Réserver, renseignez votre adresse de départ, votre destination, la date et l'heure de votre rendez-vous médical, puis validez. Vous recevez une confirmation par email dès qu'un chauffeur accepte la course.",
-      },
-      {
-        question: "Combien de temps avant mon rendez-vous dois-je réserver ?",
-        answer:
-          "Nous recommandons de réserver au moins 24h à l'avance pour garantir la disponibilité d'un chauffeur conventionné, mais des réservations en urgence peuvent être prises en compte selon la disponibilité.",
-      },
-      {
-        question: "Puis-je réserver un aller-retour ou des trajets en série ?",
-        answer:
-          "Oui, le formulaire de réservation permet de choisir un aller simple, un aller-retour, ou des trajets en série pour des soins récurrents (dialyse, chimiothérapie, etc.).",
-      },
-      {
-        question: "Puis-je annuler ou modifier ma réservation ?",
-        answer:
-          `Oui, toute annulation effectuée plus de 24h avant l'heure prévue est gratuite. Contactez notre service client au ${CONTACT_PHONE_DISPLAY} pour modifier une réservation.`,
-      },
-    ],
-  },
-  {
-    category: "Prise en charge Assurance Maladie",
-    items: [
-      {
-        question: "Qu'est-ce que le Tiers-Payant et comment ça marche ?",
-        answer:
-          "Le Tiers-Payant permet à l'Assurance Maladie de régler directement le chauffeur conventionné, sans que vous ayez à avancer les frais. Il s'applique si vous bénéficiez d'une prise en charge à 100 % et disposez d'une Prescription Médicale de Transport (PMT) valide.",
-      },
-      {
-        question: "Quelles situations médicales sont prises en charge ?",
-        answer:
-          "Dialyse rénale, chimiothérapie, radiothérapie, rééducation, consultations ALD, soins psychiatriques, maternité et urgences planifiées font partie des situations couramment prises en charge, sous réserve de prescription médicale.",
-      },
-      {
-        question: "Qu'est-ce que la Prescription Médicale de Transport (PMT) ?",
-        answer:
-          "La PMT est un document signé par votre médecin attestant de la nécessité d'un transport sanitaire. Elle est indispensable pour bénéficier du Tiers-Payant intégral.",
-      },
-      {
-        question: "Je n'ai pas de prise en charge Assurance Maladie, puis-je quand même réserver ?",
-        answer:
-          "Oui, vous pouvez réserver en tant qu'assuré standard ou à frais personnels. Le tarif applicable vous sera communiqué avant la confirmation de votre course.",
-      },
-    ],
-  },
-  {
-    category: "Pendant le trajet",
-    items: [
-      {
-        question: "Puis-je signaler des besoins spécifiques (fauteuil roulant, brancard, oxygène) ?",
-        answer:
-          "Oui, le formulaire de réservation permet d'indiquer tout besoin spécifique afin que le chauffeur dispose d'un véhicule adapté (taxi, VSL ou véhicule PMR).",
-      },
-      {
-        question: "Que se passe-t-il si mon chauffeur est en retard ?",
-        answer:
-          `Vous êtes informé en temps réel dans votre espace "Mes réservations" en cas de retard. Notre équipe reste disponible au ${CONTACT_PHONE_DISPLAY} pour vous assister en cas d'imprévu.`,
-      },
-    ],
-  },
-  {
-    category: "Chauffeurs partenaires",
-    items: [
-      {
-        question: "Comment devenir chauffeur partenaire Docteur Taxi ?",
-        answer:
-          "Rendez-vous sur notre page « Devenir chauffeur partenaire » pour déposer votre candidature. Une convention Assurance Maladie valide et les certifications requises sont nécessaires.",
-      },
-      {
-        question: "Les chauffeurs sont-ils certifiés ?",
-        answer:
-          "Tous nos chauffeurs partenaires disposent d'une convention Assurance Maladie valide, d'une formation aux gestes de transport sanitaire et d'une assurance professionnelle à jour.",
-      },
-    ],
-  },
-];
+function buildFaqCategories(phoneVisible: boolean): FaqCategory[] {
+  return [
+    {
+      category: "Réservation",
+      items: [
+        {
+          question: "Comment réserver un taxi médical ?",
+          answer:
+            "Rendez-vous sur la page Réserver, renseignez votre adresse de départ, votre destination, la date et l'heure de votre rendez-vous médical, puis validez. Vous recevez une confirmation par email dès qu'un chauffeur accepte la course.",
+        },
+        {
+          question: "Combien de temps avant mon rendez-vous dois-je réserver ?",
+          answer:
+            "Nous recommandons de réserver au moins 24h à l'avance pour garantir la disponibilité d'un chauffeur conventionné, mais des réservations en urgence peuvent être prises en compte selon la disponibilité.",
+        },
+        {
+          question: "Puis-je réserver un aller-retour ou des trajets en série ?",
+          answer:
+            "Oui, le formulaire de réservation permet de choisir un aller simple, un aller-retour, ou des trajets en série pour des soins récurrents (dialyse, chimiothérapie, etc.).",
+        },
+        {
+          question: "Puis-je annuler ou modifier ma réservation ?",
+          answer: phoneVisible
+            ? `Oui, toute annulation effectuée plus de 24h avant l'heure prévue est gratuite. Contactez notre service client au ${CONTACT_PHONE_DISPLAY} pour modifier une réservation.`
+            : `Oui, toute annulation effectuée plus de 24h avant l'heure prévue est gratuite. Modifiez votre réservation directement depuis « Suivre ma réservation », ou écrivez-nous à ${CONTACT_EMAIL}.`,
+        },
+      ],
+    },
+    {
+      category: "Prise en charge Assurance Maladie",
+      items: [
+        {
+          question: "Qu'est-ce que le Tiers-Payant et comment ça marche ?",
+          answer:
+            "Le Tiers-Payant permet à l'Assurance Maladie de régler directement le chauffeur conventionné, sans que vous ayez à avancer les frais. Il s'applique si vous bénéficiez d'une prise en charge à 100 % et disposez d'une Prescription Médicale de Transport (PMT) valide.",
+        },
+        {
+          question: "Quelles situations médicales sont prises en charge ?",
+          answer:
+            "Dialyse rénale, chimiothérapie, radiothérapie, rééducation, consultations ALD, soins psychiatriques, maternité et urgences planifiées font partie des situations couramment prises en charge, sous réserve de prescription médicale.",
+        },
+        {
+          question: "Qu'est-ce que la Prescription Médicale de Transport (PMT) ?",
+          answer:
+            "La PMT est un document signé par votre médecin attestant de la nécessité d'un transport sanitaire. Elle est indispensable pour bénéficier du Tiers-Payant intégral.",
+        },
+        {
+          question: "Je n'ai pas de prise en charge Assurance Maladie, puis-je quand même réserver ?",
+          answer:
+            "Oui, vous pouvez réserver en tant qu'assuré standard ou à frais personnels. Le tarif applicable vous sera communiqué avant la confirmation de votre course.",
+        },
+      ],
+    },
+    {
+      category: "Pendant le trajet",
+      items: [
+        {
+          question: "Puis-je signaler des besoins spécifiques (fauteuil roulant, brancard, oxygène) ?",
+          answer:
+            "Oui, le formulaire de réservation permet d'indiquer tout besoin spécifique afin que le chauffeur dispose d'un véhicule adapté (taxi, VSL ou véhicule PMR).",
+        },
+        {
+          question: "Que se passe-t-il si mon chauffeur est en retard ?",
+          answer: phoneVisible
+            ? `Vous êtes informé en temps réel dans votre espace "Mes réservations" en cas de retard. Notre équipe reste disponible au ${CONTACT_PHONE_DISPLAY} pour vous assister en cas d'imprévu.`
+            : `Vous êtes informé en temps réel dans votre espace "Mes réservations" en cas de retard. Notre équipe reste disponible à ${CONTACT_EMAIL} pour vous assister en cas d'imprévu.`,
+        },
+      ],
+    },
+    {
+      category: "Chauffeurs partenaires",
+      items: [
+        {
+          question: "Comment devenir chauffeur partenaire Docteur Taxi ?",
+          answer:
+            "Rendez-vous sur notre page « Devenir chauffeur partenaire » pour déposer votre candidature. Une convention Assurance Maladie valide et les certifications requises sont nécessaires.",
+        },
+        {
+          question: "Les chauffeurs sont-ils certifiés ?",
+          answer:
+            "Tous nos chauffeurs partenaires disposent d'une convention Assurance Maladie valide, d'une formation aux gestes de transport sanitaire et d'une assurance professionnelle à jour.",
+        },
+      ],
+    },
+  ];
+}
 
 function FaqPage() {
+  const phoneVisible = usePhoneVisibility();
+  const faqCategories = buildFaqCategories(phoneVisible);
+
   return (
     <>
       <section className="bg-white">
@@ -123,19 +131,31 @@ function FaqPage() {
             Questions fréquentes
           </h1>
           <p className="mt-5 text-lg text-gray-500 max-w-xl leading-relaxed">
-            Vous ne trouvez pas votre réponse ? Appelez-nous au{" "}
-            <a
-              href={`tel:${CONTACT_PHONE_TEL}`}
-              onClick={() => trackCallButtonClick("faq")}
-              className="text-[#1244E8] underline"
-            >
-              {CONTACT_PHONE_DISPLAY}
-            </a>{" "}
-            (gratuit) ou écrivez à{" "}
-            <a href="mailto:contact@mon-taxi-sante.com" className="text-[#1244E8] underline">
-              contact@mon-taxi-sante.com
-            </a>
-            .
+            {phoneVisible ? (
+              <>
+                Vous ne trouvez pas votre réponse ? Appelez-nous au{" "}
+                <a
+                  href={`tel:${CONTACT_PHONE_TEL}`}
+                  onClick={() => trackCallButtonClick("faq")}
+                  className="text-[#1244E8] underline"
+                >
+                  {CONTACT_PHONE_DISPLAY}
+                </a>{" "}
+                (gratuit) ou écrivez à{" "}
+                <a href={`mailto:${CONTACT_EMAIL}`} className="text-[#1244E8] underline">
+                  {CONTACT_EMAIL}
+                </a>
+                .
+              </>
+            ) : (
+              <>
+                Vous ne trouvez pas votre réponse ? Écrivez-nous à{" "}
+                <a href={`mailto:${CONTACT_EMAIL}`} className="text-[#1244E8] underline">
+                  {CONTACT_EMAIL}
+                </a>
+                .
+              </>
+            )}
           </p>
         </div>
       </section>

@@ -2,6 +2,7 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowRight, MapPin, CheckCircle2, Phone } from "lucide-react";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
 import { trackCallButtonClick } from "~/lib/trackCallClick";
+import { usePhoneVisibility } from "~/hooks/usePhoneVisibility";
 import { getCityPageDataServerFn } from "~/server/seo";
 import { HospitalSearch } from "~/components/HospitalSearch";
 import { FaqSchema } from "~/components/FaqSchema";
@@ -64,6 +65,7 @@ export const Route = createFileRoute("/$department/$city")({
 });
 
 function LocalBusinessSchema({ commune, hospitals }: { commune: Commune; hospitals: Hospital[] }) {
+  const phoneVisible = usePhoneVisibility();
   const schema = {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
@@ -71,7 +73,7 @@ function LocalBusinessSchema({ commune, hospitals }: { commune: Commune; hospita
     name: `Docteur Taxi — ${commune.nom}`,
     description: `Service de taxi médical conventionné Assurance Maladie à ${commune.nom} (${commune.codeDepartement}). Transport pour dialyse, chimiothérapie, ALD. Tiers-Payant.`,
     url: "https://docteurtaxi.fr",
-    telephone: CONTACT_PHONE_TEL,
+    ...(phoneVisible ? { telephone: CONTACT_PHONE_TEL } : {}),
     priceRange: "Pris en charge Assurance Maladie",
     image: "https://docteurtaxi.fr/og-image.jpg",
     address: {
@@ -118,11 +120,14 @@ function LocalPage() {
   const { commune, hospitals, populationRank, neighboringCommunes, nearestHospitals } =
     Route.useLoaderData();
   const { nom: City, departementNom: Dept } = commune;
+  const phoneVisible = usePhoneVisibility();
 
   const faqItems = [
     {
       q: `Comment réserver un taxi conventionné Assurance Maladie à ${City} ?`,
-      a: `Utilisez notre formulaire en ligne en 5 minutes, ou appelez le ${CONTACT_PHONE_DISPLAY} (gratuit). Votre réservation est confirmée immédiatement par email.`,
+      a: phoneVisible
+        ? `Utilisez notre formulaire en ligne en 5 minutes, ou appelez le ${CONTACT_PHONE_DISPLAY} (gratuit). Votre réservation est confirmée immédiatement par email.`
+        : `Utilisez notre formulaire en ligne en 5 minutes. Votre réservation est confirmée immédiatement par email.`,
     },
     {
       q: `Le transport médical est-il vraiment gratuit à ${City} ?`,
@@ -209,14 +214,16 @@ function LocalPage() {
               Réserver à {City}
               <ArrowRight className="h-5 w-5" aria-hidden="true" />
             </Link>
-            <a
-              href={`tel:${CONTACT_PHONE_TEL}`}
-              onClick={() => trackCallButtonClick("city_page")}
-              className="btn-cta inline-flex items-center justify-center gap-2 border-2 border-white/40 bg-white/10 hover:bg-white/20 rounded-xl transition-colors"
-            >
-              <Phone className="h-4 w-4" aria-hidden="true" />
-              {CONTACT_PHONE_DISPLAY} (gratuit)
-            </a>
+            {phoneVisible && (
+              <a
+                href={`tel:${CONTACT_PHONE_TEL}`}
+                onClick={() => trackCallButtonClick("city_page")}
+                className="btn-cta inline-flex items-center justify-center gap-2 border-2 border-white/40 bg-white/10 hover:bg-white/20 rounded-xl transition-colors"
+              >
+                <Phone className="h-4 w-4" aria-hidden="true" />
+                {CONTACT_PHONE_DISPLAY} (gratuit)
+              </a>
+            )}
           </div>
         </div>
       </section>
