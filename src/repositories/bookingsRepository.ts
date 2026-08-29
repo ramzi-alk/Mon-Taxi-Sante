@@ -456,6 +456,14 @@ function mapRideLifecycleError(error: { message: string }, rideId: string, actio
       "Votre accès au pool de courses est temporairement suspendu suite à des annulations répétées juste après acceptation."
     );
   }
+  if (error.message.includes("schedule_conflict")) {
+    return new Error(
+      "Cette course chevauche une autre course que vous avez déjà acceptée à un horaire trop proche."
+    );
+  }
+  if (error.message.includes("cancellation_reason_required")) {
+    return new Error("Merci d'indiquer un motif d'annulation.");
+  }
   if (error.message.includes("not_a_driver")) {
     return new Error("Action réservée aux chauffeurs.");
   }
@@ -575,11 +583,18 @@ export async function publishBooking(client: SupabaseClient, bookingId: string):
 
 /**
  * Driver backs out of their own accepted ride, via cancel_ride_by_driver
- * (see migration 020) — returns it to the pool (available, driver_id
- * cleared) rather than cancelling the patient's reservation outright.
+ * (see migration 020, reason made mandatory in migration 057) — returns it
+ * to the pool (available, driver_id cleared) rather than cancelling the
+ * patient's reservation outright. The reason is stored in
+ * bookings.cancellation_reason for admin visibility — it does not (yet)
+ * change the suspicious-cancellation heuristic itself.
  */
-export async function cancelRideByDriver(client: SupabaseClient, rideId: string): Promise<void> {
-  const { error } = await client.rpc("cancel_ride_by_driver", { p_booking_id: rideId });
+export async function cancelRideByDriver(
+  client: SupabaseClient,
+  rideId: string,
+  reason: string
+): Promise<void> {
+  const { error } = await client.rpc("cancel_ride_by_driver", { p_booking_id: rideId, p_reason: reason });
 
   if (error) {
     throw mapRideLifecycleError(error, rideId, "cancelRideByDriver");

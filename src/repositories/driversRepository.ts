@@ -18,6 +18,12 @@ export interface MyDriverDetails {
   // migration 030). Sert à afficher un bandeau explicatif sur le tableau de
   // bord plutôt que de laisser le chauffeur croire qu'il n'y a aucune course.
   pool_suspended_until: string | null;
+  // Repris ici (déjà présents sur "Mon compte") pour permettre un bandeau
+  // proactif d'échéance d'abonnement directement sur le tableau de bord,
+  // sans requête séparée — le chauffeur découvrait jusqu'ici la coupure
+  // d'accès après coup, une fois basculé en 'past_due'.
+  subscription_status: Database["public"]["Enums"]["subscription_status"];
+  subscription_ends_at: string | null;
 }
 
 export interface MyDriverAccount {
@@ -168,7 +174,7 @@ export async function fetchMyAvailability(
   const { data, error } = await client
     .from("drivers_details")
     .select(
-      "availability, vehicle_type, pmr_equipped, stretcher_equipped, oxygen_equipped, parking_municipality, acceptance_radius_km, pool_suspended_until"
+      "availability, vehicle_type, pmr_equipped, stretcher_equipped, oxygen_equipped, parking_municipality, acceptance_radius_km, pool_suspended_until, subscription_status, subscription_ends_at"
     )
     .eq("profile_id", profileId)
     .maybeSingle();

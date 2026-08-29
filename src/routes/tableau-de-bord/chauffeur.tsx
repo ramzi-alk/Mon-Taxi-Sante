@@ -1,7 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  Activity,
   Car,
   CheckCircle2,
   Clock,
@@ -21,6 +20,9 @@ import {
   Radio,
   RadioTower,
   Mail,
+  AlertTriangle,
+  BellRing,
+  X,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "~/lib/supabase";
@@ -91,8 +93,8 @@ async function completeRide(rideId: string): Promise<void> {
   await bookingsRepository.completeRide(supabase, rideId);
 }
 
-async function cancelRideByDriver(rideId: string): Promise<void> {
-  await bookingsRepository.cancelRideByDriver(supabase, rideId);
+async function cancelRideByDriver(rideId: string, reason: string): Promise<void> {
+  await bookingsRepository.cancelRideByDriver(supabase, rideId, reason);
 }
 
 async function refuseRide(rideId: string): Promise<void> {
@@ -184,6 +186,12 @@ function DriverDashboard() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [acceptingSeriesId, setAcceptingSeriesId] = useState<string | null>(null);
   const isOnline = useOnlineStatus();
+  const [dismissedSubscriptionWarningFor, setDismissedSubscriptionWarningFor] = useState<string | null>(() => {
+    try { return localStorage.getItem("driver-subscription-warning-dismissed-for"); } catch { return null; }
+  });
+  const [pushBannerDismissed, setPushBannerDismissed] = useState(() => {
+    try { return localStorage.getItem("driver-push-banner-dismissed") === "1"; } catch { return false; }
+  });
 
   // Driver's own online/paused/offline status — the pool only shows rides
   // to drivers who are "online" (see migration 018).
@@ -197,6 +205,25 @@ function DriverDashboard() {
   // online/paused/offline, qui reste sous le contrôle du chauffeur.
   const poolSuspendedUntil = availabilityQuery.data?.pool_suspended_until ?? null;
   const isPoolSuspended = poolSuspendedUntil != null && new Date(poolSuspendedUntil) > new Date();
+
+  // Bandeau proactif d'échéance d'abonnement — la donnée existait déjà
+  // (affichée en lecture seule sur "Mon compte") mais rien n'alertait le
+  // chauffeur avant la coupure d'accès au passage en 'past_due'.
+  const subscriptionStatus = availabilityQuery.data?.subscription_status;
+  const subscriptionEndsAt = availabilityQuery.data?.subscription_ends_at ?? null;
+  const daysUntilSubscriptionEnds =
+    subscriptionEndsAt != null
+      ? Math.ceil((new Date(subscriptionEndsAt).getTime() - Date.now()) / 86_400_000)
+      : null;
+  const showSubscriptionWarning =
+    (subscriptionStatus === "trial" || subscriptionStatus === "active") &&
+    daysUntilSubscriptionEnds != null &&
+    daysUntilSubscriptionEnds >= 0 &&
+    daysUntilSubscriptionEnds <= 7 &&
+    dismissedSubscriptionWarningFor !== subscriptionEndsAt;
+
+  const showPushBanner =
+    push.isSupported && push.permission === "default" && !push.isSubscribed && !pushBannerDismissed;
 
   const statsQuery = useQuery({
     queryKey: ["my-driver-stats"],
@@ -364,9 +391,9 @@ function DriverDashboard() {
   });
 
   const cancelMutation = useMutation({
-    mutationFn: cancelRideByDriver,
-    onMutate: (rideId) => setCancellingId(rideId),
-    onSuccess: (_, rideId) => {
+    mutationFn: ({ rideId, reason }: { rideId: string; reason: string }) => cancelRideByDriver(rideId, reason),
+    onMutate: ({ rideId }) => setCancellingId(rideId),
+    onSuccess: (_, { rideId }) => {
       toast({ title: "Course annulée", description: "La course est retournée dans le pool.", variant: "default" });
       notifyRideUnassignedServerFn({ data: { bookingId: rideId } }).catch((err) => {
         logger.warn("email.notifyRideUnassigned failed", { error: err.message, rideId });
@@ -377,18 +404,18 @@ function DriverDashboard() {
       queryClient.invalidateQueries({ queryKey: ["ride-pool"] });
       queryClient.invalidateQueries({ queryKey: ["my-rides"] });
     },
-    onError: (error, rideId) => {
+    onError: (error, { rideId }) => {
       logger.error("driver.cancelRideByDriver failed", { error: error.message, rideId });
       toast({ title: "Erreur", description: error.message, variant: "error" });
     },
   });
 
   const cancelSeriesMutation = useMutation({
-    mutationFn: async (rideIds: string[]) => {
-      for (const id of rideIds) await cancelRideByDriver(id);
+    mutationFn: async ({ rideIds, reason }: { rideIds: string[]; reason: string }) => {
+      for (const id of rideIds) await cancelRideByDriver(id, reason);
     },
-    onMutate: ([firstId]) => setCancellingSeriesId(firstId),
-    onSuccess: (_, rideIds) => {
+    onMutate: ({ rideIds: [firstId] }) => setCancellingSeriesId(firstId),
+    onSuccess: (_, { rideIds }) => {
       const n = rideIds.length;
       toast({ title: `${n} séance${n > 1 ? "s" : ""} annulée${n > 1 ? "s" : ""}`, description: "Retournées dans le pool.", variant: "default" });
       // Un seul email récap : on passe le compte exact annulé pour que l'email
@@ -600,6 +627,79 @@ function DriverDashboard() {
       </div>
 
       <div className="container py-8 space-y-8">
+        {/* Bandeau proactif d'échéance d'abonnement */}
+        {showSubscriptionWarning && (
+          <div
+            role="alert"
+            className="flex items-start gap-3 rounded-2xl bg-amber-50 border border-amber-200 px-5 py-4"
+          >
+            <AlertTriangle className="h-5 w-5 shrink-0 text-amber-500 mt-0.5" aria-hidden="true" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-amber-900">
+                {daysUntilSubscriptionEnds === 0
+                  ? "Votre abonnement expire aujourd'hui"
+                  : `Votre abonnement expire dans ${daysUntilSubscriptionEnds} jour${daysUntilSubscriptionEnds! > 1 ? "s" : ""}`}
+              </p>
+              <p className="text-sm text-amber-700 mt-0.5">
+                Sans renouvellement, vous perdrez l'accès au pool de courses.{" "}
+                <Link to="/tableau-de-bord/chauffeur/compte" className="font-semibold underline">
+                  Gérer mon abonnement
+                </Link>
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setDismissedSubscriptionWarningFor(subscriptionEndsAt);
+                try { localStorage.setItem("driver-subscription-warning-dismissed-for", subscriptionEndsAt ?? ""); } catch {}
+              }}
+              aria-label="Masquer cet avertissement"
+              className="shrink-0 rounded-lg p-1 text-amber-500 hover:bg-amber-100 transition-colors"
+            >
+              <X className="h-4 w-4" aria-hidden="true" />
+            </button>
+          </div>
+        )}
+
+        {/* Bannière d'activation des notifications push — sans elles, le
+            chauffeur ne sait qu'une course est disponible que s'il garde
+            l'onglet ouvert sous les yeux. */}
+        {showPushBanner && (
+          <div
+            role="status"
+            className="flex items-start gap-3 rounded-2xl bg-brand-blue-50 border border-brand-blue-200 px-5 py-4"
+          >
+            <BellRing className="h-5 w-5 shrink-0 text-brand-blue-600 mt-0.5" aria-hidden="true" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-brand-blue-900">
+                Activez les notifications pour ne manquer aucune course
+              </p>
+              <p className="text-sm text-brand-blue-700 mt-0.5">
+                Vous serez alerté même l'application fermée, dès qu'une nouvelle course correspond à votre véhicule.
+              </p>
+              <button
+                type="button"
+                onClick={() => push.subscribe().catch(() => {})}
+                disabled={push.isLoading}
+                className="mt-2 inline-flex items-center gap-1.5 rounded-xl bg-brand-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-blue-700 disabled:opacity-60 transition-colors"
+              >
+                {push.isLoading ? "Activation…" : "Activer les notifications"}
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setPushBannerDismissed(true);
+                try { localStorage.setItem("driver-push-banner-dismissed", "1"); } catch {}
+              }}
+              aria-label="Masquer cette bannière"
+              className="shrink-0 rounded-lg p-1 text-brand-blue-500 hover:bg-brand-blue-100 transition-colors"
+            >
+              <X className="h-4 w-4" aria-hidden="true" />
+            </button>
+          </div>
+        )}
+
         {/* Stats avec sélecteur de période */}
         <section aria-labelledby="stats-heading">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
@@ -712,11 +812,6 @@ function DriverDashboard() {
             );
           })()}
         </section>
-
-        {/* Pool disponible — toujours visible */}
-        <div className="grid grid-cols-1 gap-2.5">
-          <StatCard icon={Activity} label="Courses disponibles" value={poolRides.length} color="bg-brand-blue-50 text-brand-blue-600" />
-        </div>
 
         {/* Acceptance radius setting — chips instantanés */}
         <section aria-labelledby="radius-heading">
@@ -953,9 +1048,9 @@ function DriverDashboard() {
                             isStarting={startingId === ride.id && startMutation.isPending}
                             onComplete={(id) => completeMutation.mutate(id)}
                             isCompleting={completingId === ride.id && completeMutation.isPending}
-                            onCancel={(id) => cancelMutation.mutate(id)}
+                            onCancel={(id, reason) => cancelMutation.mutate({ rideId: id, reason })}
                             isCancelling={cancellingId === ride.id && cancelMutation.isPending}
-                            onCancelSeries={(ids) => cancelSeriesMutation.mutate(ids)}
+                            onCancelSeries={(ids, reason) => cancelSeriesMutation.mutate({ rideIds: ids, reason })}
                             isCancellingSeries={cancellingSeriesId === ride.id && cancelSeriesMutation.isPending}
                             onRate={(id, rating, comment) => rateMutation.mutate({ rideId: id, rating, comment })}
                             isRating={ratingId === ride.id && rateMutation.isPending}

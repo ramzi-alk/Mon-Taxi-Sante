@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { MapPin, Clock, Car, Users, Navigation, Loader2, PlayCircle, FlagTriangleRight, XCircle, User, Phone, CalendarPlus, Banknote, ChevronDown, ChevronUp, ClipboardCheck, Building2, Repeat, Lock } from "lucide-react";
 import { SeriesRideSelectPanel } from "./SeriesRideSelectPanel";
+import { CancelReasonForm } from "./CancelReasonForm";
 import { formatDateFr, formatTimeFr, formatCountdown } from "~/lib/utils";
 import { cn } from "~/lib/utils";
 import { revealThresholdMin } from "~/lib/bookingMasking";
@@ -87,9 +88,9 @@ interface RideCardProps {
   isStarting?: boolean;
   onComplete?: (rideId: string) => void;
   isCompleting?: boolean;
-  onCancel?: (rideId: string) => void;
+  onCancel?: (rideId: string, reason: string) => void;
   isCancelling?: boolean;
-  onCancelSeries?: (rideIds: string[]) => void;
+  onCancelSeries?: (rideIds: string[], reason: string) => void;
   isCancellingSeries?: boolean;
   onRate?: (rideId: string, rating: number, comment?: string) => void;
   isRating?: boolean;
@@ -374,7 +375,9 @@ export function RideCard({
   const isCompleted = ride.status === "completed";
   // Collapsed by default when completed and already rated; expand if pending rating
   const [collapsed, setCollapsed] = useState(isCompleted && ride.driver_rating_given != null);
-  const [confirmingCancel, setConfirmingCancel] = useState(false);
+  const [cancelTarget, setCancelTarget] = useState<
+    { kind: "single"; id: string } | { kind: "series"; ids: string[] } | null
+  >(null);
   const [confirmingRefuse, setConfirmingRefuse] = useState(false);
   const [confirmingComplete, setConfirmingComplete] = useState(false);
   const [seriesAcceptOpen, setSeriesAcceptOpen] = useState(false);
@@ -816,14 +819,26 @@ export function RideCard({
 
           {ride.status === "accepted" && onCancel && (
             <div className="w-full space-y-2">
-              {/* Série : panneau de sélection multi-séances */}
-              {isSeries && onCancelSeries && cancellableSeriesRides.length > 0 ? (
+              {cancelTarget ? (
+                /* Motif obligatoire avant confirmation, quel que soit le
+                   chemin (course seule ou série sélectionnée ci-dessous) */
+                <CancelReasonForm
+                  isSubmitting={cancelTarget.kind === "single" ? !!isCancelling : !!isCancellingSeries}
+                  onConfirm={(reason) => {
+                    if (cancelTarget.kind === "single") onCancel(cancelTarget.id, reason);
+                    else onCancelSeries?.(cancelTarget.ids, reason);
+                    setCancelTarget(null);
+                  }}
+                  onClose={() => setCancelTarget(null)}
+                />
+              ) : isSeries && onCancelSeries && cancellableSeriesRides.length > 0 ? (
+                /* Série : panneau de sélection multi-séances */
                 seriesCancelOpen ? (
                   <SeriesRideSelectPanel
                     rides={cancellableSeriesRides}
                     mode="cancel"
-                    isSubmitting={!!isCancellingSeries || !!isCancelling}
-                    onConfirm={(ids) => { onCancelSeries(ids); setSeriesCancelOpen(false); }}
+                    isSubmitting={false}
+                    onConfirm={(ids) => { setCancelTarget({ kind: "series", ids }); setSeriesCancelOpen(false); }}
                     onClose={() => setSeriesCancelOpen(false)}
                   />
                 ) : (
@@ -837,38 +852,14 @@ export function RideCard({
                   </button>
                 )
               ) : (
-                /* Course seule : confirmation classique en 2 étapes */
-                confirmingCancel ? (
-                  <div className="flex items-center gap-3 text-sm pt-2">
-                    <span className="text-gray-700">Annuler cette course ?</span>
-                    <button
-                      type="button"
-                      onClick={() => { onCancel(ride.id); setConfirmingCancel(false); }}
-                      disabled={isCancelling}
-                      className="font-bold text-red-600 hover:underline disabled:opacity-60 flex items-center gap-1.5"
-                    >
-                      {isCancelling && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
-                      Oui, annuler
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setConfirmingCancel(false)}
-                      disabled={isCancelling}
-                      className="text-gray-500 hover:underline"
-                    >
-                      Non
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setConfirmingCancel(true)}
-                    className="flex items-center gap-1.5 text-xs font-semibold text-red-600 hover:underline pt-2"
-                  >
-                    <XCircle className="h-3.5 w-3.5" aria-hidden="true" />
-                    Me désister de cette course
-                  </button>
-                )
+                <button
+                  type="button"
+                  onClick={() => setCancelTarget({ kind: "single", id: ride.id })}
+                  className="flex items-center gap-1.5 text-xs font-semibold text-red-600 hover:underline pt-2"
+                >
+                  <XCircle className="h-3.5 w-3.5" aria-hidden="true" />
+                  Me désister de cette course
+                </button>
               )}
             </div>
           )}

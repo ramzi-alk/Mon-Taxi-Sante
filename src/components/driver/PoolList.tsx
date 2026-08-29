@@ -71,10 +71,37 @@ export function PoolList({ rides, onAccept, acceptingId, isAccepting, driverProf
   }, [rides]);
   const [vehicleFilter, setVehicleFilter] = useState<VehicleFilter>(() => defaultVehicleFilter(driverProfile));
   const [accessibilityOnly, setAccessibilityOnly] = useState(false);
-  const [sortBy, setSortBy] = useState<SortBy>("urgency");
-  const [viewMode, setViewMode] = useState<ViewMode>(
-    rides.length > VIRTUALIZE_THRESHOLD ? "compact" : "grid"
-  );
+  // Tri et vue sont des préférences durables (le chauffeur les re-choisit
+  // sinon à chaque session) — persistées en localStorage. La recherche
+  // texte et "besoins spécifiques" restent volontairement remises à zéro à
+  // chaque visite : un filtre oublié actif d'une session précédente
+  // masquerait silencieusement des courses disponibles.
+  const [sortBy, setSortBy] = useState<SortBy>(() => {
+    try {
+      const stored = localStorage.getItem("driver-pool-sort");
+      return stored === "urgency" || stored === "proximity" ? stored : "urgency";
+    } catch {
+      return "urgency";
+    }
+  });
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    try {
+      const stored = localStorage.getItem("driver-pool-view");
+      if (stored === "compact" || stored === "grid") return stored;
+    } catch {
+      // ignore
+    }
+    return rides.length > VIRTUALIZE_THRESHOLD ? "compact" : "grid";
+  });
+
+  const updateSortBy = (value: SortBy) => {
+    setSortBy(value);
+    try { localStorage.setItem("driver-pool-sort", value); } catch {}
+  };
+  const updateViewMode = (value: ViewMode) => {
+    setViewMode(value);
+    try { localStorage.setItem("driver-pool-view", value); } catch {}
+  };
 
   const hasAppliedDriverDefault = useRef(false);
   useEffect(() => {
@@ -144,7 +171,7 @@ export function PoolList({ rides, onAccept, acceptingId, isAccepting, driverProf
           <div className="shrink-0 flex items-center gap-1 rounded-lg bg-gray-100 p-1">
             <button
               type="button"
-              onClick={() => setViewMode("compact")}
+              onClick={() => updateViewMode("compact")}
               aria-pressed={viewMode === "compact"}
               aria-label="Vue liste compacte"
               className={cn(
@@ -157,7 +184,7 @@ export function PoolList({ rides, onAccept, acceptingId, isAccepting, driverProf
             </button>
             <button
               type="button"
-              onClick={() => setViewMode("grid")}
+              onClick={() => updateViewMode("grid")}
               aria-pressed={viewMode === "grid"}
               aria-label="Vue détaillée en cartes"
               className={cn(
@@ -185,7 +212,7 @@ export function PoolList({ rides, onAccept, acceptingId, isAccepting, driverProf
             </SelectContent>
           </Select>
 
-          <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortBy)}>
+          <Select value={sortBy} onValueChange={(v) => updateSortBy(v as SortBy)}>
             <SelectTrigger className="w-auto" aria-label="Trier les courses">
               <ArrowDownWideNarrow className="h-4 w-4 text-gray-400" aria-hidden="true" />
               <SelectValue placeholder="Trier" />

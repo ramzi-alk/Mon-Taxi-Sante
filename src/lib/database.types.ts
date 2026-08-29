@@ -964,7 +964,7 @@ export type Database = {
         Returns: string
       }
       cancel_ride_by_driver: {
-        Args: { p_booking_id: string }
+        Args: { p_booking_id: string; p_reason: string }
         Returns: undefined
       }
       cancel_series: { Args: { p_booking_id: string }; Returns: undefined }
