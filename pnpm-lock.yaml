@@ -92,6 +92,9 @@ importers:
       lucide-react:
         specifier: ^0.454.0
         version: 0.454.0(react@19.2.7)
+      mapbox-gl:
+        specifier: ^3.29.0
+        version: 3.29.0
       pino:
         specifier: ^10.3.1
         version: 10.3.1
@@ -1929,6 +1932,9 @@ packages:
     resolution: {integrity: sha512-hw7zMDwykCLnEzgncEEjHeA6+45aeEzRYuKHuyRSOPkhko+J3ySGjGIzu+mmMfDFG1vazHepMaYFYHbTFAZAAQ==}
     peerDependencies:
       react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0-rc
+
+  mapbox-gl@3.29.0:
+    resolution: {integrity: sha512-Fnh1WLsZMfihwRZY5scp456iQuZo9G97tTpb26bf/Ejsi/L7O+4dE9+I03VoOor2ul3DEOp6F2P3273omyVsNw==}
 
   math-intrinsics@1.1.0:
     resolution: {integrity: sha512-/IXtbwEk5HTPyEwyKX6hGkYXxM9nbj64B+ilVJnC/R6B0pH5G4V3b0pVbL7DBj4tkhBAppbQUlf6F6Xl9LHu1g==}
@@ -4319,6 +4325,8 @@ snapshots:
   lucide-react@0.454.0(react@19.2.7):
     dependencies:
       react: 19.2.7
+
+  mapbox-gl@3.29.0: {}
 
   math-intrinsics@1.1.0: {}
 

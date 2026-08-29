@@ -171,16 +171,51 @@ code de `main`).
       confusion identifiée (rayon serveur vs filtres d'affichage client, deux
       causes différentes à "pourquoi je ne vois pas cette course").
 
-## Sprint 3 — Productivité chauffeur (carte & planning)
+## Sprint 3 — Productivité chauffeur (carte & planning) — 3/4 livré
 
-- [ ] Vue "Ma journée" chronologique avec alertes de chevauchement (réutilise
-      la logique du Sprint 1).
-- [ ] Mini-carte pool + itinéraire du jour (`src/lib/mapbox.ts` déjà intégré
-      au projet).
-- [ ] Simplifier les CTA d'une carte pool en série (1 seul bouton "Accepter"
-      au lieu de 3 concurrents).
-- [ ] Refactor `RideCard.tsx` en sous-composants par statut — à faire avant
-      d'alourdir encore ce composant avec les tickets Sprint 4.
+- [x] **Simplifier les CTA d'une carte pool en série.** Le bouton "X séances"
+      (même poids visuel qu'"Accepter") devient un lien texte discret
+      "Accepter toute la série" sous le CTA principal, dans `RideCard.tsx`
+      (vue Cartes) et `PoolRideRow.tsx` (vue Liste) — un seul bouton plein
+      par carte au lieu de deux qui se disputaient l'attention.
+- [x] **Vue "Ma journée" chronologique avec alertes de chevauchement.**
+      Nouveau composant `src/components/driver/DayTimeline.tsx`, affiché en
+      tête de l'onglet "Mes courses" dès 2 courses acceptées aujourd'hui :
+      frise avec le temps de battement entre chaque course (même formule que
+      la détection serveur de la migration 056 — ~2 min/km, plancher 20 min),
+      alerte visuelle si <20 min ou chevauchement. Reste utile même une fois
+      056 déployée : les courses acceptées avant son déploiement n'ont pas
+      été vérifiées, et la frise donne une vraie vision d'ensemble du
+      planning, pas seulement un blocage à l'acceptation.
+- [x] **Mini-carte pool + itinéraire du jour.** Nouveau composant partagé
+      `src/components/driver/RideMap.tsx` (Mapbox GL JS — cohérent avec le
+      token déjà utilisé pour l'autocomplete/distance dans `src/lib/mapbox.ts`,
+      pas de nouveau fournisseur cartographique) :
+      - Dans `PoolList.tsx` : toggle "Carte" (repliée par défaut, préférence
+        persistée) positionnant la destination de chaque course filtrée —
+        **jamais le point de prise en charge**, non exposé tant qu'une course
+        n'est pas acceptée (`bookings_pool_for_drivers` masque
+        `pickup_lat`/`pickup_lng`, migrations 029/031) : la carte ne révèle
+        rien de plus que ce que le texte affiche déjà.
+      - Dans `DayTimeline` : itinéraire tracé (pickup → dropoff de chaque
+        course, dans l'ordre chronologique) pour les courses déjà acceptées,
+        où les coordonnées sont légitimement disponibles.
+      - `mapbox-gl` (~1 Mo minifié) chargé en `React.lazy()` dans les deux
+        cas plutôt qu'en import statique — sans ça, le chunk du dashboard
+        chauffeur passait de ~80 kB à **2,8 Mo** pour tout le monde, carte
+        affichée ou non. Vérifié avec un vrai build (`pnpm run build:vite`),
+        pas seulement `tsc`.
+      - `drivers_details.parking_lat`/`parking_lng` remontés dans
+        `fetchMyAvailability` (existaient déjà en base, jamais exposés côté
+        dashboard) pour positionner le chauffeur sur les deux cartes.
+- [ ] **Refactor `RideCard.tsx` en sous-composants par statut — reporté.**
+      Composant central de ~1000 lignes déjà fonctionnel, à fort trafic
+      (chaque vue pool/mes courses) : un refactor complet maintenant serait
+      un risque de régression sans bénéfice immédiat, puisque rien de ce
+      sprint ni du précédent n'en dépendait. Le plan initial le positionnait
+      explicitement "à faire *avant* d'alourdir encore ce composant avec les
+      tickets Sprint 4" — le bon moment reste donc juste avant d'attaquer le
+      Sprint 4 (CA réel, justificatif PDF, tags patient), pas avant.
 
 ## Sprint 4 — Revenu réel & différenciants
 

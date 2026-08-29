@@ -1,6 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, lazy, Suspense } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { Search, LayoutGrid, Rows3, ArrowDownWideNarrow, MapPin } from "lucide-react";
+import { Search, LayoutGrid, Rows3, ArrowDownWideNarrow, MapPin, Map as MapIcon } from "lucide-react";
+import type { RideMapMarker } from "./RideMap";
+
+// mapbox-gl à lui seul pèse ~1 Mo minifié — la carte est repliée par défaut
+// (showMap), donc un import statique gonflerait le bundle du dashboard
+// chauffeur pour tout le monde, même ceux qui ne l'ouvrent jamais.
+const RideMap = lazy(() => import("./RideMap").then((m) => ({ default: m.RideMap })));
 import { Input } from "~/components/ui/input";
 import { Checkbox } from "~/components/ui/checkbox";
 import {
@@ -46,6 +52,8 @@ interface PoolListProps {
   acceptanceRadiusKm?: number | null;
   onSetAcceptanceRadius?: (km: number | null) => void;
   isSettingAcceptanceRadius?: boolean;
+  driverLat?: number | null;
+  driverLng?: number | null;
 }
 
 const RADIUS_OPTIONS = [5, 10, 25, 50, null] as const;
@@ -80,7 +88,19 @@ export function PoolList({
   acceptanceRadiusKm,
   onSetAcceptanceRadius,
   isSettingAcceptanceRadius,
+  driverLat,
+  driverLng,
 }: PoolListProps) {
+  const [showMap, setShowMap] = useState(() => {
+    try { return localStorage.getItem("driver-pool-map") === "1"; } catch { return false; }
+  });
+  const toggleMap = () => {
+    setShowMap((v) => {
+      const next = !v;
+      try { localStorage.setItem("driver-pool-map", next ? "1" : "0"); } catch {}
+      return next;
+    });
+  };
   const [search, setSearch] = useState("");
 
   // Toutes les rides du pool groupées par series_id (non filtrées) pour
@@ -163,6 +183,30 @@ export function PoolList({
     return result;
   }, [rides, vehicleFilter, accessibilityOnly, search, sortBy, driverProfile]);
 
+  // Un pickup non accepté n'a jamais de coordonnées exposées (bookings_pool_
+  // for_drivers masque pickup_lat/lng — migration 029/031) : la carte ne
+  // positionne donc que la destination de chaque course, jamais son point de
+  // départ, pour ne rien révéler de plus que ce que le texte affiche déjà.
+  const mapMarkers = useMemo<RideMapMarker[]>(() => {
+    const markers: RideMapMarker[] = [];
+    if (driverLat != null && driverLng != null) {
+      markers.push({ id: "driver", lat: driverLat, lng: driverLng, kind: "driver", label: "Vous" });
+    }
+    for (const ride of filteredRides) {
+      if (ride.dropoff_lat == null || ride.dropoff_lng == null) continue;
+      const minutesUntil = (new Date(ride.pickup_datetime).getTime() - Date.now()) / 60000;
+      markers.push({
+        id: ride.id,
+        lat: ride.dropoff_lat,
+        lng: ride.dropoff_lng,
+        kind: "dropoff",
+        urgent: minutesUntil >= 0 && minutesUntil <= 20,
+        label: `${new Date(ride.pickup_datetime).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })} → ${ride.dropoff_address}`,
+      });
+    }
+    return markers;
+  }, [filteredRides, driverLat, driverLng]);
+
   const parentRef = useRef<HTMLDivElement>(null);
   const virtualizer = useVirtualizer({
     count: filteredRides.length,
@@ -222,7 +266,33 @@ export function PoolList({
               Cartes
             </button>
           </div>
+
+          <button
+            type="button"
+            onClick={toggleMap}
+            aria-pressed={showMap}
+            aria-label={showMap ? "Masquer la carte" : "Afficher la carte"}
+            className={cn(
+              "shrink-0 flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors",
+              showMap ? "bg-brand-blue-50 text-brand-blue-700 ring-1 ring-brand-blue-200" : "bg-gray-100 text-gray-500 hover:text-gray-700"
+            )}
+          >
+            <MapIcon className="h-3.5 w-3.5" aria-hidden="true" />
+            Carte
+          </button>
         </div>
+
+        {showMap && (
+          <div className="mb-2">
+            <Suspense fallback={<div className="h-[220px] w-full rounded-2xl bg-gray-100 animate-pulse" />}>
+              <RideMap markers={mapMarkers} height="220px" />
+            </Suspense>
+            <p className="mt-1.5 text-[11px] text-gray-400">
+              Seule la destination de chaque course est positionnée — le point de prise en charge reste masqué tant
+              que la course n'est pas acceptée.
+            </p>
+          </div>
+        )}
 
         {/* Ligne 2 : filtres */}
         <div className="flex flex-wrap items-center gap-2">

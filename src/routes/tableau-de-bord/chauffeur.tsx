@@ -35,6 +35,7 @@ import { useRealtime } from "~/hooks/useRealtime";
 import { useOnlineStatus } from "~/hooks/useOnlineStatus";
 import { usePushNotifications } from "~/hooks/usePushNotifications";
 import { RideCard, type PoolRide } from "~/components/driver/RideCard";
+import { DayTimeline } from "~/components/driver/DayTimeline";
 import { PoolList } from "~/components/driver/PoolList";
 import { SkeletonRideCard } from "~/components/driver/SkeletonCard";
 import { useToast } from "~/components/ui/toast";
@@ -1064,6 +1065,8 @@ function DriverDashboard() {
                 acceptanceRadiusKm={availabilityQuery.data?.acceptance_radius_km ?? null}
                 onSetAcceptanceRadius={(km) => radiusMutation.mutate(km)}
                 isSettingAcceptanceRadius={radiusMutation.isPending}
+                driverLat={availabilityQuery.data?.parking_lat ?? null}
+                driverLng={availabilityQuery.data?.parking_lng ?? null}
               />
             )}
           </section>
@@ -1094,6 +1097,11 @@ function DriverDashboard() {
               </div>
             ) : (
               <div className="space-y-8">
+                <DayTimeline
+                  rides={todayRides}
+                  driverLat={availabilityQuery.data?.parking_lat ?? null}
+                  driverLng={availabilityQuery.data?.parking_lng ?? null}
+                />
                 {/* #12 Prompt contextuel de notation */}
                 {unratedRides.length > 0 && (
                   <div className="flex items-center gap-3 rounded-2xl bg-amber-50 border border-amber-200 px-5 py-4">

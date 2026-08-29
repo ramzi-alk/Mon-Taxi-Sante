@@ -12,6 +12,8 @@ export interface MyDriverDetails {
   stretcher_equipped: boolean;
   oxygen_equipped: boolean;
   parking_municipality: string | null;
+  parking_lat: number | null;
+  parking_lng: number | null;
   acceptance_radius_km: number | null;
   // Renseigné et futur si le chauffeur est temporairement suspendu du pool
   // suite à des annulations suspectes répétées (cf. cancel_ride_by_driver,
@@ -179,7 +181,7 @@ export async function fetchMyAvailability(
   const { data, error } = await client
     .from("drivers_details")
     .select(
-      "availability, vehicle_type, pmr_equipped, stretcher_equipped, oxygen_equipped, parking_municipality, acceptance_radius_km, pool_suspended_until, subscription_status, subscription_ends_at"
+      "availability, vehicle_type, pmr_equipped, stretcher_equipped, oxygen_equipped, parking_municipality, parking_lat, parking_lng, acceptance_radius_km, pool_suspended_until, subscription_status, subscription_ends_at"
     )
     .eq("profile_id", profileId)
     .maybeSingle();

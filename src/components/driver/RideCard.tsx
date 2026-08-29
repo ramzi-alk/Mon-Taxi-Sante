@@ -697,54 +697,52 @@ export function RideCard({
         {/* CTA */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end pt-2 border-t border-gray-100">
           {ride.status === "available" && (
-            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-              <button
-                type="button"
-                onClick={() => onAccept(ride.id)}
-                disabled={isAccepting || isAcceptingSeries}
-                aria-label={`Accepter la course — ${ride.pickup_address} vers ${ride.dropoff_address}`}
-                aria-busy={isAccepting}
-                className={cn(
-                  "flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 flex-1 sm:flex-initial",
-                  (isAccepting || isAcceptingSeries)
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-brand-green-600 hover:bg-brand-green-700 shadow-md shadow-brand-green-600/20 active:scale-95"
-                )}
-              >
-                {isAccepting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                    En cours…
-                  </>
-                ) : (
-                  <>
-                    <Car className="h-4 w-4" aria-hidden="true" />
-                    {isSeries ? "Cette séance" : "Accepter"}
-                  </>
-                )}
-              </button>
+            <div className="flex flex-col items-stretch gap-1.5 w-full sm:w-auto sm:items-end">
+              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                <button
+                  type="button"
+                  onClick={() => onAccept(ride.id)}
+                  disabled={isAccepting || isAcceptingSeries}
+                  aria-label={`Accepter la course — ${ride.pickup_address} vers ${ride.dropoff_address}`}
+                  aria-busy={isAccepting}
+                  className={cn(
+                    "flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 flex-1 sm:flex-initial",
+                    (isAccepting || isAcceptingSeries)
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-brand-green-600 hover:bg-brand-green-700 shadow-md shadow-brand-green-600/20 active:scale-95"
+                  )}
+                >
+                  {isAccepting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                      En cours…
+                    </>
+                  ) : (
+                    <>
+                      <Car className="h-4 w-4" aria-hidden="true" />
+                      Accepter
+                    </>
+                  )}
+                </button>
+              </div>
+              {/* Série : un seul CTA plein ("Accepter" ci-dessus, cette
+                  séance) + un lien discret pour la série entière, plutôt
+                  que deux boutons de même poids visuel se disputant
+                  l'attention. */}
               {isSeries && onAcceptSeries && selectableSeriesPoolRides && (
                 <button
                   type="button"
                   onClick={() => setSeriesAcceptOpen((v) => !v)}
                   disabled={isAcceptingSeries || isAccepting}
-                  aria-label={`Choisir parmi les ${selectableSeriesPoolRides.length} séances de la série`}
-                  aria-busy={isAcceptingSeries}
-                  className={cn(
-                    "flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 flex-1 sm:flex-initial",
-                    (isAcceptingSeries || isAccepting)
-                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                      : seriesAcceptOpen
-                      ? "bg-violet-200 text-violet-800"
-                      : "bg-violet-100 text-violet-700 hover:bg-violet-200 active:scale-95"
-                  )}
+                  aria-expanded={seriesAcceptOpen}
+                  className="flex items-center gap-1.5 text-xs font-semibold text-violet-700 hover:underline disabled:opacity-60"
                 >
                   {isAcceptingSeries ? (
-                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
                   ) : (
-                    <Repeat className="h-4 w-4" aria-hidden="true" />
+                    <Repeat className="h-3.5 w-3.5" aria-hidden="true" />
                   )}
-                  {selectableSeriesPoolRides.length}/{ride.series_total} séances
+                  Accepter toute la série ({selectableSeriesPoolRides.length}/{ride.series_total} séances)
                 </button>
               )}
             </div>
