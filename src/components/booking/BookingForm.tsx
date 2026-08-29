@@ -1,11 +1,10 @@
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Loader2, ShieldCheck, Sparkles, X } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 
-import { bookingSchema, BOOKING_STEPS, STEP_FIELDS, type BookingSchema } from "./schema";
+import { bookingResolver, BOOKING_STEPS, STEP_FIELDS, type BookingSchema } from "./schema";
 import { consumeBookingPrefill } from "~/lib/bookingPrefill";
 import {
   clearBookingDraft,
@@ -221,7 +220,7 @@ export function BookingForm() {
   const [pendingDraft, setPendingDraft] = useState<BookingDraft | null>(() => readBookingDraft());
 
   const form = useForm<BookingSchema>({
-    resolver: zodResolver(bookingSchema),
+    resolver: bookingResolver,
     defaultValues: DEFAULT_VALUES,
     mode: "onBlur",
   });
