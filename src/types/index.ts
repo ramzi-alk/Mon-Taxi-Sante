@@ -83,7 +83,7 @@ export interface Booking {
   mutual_name: string | null;
   // Step 8 – PMT
   pmt_declared: boolean;
-  pmt_file_url: string | null;
+  pmt_file_path: string | null;
   // Step 9 – Notes
   medical_notes: string | null;
   // Step 10 – Consent

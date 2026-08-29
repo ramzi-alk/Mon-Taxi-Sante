@@ -90,15 +90,21 @@ chauffeur, pas un détail secondaire.
   nouvelles fonctions du Sprint 2 (`get_my_driver_performance`,
   `get_my_cancellations`, `cancel_ride_by_driver`) ferment aussi
   explicitement `anon` par précaution.
-- **L'upload PMT côté patient est probablement cassé en production.**
-  `select count(*) from storage.buckets` renvoie **0** sur le projet Supabase
-  réel — aucun bucket n'existe, y compris `pmt-documents` que
+- **L'upload PMT côté patient était cassé en production — corrigé.**
+  `select count(*) from storage.buckets` renvoyait **0** sur le projet
+  Supabase réel — aucun bucket n'existait, y compris `pmt-documents` que
   `BookingForm.tsx` utilise pour joindre le fichier de prescription médicale
-  de transport. L'upload échoue silencieusement (`storageRepository.uploadFile`
-  catch l'erreur et retourne `null`), donc la réservation continue sans le
-  fichier — pas de crash visible, mais la pièce jointe PMT n'est jamais
-  réellement stockée. **Hors périmètre chauffeur, non corrigé ici** — à
-  vérifier et corriger séparément côté funnel patient.
+  de transport. L'upload échouait silencieusement (`storageRepository.uploadFile`
+  catch l'erreur et retourne `null`), la réservation continuait sans le
+  fichier. Corrigé : bucket privé `pmt-documents` + policies RLS (migration
+  `062_pmt_documents_bucket.sql`), colonne `bookings.pmt_file_url` renommée
+  en `pmt_file_path` (même raisonnement HDS-sensible que les documents
+  chauffeur — stocke un chemin, pas une URL publique), nouvelles fonctions
+  génériques `storageRepository.uploadPrivateFile`/`createSignedUrl`.
+  **Migration en attente du merge** (même piège que 056/057 : elle touche le
+  funnel de réservation patient actif en prod — l'appliquer avant le merge
+  casserait l'insertion de toute nouvelle réservation sur `main`, qui insère
+  encore avec l'ancien nom de colonne).
 - **Deux chemins redondants pour annuler une série.** Le tableau de bord
   (`cancelSeriesMutation` dans `chauffeur.tsx`) boucle sur
   `cancel_ride_by_driver` par course plutôt que d'appeler la RPC dédiée
@@ -110,14 +116,15 @@ chauffeur, pas un détail secondaire.
 
 ### ⚠️ Migrations en attente du merge sur `main`
 
-`056` (chevauchement d'horaires) et `057` (motif d'annulation + historique)
-sont **poussées mais pas encore appliquées à la base**, sur décision
-explicite : `main` (donc la prod réelle, un seul projet Supabase partagé
-entre preview et prod) tourne encore sur l'ancien code — appliquer 057
-maintenant casserait `cancel_ride_by_driver` pour les vrais chauffeurs
-jusqu'au merge (ancien code, nouvelle signature RPC à 2 arguments). `059`
-(indicateurs de performance) dépend de la table créée par `057`, donc
-attend aussi. **À appliquer les trois ensemble, au moment du merge de cette
+`056` (chevauchement d'horaires), `057` (motif d'annulation + historique),
+`059` (indicateurs de performance, dépend de `057`) et `062` (bucket PMT,
+renomme une colonne utilisée par le funnel de réservation patient) sont
+**poussées mais pas encore appliquées à la base**, sur décision explicite :
+`main` (donc la prod réelle, un seul projet Supabase partagé entre preview
+et prod) tourne encore sur l'ancien code — les appliquer maintenant
+casserait respectivement `cancel_ride_by_driver` pour les vrais chauffeurs
+et l'insertion de toute nouvelle réservation patient, jusqu'au merge.
+**À appliquer toutes les quatre ensemble, au moment du merge de cette
 branche sur `main`** — pas avant, pas après.
 
 `058`, `060` et `061` sont déjà appliquées (sûres indépendamment du

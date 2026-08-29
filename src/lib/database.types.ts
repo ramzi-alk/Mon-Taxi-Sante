@@ -433,7 +433,7 @@ export type Database = {
           pickup_lng: number | null
           pickup_municipality: string | null
           pmt_declared: boolean
-          pmt_file_url: string | null
+          pmt_file_path: string | null
           priority_driver_id: string | null
           priority_expires_at: string | null
           reference_code: string
@@ -486,7 +486,7 @@ export type Database = {
           pickup_lng?: number | null
           pickup_municipality?: string | null
           pmt_declared?: boolean
-          pmt_file_url?: string | null
+          pmt_file_path?: string | null
           priority_driver_id?: string | null
           priority_expires_at?: string | null
           reference_code: string
@@ -539,7 +539,7 @@ export type Database = {
           pickup_lng?: number | null
           pickup_municipality?: string | null
           pmt_declared?: boolean
-          pmt_file_url?: string | null
+          pmt_file_path?: string | null
           priority_driver_id?: string | null
           priority_expires_at?: string | null
           reference_code?: string

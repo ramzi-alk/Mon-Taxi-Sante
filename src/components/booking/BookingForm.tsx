@@ -119,12 +119,13 @@ async function submitBooking(data: BookingSchema) {
   const session = await getOrCreatePatientSession(data.patient_full_name);
   const userId = session.user.id;
 
-  // Upload PMT file if present
-  let pmtFileUrl: string | null = null;
+  // Upload PMT file if present — bucket privé (document HDS-sensible),
+  // on ne stocke que le chemin, jamais une URL publique (voir migration 062).
+  let pmtFilePath: string | null = null;
   if (data.pmt_declared && data.pmt_file instanceof File) {
     const ext = data.pmt_file.name.split(".").pop();
     const path = `${userId}/${Date.now()}.${ext}`;
-    pmtFileUrl = await storageRepository.uploadFile(
+    pmtFilePath = await storageRepository.uploadPrivateFile(
       supabase,
       "pmt-documents",
       path,
@@ -160,7 +161,7 @@ async function submitBooking(data: BookingSchema) {
     cpam_status: data.cpam_status,
     mutual_name: data.mutual_name || null,
     pmt_declared: data.pmt_declared,
-    pmt_file_url: pmtFileUrl,
+    pmt_file_path: pmtFilePath,
     medical_notes: data.medical_notes || null,
     consent_accepted_at: new Date().toISOString(),
     status: "pending" as const,

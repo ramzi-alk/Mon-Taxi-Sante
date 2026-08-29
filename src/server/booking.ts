@@ -38,7 +38,7 @@ interface SubmitBookingPayload {
   cpam_status: Database["public"]["Tables"]["bookings"]["Row"]["cpam_status"];
   mutual_name: string | null;
   pmt_declared: boolean;
-  pmt_file_url: string | null;
+  pmt_file_path: string | null;
   medical_notes: string | null;
   consent_accepted_at: string;
   status: Database["public"]["Tables"]["bookings"]["Row"]["status"];
