@@ -17,6 +17,11 @@ app.config.timestamp_*.mjs
 # Build artifacts
 *.tsbuildinfo
 
+# Ce projet utilise pnpm (pnpm-lock.yaml) — ne pas laisser un `npm install`
+# local recréer un package-lock.json qui traînerait dans le repo.
+package-lock.json
+yarn.lock
+
 # Playwright
 test-results/
 playwright-report/
