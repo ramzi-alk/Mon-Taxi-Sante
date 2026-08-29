@@ -7,6 +7,7 @@ import { formatDateFr, formatTimeFr, formatReferenceCode, cn } from "~/lib/utils
 import { logger } from "~/lib/logger";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
 import { trackCallButtonClick } from "~/lib/trackCallClick";
+import { usePhoneVisibility } from "~/hooks/usePhoneVisibility";
 import { useRealtime } from "~/hooks/useRealtime";
 import { STATUS_LABELS, STATUS_BADGE_CLASSES, type BookingStatus } from "~/lib/bookingStatus";
 import { CPAM_LABELS } from "~/lib/cpam";
@@ -46,6 +47,7 @@ async function fetchBooking(id: string) {
 function ConfirmationPage() {
   const { id, seriesTotal } = Route.useSearch();
   const isSeries = !!seriesTotal && seriesTotal > 1;
+  const phoneVisible = usePhoneVisibility();
 
   const { data: booking, isLoading, isError } = useQuery({
     queryKey: ["booking-confirmation", id],
@@ -155,14 +157,16 @@ function ConfirmationPage() {
             <ClipboardList className="h-4 w-4" aria-hidden="true" />
             {isSeries ? "Suivre mes réservations" : "Suivre ma réservation"}
           </Link>
-          <a
-            href={`tel:${CONTACT_PHONE_TEL}`}
-            onClick={() => trackCallButtonClick("booking_confirmation")}
-            className="btn-cta inline-flex items-center justify-center gap-2 border-2 border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50 transition-colors"
-          >
-            <Phone className="h-4 w-4" aria-hidden="true" />
-            {CONTACT_PHONE_DISPLAY}
-          </a>
+          {phoneVisible && (
+            <a
+              href={`tel:${CONTACT_PHONE_TEL}`}
+              onClick={() => trackCallButtonClick("booking_confirmation")}
+              className="btn-cta inline-flex items-center justify-center gap-2 border-2 border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50 transition-colors"
+            >
+              <Phone className="h-4 w-4" aria-hidden="true" />
+              {CONTACT_PHONE_DISPLAY}
+            </a>
+          )}
         </div>
 
         <p className="mt-5 text-center">

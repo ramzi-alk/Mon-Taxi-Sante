@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { LegalPageLayout } from "~/components/LegalPageLayout";
 import { CONTACT_PHONE_DISPLAY } from "~/lib/contact";
+import { usePhoneVisibility } from "~/hooks/usePhoneVisibility";
 
 export const Route = createFileRoute("/cgv")({
   head: () => ({
@@ -17,6 +18,8 @@ export const Route = createFileRoute("/cgv")({
 });
 
 function CgvPage() {
+  const phoneVisible = usePhoneVisibility();
+
   return (
     <LegalPageLayout
       title="Conditions Générales de Vente"
@@ -34,10 +37,11 @@ function CgvPage() {
       <h2>Article 2 — Réservation</h2>
       <p>
         La réservation s'effectue en ligne via le formulaire de réservation
-        ou par téléphone au {CONTACT_PHONE_DISPLAY}. Le patient s'engage à fournir des
-        informations exactes (adresses, créneau souhaité, statut de prise en
-        charge, besoins spécifiques). Une confirmation est envoyée par
-        email dès qu'un chauffeur conventionné accepte la course.
+        {phoneVisible ? <> ou par téléphone au {CONTACT_PHONE_DISPLAY}</> : null}. Le
+        patient s'engage à fournir des informations exactes (adresses, créneau
+        souhaité, statut de prise en charge, besoins spécifiques). Une
+        confirmation est envoyée par email dès qu'un chauffeur conventionné
+        accepte la course.
       </p>
 
       <h2>Article 3 — Prise en charge Assurance Maladie et tarifs</h2>

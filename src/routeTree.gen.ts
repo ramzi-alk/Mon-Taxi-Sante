@@ -47,6 +47,7 @@ import { Route as AdminStatistiquesRouteImport } from './routes/admin/statistiqu
 import { Route as AdminSecuriteRouteImport } from './routes/admin/securite'
 import { Route as AdminReservationsRouteImport } from './routes/admin/reservations'
 import { Route as AdminPatientsRouteImport } from './routes/admin/patients'
+import { Route as AdminParametresRouteImport } from './routes/admin/parametres'
 import { Route as AdminJournalRouteImport } from './routes/admin/journal'
 import { Route as AdminChauffeursRouteImport } from './routes/admin/chauffeurs'
 import { Route as AdminAvisRouteImport } from './routes/admin/avis'
@@ -244,6 +245,11 @@ const AdminPatientsRoute = AdminPatientsRouteImport.update({
   path: '/patients',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminParametresRoute = AdminParametresRouteImport.update({
+  id: '/parametres',
+  path: '/parametres',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminJournalRoute = AdminJournalRouteImport.update({
   id: '/journal',
   path: '/journal',
@@ -325,6 +331,7 @@ export interface FileRoutesByFullPath {
   '/admin/avis': typeof AdminAvisRoute
   '/admin/chauffeurs': typeof AdminChauffeursRoute
   '/admin/journal': typeof AdminJournalRoute
+  '/admin/parametres': typeof AdminParametresRoute
   '/admin/patients': typeof AdminPatientsRoute
   '/admin/reservations': typeof AdminReservationsRoute
   '/admin/securite': typeof AdminSecuriteRoute
@@ -368,6 +375,7 @@ export interface FileRoutesByTo {
   '/admin/avis': typeof AdminAvisRoute
   '/admin/chauffeurs': typeof AdminChauffeursRoute
   '/admin/journal': typeof AdminJournalRoute
+  '/admin/parametres': typeof AdminParametresRoute
   '/admin/patients': typeof AdminPatientsRoute
   '/admin/reservations': typeof AdminReservationsRoute
   '/admin/securite': typeof AdminSecuriteRoute
@@ -413,6 +421,7 @@ export interface FileRoutesById {
   '/admin/avis': typeof AdminAvisRoute
   '/admin/chauffeurs': typeof AdminChauffeursRoute
   '/admin/journal': typeof AdminJournalRoute
+  '/admin/parametres': typeof AdminParametresRoute
   '/admin/patients': typeof AdminPatientsRoute
   '/admin/reservations': typeof AdminReservationsRoute
   '/admin/securite': typeof AdminSecuriteRoute
@@ -459,6 +468,7 @@ export interface FileRouteTypes {
     | '/admin/avis'
     | '/admin/chauffeurs'
     | '/admin/journal'
+    | '/admin/parametres'
     | '/admin/patients'
     | '/admin/reservations'
     | '/admin/securite'
@@ -502,6 +512,7 @@ export interface FileRouteTypes {
     | '/admin/avis'
     | '/admin/chauffeurs'
     | '/admin/journal'
+    | '/admin/parametres'
     | '/admin/patients'
     | '/admin/reservations'
     | '/admin/securite'
@@ -546,6 +557,7 @@ export interface FileRouteTypes {
     | '/admin/avis'
     | '/admin/chauffeurs'
     | '/admin/journal'
+    | '/admin/parametres'
     | '/admin/patients'
     | '/admin/reservations'
     | '/admin/securite'
@@ -916,6 +928,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPatientsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/parametres': {
+      id: '/admin/parametres'
+      path: '/parametres'
+      fullPath: '/admin/parametres'
+      preLoaderRoute: typeof AdminParametresRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/journal': {
       id: '/admin/journal'
       path: '/journal'
@@ -1004,6 +1023,7 @@ interface AdminRouteChildren {
   AdminAvisRoute: typeof AdminAvisRoute
   AdminChauffeursRoute: typeof AdminChauffeursRoute
   AdminJournalRoute: typeof AdminJournalRoute
+  AdminParametresRoute: typeof AdminParametresRoute
   AdminPatientsRoute: typeof AdminPatientsRoute
   AdminReservationsRoute: typeof AdminReservationsRoute
   AdminSecuriteRoute: typeof AdminSecuriteRoute
@@ -1015,6 +1035,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAvisRoute: AdminAvisRoute,
   AdminChauffeursRoute: AdminChauffeursRoute,
   AdminJournalRoute: AdminJournalRoute,
+  AdminParametresRoute: AdminParametresRoute,
   AdminPatientsRoute: AdminPatientsRoute,
   AdminReservationsRoute: AdminReservationsRoute,
   AdminSecuriteRoute: AdminSecuriteRoute,

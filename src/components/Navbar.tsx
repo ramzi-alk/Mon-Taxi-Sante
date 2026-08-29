@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
 import { trackCallButtonClick } from "~/lib/trackCallClick";
+import { usePhoneVisibility } from "~/hooks/usePhoneVisibility";
 
 const navLinks = [
   { to: "/comment-ca-marche", label: "Comment ça marche" },
@@ -13,6 +14,7 @@ const navLinks = [
 
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const phoneVisible = usePhoneVisibility();
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100">
@@ -51,14 +53,16 @@ export function Navbar() {
 
           {/* CTA zone */}
           <div className="hidden md:flex items-center gap-4">
-            <a
-              href={`tel:${CONTACT_PHONE_TEL}`}
-              onClick={() => trackCallButtonClick("navbar")}
-              className="text-sm font-medium text-gray-500 hover:text-[#0B0F1C] transition-colors"
-              aria-label={`Appeler le ${CONTACT_PHONE_DISPLAY} (gratuit)`}
-            >
-              {CONTACT_PHONE_DISPLAY}
-            </a>
+            {phoneVisible && (
+              <a
+                href={`tel:${CONTACT_PHONE_TEL}`}
+                onClick={() => trackCallButtonClick("navbar")}
+                className="text-sm font-medium text-gray-500 hover:text-[#0B0F1C] transition-colors"
+                aria-label={`Appeler le ${CONTACT_PHONE_DISPLAY} (gratuit)`}
+              >
+                {CONTACT_PHONE_DISPLAY}
+              </a>
+            )}
             <Link
               to="/reservation"
               className="btn-cta bg-[#0B0F1C] text-white hover:bg-[#1244E8] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"

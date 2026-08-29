@@ -3,6 +3,7 @@ import { Phone, Mail, MapPin } from "lucide-react";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL, CONTACT_EMAIL } from "~/lib/contact";
 import { trackCallButtonClick } from "~/lib/trackCallClick";
 import { openCookiePreferences } from "~/components/CookieConsent";
+import { usePhoneVisibility } from "~/hooks/usePhoneVisibility";
 // Fichier dédié (30 villes) plutôt que ~/lib/seoData : ce module est chargé
 // sur TOUTES les pages (Footer est dans le layout racine) — importer
 // seoData.ts embarquerait les 5509 communes + 7474 hôpitaux dans le bundle
@@ -32,6 +33,8 @@ const footerLinks = {
 };
 
 export function Footer() {
+  const phoneVisible = usePhoneVisibility();
+
   return (
     <footer className="bg-[#0B0F1C] text-gray-400" role="contentinfo">
       <div className="container py-16 md:py-20">
@@ -51,15 +54,17 @@ export function Footer() {
               le reste.
             </p>
             <div className="space-y-2.5 text-sm">
-              <a
-                href={`tel:${CONTACT_PHONE_TEL}`}
-                onClick={() => trackCallButtonClick("footer")}
-                className="flex items-center gap-2 hover:text-white transition-colors"
-                aria-label={`Nous appeler au ${CONTACT_PHONE_DISPLAY}`}
-              >
-                <Phone className="h-4 w-4 text-[#1244E8]" aria-hidden="true" />
-                {CONTACT_PHONE_DISPLAY} (gratuit)
-              </a>
+              {phoneVisible && (
+                <a
+                  href={`tel:${CONTACT_PHONE_TEL}`}
+                  onClick={() => trackCallButtonClick("footer")}
+                  className="flex items-center gap-2 hover:text-white transition-colors"
+                  aria-label={`Nous appeler au ${CONTACT_PHONE_DISPLAY}`}
+                >
+                  <Phone className="h-4 w-4 text-[#1244E8]" aria-hidden="true" />
+                  {CONTACT_PHONE_DISPLAY} (gratuit)
+                </a>
+              )}
               <a
                 href={`mailto:${CONTACT_EMAIL}`}
                 className="flex items-center gap-2 hover:text-white transition-colors"

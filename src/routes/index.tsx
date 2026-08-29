@@ -13,6 +13,7 @@ import { TrustBadges } from "~/components/TrustBadges";
 import { CitySearch } from "~/components/CitySearch";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
 import { trackCallButtonClick } from "~/lib/trackCallClick";
+import { usePhoneVisibility } from "~/hooks/usePhoneVisibility";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -215,6 +216,8 @@ const homeFaqItems: HomeFaqItem[] = [
 ];
 
 function HeroSection() {
+  const phoneVisible = usePhoneVisibility();
+
   return (
     <section
       className="bg-white"
@@ -257,14 +260,16 @@ function HeroSection() {
                 Réserver maintenant
                 <ArrowRight className="h-5 w-5" aria-hidden="true" />
               </Link>
-              <a
-                href={`tel:${CONTACT_PHONE_TEL}`}
-                onClick={() => trackCallButtonClick("home_hero")}
-                className="btn-cta inline-flex items-center justify-center gap-2 border-2 border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                aria-label={`Appeler le ${CONTACT_PHONE_DISPLAY} (gratuit)`}
-              >
-                {CONTACT_PHONE_DISPLAY}
-              </a>
+              {phoneVisible && (
+                <a
+                  href={`tel:${CONTACT_PHONE_TEL}`}
+                  onClick={() => trackCallButtonClick("home_hero")}
+                  className="btn-cta inline-flex items-center justify-center gap-2 border-2 border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  aria-label={`Appeler le ${CONTACT_PHONE_DISPLAY} (gratuit)`}
+                >
+                  {CONTACT_PHONE_DISPLAY}
+                </a>
+              )}
             </div>
 
             {/* Recherche de ville */}
@@ -574,6 +579,8 @@ function HomeFaqSection() {
 }
 
 function CtaBanner() {
+  const phoneVisible = usePhoneVisibility();
+
   return (
     <section
       className="bg-[#1244E8] text-white"
@@ -600,13 +607,15 @@ function CtaBanner() {
               Réserver mon transport
               <ArrowRight className="h-5 w-5" aria-hidden="true" />
             </Link>
-            <a
-              href={`tel:${CONTACT_PHONE_TEL}`}
-              onClick={() => trackCallButtonClick("home_bottom_cta")}
-              className="btn-cta inline-flex items-center justify-center gap-2 border-2 border-white/30 text-white hover:border-white/60 hover:bg-white/10 transition-colors"
-            >
-              Ou appeler le {CONTACT_PHONE_DISPLAY}
-            </a>
+            {phoneVisible && (
+              <a
+                href={`tel:${CONTACT_PHONE_TEL}`}
+                onClick={() => trackCallButtonClick("home_bottom_cta")}
+                className="btn-cta inline-flex items-center justify-center gap-2 border-2 border-white/30 text-white hover:border-white/60 hover:bg-white/10 transition-colors"
+              >
+                Ou appeler le {CONTACT_PHONE_DISPLAY}
+              </a>
+            )}
           </div>
         </div>
       </div>
@@ -615,6 +624,7 @@ function CtaBanner() {
 }
 
 function HomeStructuredData() {
+  const phoneVisible = usePhoneVisibility();
   const schema = {
     "@context": "https://schema.org",
     "@graph": [
@@ -625,7 +635,7 @@ function HomeStructuredData() {
         url: "https://docteurtaxi.fr",
         description:
           "Plateforme de réservation de taxis conventionnés agréés Sécurité Sociale pour le transport médical en France.",
-        telephone: CONTACT_PHONE_TEL,
+        ...(phoneVisible ? { telephone: CONTACT_PHONE_TEL } : {}),
         email: "contact@mon-taxi-sante.com",
         areaServed: { "@type": "Country", name: "France" },
         serviceType: "Transport médical conventionné Assurance Maladie",

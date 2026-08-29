@@ -3,7 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, ShieldCheck, Sparkles, X } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 
 import { bookingSchema, BOOKING_STEPS, STEP_FIELDS, type BookingSchema } from "./schema";
 import { consumeBookingPrefill } from "~/lib/bookingPrefill";
@@ -28,6 +28,7 @@ import { supabase } from "~/lib/supabase";
 import { combineLocalDateTimeToIso } from "~/lib/utils";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
 import { trackCallButtonClick } from "~/lib/trackCallClick";
+import { usePhoneVisibility } from "~/hooks/usePhoneVisibility";
 import { logger } from "~/lib/logger";
 import { submitBookingServerFn } from "~/server/booking";
 import * as authRepository from "~/repositories/authRepository";
@@ -187,6 +188,7 @@ export function BookingForm() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const phoneVisible = usePhoneVisibility();
 
   const [isPrefilled, setIsPrefilled] = useState(false);
   const [pendingDraft, setPendingDraft] = useState<BookingDraft | null>(() => readBookingDraft());
@@ -442,13 +444,22 @@ export function BookingForm() {
         {/* Help callout */}
         <div className="mt-6 flex items-center justify-center gap-2 text-sm text-muted-foreground">
           <span>Besoin d&apos;aide pour remplir le formulaire&nbsp;?</span>
-          <a
-            href={`tel:${CONTACT_PHONE_TEL}`}
-            onClick={() => trackCallButtonClick("booking_form_help")}
-            className="font-semibold text-brand-blue-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
-          >
-            Appelez le {CONTACT_PHONE_DISPLAY}
-          </a>
+          {phoneVisible ? (
+            <a
+              href={`tel:${CONTACT_PHONE_TEL}`}
+              onClick={() => trackCallButtonClick("booking_form_help")}
+              className="font-semibold text-brand-blue-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+            >
+              Appelez le {CONTACT_PHONE_DISPLAY}
+            </a>
+          ) : (
+            <Link
+              to="/faq"
+              className="font-semibold text-brand-blue-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+            >
+              Consultez notre FAQ
+            </Link>
+          )}
         </div>
       </div>
     </div>

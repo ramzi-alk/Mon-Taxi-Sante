@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { LegalPageLayout } from "~/components/LegalPageLayout";
 import { CONTACT_PHONE_DISPLAY, CONTACT_EMAIL } from "~/lib/contact";
+import { usePhoneVisibility } from "~/hooks/usePhoneVisibility";
 
 export const Route = createFileRoute("/mentions-legales")({
   head: () => ({
@@ -17,6 +18,8 @@ export const Route = createFileRoute("/mentions-legales")({
 });
 
 function MentionsLegalesPage() {
+  const phoneVisible = usePhoneVisibility();
+
   return (
     <LegalPageLayout title="Mentions légales" lastUpdated="25 juin 2026">
       <h2>Éditeur du site</h2>
@@ -26,7 +29,10 @@ function MentionsLegalesPage() {
         <li>Adresse de l'établissement : 1 Allée Van Gogh, 60100 Creil</li>
         <li>SIREN : 106 941 180 — RCS Compiègne</li>
         <li>Directeur de la publication : Ramzi AL KHATEEB</li>
-        <li>Contact : {CONTACT_EMAIL} — {CONTACT_PHONE_DISPLAY} (appel gratuit)</li>
+        <li>
+          Contact : {CONTACT_EMAIL}
+          {phoneVisible && <> — {CONTACT_PHONE_DISPLAY} (appel gratuit)</>}
+        </li>
       </ul>
 
       <h2>Hébergement</h2>

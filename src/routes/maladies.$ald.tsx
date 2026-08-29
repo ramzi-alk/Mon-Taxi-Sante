@@ -3,6 +3,7 @@ import { ArrowRight, HeartPulse, CheckCircle2, Phone } from "lucide-react";
 import { aldList } from "~/lib/aldData";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
 import { trackCallButtonClick } from "~/lib/trackCallClick";
+import { usePhoneVisibility } from "~/hooks/usePhoneVisibility";
 import { CitySearch } from "~/components/CitySearch";
 import { FaqSchema } from "~/components/FaqSchema";
 import { BreadcrumbSchema } from "~/components/BreadcrumbSchema";
@@ -40,6 +41,7 @@ export const Route = createFileRoute("/maladies/$ald")({
 function MaladiePage() {
   const { ald: aldSlug } = Route.useParams();
   const affection = aldBySlug.get(aldSlug);
+  const phoneVisible = usePhoneVisibility();
   // Le loader a déjà validé l'existence de l'ALD (notFound() sinon).
   if (!affection) return null;
 
@@ -114,14 +116,16 @@ function MaladiePage() {
               Réserver mon transport
               <ArrowRight className="h-5 w-5" aria-hidden="true" />
             </Link>
-            <a
-              href={`tel:${CONTACT_PHONE_TEL}`}
-              onClick={() => trackCallButtonClick("ald_page")}
-              className="btn-cta inline-flex items-center justify-center gap-2 border-2 border-white/40 bg-white/10 hover:bg-white/20 rounded-xl transition-colors"
-            >
-              <Phone className="h-4 w-4" aria-hidden="true" />
-              {CONTACT_PHONE_DISPLAY} (gratuit)
-            </a>
+            {phoneVisible && (
+              <a
+                href={`tel:${CONTACT_PHONE_TEL}`}
+                onClick={() => trackCallButtonClick("ald_page")}
+                className="btn-cta inline-flex items-center justify-center gap-2 border-2 border-white/40 bg-white/10 hover:bg-white/20 rounded-xl transition-colors"
+              >
+                <Phone className="h-4 w-4" aria-hidden="true" />
+                {CONTACT_PHONE_DISPLAY} (gratuit)
+              </a>
+            )}
           </div>
         </div>
       </section>

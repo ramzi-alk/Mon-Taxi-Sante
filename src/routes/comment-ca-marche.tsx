@@ -10,6 +10,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { CONTACT_PHONE_DISPLAY } from "~/lib/contact";
+import { usePhoneVisibility } from "~/hooks/usePhoneVisibility";
 
 export const Route = createFileRoute("/comment-ca-marche")({
   head: () => ({
@@ -83,6 +84,8 @@ const vehicles = [
 ];
 
 function CommentCaMarchePage() {
+  const phoneVisible = usePhoneVisibility();
+
   return (
     <>
       <section className="bg-white">
@@ -167,8 +170,9 @@ function CommentCaMarchePage() {
             Une question sur votre prise en charge ?
           </h2>
           <p className="text-lg text-white/70 mb-10">
-            Consultez notre FAQ ou contactez-nous au {CONTACT_PHONE_DISPLAY}, gratuit
-            depuis un poste fixe ou mobile.
+            {phoneVisible
+              ? `Consultez notre FAQ ou contactez-nous au ${CONTACT_PHONE_DISPLAY}, gratuit depuis un poste fixe ou mobile.`
+              : "Consultez notre FAQ ou contactez-nous via le formulaire de réservation."}
           </p>
           <Link
             to="/faq"

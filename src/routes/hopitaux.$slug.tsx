@@ -2,6 +2,7 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowRight, Building2, MapPin, Phone, CheckCircle2, HeartPulse } from "lucide-react";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
 import { trackCallButtonClick } from "~/lib/trackCallClick";
+import { usePhoneVisibility } from "~/hooks/usePhoneVisibility";
 import { getHospitalPageDataServerFn } from "~/server/seo";
 import { FaqSchema } from "~/components/FaqSchema";
 import { BreadcrumbSchema } from "~/components/BreadcrumbSchema";
@@ -83,6 +84,7 @@ function HospitalPage() {
   const { slug } = Route.useParams();
   const { hospital, commune, otherHospitals } = Route.useLoaderData();
   const relatedAld = getRelatedAld(hospital);
+  const phoneVisible = usePhoneVisibility();
 
   const faqItems = [
     {
@@ -91,7 +93,9 @@ function HospitalPage() {
     },
     {
       q: "Comment réserver un taxi conventionné pour cet établissement ?",
-      a: `Utilisez notre formulaire en ligne en 5 minutes, ou appelez le ${CONTACT_PHONE_DISPLAY} (gratuit). Votre réservation est confirmée immédiatement par email.`,
+      a: phoneVisible
+        ? `Utilisez notre formulaire en ligne en 5 minutes, ou appelez le ${CONTACT_PHONE_DISPLAY} (gratuit). Votre réservation est confirmée immédiatement par email.`
+        : `Utilisez notre formulaire en ligne en 5 minutes. Votre réservation est confirmée immédiatement par email.`,
     },
     {
       q: "Proposez-vous des véhicules adaptés (PMR) ?",
@@ -174,14 +178,16 @@ function HospitalPage() {
               Réserver mon transport
               <ArrowRight className="h-5 w-5" aria-hidden="true" />
             </Link>
-            <a
-              href={`tel:${CONTACT_PHONE_TEL}`}
-              onClick={() => trackCallButtonClick("hospital_page")}
-              className="btn-cta inline-flex items-center justify-center gap-2 border-2 border-white/40 bg-white/10 hover:bg-white/20 rounded-xl transition-colors"
-            >
-              <Phone className="h-4 w-4" aria-hidden="true" />
-              {CONTACT_PHONE_DISPLAY} (gratuit)
-            </a>
+            {phoneVisible && (
+              <a
+                href={`tel:${CONTACT_PHONE_TEL}`}
+                onClick={() => trackCallButtonClick("hospital_page")}
+                className="btn-cta inline-flex items-center justify-center gap-2 border-2 border-white/40 bg-white/10 hover:bg-white/20 rounded-xl transition-colors"
+              >
+                <Phone className="h-4 w-4" aria-hidden="true" />
+                {CONTACT_PHONE_DISPLAY} (gratuit)
+              </a>
+            )}
           </div>
         </div>
       </section>
