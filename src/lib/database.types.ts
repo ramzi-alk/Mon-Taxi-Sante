@@ -159,6 +159,62 @@ export type Database = {
           },
         ]
       }
+      booking_driver_cancellations: {
+        Row: {
+          booking_id: string
+          cancelled_at: string
+          driver_id: string
+          id: string
+          reason: string
+          was_suspicious: boolean
+        }
+        Insert: {
+          booking_id: string
+          cancelled_at?: string
+          driver_id: string
+          id?: string
+          reason: string
+          was_suspicious?: boolean
+        }
+        Update: {
+          booking_id?: string
+          cancelled_at?: string
+          driver_id?: string
+          id?: string
+          reason?: string
+          was_suspicious?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_driver_cancellations_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_driver_cancellations_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings_active_for_driver"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_driver_cancellations_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings_pool_for_drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_driver_cancellations_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       booking_driver_refusals: {
         Row: {
           booking_id: string
@@ -635,11 +691,13 @@ export type Database = {
           company_name: string | null
           convention_cpam: boolean
           convention_number: string | null
-          cpam_certificate_url: string | null
+          cpam_certificate_expires_at: string | null
+          cpam_certificate_path: string | null
           created_at: string
-          driving_licence_url: string | null
+          driving_licence_path: string | null
           id: string
-          insurance_url: string | null
+          insurance_expires_at: string | null
+          insurance_path: string | null
           last_heartbeat_at: string | null
           oxygen_equipped: boolean
           parking_lat: number | null
@@ -672,11 +730,13 @@ export type Database = {
           company_name?: string | null
           convention_cpam?: boolean
           convention_number?: string | null
-          cpam_certificate_url?: string | null
+          cpam_certificate_expires_at?: string | null
+          cpam_certificate_path?: string | null
           created_at?: string
-          driving_licence_url?: string | null
+          driving_licence_path?: string | null
           id?: string
-          insurance_url?: string | null
+          insurance_expires_at?: string | null
+          insurance_path?: string | null
           last_heartbeat_at?: string | null
           oxygen_equipped?: boolean
           parking_lat?: number | null
@@ -709,11 +769,13 @@ export type Database = {
           company_name?: string | null
           convention_cpam?: boolean
           convention_number?: string | null
-          cpam_certificate_url?: string | null
+          cpam_certificate_expires_at?: string | null
+          cpam_certificate_path?: string | null
           created_at?: string
-          driving_licence_url?: string | null
+          driving_licence_path?: string | null
           id?: string
-          insurance_url?: string | null
+          insurance_expires_at?: string | null
+          insurance_path?: string | null
           last_heartbeat_at?: string | null
           oxygen_equipped?: boolean
           parking_lat?: number | null
@@ -1074,6 +1136,29 @@ export type Database = {
           vehicle_model: string
           vehicle_registration: string
           vehicle_type: Database["public"]["Enums"]["booking_vehicle_type"]
+        }[]
+      }
+      get_my_cancellations: {
+        Args: never
+        Returns: {
+          booking_id: string
+          cancelled_at: string
+          pickup_address: string
+          pickup_datetime: string
+          reason: string
+          was_suspicious: boolean
+        }[]
+      }
+      get_my_driver_performance: {
+        Args: never
+        Returns: {
+          acceptance_rate: number
+          cancellation_rate: number
+          rating_avg_previous: number
+          rating_avg_recent: number
+          rides_accepted_total: number
+          rides_cancelled_total: number
+          rides_refused_total: number
         }[]
       }
       get_my_driver_stats: {

@@ -16,11 +16,13 @@ import {
   CheckCircle2,
   Loader2,
   ExternalLink,
+  History,
+  FileText,
 } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "~/lib/supabase";
 import { logger } from "~/lib/logger";
-import { formatDateFr } from "~/lib/utils";
+import { formatDateFr, formatTimeFr } from "~/lib/utils";
 import * as authRepository from "~/repositories/authRepository";
 import * as profilesRepository from "~/repositories/profilesRepository";
 import * as driversRepository from "~/repositories/driversRepository";
@@ -33,6 +35,7 @@ import { Input } from "~/components/ui/input";
 import { Checkbox } from "~/components/ui/checkbox";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "~/components/ui/select";
 import { AddressAutocomplete } from "~/components/booking/AddressAutocomplete";
+import { DocumentUploadField } from "~/components/driver/DocumentUploadField";
 import type { Database } from "~/lib/database.types";
 
 export const Route = createFileRoute("/tableau-de-bord/chauffeur_/compte")({
@@ -70,6 +73,10 @@ async function fetchMyAccountDetails(): Promise<driversRepository.MyDriverAccoun
   const user = await authRepository.getCurrentUser(supabase);
   if (!user) return null;
   return driversRepository.fetchMyAccountDetails(supabase, user.id);
+}
+
+async function fetchMyCancellations(): Promise<driversRepository.MyCancellation[]> {
+  return driversRepository.fetchMyCancellations(supabase);
 }
 
 async function updateMyAccountDetails(
@@ -669,6 +676,123 @@ function SubscriptionActions({ details }: { details: driversRepository.MyDriverA
   );
 }
 
+// ─── Documents chauffeur (carte pro, permis, assurance) ─────────────────────
+
+function DocumentsCard({ details }: { details: driversRepository.MyDriverAccount }) {
+  const queryClient = useQueryClient();
+  const [uploadingKind, setUploadingKind] = useState<"cpam_certificate" | "driving_licence" | "insurance" | null>(null);
+
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ["my-account-details"] });
+
+  const uploadMutation = useMutation({
+    mutationFn: async (vars: { kind: "cpam_certificate" | "driving_licence" | "insurance"; file: File }) => {
+      const user = await authRepository.getCurrentUser(supabase);
+      if (!user) throw new Error("Non authentifié");
+      const path = await driversRepository.uploadDriverDocument(supabase, user.id, vars.kind, vars.file);
+      const fieldName = `${vars.kind}_path` as const;
+      await driversRepository.updateMyAccountDetails(supabase, user.id, { [fieldName]: path });
+    },
+    onMutate: (vars) => setUploadingKind(vars.kind),
+    onSuccess: invalidate,
+    onSettled: () => setUploadingKind(null),
+    onError: (error) => {
+      logger.error("driver.uploadDriverDocument failed", { error: error.message });
+      alert(`Erreur : ${error.message}`);
+    },
+  });
+
+  const expiryMutation = useMutation({
+    mutationFn: (vars: { field: "cpam_certificate_expires_at" | "insurance_expires_at"; date: string | null }) => {
+      return authRepository.getCurrentUser(supabase).then((user) => {
+        if (!user) throw new Error("Non authentifié");
+        return driversRepository.updateMyAccountDetails(supabase, user.id, { [vars.field]: vars.date });
+      });
+    },
+    onSuccess: invalidate,
+    onError: (error) => {
+      logger.error("driver.updateDocumentExpiry failed", { error: error.message });
+      alert(`Erreur : ${error.message}`);
+    },
+  });
+
+  async function handleView(path: string): Promise<string> {
+    return driversRepository.getSignedDocumentUrl(supabase, path);
+  }
+
+  return (
+    <Card
+      icon={FileText}
+      title="Mes documents"
+      description="Carte professionnelle, permis de conduire, attestation d'assurance — consultés uniquement par vous et l'équipe Docteur Taxi."
+    >
+      <div className="space-y-3">
+        <DocumentUploadField
+          label="Certificat de conventionnement CPAM"
+          path={details.cpam_certificate_path}
+          expiresAt={details.cpam_certificate_expires_at}
+          onExpiryChange={(date) => expiryMutation.mutate({ field: "cpam_certificate_expires_at", date })}
+          onUpload={(file) => uploadMutation.mutate({ kind: "cpam_certificate", file })}
+          onView={() => handleView(details.cpam_certificate_path!)}
+          isUploading={uploadingKind === "cpam_certificate"}
+        />
+        <DocumentUploadField
+          label="Permis de conduire"
+          path={details.driving_licence_path}
+          onUpload={(file) => uploadMutation.mutate({ kind: "driving_licence", file })}
+          onView={() => handleView(details.driving_licence_path!)}
+          isUploading={uploadingKind === "driving_licence"}
+        />
+        <DocumentUploadField
+          label="Attestation d'assurance"
+          path={details.insurance_path}
+          expiresAt={details.insurance_expires_at}
+          onExpiryChange={(date) => expiryMutation.mutate({ field: "insurance_expires_at", date })}
+          onUpload={(file) => uploadMutation.mutate({ kind: "insurance", file })}
+          onView={() => handleView(details.insurance_path!)}
+          isUploading={uploadingKind === "insurance"}
+        />
+      </div>
+    </Card>
+  );
+}
+
+// ─── Historique des annulations (transparence sur les strikes) ──────────────
+
+// Le bandeau de suspension du pool (chauffeur.tsx) ne dit que "annulations
+// suspectes répétées" sans jamais détailler lesquelles — cette carte comble
+// ce trou en listant les désistements du chauffeur avec leur motif, pour
+// qu'il comprenne concrètement ce qui compte comme "suspect" plutôt que de
+// le découvrir uniquement au moment d'une suspension.
+function CancellationsHistoryCard({ cancellations }: { cancellations: driversRepository.MyCancellation[] }) {
+  return (
+    <Card
+      icon={History}
+      title="Historique de mes annulations"
+      description="Les annulations acceptées puis annulées moins de 10 min après, alors que la prise en charge restait à plus de 2h, comptent comme suspectes."
+    >
+      <ul className="divide-y divide-gray-100 -mt-2">
+        {cancellations.map((c) => (
+          <li key={`${c.booking_id}-${c.cancelled_at}`} className="py-2.5 flex items-start justify-between gap-3 text-sm">
+            <div className="min-w-0">
+              <p className="font-medium text-gray-900 truncate">{c.pickup_address}</p>
+              <p className="text-xs text-muted-foreground">
+                Course du {formatDateFr(c.pickup_datetime)} à {formatTimeFr(c.pickup_datetime)} — annulée le{" "}
+                {formatDateFr(c.cancelled_at)} à {formatTimeFr(c.cancelled_at)}
+              </p>
+              <p className="text-xs text-gray-600 mt-1">Motif : {c.reason}</p>
+            </div>
+            {c.was_suspicious && (
+              <span className="shrink-0 rounded-full bg-amber-50 text-amber-700 px-2.5 py-1 text-[11px] font-semibold">
+                Suspecte
+              </span>
+            )}
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
+}
+
 function CompanyCard({ details }: { details: driversRepository.MyDriverAccount }) {
   return (
     <Card icon={Building2} title="Entreprise & abonnement">
@@ -745,6 +869,7 @@ function CheckoutReturnBanner() {
 function DriverAccountPage() {
   const profileQuery = useQuery({ queryKey: ["my-profile"], queryFn: fetchMyProfile });
   const accountQuery = useQuery({ queryKey: ["my-account-details"], queryFn: fetchMyAccountDetails });
+  const cancellationsQuery = useQuery({ queryKey: ["my-cancellations"], queryFn: fetchMyCancellations });
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -780,8 +905,12 @@ function DriverAccountPage() {
             <VehicleCard details={accountQuery.data} />
             <ParkingCard details={accountQuery.data} />
             <CompanyCard details={accountQuery.data} />
+            <DocumentsCard details={accountQuery.data} />
           </>
         ) : null}
+        {cancellationsQuery.data && cancellationsQuery.data.length > 0 && (
+          <CancellationsHistoryCard cancellations={cancellationsQuery.data} />
+        )}
       </div>
     </div>
   );

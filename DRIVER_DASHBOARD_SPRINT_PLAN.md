@@ -70,35 +70,99 @@ chauffeur, pas un détail secondaire.
 
 ### Constats complémentaires (hors ticket, découverts en cours de route)
 
-- **`accept_series` n'a pas de migration dans le dépôt.** Le frontend
-  (`bookingsRepository.acceptSeriesRides`) et `database.types.ts` référencent
-  une RPC `accept_series`, mais aucun fichier sous `supabase/migrations/` ne
-  la définit (contrairement à `cancel_series`, présente en migration 038).
-  Soit elle a été créée hors migration (drift schéma ↔ dépôt), soit elle
-  n'existe pas réellement en base — dans les deux cas, à vérifier avant de
-  faire confiance à ce chemin de code. Non traité dans ce sprint (hors
-  périmètre initial), à investiguer en priorité avant Sprint 2.
+- **`accept_series` n'a pas de migration dans le dépôt — investigué et
+  résolu.** Vérifié directement en base (Supabase MCP) : la fonction existe
+  bien et fonctionne (elle délègue à `accept_ride()` pour chaque séance, donc
+  la détection de chevauchement de la migration 056 s'y applique déjà
+  automatiquement). Le SQL avait simplement été perdu du dépôt suite à une
+  collision de numérotation (un fichier `037_*.sql` différent a réutilisé ce
+  numéro). `update_driver_heartbeat()` était dans le même cas. Les deux sont
+  maintenant documentées par un backfill fidèle :
+  `058_backfill_accept_series_heartbeat.sql` (appliqué en base).
+- **Les deux fonctions backfillées étaient exécutables par `anon`.**
+  Découvert via l'advisor sécurité Supabase après application de 058 : Supabase
+  accorde `EXECUTE` à `anon`/`authenticated` par défaut sur les fonctions
+  créées hors du process de migration standard (même cause que documentée
+  dans la migration 011 historique du projet) — un `REVOKE ALL ... FROM
+  PUBLIC` ne retire pas ce grant explicite. Non exploitable en pratique
+  (`auth.uid()` est `NULL` pour `anon`), mais corrigé par prudence :
+  `061_revoke_anon_accept_series_heartbeat.sql` (appliqué en base). Les
+  nouvelles fonctions du Sprint 2 (`get_my_driver_performance`,
+  `get_my_cancellations`, `cancel_ride_by_driver`) ferment aussi
+  explicitement `anon` par précaution.
+- **L'upload PMT côté patient est probablement cassé en production.**
+  `select count(*) from storage.buckets` renvoie **0** sur le projet Supabase
+  réel — aucun bucket n'existe, y compris `pmt-documents` que
+  `BookingForm.tsx` utilise pour joindre le fichier de prescription médicale
+  de transport. L'upload échoue silencieusement (`storageRepository.uploadFile`
+  catch l'erreur et retourne `null`), donc la réservation continue sans le
+  fichier — pas de crash visible, mais la pièce jointe PMT n'est jamais
+  réellement stockée. **Hors périmètre chauffeur, non corrigé ici** — à
+  vérifier et corriger séparément côté funnel patient.
 - **Deux chemins redondants pour annuler une série.** Le tableau de bord
   (`cancelSeriesMutation` dans `chauffeur.tsx`) boucle sur
   `cancel_ride_by_driver` par course plutôt que d'appeler la RPC dédiée
   `cancel_series` (un seul appel, un seul événement d'annulation suspecte
   pour toute la série — voir migration 038). `bookingsRepository.cancelSeriesRides`
-  (qui appelle bien `cancel_series`) semble donc mort côté UI. À trancher :
-  brancher l'UI sur `cancel_series` (plus juste vis-à-vis du chauffeur) ou
-  supprimer le code mort.
+  (qui appelle bien `cancel_series`) semble donc mort côté UI. Toujours pas
+  tranché : brancher l'UI sur `cancel_series` (plus juste vis-à-vis du
+  chauffeur) ou supprimer le code mort.
+
+### ⚠️ Migrations en attente du merge sur `main`
+
+`056` (chevauchement d'horaires) et `057` (motif d'annulation + historique)
+sont **poussées mais pas encore appliquées à la base**, sur décision
+explicite : `main` (donc la prod réelle, un seul projet Supabase partagé
+entre preview et prod) tourne encore sur l'ancien code — appliquer 057
+maintenant casserait `cancel_ride_by_driver` pour les vrais chauffeurs
+jusqu'au merge (ancien code, nouvelle signature RPC à 2 arguments). `059`
+(indicateurs de performance) dépend de la table créée par `057`, donc
+attend aussi. **À appliquer les trois ensemble, au moment du merge de cette
+branche sur `main`** — pas avant, pas après.
+
+`058`, `060` et `061` sont déjà appliquées (sûres indépendamment du
+timing de merge : backfill pur, ou colonnes/bucket jamais référencés par le
+code de `main`).
 
 ---
 
-## Sprint 2 — Conformité & confiance
+## Sprint 2 — Conformité & confiance ✅ Livré (code) — migrations partiellement en attente
 
-- [ ] Centre de documents chauffeur (upload + date d'expiration + statut),
-      en réutilisant `storageRepository.uploadFile` déjà en place.
-- [ ] Détail des annulations suspectes visible chauffeur + admin (exploite le
-      motif capturé en Sprint 1).
-- [ ] Indicateurs de performance personnels (taux acceptation/annulation,
-      tendance de note).
-- [ ] Écran unique "Préférences de courses" (fusion rayon d'acceptation +
-      filtres véhicule/accessibilité).
+- [x] **Centre de documents chauffeur.** `drivers_details` avait déjà
+      `cpam_certificate_url`/`driving_licence_url`/`insurance_url` (jamais
+      exploitées) — renommées en `*_path` (bucket privé, pas d'URL publique
+      stockée) et complétées avec `cpam_certificate_expires_at`/
+      `insurance_expires_at`. Bucket Storage privé `driver-documents` créé
+      avec policies RLS (chauffeur lit/écrit ses propres fichiers via le
+      premier segment du chemin, admin lit tout). URLs générées à la demande
+      via `createSignedUrl` (1h), jamais stockées en clair. Voir migration
+      `060_driver_documents_center.sql` (appliquée), nouveau composant
+      `src/components/driver/DocumentUploadField.tsx` (badge Valide/Expire
+      bientôt/Expiré/Déposé), carte "Mes documents" dans `chauffeur_.compte.tsx`.
+      Pas encore livré : alertes automatiques avant expiration (prévu une
+      fois qu'on aura du recul sur l'usage réel).
+- [x] **Détail des annulations suspectes visible chauffeur + admin.**
+      Nouvelle table `booking_driver_cancellations` (migration 057, en
+      attente du merge — voir ci-dessus) : historique persistant d'une ligne
+      par annulation, contrairement à `bookings.cancellation_reason` qui ne
+      garde que le dernier motif sur la course (écrasé si un second chauffeur
+      accepte puis annule à son tour). Carte "Historique de mes annulations"
+      sur `chauffeur_.compte.tsx` (chauffeur), section dans `DriverDetailDialog`
+      de `/admin/chauffeurs` (admin, via `adminDriversRepository.fetchDriverCancellations`).
+- [x] **Indicateurs de performance personnels.** Nouvelle section "Ma
+      performance" sur le tableau de bord : taux d'acceptation (accepté /
+      (accepté + refusé), exploite `booking_driver_refusals` déjà existante),
+      taux d'annulation (annulé / accepté, exploite la nouvelle table), et
+      tendance de note (moyenne des 30 derniers jours vs les 30 jours
+      précédents). RPC `get_my_driver_performance()` — migration `059`, en
+      attente du merge (dépend de `057`).
+- [x] **Écran unique "Préférences de courses".** Le rayon d'acceptation a
+      migré de sa section dédiée du tableau de bord vers la barre de filtres
+      de `PoolList.tsx`, avec un texte explicite : *"Seul le rayon change les
+      courses qui vous sont proposées (et notifiées) — les autres filtres
+      ci-dessus n'affectent que cet affichage."* Répond directement à la
+      confusion identifiée (rayon serveur vs filtres d'affichage client, deux
+      causes différentes à "pourquoi je ne vois pas cette course").
 
 ## Sprint 3 — Productivité chauffeur (carte & planning)
 
@@ -156,7 +220,7 @@ en local/CI avec un vrai accès réseau :
 
 ```bash
 export E2E_VAPID_PUBLIC_KEY=$(node -e "console.log(require('web-push').generateVAPIDKeys().publicKey)")
-npm run test:e2e
+pnpm run test:e2e
 ```
 
 `playwright.config.ts` sert `public/` (le vrai `sw.js` livré en prod) via un

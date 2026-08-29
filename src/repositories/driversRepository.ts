@@ -43,6 +43,11 @@ export interface MyDriverAccount {
   subscription_status: Database["public"]["Enums"]["subscription_status"];
   subscription_ends_at: string | null;
   stripe_customer_id: string | null;
+  cpam_certificate_path: string | null;
+  cpam_certificate_expires_at: string | null;
+  driving_licence_path: string | null;
+  insurance_path: string | null;
+  insurance_expires_at: string | null;
 }
 
 export interface MyDriverStats {
@@ -240,7 +245,7 @@ export async function fetchMyAccountDetails(
   const { data, error } = await client
     .from("drivers_details")
     .select(
-      "vehicle_type, vehicle_registration, vehicle_brand, vehicle_model, vehicle_year, pmr_equipped, stretcher_equipped, oxygen_equipped, parking_municipality, parking_lat, parking_lng, siret, company_name, subscription_status, subscription_ends_at, stripe_customer_id"
+      "vehicle_type, vehicle_registration, vehicle_brand, vehicle_model, vehicle_year, pmr_equipped, stretcher_equipped, oxygen_equipped, parking_municipality, parking_lat, parking_lng, siret, company_name, subscription_status, subscription_ends_at, stripe_customer_id, cpam_certificate_path, cpam_certificate_expires_at, driving_licence_path, insurance_path, insurance_expires_at"
     )
     .eq("profile_id", profileId)
     .maybeSingle();
@@ -272,6 +277,11 @@ export async function updateMyAccountDetails(
     parking_municipality: string;
     parking_lat: number | null;
     parking_lng: number | null;
+    cpam_certificate_path: string | null;
+    cpam_certificate_expires_at: string | null;
+    driving_licence_path: string | null;
+    insurance_path: string | null;
+    insurance_expires_at: string | null;
   }>
 ): Promise<void> {
   const { error } = await client.from("drivers_details").update(fields).eq("profile_id", profileId);
@@ -280,6 +290,43 @@ export async function updateMyAccountDetails(
     logger.error("drivers.updateMyAccountDetails failed", { error: error.message, profileId });
     throw new Error(error.message);
   }
+}
+
+const DRIVER_DOCUMENTS_BUCKET = "driver-documents";
+
+/**
+ * Dépose un document chauffeur (carte pro, assurance…) dans le bucket privé
+ * driver-documents et retourne son *chemin* — jamais une URL publique, voir
+ * migration 060. Le chemin est préfixé par profileId pour matcher les
+ * policies RLS de storage.objects (storage.foldername(name)[1] = auth.uid()).
+ */
+export async function uploadDriverDocument(
+  client: SupabaseClient,
+  profileId: string,
+  kind: "cpam_certificate" | "driving_licence" | "insurance",
+  file: File
+): Promise<string> {
+  const ext = file.name.split(".").pop() ?? "pdf";
+  const path = `${profileId}/${kind}-${Date.now()}.${ext}`;
+  const { error } = await client.storage.from(DRIVER_DOCUMENTS_BUCKET).upload(path, file, { upsert: false });
+  if (error) {
+    logger.error("drivers.uploadDriverDocument failed", { error: error.message, profileId, kind });
+    throw new Error(error.message);
+  }
+  return path;
+}
+
+/**
+ * Lien signé à courte durée de vie (1h) pour consulter/télécharger un
+ * document déjà déposé — jamais d'URL publique stockée (bucket privé).
+ */
+export async function getSignedDocumentUrl(client: SupabaseClient, path: string): Promise<string> {
+  const { data, error } = await client.storage.from(DRIVER_DOCUMENTS_BUCKET).createSignedUrl(path, 3600);
+  if (error || !data) {
+    logger.error("drivers.getSignedDocumentUrl failed", { error: error?.message, path });
+    throw new Error(error?.message ?? "Lien de document indisponible");
+  }
+  return data.signedUrl;
 }
 
 /**
@@ -295,6 +342,54 @@ export async function fetchMyDriverStats(client: SupabaseClient): Promise<MyDriv
     throw new Error(error.message);
   }
   return data?.[0] ?? null;
+}
+
+export interface MyDriverPerformance {
+  rides_accepted_total: number;
+  rides_refused_total: number;
+  rides_cancelled_total: number;
+  acceptance_rate: number | null;
+  cancellation_rate: number | null;
+  rating_avg_recent: number | null;
+  rating_avg_previous: number | null;
+}
+
+/**
+ * Indicateurs de performance perso (taux d'acceptation/annulation, tendance
+ * de note) — voir migration 059. Donne au chauffeur un signal sur la santé
+ * de son compte avant d'être suspendu, plutôt que de le découvrir après coup.
+ */
+export async function fetchMyDriverPerformance(client: SupabaseClient): Promise<MyDriverPerformance | null> {
+  const { data, error } = await client.rpc("get_my_driver_performance");
+
+  if (error) {
+    logger.error("drivers.fetchMyDriverPerformance failed", { error: error.message });
+    throw new Error(error.message);
+  }
+  return data?.[0] ?? null;
+}
+
+export interface MyCancellation {
+  booking_id: string;
+  pickup_address: string;
+  pickup_datetime: string;
+  reason: string;
+  was_suspicious: boolean;
+  cancelled_at: string;
+}
+
+/**
+ * Historique des désistements du chauffeur connecté (migration 059) —
+ * affiché sur "Mon compte" pour la transparence sur pool_suspended_until.
+ */
+export async function fetchMyCancellations(client: SupabaseClient): Promise<MyCancellation[]> {
+  const { data, error } = await client.rpc("get_my_cancellations");
+
+  if (error) {
+    logger.error("drivers.fetchMyCancellations failed", { error: error.message });
+    throw new Error(error.message);
+  }
+  return data ?? [];
 }
 
 export interface DriverStatsPeriod {

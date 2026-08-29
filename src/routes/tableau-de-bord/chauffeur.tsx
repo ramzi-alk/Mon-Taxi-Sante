@@ -13,7 +13,6 @@ import {
   ShieldAlert,
   Gauge,
   Wallet,
-  MapPin,
   UserCog,
   Star,
   WifiOff,
@@ -23,6 +22,11 @@ import {
   AlertTriangle,
   BellRing,
   X,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  Target,
+  XCircle,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "~/lib/supabase";
@@ -125,6 +129,10 @@ async function fetchMyDriverStats(): Promise<driversRepository.MyDriverStats | n
   return driversRepository.fetchMyDriverStats(supabase);
 }
 
+async function fetchMyDriverPerformance(): Promise<driversRepository.MyDriverPerformance | null> {
+  return driversRepository.fetchMyDriverPerformance(supabase);
+}
+
 async function fetchDriverStatsSince(since: Date): Promise<DriverStatsPeriod> {
   return driversRepository.fetchDriverStatsSince(supabase, since);
 }
@@ -158,6 +166,77 @@ function StatCard({
       <div className="min-w-0">
         <p className="text-lg font-black text-gray-900 leading-tight sm:text-2xl">{value}</p>
         <p className="text-xs leading-snug text-muted-foreground sm:text-sm">{label}</p>
+      </div>
+    </div>
+  );
+}
+
+// ─── Performance card ───────────────────────────────────────────────────────
+
+function RateCard({
+  icon: Icon,
+  label,
+  value,
+  goodAbove,
+  invert,
+}: {
+  icon: React.FC<{ className?: string }>;
+  label: string;
+  value: number | null;
+  // Seuil au-delà duquel le taux est considéré "bon" (vert) plutôt
+  // qu'"à surveiller" (ambre) — sens inversé pour un taux d'annulation
+  // (bas = bon) via `invert`.
+  goodAbove: number;
+  invert?: boolean;
+}) {
+  const isGood = value != null && (invert ? value <= goodAbove : value >= goodAbove);
+  const color = value == null
+    ? "bg-gray-50 text-gray-400"
+    : isGood
+    ? "bg-brand-green-50 text-brand-green-600"
+    : "bg-amber-50 text-amber-600";
+  return (
+    <div className="flex items-center gap-2.5 rounded-xl bg-white p-3 shadow-sm ring-1 ring-gray-100 sm:gap-4 sm:rounded-2xl sm:p-5">
+      <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg sm:h-12 sm:w-12 sm:rounded-xl ${color}`}>
+        <Icon className="h-5 w-5 sm:h-6 sm:w-6" aria-hidden="true" />
+      </div>
+      <div className="min-w-0">
+        <p className="text-lg font-black text-gray-900 leading-tight sm:text-2xl">
+          {value != null ? `${value}%` : "—"}
+        </p>
+        <p className="text-xs leading-snug text-muted-foreground sm:text-sm">{label}</p>
+      </div>
+    </div>
+  );
+}
+
+function RatingTrendCard({ recent, previous }: { recent: number | null; previous: number | null }) {
+  const hasTrend = recent != null && previous != null;
+  const delta = hasTrend ? Math.round((recent - previous) * 100) / 100 : null;
+  const TrendIcon = delta == null ? Minus : delta > 0.05 ? TrendingUp : delta < -0.05 ? TrendingDown : Minus;
+  const color = delta == null
+    ? "bg-gray-50 text-gray-400"
+    : delta > 0.05
+    ? "bg-brand-green-50 text-brand-green-600"
+    : delta < -0.05
+    ? "bg-red-50 text-red-600"
+    : "bg-gray-50 text-gray-500";
+  return (
+    <div className="flex items-center gap-2.5 rounded-xl bg-white p-3 shadow-sm ring-1 ring-gray-100 sm:gap-4 sm:rounded-2xl sm:p-5">
+      <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg sm:h-12 sm:w-12 sm:rounded-xl ${color}`}>
+        <TrendIcon className="h-5 w-5 sm:h-6 sm:w-6" aria-hidden="true" />
+      </div>
+      <div className="min-w-0">
+        <p className="text-lg font-black text-gray-900 leading-tight sm:text-2xl">
+          {recent != null ? recent.toFixed(1) : "—"}
+          {delta != null && (
+            <span className="ml-1 text-xs font-semibold text-gray-400">
+              ({delta > 0 ? "+" : ""}
+              {delta})
+            </span>
+          )}
+        </p>
+        <p className="text-xs leading-snug text-muted-foreground sm:text-sm">Note (30 derniers jours)</p>
       </div>
     </div>
   );
@@ -228,6 +307,11 @@ function DriverDashboard() {
   const statsQuery = useQuery({
     queryKey: ["my-driver-stats"],
     queryFn: fetchMyDriverStats,
+  });
+
+  const performanceQuery = useQuery({
+    queryKey: ["my-driver-performance"],
+    queryFn: fetchMyDriverPerformance,
   });
 
   const periodSince = (() => {
@@ -813,47 +897,34 @@ function DriverDashboard() {
           })()}
         </section>
 
-        {/* Acceptance radius setting — chips instantanés */}
-        <section aria-labelledby="radius-heading">
-          <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-100">
-            <div className="flex items-center gap-2 mb-1">
-              <MapPin className="h-4 w-4 text-brand-blue-500" aria-hidden="true" />
-              <h2 id="radius-heading" className="text-sm font-bold text-gray-900">
-                Rayon d'acceptation
-              </h2>
-              {radiusMutation.isPending && (
-                <span className="text-xs text-gray-400">Enregistrement…</span>
-              )}
+        {/* Ma performance — signal sur la santé du compte avant suspension */}
+        {performanceQuery.data && (
+          <section aria-labelledby="performance-heading">
+            <div className="flex items-center gap-2 mb-4">
+              <Target className="h-4 w-4 text-brand-blue-500" aria-hidden="true" />
+              <h2 id="performance-heading" className="text-xl font-bold text-gray-900">Ma performance</h2>
             </div>
-            <p className="text-sm text-muted-foreground mb-3">
-              Distance maximale entre votre stationnement et le départ d'une course. Illimité = toutes les courses.
-            </p>
-            <div role="group" aria-label="Rayon d'acceptation" className="flex flex-wrap gap-2">
-              {([5, 10, 25, 50, null] as (number | null)[]).map((val) => {
-                const label = val === null ? "Illimité" : `${val} km`;
-                const current = availabilityQuery.data?.acceptance_radius_km ?? null;
-                const isActive = current === val;
-                return (
-                  <button
-                    key={String(val)}
-                    type="button"
-                    aria-pressed={isActive}
-                    disabled={radiusMutation.isPending}
-                    onClick={() => radiusMutation.mutate(val)}
-                    className={cn(
-                      "rounded-xl px-4 py-2 text-sm font-semibold transition-all border",
-                      isActive
-                        ? "bg-brand-blue-600 text-white border-brand-blue-600 shadow-sm"
-                        : "bg-white text-gray-700 border-gray-200 hover:border-brand-blue-300 hover:bg-brand-blue-50"
-                    )}
-                  >
-                    {label}
-                  </button>
-                );
-              })}
+            <div className="grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-3">
+              <RateCard
+                icon={Target}
+                label="Taux d'acceptation"
+                value={performanceQuery.data.acceptance_rate}
+                goodAbove={70}
+              />
+              <RateCard
+                icon={XCircle}
+                label="Taux d'annulation"
+                value={performanceQuery.data.cancellation_rate}
+                goodAbove={5}
+                invert
+              />
+              <RatingTrendCard
+                recent={performanceQuery.data.rating_avg_recent}
+                previous={performanceQuery.data.rating_avg_previous}
+              />
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* Tabs */}
         <div
@@ -990,6 +1061,9 @@ function DriverDashboard() {
                       }
                     : null
                 }
+                acceptanceRadiusKm={availabilityQuery.data?.acceptance_radius_km ?? null}
+                onSetAcceptanceRadius={(km) => radiusMutation.mutate(km)}
+                isSettingAcceptanceRadius={radiusMutation.isPending}
               />
             )}
           </section>

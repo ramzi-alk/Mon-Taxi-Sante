@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { Search, LayoutGrid, Rows3, ArrowDownWideNarrow } from "lucide-react";
+import { Search, LayoutGrid, Rows3, ArrowDownWideNarrow, MapPin } from "lucide-react";
 import { Input } from "~/components/ui/input";
 import { Checkbox } from "~/components/ui/checkbox";
 import {
@@ -36,7 +36,19 @@ interface PoolListProps {
   onRefuse?: (rideId: string) => void;
   refusingId?: string | null;
   isRefusing?: boolean;
+  // Rayon d'acceptation : contrairement aux filtres ci-dessous (purement
+  // côté client, sur les courses déjà chargées), c'est un réglage serveur
+  // qui détermine quelles courses arrivent jusque dans `rides` — et
+  // déclenchent une notification. Regroupé ici avec les autres filtres du
+  // pool plutôt que sur une page séparée, pour qu'un chauffeur qui se
+  // demande "pourquoi je ne vois pas telle course" trouve les deux causes
+  // possibles au même endroit.
+  acceptanceRadiusKm?: number | null;
+  onSetAcceptanceRadius?: (km: number | null) => void;
+  isSettingAcceptanceRadius?: boolean;
 }
+
+const RADIUS_OPTIONS = [5, 10, 25, 50, null] as const;
 
 const VIRTUALIZE_THRESHOLD = 20;
 const ROW_HEIGHT_ESTIMATE = 96;
@@ -54,7 +66,21 @@ function defaultVehicleFilter(profile: DriverProfileFilter | null | undefined): 
   return "all";
 }
 
-export function PoolList({ rides, onAccept, acceptingId, isAccepting, driverProfile, onAcceptSeries, acceptingSeriesId, onRefuse, refusingId, isRefusing }: PoolListProps) {
+export function PoolList({
+  rides,
+  onAccept,
+  acceptingId,
+  isAccepting,
+  driverProfile,
+  onAcceptSeries,
+  acceptingSeriesId,
+  onRefuse,
+  refusingId,
+  isRefusing,
+  acceptanceRadiusKm,
+  onSetAcceptanceRadius,
+  isSettingAcceptanceRadius,
+}: PoolListProps) {
   const [search, setSearch] = useState("");
 
   // Toutes les rides du pool groupées par series_id (non filtrées) pour
@@ -231,6 +257,26 @@ export function PoolList({ rides, onAccept, acceptingId, isAccepting, driverProf
             />
             Besoins spécifiques
           </label>
+
+          {onSetAcceptanceRadius && (
+            <Select
+              value={String(acceptanceRadiusKm ?? "null")}
+              onValueChange={(v) => onSetAcceptanceRadius(v === "null" ? null : Number(v))}
+            >
+              <SelectTrigger className="w-auto" aria-label="Rayon d'acceptation autour de votre stationnement">
+                <MapPin className="h-4 w-4 text-gray-400" aria-hidden="true" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {RADIUS_OPTIONS.map((km) => (
+                  <SelectItem key={String(km)} value={String(km ?? "null")}>
+                    {km === null ? "Rayon illimité" : `Rayon ${km} km`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          {isSettingAcceptanceRadius && <span className="text-xs text-gray-400">Enregistrement…</span>}
         </div>
 
         <p className="mt-2 text-xs text-gray-500">
@@ -238,6 +284,13 @@ export function PoolList({ rides, onAccept, acceptingId, isAccepting, driverProf
           {hasActiveFilters && rides.length !== filteredRides.length
             ? ` sur ${rides.length} affichée${filteredRides.length > 1 ? "s" : ""}`
             : ""}
+          {onSetAcceptanceRadius && (
+            <>
+              {" · "}
+              Seul le rayon change les courses qui vous sont proposées (et notifiées) — les autres filtres ci-dessus
+              n'affectent que cet affichage.
+            </>
+          )}
         </p>
       </div>
 

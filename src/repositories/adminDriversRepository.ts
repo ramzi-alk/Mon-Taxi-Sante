@@ -37,6 +37,40 @@ export async function suspendDriver(client: SupabaseClient, driverProfileId: str
   }
 }
 
+export interface DriverCancellation {
+  booking_id: string;
+  reason: string;
+  was_suspicious: boolean;
+  cancelled_at: string;
+  bookings: { pickup_address: string; pickup_datetime: string } | null;
+}
+
+/**
+ * Historique complet des désistements d'un chauffeur (booking_driver_
+ * cancellations, migration 057), pour arbitrer une suspension au lieu de la
+ * subir aveuglément (voir suspicious_cancellation_count/pool_suspended_until
+ * sur AdminDriverDirectoryRow). RLS ("admin all") donne accès direct, pas
+ * besoin de RPC dédiée comme côté chauffeur (get_my_cancellations, qui elle
+ * masque l'adresse exacte).
+ */
+export async function fetchDriverCancellations(
+  client: SupabaseClient,
+  driverProfileId: string
+): Promise<DriverCancellation[]> {
+  const { data, error } = await client
+    .from("booking_driver_cancellations")
+    .select("booking_id, reason, was_suspicious, cancelled_at, bookings(pickup_address, pickup_datetime)")
+    .eq("driver_id", driverProfileId)
+    .order("cancelled_at", { ascending: false })
+    .limit(50);
+
+  if (error) {
+    logger.error("adminDrivers.fetchDriverCancellations failed", { error: error.message, driverProfileId });
+    throw new Error(error.message);
+  }
+  return (data ?? []) as unknown as DriverCancellation[];
+}
+
 export async function reactivateDriver(client: SupabaseClient, driverProfileId: string): Promise<void> {
   // Cast: the generated Args type marks this defaultless plpgsql param as
   // non-null (Postgres doesn't expose per-arg nullability), but the RPC
