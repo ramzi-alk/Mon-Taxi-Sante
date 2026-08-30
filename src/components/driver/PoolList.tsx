@@ -1,6 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, lazy, Suspense } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { Search, LayoutGrid, Rows3, ArrowDownWideNarrow } from "lucide-react";
+import { Search, LayoutGrid, Rows3, ArrowDownWideNarrow, MapPin, Map as MapIcon } from "lucide-react";
+import type { RideMapMarker } from "./RideMap";
+
+// mapbox-gl à lui seul pèse ~1 Mo minifié — la carte est repliée par défaut
+// (showMap), donc un import statique gonflerait le bundle du dashboard
+// chauffeur pour tout le monde, même ceux qui ne l'ouvrent jamais.
+const RideMap = lazy(() => import("./RideMap").then((m) => ({ default: m.RideMap })));
 import { Input } from "~/components/ui/input";
 import { Checkbox } from "~/components/ui/checkbox";
 import {
@@ -36,7 +42,21 @@ interface PoolListProps {
   onRefuse?: (rideId: string) => void;
   refusingId?: string | null;
   isRefusing?: boolean;
+  // Rayon d'acceptation : contrairement aux filtres ci-dessous (purement
+  // côté client, sur les courses déjà chargées), c'est un réglage serveur
+  // qui détermine quelles courses arrivent jusque dans `rides` — et
+  // déclenchent une notification. Regroupé ici avec les autres filtres du
+  // pool plutôt que sur une page séparée, pour qu'un chauffeur qui se
+  // demande "pourquoi je ne vois pas telle course" trouve les deux causes
+  // possibles au même endroit.
+  acceptanceRadiusKm?: number | null;
+  onSetAcceptanceRadius?: (km: number | null) => void;
+  isSettingAcceptanceRadius?: boolean;
+  driverLat?: number | null;
+  driverLng?: number | null;
 }
+
+const RADIUS_OPTIONS = [5, 10, 25, 50, null] as const;
 
 const VIRTUALIZE_THRESHOLD = 20;
 const ROW_HEIGHT_ESTIMATE = 96;
@@ -54,7 +74,33 @@ function defaultVehicleFilter(profile: DriverProfileFilter | null | undefined): 
   return "all";
 }
 
-export function PoolList({ rides, onAccept, acceptingId, isAccepting, driverProfile, onAcceptSeries, acceptingSeriesId, onRefuse, refusingId, isRefusing }: PoolListProps) {
+export function PoolList({
+  rides,
+  onAccept,
+  acceptingId,
+  isAccepting,
+  driverProfile,
+  onAcceptSeries,
+  acceptingSeriesId,
+  onRefuse,
+  refusingId,
+  isRefusing,
+  acceptanceRadiusKm,
+  onSetAcceptanceRadius,
+  isSettingAcceptanceRadius,
+  driverLat,
+  driverLng,
+}: PoolListProps) {
+  const [showMap, setShowMap] = useState(() => {
+    try { return localStorage.getItem("driver-pool-map") === "1"; } catch { return false; }
+  });
+  const toggleMap = () => {
+    setShowMap((v) => {
+      const next = !v;
+      try { localStorage.setItem("driver-pool-map", next ? "1" : "0"); } catch {}
+      return next;
+    });
+  };
   const [search, setSearch] = useState("");
 
   // Toutes les rides du pool groupées par series_id (non filtrées) pour
@@ -71,10 +117,37 @@ export function PoolList({ rides, onAccept, acceptingId, isAccepting, driverProf
   }, [rides]);
   const [vehicleFilter, setVehicleFilter] = useState<VehicleFilter>(() => defaultVehicleFilter(driverProfile));
   const [accessibilityOnly, setAccessibilityOnly] = useState(false);
-  const [sortBy, setSortBy] = useState<SortBy>("urgency");
-  const [viewMode, setViewMode] = useState<ViewMode>(
-    rides.length > VIRTUALIZE_THRESHOLD ? "compact" : "grid"
-  );
+  // Tri et vue sont des préférences durables (le chauffeur les re-choisit
+  // sinon à chaque session) — persistées en localStorage. La recherche
+  // texte et "besoins spécifiques" restent volontairement remises à zéro à
+  // chaque visite : un filtre oublié actif d'une session précédente
+  // masquerait silencieusement des courses disponibles.
+  const [sortBy, setSortBy] = useState<SortBy>(() => {
+    try {
+      const stored = localStorage.getItem("driver-pool-sort");
+      return stored === "urgency" || stored === "proximity" ? stored : "urgency";
+    } catch {
+      return "urgency";
+    }
+  });
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    try {
+      const stored = localStorage.getItem("driver-pool-view");
+      if (stored === "compact" || stored === "grid") return stored;
+    } catch {
+      // ignore
+    }
+    return rides.length > VIRTUALIZE_THRESHOLD ? "compact" : "grid";
+  });
+
+  const updateSortBy = (value: SortBy) => {
+    setSortBy(value);
+    try { localStorage.setItem("driver-pool-sort", value); } catch {}
+  };
+  const updateViewMode = (value: ViewMode) => {
+    setViewMode(value);
+    try { localStorage.setItem("driver-pool-view", value); } catch {}
+  };
 
   const hasAppliedDriverDefault = useRef(false);
   useEffect(() => {
@@ -110,6 +183,30 @@ export function PoolList({ rides, onAccept, acceptingId, isAccepting, driverProf
     return result;
   }, [rides, vehicleFilter, accessibilityOnly, search, sortBy, driverProfile]);
 
+  // Un pickup non accepté n'a jamais de coordonnées exposées (bookings_pool_
+  // for_drivers masque pickup_lat/lng — migration 029/031) : la carte ne
+  // positionne donc que la destination de chaque course, jamais son point de
+  // départ, pour ne rien révéler de plus que ce que le texte affiche déjà.
+  const mapMarkers = useMemo<RideMapMarker[]>(() => {
+    const markers: RideMapMarker[] = [];
+    if (driverLat != null && driverLng != null) {
+      markers.push({ id: "driver", lat: driverLat, lng: driverLng, kind: "driver", label: "Vous" });
+    }
+    for (const ride of filteredRides) {
+      if (ride.dropoff_lat == null || ride.dropoff_lng == null) continue;
+      const minutesUntil = (new Date(ride.pickup_datetime).getTime() - Date.now()) / 60000;
+      markers.push({
+        id: ride.id,
+        lat: ride.dropoff_lat,
+        lng: ride.dropoff_lng,
+        kind: "dropoff",
+        urgent: minutesUntil >= 0 && minutesUntil <= 20,
+        label: `${new Date(ride.pickup_datetime).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })} → ${ride.dropoff_address}`,
+      });
+    }
+    return markers;
+  }, [filteredRides, driverLat, driverLng]);
+
   const parentRef = useRef<HTMLDivElement>(null);
   const virtualizer = useVirtualizer({
     count: filteredRides.length,
@@ -144,7 +241,7 @@ export function PoolList({ rides, onAccept, acceptingId, isAccepting, driverProf
           <div className="shrink-0 flex items-center gap-1 rounded-lg bg-gray-100 p-1">
             <button
               type="button"
-              onClick={() => setViewMode("compact")}
+              onClick={() => updateViewMode("compact")}
               aria-pressed={viewMode === "compact"}
               aria-label="Vue liste compacte"
               className={cn(
@@ -157,7 +254,7 @@ export function PoolList({ rides, onAccept, acceptingId, isAccepting, driverProf
             </button>
             <button
               type="button"
-              onClick={() => setViewMode("grid")}
+              onClick={() => updateViewMode("grid")}
               aria-pressed={viewMode === "grid"}
               aria-label="Vue détaillée en cartes"
               className={cn(
@@ -169,7 +266,33 @@ export function PoolList({ rides, onAccept, acceptingId, isAccepting, driverProf
               Cartes
             </button>
           </div>
+
+          <button
+            type="button"
+            onClick={toggleMap}
+            aria-pressed={showMap}
+            aria-label={showMap ? "Masquer la carte" : "Afficher la carte"}
+            className={cn(
+              "shrink-0 flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors",
+              showMap ? "bg-brand-blue-50 text-brand-blue-700 ring-1 ring-brand-blue-200" : "bg-gray-100 text-gray-500 hover:text-gray-700"
+            )}
+          >
+            <MapIcon className="h-3.5 w-3.5" aria-hidden="true" />
+            Carte
+          </button>
         </div>
+
+        {showMap && (
+          <div className="mb-2">
+            <Suspense fallback={<div className="h-[220px] w-full rounded-2xl bg-gray-100 animate-pulse" />}>
+              <RideMap markers={mapMarkers} height="220px" />
+            </Suspense>
+            <p className="mt-1.5 text-[11px] text-gray-400">
+              Seule la destination de chaque course est positionnée — le point de prise en charge reste masqué tant
+              que la course n'est pas acceptée.
+            </p>
+          </div>
+        )}
 
         {/* Ligne 2 : filtres */}
         <div className="flex flex-wrap items-center gap-2">
@@ -185,7 +308,7 @@ export function PoolList({ rides, onAccept, acceptingId, isAccepting, driverProf
             </SelectContent>
           </Select>
 
-          <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortBy)}>
+          <Select value={sortBy} onValueChange={(v) => updateSortBy(v as SortBy)}>
             <SelectTrigger className="w-auto" aria-label="Trier les courses">
               <ArrowDownWideNarrow className="h-4 w-4 text-gray-400" aria-hidden="true" />
               <SelectValue placeholder="Trier" />
@@ -204,6 +327,26 @@ export function PoolList({ rides, onAccept, acceptingId, isAccepting, driverProf
             />
             Besoins spécifiques
           </label>
+
+          {onSetAcceptanceRadius && (
+            <Select
+              value={String(acceptanceRadiusKm ?? "null")}
+              onValueChange={(v) => onSetAcceptanceRadius(v === "null" ? null : Number(v))}
+            >
+              <SelectTrigger className="w-auto" aria-label="Rayon d'acceptation autour de votre stationnement">
+                <MapPin className="h-4 w-4 text-gray-400" aria-hidden="true" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {RADIUS_OPTIONS.map((km) => (
+                  <SelectItem key={String(km)} value={String(km ?? "null")}>
+                    {km === null ? "Rayon illimité" : `Rayon ${km} km`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          {isSettingAcceptanceRadius && <span className="text-xs text-gray-400">Enregistrement…</span>}
         </div>
 
         <p className="mt-2 text-xs text-gray-500">
@@ -211,6 +354,13 @@ export function PoolList({ rides, onAccept, acceptingId, isAccepting, driverProf
           {hasActiveFilters && rides.length !== filteredRides.length
             ? ` sur ${rides.length} affichée${filteredRides.length > 1 ? "s" : ""}`
             : ""}
+          {onSetAcceptanceRadius && (
+            <>
+              {" · "}
+              Seul le rayon change les courses qui vous sont proposées (et notifiées) — les autres filtres ci-dessus
+              n'affectent que cet affichage.
+            </>
+          )}
         </p>
       </div>
 

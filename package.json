@@ -15,7 +15,8 @@
     "seo:sitemap": "node scripts/seo-data/generate-sitemap.mjs",
     "seo:copy": "node scripts/seo-data/generate-copy.mjs",
     "seo:discover-sae": "node scripts/seo-data/fetch-sae.mjs",
-    "seo:discover-insee-local": "node scripts/seo-data/fetch-insee-local.mjs"
+    "seo:discover-insee-local": "node scripts/seo-data/fetch-insee-local.mjs",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -46,6 +47,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "lucide-react": "^0.454.0",
+    "mapbox-gl": "^3.29.0",
     "pino": "^10.3.1",
     "react": "^19.0.0",
     "react-day-picker": "^10.0.1",
@@ -58,6 +60,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/typography": "^0.5.15",
     "@types/node": "^22",
     "@types/react": "^19",

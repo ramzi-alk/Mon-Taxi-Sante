@@ -159,6 +159,62 @@ export type Database = {
           },
         ]
       }
+      booking_driver_cancellations: {
+        Row: {
+          booking_id: string
+          cancelled_at: string
+          driver_id: string
+          id: string
+          reason: string
+          was_suspicious: boolean
+        }
+        Insert: {
+          booking_id: string
+          cancelled_at?: string
+          driver_id: string
+          id?: string
+          reason: string
+          was_suspicious?: boolean
+        }
+        Update: {
+          booking_id?: string
+          cancelled_at?: string
+          driver_id?: string
+          id?: string
+          reason?: string
+          was_suspicious?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_driver_cancellations_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_driver_cancellations_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings_active_for_driver"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_driver_cancellations_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings_pool_for_drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_driver_cancellations_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       booking_driver_refusals: {
         Row: {
           booking_id: string
@@ -226,6 +282,38 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      booking_location_notes: {
+        Row: {
+          created_at: string
+          driver_id: string
+          id: string
+          note: string
+          pickup_address: string
+        }
+        Insert: {
+          created_at?: string
+          driver_id: string
+          id?: string
+          note: string
+          pickup_address: string
+        }
+        Update: {
+          created_at?: string
+          driver_id?: string
+          id?: string
+          note?: string
+          pickup_address?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_location_notes_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       booking_ratings: {
         Row: {
@@ -377,7 +465,7 @@ export type Database = {
           pickup_lng: number | null
           pickup_municipality: string | null
           pmt_declared: boolean
-          pmt_file_url: string | null
+          pmt_file_path: string | null
           priority_driver_id: string | null
           priority_expires_at: string | null
           reference_code: string
@@ -430,7 +518,7 @@ export type Database = {
           pickup_lng?: number | null
           pickup_municipality?: string | null
           pmt_declared?: boolean
-          pmt_file_url?: string | null
+          pmt_file_path?: string | null
           priority_driver_id?: string | null
           priority_expires_at?: string | null
           reference_code: string
@@ -483,7 +571,7 @@ export type Database = {
           pickup_lng?: number | null
           pickup_municipality?: string | null
           pmt_declared?: boolean
-          pmt_file_url?: string | null
+          pmt_file_path?: string | null
           priority_driver_id?: string | null
           priority_expires_at?: string | null
           reference_code?: string
@@ -635,11 +723,13 @@ export type Database = {
           company_name: string | null
           convention_cpam: boolean
           convention_number: string | null
-          cpam_certificate_url: string | null
+          cpam_certificate_expires_at: string | null
+          cpam_certificate_path: string | null
           created_at: string
-          driving_licence_url: string | null
+          driving_licence_path: string | null
           id: string
-          insurance_url: string | null
+          insurance_expires_at: string | null
+          insurance_path: string | null
           last_heartbeat_at: string | null
           oxygen_equipped: boolean
           parking_lat: number | null
@@ -672,11 +762,13 @@ export type Database = {
           company_name?: string | null
           convention_cpam?: boolean
           convention_number?: string | null
-          cpam_certificate_url?: string | null
+          cpam_certificate_expires_at?: string | null
+          cpam_certificate_path?: string | null
           created_at?: string
-          driving_licence_url?: string | null
+          driving_licence_path?: string | null
           id?: string
-          insurance_url?: string | null
+          insurance_expires_at?: string | null
+          insurance_path?: string | null
           last_heartbeat_at?: string | null
           oxygen_equipped?: boolean
           parking_lat?: number | null
@@ -709,11 +801,13 @@ export type Database = {
           company_name?: string | null
           convention_cpam?: boolean
           convention_number?: string | null
-          cpam_certificate_url?: string | null
+          cpam_certificate_expires_at?: string | null
+          cpam_certificate_path?: string | null
           created_at?: string
-          driving_licence_url?: string | null
+          driving_licence_path?: string | null
           id?: string
-          insurance_url?: string | null
+          insurance_expires_at?: string | null
+          insurance_path?: string | null
           last_heartbeat_at?: string | null
           oxygen_equipped?: boolean
           parking_lat?: number | null
@@ -899,6 +993,7 @@ export type Database = {
           dropoff_lat: number | null
           dropoff_lng: number | null
           estimated_price: number | null
+          has_location_notes: boolean | null
           id: string | null
           is_hospitalization: boolean | null
           passenger_count: number | null
@@ -947,6 +1042,10 @@ export type Database = {
       a_majoration_horaire: { Args: { p_datetime: string }; Returns: boolean }
       accept_ride: { Args: { p_booking_id: string }; Returns: undefined }
       accept_series: { Args: { p_booking_id: string }; Returns: undefined }
+      add_location_note: {
+        Args: { p_booking_id: string; p_note: string }
+        Returns: undefined
+      }
       admin_set_driver_suspension: {
         Args: { p_driver_profile_id: string; p_until: string }
         Returns: undefined
@@ -964,7 +1063,7 @@ export type Database = {
         Returns: string
       }
       cancel_ride_by_driver: {
-        Args: { p_booking_id: string }
+        Args: { p_booking_id: string; p_reason: string }
         Returns: undefined
       }
       cancel_series: { Args: { p_booking_id: string }; Returns: undefined }
@@ -1034,6 +1133,13 @@ export type Database = {
           status: string
         }[]
       }
+      get_location_notes: {
+        Args: { p_booking_id: string }
+        Returns: {
+          created_at: string
+          note: string
+        }[]
+      }
       get_my_bookings: {
         Args: never
         Returns: {
@@ -1074,6 +1180,29 @@ export type Database = {
           vehicle_model: string
           vehicle_registration: string
           vehicle_type: Database["public"]["Enums"]["booking_vehicle_type"]
+        }[]
+      }
+      get_my_cancellations: {
+        Args: never
+        Returns: {
+          booking_id: string
+          cancelled_at: string
+          pickup_address: string
+          pickup_datetime: string
+          reason: string
+          was_suspicious: boolean
+        }[]
+      }
+      get_my_driver_performance: {
+        Args: never
+        Returns: {
+          acceptance_rate: number
+          cancellation_rate: number
+          rating_avg_previous: number
+          rating_avg_recent: number
+          rides_accepted_total: number
+          rides_cancelled_total: number
+          rides_refused_total: number
         }[]
       }
       get_my_driver_stats: {

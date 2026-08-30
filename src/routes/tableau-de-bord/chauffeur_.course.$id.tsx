@@ -57,7 +57,7 @@ function DriverRideDetailPage() {
   });
 
   const cancelMutation = useMutation({
-    mutationFn: () => bookingsRepository.cancelRideByDriver(supabase, id),
+    mutationFn: (reason: string) => bookingsRepository.cancelRideByDriver(supabase, id, reason),
     onSuccess: () =>
       toast({ title: "Course annulée", description: "La course est retournée dans le pool.", variant: "default" }),
     onSettled: () => {
@@ -111,7 +111,7 @@ function DriverRideDetailPage() {
           isStarting={startMutation.isPending}
           onComplete={() => completeMutation.mutate()}
           isCompleting={completeMutation.isPending}
-          onCancel={() => cancelMutation.mutate()}
+          onCancel={(_, reason) => cancelMutation.mutate(reason)}
           isCancelling={cancelMutation.isPending}
           onRate={(_, rating, comment) => rateMutation.mutate({ rating, comment })}
           isRating={rateMutation.isPending}

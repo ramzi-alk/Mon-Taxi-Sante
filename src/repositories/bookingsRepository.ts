@@ -456,6 +456,14 @@ function mapRideLifecycleError(error: { message: string }, rideId: string, actio
       "Votre accès au pool de courses est temporairement suspendu suite à des annulations répétées juste après acceptation."
     );
   }
+  if (error.message.includes("schedule_conflict")) {
+    return new Error(
+      "Cette course chevauche une autre course que vous avez déjà acceptée à un horaire trop proche."
+    );
+  }
+  if (error.message.includes("cancellation_reason_required")) {
+    return new Error("Merci d'indiquer un motif d'annulation.");
+  }
   if (error.message.includes("not_a_driver")) {
     return new Error("Action réservée aux chauffeurs.");
   }
@@ -479,6 +487,12 @@ function mapRideLifecycleError(error: { message: string }, rideId: string, actio
   }
   if (error.message.includes("already_rated")) {
     return new Error("Vous avez déjà noté cette course.");
+  }
+  if (error.message.includes("invalid_note")) {
+    return new Error("La note doit contenir entre 1 et 200 caractères.");
+  }
+  if (error.message.includes("booking_not_accepted")) {
+    return new Error("Vous devez avoir accepté cette course pour laisser une note sur ce lieu.");
   }
   logger.error(`bookings.${action} failed`, { error: error.message, rideId });
   return new Error(error.message);
@@ -575,11 +589,18 @@ export async function publishBooking(client: SupabaseClient, bookingId: string):
 
 /**
  * Driver backs out of their own accepted ride, via cancel_ride_by_driver
- * (see migration 020) — returns it to the pool (available, driver_id
- * cleared) rather than cancelling the patient's reservation outright.
+ * (see migration 020, reason made mandatory in migration 057) — returns it
+ * to the pool (available, driver_id cleared) rather than cancelling the
+ * patient's reservation outright. The reason is stored in
+ * bookings.cancellation_reason for admin visibility — it does not (yet)
+ * change the suspicious-cancellation heuristic itself.
  */
-export async function cancelRideByDriver(client: SupabaseClient, rideId: string): Promise<void> {
-  const { error } = await client.rpc("cancel_ride_by_driver", { p_booking_id: rideId });
+export async function cancelRideByDriver(
+  client: SupabaseClient,
+  rideId: string,
+  reason: string
+): Promise<void> {
+  const { error } = await client.rpc("cancel_ride_by_driver", { p_booking_id: rideId, p_reason: reason });
 
   if (error) {
     throw mapRideLifecycleError(error, rideId, "cancelRideByDriver");
@@ -670,6 +691,34 @@ export async function cancelBookingViaReminder(client: SupabaseClient, token: st
     throw new Error(error.message);
   }
   return data;
+}
+
+export type LocationNote = Database["public"]["Functions"]["get_location_notes"]["Returns"][number];
+
+/**
+ * Notes factuelles non identifiantes existantes pour l'adresse de prise en
+ * charge d'une course du chauffeur connecté (migration 065) — scopé à ses
+ * propres courses accepted/in_progress/completed.
+ */
+export async function getLocationNotes(client: SupabaseClient, rideId: string): Promise<LocationNote[]> {
+  const { data, error } = await client.rpc("get_location_notes", { p_booking_id: rideId });
+  if (error) {
+    logger.error("bookings.getLocationNotes failed", { error: error.message, rideId });
+    throw new Error(error.message);
+  }
+  return data ?? [];
+}
+
+/**
+ * Le chauffeur ajoute une note sur le lieu de prise en charge d'une de ses
+ * courses (add_location_note, migration 065) — visible par tous les
+ * chauffeurs une fois la course acceptée, jamais par le pool avant.
+ */
+export async function addLocationNote(client: SupabaseClient, rideId: string, note: string): Promise<void> {
+  const { error } = await client.rpc("add_location_note", { p_booking_id: rideId, p_note: note });
+  if (error) {
+    throw mapRideLifecycleError(error, rideId, "addLocationNote");
+  }
 }
 
 export async function insertBooking(

@@ -28,7 +28,7 @@ import { Textarea } from "~/components/ui/textarea";
 import { Checkbox } from "~/components/ui/checkbox";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "~/components/ui/tabs";
 import { AdminErrorState } from "~/components/admin/AdminErrorState";
-import { cn } from "~/lib/utils";
+import { cn, formatDateFr, formatTimeFr } from "~/lib/utils";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -585,6 +585,14 @@ function DriverDetailDialog({ driver, onClose }: { driver: AdminDriverDirectoryR
   const [showDocumentForm, setShowDocumentForm] = useState(false);
   const suspended = !!driver.pool_suspended_until && new Date(driver.pool_suspended_until) > new Date();
 
+  // Détail des annulations — pour arbitrer une suspension (suspicious_
+  // cancellation_count ci-dessous n'est qu'un compteur brut) plutôt que de
+  // se fier aveuglément au seul critère temporel automatique.
+  const { data: cancellations } = useQuery({
+    queryKey: ["admin-driver-cancellations", driver.profile_id],
+    queryFn: () => adminDriversRepository.fetchDriverCancellations(supabase, driver.profile_id),
+  });
+
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["admin-driver-directory"] });
 
   const { mutate: suspend, isPending: isSuspending } = useMutation({
@@ -690,6 +698,37 @@ function DriverDetailDialog({ driver, onClose }: { driver: AdminDriverDirectoryR
                 <div className="mt-0.5 text-[#0B0F1C]">{driver.availability}</div>
               </div>
             </div>
+
+            {cancellations && cancellations.length > 0 && (
+              <div className="border-t border-gray-100 pt-4">
+                <div className="text-[10.5px] font-bold uppercase tracking-wide text-gray-400 mb-2">
+                  Historique des annulations ({cancellations.length})
+                </div>
+                <ul className="max-h-48 overflow-y-auto divide-y divide-gray-100 -mx-1">
+                  {cancellations.map((c) => (
+                    <li key={`${c.booking_id}-${c.cancelled_at}`} className="px-1 py-2 text-xs">
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="font-medium text-[#0B0F1C] truncate">
+                          {c.bookings?.pickup_address ?? "Course introuvable"}
+                        </span>
+                        {c.was_suspicious && (
+                          <span className="shrink-0 rounded-full bg-amber-50 text-amber-700 px-2 py-0.5 text-[10px] font-semibold">
+                            Suspecte
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-gray-400 mt-0.5">
+                        {c.bookings?.pickup_datetime
+                          ? `Course du ${formatDateFr(c.bookings.pickup_datetime)} à ${formatTimeFr(c.bookings.pickup_datetime)} — `
+                          : ""}
+                        annulée le {formatDateFr(c.cancelled_at)} à {formatTimeFr(c.cancelled_at)}
+                      </p>
+                      <p className="text-gray-600 mt-0.5">Motif : {c.reason}</p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             <DialogFooter>
               <button

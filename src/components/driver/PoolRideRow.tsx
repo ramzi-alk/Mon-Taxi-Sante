@@ -12,6 +12,7 @@ import {
   Repeat,
   Lock,
   XCircle,
+  Info,
 } from "lucide-react";
 import { formatDateFr, formatTimeFr, formatCountdown, cn } from "~/lib/utils";
 import { useEffect, useState } from "react";
@@ -218,6 +219,15 @@ export function PoolRideRow({ ride, onAccept, isAccepting, onAcceptSeries, isAcc
           {hasPriority && (
             <span className="rounded-full bg-violet-50 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700">Prio</span>
           )}
+          {ride.has_location_notes && (
+            <span
+              className="flex items-center gap-0.5 rounded-full bg-sky-50 px-1.5 py-0.5 text-[10px] font-semibold text-sky-700"
+              title="Un chauffeur a déjà laissé une note sur ce lieu (visible après acceptation)"
+            >
+              <Info className="h-2.5 w-2.5" aria-hidden="true" />
+              Lieu signalé
+            </span>
+          )}
           {needs.map((n) => (
             <span key={n} className="rounded-full bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">{n}</span>
           ))}
@@ -254,21 +264,15 @@ export function PoolRideRow({ ride, onAccept, isAccepting, onAcceptSeries, isAcc
               type="button"
               onClick={() => setSeriesSelectOpen((v) => !v)}
               disabled={isAcceptingSeries || isAccepting}
-              aria-label={`Choisir parmi les ${selectableSeriesRides.length} séances de la série`}
-              className={cn(
-                "shrink-0 flex items-center gap-0.5 rounded-lg px-2 py-1 text-[10px] font-bold transition-all",
-                (isAcceptingSeries || isAccepting)
-                  ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                  : seriesSelectOpen
-                  ? "bg-violet-200 text-violet-800"
-                  : "bg-violet-100 text-violet-700 hover:bg-violet-200"
-              )}
+              aria-expanded={seriesSelectOpen}
+              aria-label={`Accepter toute la série — ${selectableSeriesRides.length} séances`}
+              className="shrink-0 flex items-center gap-0.5 text-[10px] font-semibold text-violet-700 hover:underline disabled:opacity-60"
             >
               {isAcceptingSeries
                 ? <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />
                 : <Repeat className="h-3 w-3" aria-hidden="true" />
               }
-              {selectableSeriesRides.length}/{ride.series_total} séances
+              Série ({selectableSeriesRides.length}/{ride.series_total})
             </button>
           )}
         </div>
