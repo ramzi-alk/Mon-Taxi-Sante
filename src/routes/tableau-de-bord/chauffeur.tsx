@@ -27,6 +27,8 @@ import {
   Minus,
   Target,
   XCircle,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "~/lib/supabase";
@@ -272,6 +274,17 @@ function DriverDashboard() {
   const [pushBannerDismissed, setPushBannerDismissed] = useState(() => {
     try { return localStorage.getItem("driver-push-banner-dismissed") === "1"; } catch { return false; }
   });
+  // Mois d'historique dépliés (courses passées, voir pastRidesByMonth) —
+  // repliés par défaut.
+  const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
+  const toggleMonth = (key: string) => {
+    setExpandedMonths((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
 
   // Driver's own online/paused/offline status — the pool only shows rides
   // to drivers who are "online" (see migration 018).
@@ -551,6 +564,21 @@ function DriverDashboard() {
     return acc;
   }, {});
 
+  const byPickupAsc = (a: PoolRide, b: PoolRide) =>
+    new Date(a.pickup_datetime).getTime() - new Date(b.pickup_datetime).getTime();
+  const byPickupDesc = (a: PoolRide, b: PoolRide) =>
+    new Date(b.pickup_datetime).getTime() - new Date(a.pickup_datetime).getTime();
+
+  const withSublabel = (rides: PoolRide[]) =>
+    `${rides.length} course${rides.length > 1 ? "s" : ""}${
+      rides.some((r) => r.distance_km != null)
+        ? ` · ~${Math.round(rides.reduce((s, r) => s + (r.distance_km ?? 0), 0))} km`
+        : ""
+    }`;
+
+  // Courses à venir (aujourd'hui → plus tard), triées de la plus proche
+  // à la plus lointaine. Les courses passées sont exclues d'ici et
+  // regroupées par mois ci-dessous (pastRidesByMonth).
   const myRidesGrouped = (() => {
     const now = new Date();
     const startOfToday = new Date(now);
@@ -563,16 +591,12 @@ function DriverDashboard() {
       { label: "Demain", rides: [] },
       { label: "Cette semaine", rides: [] },
       { label: "Plus tard", rides: [] },
-      { label: "Passées", rides: [] },
     ];
     for (const ride of myRides) {
       const d = new Date(ride.pickup_datetime);
+      if (d < startOfToday) continue; // géré par pastRidesByMonth
       if (d.toDateString() === todayStr) groups[0].rides.push(ride);
       else if (d.toDateString() === tomorrowStr) groups[1].rides.push(ride);
-      // Une date antérieure à aujourd'hui n'est jamais "cette semaine" —
-      // sans ce garde-fou, `d < weekEnd` est vrai pour n'importe quelle
-      // course passée (même vieille de plusieurs mois).
-      else if (d < startOfToday) groups[4].rides.push(ride);
       else if (d < weekEnd) groups[2].rides.push(ride);
       else groups[3].rides.push(ride);
     }
@@ -580,12 +604,32 @@ function DriverDashboard() {
       .filter((g) => g.rides.length > 0)
       .map((g) => ({
         ...g,
-        sublabel: `${g.rides.length} course${g.rides.length > 1 ? "s" : ""}${
-          g.rides.some((r) => r.distance_km != null)
-            ? ` · ~${Math.round(g.rides.reduce((s, r) => s + (r.distance_km ?? 0), 0))} km`
-            : ""
-        }`,
+        rides: [...g.rides].sort(byPickupAsc),
+        sublabel: withSublabel(g.rides),
       }));
+  })();
+
+  // Courses passées, regroupées par mois — mois le plus récent en premier,
+  // et courses les plus récentes en premier dans chaque mois. Chaque mois
+  // est masqué par défaut (voir expandedMonths) et se déplie au clic.
+  const pastRidesByMonth = (() => {
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const byMonth = new Map<string, { label: string; sortKey: number; rides: PoolRide[] }>();
+    for (const ride of myRides) {
+      const d = new Date(ride.pickup_datetime);
+      if (d >= startOfToday) continue;
+      const sortKey = d.getFullYear() * 12 + d.getMonth();
+      const key = String(sortKey);
+      if (!byMonth.has(key)) {
+        const label = d.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+        byMonth.set(key, { label: label.charAt(0).toUpperCase() + label.slice(1), sortKey, rides: [] });
+      }
+      byMonth.get(key)!.rides.push(ride);
+    }
+    return Array.from(byMonth.values())
+      .sort((a, b) => b.sortKey - a.sortKey)
+      .map((g) => ({ ...g, rides: [...g.rides].sort(byPickupDesc), sublabel: withSublabel(g.rides) }));
   })();
 
   // Heartbeat toutes les 30 s quand le chauffeur est en ligne
@@ -643,6 +687,25 @@ function DriverDashboard() {
 
   const unratedRides = myRides.filter(
     (r) => r.status === "completed" && r.driver_rating_given == null
+  );
+
+  const renderRideCard = (ride: PoolRide) => (
+    <RideCard
+      ride={ride}
+      onAccept={() => {}}
+      isAccepting={false}
+      onStart={(id) => startMutation.mutate(id)}
+      isStarting={startingId === ride.id && startMutation.isPending}
+      onComplete={(id) => completeMutation.mutate(id)}
+      isCompleting={completingId === ride.id && completeMutation.isPending}
+      onCancel={(id, reason) => cancelMutation.mutate({ rideId: id, reason })}
+      isCancelling={cancellingId === ride.id && cancelMutation.isPending}
+      onCancelSeries={(ids, reason) => cancelSeriesMutation.mutate({ rideIds: ids, reason })}
+      isCancellingSeries={cancellingSeriesId === ride.id && cancelSeriesMutation.isPending}
+      onRate={(id, rating, comment) => rateMutation.mutate({ rideId: id, rating, comment })}
+      isRating={ratingId === ride.id && rateMutation.isPending}
+      seriesRides={ride.series_id ? ridesBySeries[ride.series_id] : undefined}
+    />
   );
 
   return (
@@ -1129,27 +1192,58 @@ function DriverDashboard() {
                     <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 list-none">
                       {group.rides.map((ride) => (
                         <li key={ride.id} className="min-w-0">
-                          <RideCard
-                            ride={ride}
-                            onAccept={() => {}}
-                            isAccepting={false}
-                            onStart={(id) => startMutation.mutate(id)}
-                            isStarting={startingId === ride.id && startMutation.isPending}
-                            onComplete={(id) => completeMutation.mutate(id)}
-                            isCompleting={completingId === ride.id && completeMutation.isPending}
-                            onCancel={(id, reason) => cancelMutation.mutate({ rideId: id, reason })}
-                            isCancelling={cancellingId === ride.id && cancelMutation.isPending}
-                            onCancelSeries={(ids, reason) => cancelSeriesMutation.mutate({ rideIds: ids, reason })}
-                            isCancellingSeries={cancellingSeriesId === ride.id && cancelSeriesMutation.isPending}
-                            onRate={(id, rating, comment) => rateMutation.mutate({ rideId: id, rating, comment })}
-                            isRating={ratingId === ride.id && rateMutation.isPending}
-                            seriesRides={ride.series_id ? ridesBySeries[ride.series_id] : undefined}
-                          />
+                          {renderRideCard(ride)}
                         </li>
                       ))}
                     </ul>
                   </div>
                 ))}
+
+                {/* Historique des courses passées, replié par mois —
+                    mois le plus récent en premier. */}
+                {pastRidesByMonth.length > 0 && (
+                  <div>
+                    <h3 className="text-base font-bold text-gray-900 mb-3">Courses passées</h3>
+                    <div className="space-y-2">
+                      {pastRidesByMonth.map((group) => {
+                        const key = String(group.sortKey);
+                        const isOpen = expandedMonths.has(key);
+                        return (
+                          <div
+                            key={key}
+                            className="rounded-2xl bg-white shadow-sm ring-1 ring-gray-100 overflow-hidden"
+                          >
+                            <button
+                              type="button"
+                              onClick={() => toggleMonth(key)}
+                              aria-expanded={isOpen}
+                              className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                            >
+                              <span className="flex items-baseline gap-2">
+                                <span className="text-sm font-bold text-gray-900">{group.label}</span>
+                                <span className="text-xs text-gray-400">{group.sublabel}</span>
+                              </span>
+                              {isOpen ? (
+                                <ChevronUp className="h-4 w-4 shrink-0 text-gray-400" aria-hidden="true" />
+                              ) : (
+                                <ChevronDown className="h-4 w-4 shrink-0 text-gray-400" aria-hidden="true" />
+                              )}
+                            </button>
+                            {isOpen && (
+                              <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 list-none p-4 pt-0">
+                                {group.rides.map((ride) => (
+                                  <li key={ride.id} className="min-w-0">
+                                    {renderRideCard(ride)}
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </section>
