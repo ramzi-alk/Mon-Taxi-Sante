@@ -114,18 +114,19 @@ chauffeur, pas un détail secondaire.
   tranché : brancher l'UI sur `cancel_series` (plus juste vis-à-vis du
   chauffeur) ou supprimer le code mort.
 
-### ⚠️ Migrations en attente du merge sur `main`
+### ✅ Migrations 056/057/059/062 — appliquées, merge à faire sans attendre
 
 `056` (chevauchement d'horaires), `057` (motif d'annulation + historique),
 `059` (indicateurs de performance, dépend de `057`) et `062` (bucket PMT,
-renomme une colonne utilisée par le funnel de réservation patient) sont
-**poussées mais pas encore appliquées à la base**, sur décision explicite :
-`main` (donc la prod réelle, un seul projet Supabase partagé entre preview
-et prod) tourne encore sur l'ancien code — les appliquer maintenant
-casserait respectivement `cancel_ride_by_driver` pour les vrais chauffeurs
-et l'insertion de toute nouvelle réservation patient, jusqu'au merge.
-**À appliquer toutes les quatre ensemble, au moment du merge de cette
-branche sur `main`** — pas avant, pas après.
+renomme `pmt_file_url` en `pmt_file_path`) ont été appliquées à la base à la
+demande explicite de l'utilisateur, juste avant le merge de cette branche
+sur `main`. **Jusqu'au merge effectif, `main` tourne sur un schéma qui ne
+correspond plus à son propre code** : `cancel_ride_by_driver(UUID)` n'existe
+plus (057 a supprimé l'ancienne signature 1-argument avant de créer la
+version à 2 arguments) et `bookings.pmt_file_url` a été renommée en
+`pmt_file_path` (062) — le bouton d'annulation chauffeur et l'upload PMT
+patient sont donc cassés sur `main` tant que le merge n'a pas eu lieu.
+**Merger sans délai.**
 
 `058`, `060` et `061` sont déjà appliquées (sûres indépendamment du
 timing de merge : backfill pur, ou colonnes/bucket jamais référencés par le
