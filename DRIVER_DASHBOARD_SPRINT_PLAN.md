@@ -131,6 +131,14 @@ branche sur `main`** — pas avant, pas après.
 timing de merge : backfill pur, ou colonnes/bucket jamais référencés par le
 code de `main`).
 
+`063` (`bookings.actual_price` + `set_actual_price()`), `064` (colonnes
+`picked_up_at`/`completed_at`/`reference_code` exposées sur
+`bookings_active_for_driver`) et `065` (table `booking_location_notes` +
+`has_location_notes` sur `bookings_pool_for_drivers`) sont également déjà
+appliquées : purement additives (nouvelles colonnes en fin de vue, nouvelles
+tables/RPC), rien de `main` ne les référence donc rien à casser avant le
+merge.
+
 ---
 
 ## Sprint 2 — Conformité & confiance ✅ Livré (code) — migrations partiellement en attente
@@ -216,16 +224,48 @@ code de `main`).
       explicitement "à faire *avant* d'alourdir encore ce composant avec les
       tickets Sprint 4" — le bon moment reste donc juste avant d'attaquer le
       Sprint 4 (CA réel, justificatif PDF, tags patient), pas avant.
+      **Mise à jour Sprint 4** : plutôt qu'un refactor complet (toujours
+      reporté, toujours pas de bénéfice isolé), les deux nouveaux blocs
+      spécifiques au statut "terminée" (notation + CA réel + justificatif) et
+      "notes de lieu" (accepted/in_progress/completed) ont été extraits en
+      composants dédiés au fil de l'eau — `CompletedRideExtras.tsx` et
+      `LocationNotesSection.tsx` — plutôt que rajoutés inline. `RideCard.tsx`
+      reste le composant central mais n'a pas grossi avec ces deux tickets.
 
 ## Sprint 4 — Revenu réel & différenciants
 
-- [ ] CA réel ajustable + export comptable (CSV/PDF), au lieu de l'estimation
-      Haversine actuelle (`estimated_price`).
-- [ ] Justificatif de transport PDF auto-généré (`picked_up_at`/`completed_at`
-      déjà stampés).
-- [ ] Tags non-identifiants sur les points de RDV (accès difficile, etc.) —
-      étend le pattern déjà en prod (`patient_rating_avg`, migration 035).
-- [ ] Programme de parrainage chauffeur.
+- [x] **CA réel ajustable + export comptable (CSV).** `bookings.actual_price`
+      + RPC `set_actual_price()` (migration `063`, appliquée) —
+      `estimated_price` (estimation Haversine) n'est jamais écrasé, sert de
+      valeur par défaut éditable. `ActualPriceEditor` dans
+      `CompletedRideExtras.tsx`. Export CSV (bouton dans l'en-tête des stats,
+      `chauffeur.tsx`) via `fetchMyCompletedRidesForExport()` +
+      `src/lib/csvExport.ts` (point-virgule + BOM UTF-8, format Excel FR) —
+      pas de PDF comptable séparé, le CSV suffit pour un export multi-lignes.
+- [x] **Justificatif de transport PDF auto-généré.** `picked_up_at`/
+      `completed_at`/`reference_code` exposés sur `bookings_active_for_driver`
+      (migration `064`, appliquée). `src/lib/receiptPdf.ts` —
+      `generateReceiptPdf()` importe `jsPDF` dynamiquement (`await
+      import("jspdf")`, ~1.75 Mo minifié) plutôt qu'en import statique, même
+      leçon que `mapbox-gl` au Sprint 3 : chargé uniquement au clic sur
+      "Justificatif de transport (PDF)", jamais dans le chunk du dashboard.
+- [x] **Tags non-identifiants sur les points de RDV.** Table
+      `booking_location_notes` + RPCs `add_location_note()`/
+      `get_location_notes()` (migration `065`, appliquée) — étend le pattern
+      déjà en prod (`patient_rating_avg`, migration 035) : le pool
+      (`bookings_pool_for_drivers`) n'expose qu'un booléen
+      `has_location_notes` ("Lieu signalé", badge dans `RideCard`/
+      `PoolRideRow`), jamais le contenu ni l'adresse exacte avant acceptation.
+      Le détail (lecture + ajout d'une note, 200 caractères max) n'apparaît
+      que sur les courses accepted/in_progress/completed, via
+      `LocationNotesSection.tsx` — repliée par défaut et chargée à la demande
+      (une requête par course affichée aurait été inutile pour la majorité
+      des chauffeurs qui ne l'ouvrent jamais).
+- [ ] **Programme de parrainage chauffeur — en attente des paramètres
+      métier.** Récompense/déclencheur (montant, condition : filleul inscrit
+      vs. première course complétée, plafond, etc.) sont des décisions
+      produit, pas techniques — à trancher avant d'implémenter quoi que ce
+      soit plutôt que d'inventer une règle arbitraire.
 
 ## Backlog (non séquencé)
 

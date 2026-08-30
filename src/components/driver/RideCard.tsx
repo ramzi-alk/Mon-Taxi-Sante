@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { MapPin, Clock, Car, Users, Navigation, Loader2, PlayCircle, FlagTriangleRight, XCircle, User, Phone, CalendarPlus, Banknote, ChevronDown, ChevronUp, ClipboardCheck, Building2, Repeat, Lock } from "lucide-react";
+import { MapPin, Clock, Car, Users, Navigation, Loader2, PlayCircle, FlagTriangleRight, XCircle, User, Phone, CalendarPlus, Banknote, ChevronDown, ChevronUp, ClipboardCheck, Building2, Repeat, Lock, Info } from "lucide-react";
 import { SeriesRideSelectPanel } from "./SeriesRideSelectPanel";
 import { CancelReasonForm } from "./CancelReasonForm";
+import { CompletedRideExtras } from "./CompletedRideExtras";
 import { formatDateFr, formatTimeFr, formatCountdown } from "~/lib/utils";
 import { cn } from "~/lib/utils";
 import { revealThresholdMin } from "~/lib/bookingMasking";
@@ -20,7 +21,7 @@ function useMinutesUntil(datetimeStr: string) {
 }
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
 import { StarRating } from "~/components/ui/star-rating";
-import { RatingForm } from "~/components/booking/RatingForm";
+import { LocationNotesSection } from "./LocationNotesSection";
 
 // Mirrors bookings_pool_for_drivers view — no medical fields. patient_full_name
 // is only ever populated for "my rides" (accepted/in_progress/completed, see
@@ -49,6 +50,15 @@ export interface PoolRide {
   requires_oxygen: boolean;
   passenger_count: number;
   estimated_price: number | null;
+  // Tarif réellement facturé, saisi par le chauffeur après la course (voir
+  // migration 063) — estimated_price reste l'estimation Haversine, jamais
+  // écrasée, pour garder la formule de départ comparable dans le temps.
+  actual_price?: number | null;
+  // Horodatages réels (start_ride/complete_ride) et référence lisible —
+  // exposés depuis la migration 064 pour le justificatif de transport PDF.
+  picked_up_at?: string | null;
+  completed_at?: string | null;
+  reference_code?: string | null;
   status: string;
   created_at: string;
   distance_to_driver_km?: number | null;
@@ -73,6 +83,10 @@ export interface PoolRide {
   series_id?: string | null;
   series_index?: number | null;
   series_total?: number | null;
+  // Signale (sans jamais révéler le contenu avant acceptation) qu'un ou
+  // plusieurs chauffeurs ont déjà laissé une note sur ce lieu de prise en
+  // charge (accès difficile, stationnement…) — migration 065.
+  has_location_notes?: boolean | null;
 }
 
 interface RideCardProps {
@@ -95,6 +109,9 @@ interface RideCardProps {
   onRate?: (rideId: string, rating: number, comment?: string) => void;
   isRating?: boolean;
   seriesRides?: PoolRide[];
+  onSetActualPrice?: (rideId: string, amount: number) => void;
+  isSettingActualPrice?: boolean;
+  onDownloadReceipt?: (ride: PoolRide) => void;
 }
 
 
@@ -371,6 +388,9 @@ export function RideCard({
   onRate,
   isRating,
   seriesRides,
+  onSetActualPrice,
+  isSettingActualPrice,
+  onDownloadReceipt,
 }: RideCardProps) {
   const isCompleted = ride.status === "completed";
   // Collapsed by default when completed and already rated; expand if pending rating
@@ -607,6 +627,15 @@ export function RideCard({
                 Priorité série — vous l'avez déjà acceptée
               </span>
             )}
+          {isPool && ride.has_location_notes && (
+            <span
+              className="flex items-center gap-1 rounded-full bg-sky-50 text-sky-700 px-2.5 py-0.5 font-semibold"
+              title="Un chauffeur a déjà laissé une note sur ce lieu (visible après acceptation)"
+            >
+              <Info className="h-3 w-3" aria-hidden="true" />
+              Lieu signalé
+            </span>
+          )}
           {needs.map((n) => (
             <span
               key={n}
@@ -693,6 +722,8 @@ export function RideCard({
             )}
           </div>
         )}
+
+        {!isPool && <LocationNotesSection rideId={ride.id} />}
 
         {/* CTA */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end pt-2 border-t border-gray-100">
@@ -915,22 +946,16 @@ export function RideCard({
           )}
         </div>
 
-        {ride.status === "completed" &&
-          (ride.driver_rating_given != null ? (
-            <div className="flex items-center gap-2 text-sm text-gray-600 pt-2 border-t border-gray-100">
-              <span>Votre avis sur ce patient :</span>
-              <StarRating value={ride.driver_rating_given} readOnly size="sm" />
-            </div>
-          ) : (
-            onRate && (
-              <RatingForm
-                prompt="Comment s'est passée cette course avec ce patient ?"
-                submitLabel="Envoyer mon avis"
-                isSubmitting={isRating}
-                onSubmit={(rating, comment) => onRate(ride.id, rating, comment)}
-              />
-            )
-          ))}
+        {ride.status === "completed" && (
+          <CompletedRideExtras
+            ride={ride}
+            onRate={onRate}
+            isRating={isRating}
+            onSetActualPrice={onSetActualPrice}
+            isSettingActualPrice={isSettingActualPrice}
+            onDownloadReceipt={onDownloadReceipt}
+          />
+        )}
 
         {/* Panneau sélection séances à accepter */}
         {seriesAcceptOpen && selectableSeriesPoolRides && onAcceptSeries && (

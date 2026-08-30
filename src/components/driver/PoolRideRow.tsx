@@ -12,6 +12,7 @@ import {
   Repeat,
   Lock,
   XCircle,
+  Info,
 } from "lucide-react";
 import { formatDateFr, formatTimeFr, formatCountdown, cn } from "~/lib/utils";
 import { useEffect, useState } from "react";
@@ -217,6 +218,15 @@ export function PoolRideRow({ ride, onAccept, isAccepting, onAcceptSeries, isAcc
           )}
           {hasPriority && (
             <span className="rounded-full bg-violet-50 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700">Prio</span>
+          )}
+          {ride.has_location_notes && (
+            <span
+              className="flex items-center gap-0.5 rounded-full bg-sky-50 px-1.5 py-0.5 text-[10px] font-semibold text-sky-700"
+              title="Un chauffeur a déjà laissé une note sur ce lieu (visible après acceptation)"
+            >
+              <Info className="h-2.5 w-2.5" aria-hidden="true" />
+              Lieu signalé
+            </span>
           )}
           {needs.map((n) => (
             <span key={n} className="rounded-full bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">{n}</span>

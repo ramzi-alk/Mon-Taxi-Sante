@@ -283,6 +283,38 @@ export type Database = {
         }
         Relationships: []
       }
+      booking_location_notes: {
+        Row: {
+          created_at: string
+          driver_id: string
+          id: string
+          note: string
+          pickup_address: string
+        }
+        Insert: {
+          created_at?: string
+          driver_id: string
+          id?: string
+          note: string
+          pickup_address: string
+        }
+        Update: {
+          created_at?: string
+          driver_id?: string
+          id?: string
+          note?: string
+          pickup_address?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_location_notes_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       booking_ratings: {
         Row: {
           booking_id: string
@@ -400,6 +432,7 @@ export type Database = {
       bookings: {
         Row: {
           accepted_at: string | null
+          actual_price: number | null
           booker_email: string | null
           booker_full_name: string | null
           booker_phone: string | null
@@ -453,6 +486,7 @@ export type Database = {
         }
         Insert: {
           accepted_at?: string | null
+          actual_price?: number | null
           booker_email?: string | null
           booker_full_name?: string | null
           booker_phone?: string | null
@@ -506,6 +540,7 @@ export type Database = {
         }
         Update: {
           accepted_at?: string | null
+          actual_price?: number | null
           booker_email?: string | null
           booker_full_name?: string | null
           booker_phone?: string | null
@@ -907,6 +942,8 @@ export type Database = {
     Views: {
       bookings_active_for_driver: {
         Row: {
+          actual_price: number | null
+          completed_at: string | null
           created_at: string | null
           distance_km: number | null
           distance_to_driver_km: number | null
@@ -927,7 +964,9 @@ export type Database = {
           pickup_datetime: string | null
           pickup_lat: number | null
           pickup_lng: number | null
+          picked_up_at: string | null
           pmt_declared: boolean | null
+          reference_code: string | null
           requires_oxygen: boolean | null
           requires_stretcher: boolean | null
           requires_wheelchair: boolean | null
@@ -961,6 +1000,7 @@ export type Database = {
           dropoff_lat: number | null
           dropoff_lng: number | null
           estimated_price: number | null
+          has_location_notes: boolean | null
           id: string | null
           is_hospitalization: boolean | null
           passenger_count: number | null
@@ -1009,6 +1049,10 @@ export type Database = {
       a_majoration_horaire: { Args: { p_datetime: string }; Returns: boolean }
       accept_ride: { Args: { p_booking_id: string }; Returns: undefined }
       accept_series: { Args: { p_booking_id: string }; Returns: undefined }
+      add_location_note: {
+        Args: { p_booking_id: string; p_note: string }
+        Returns: undefined
+      }
       admin_set_driver_suspension: {
         Args: { p_driver_profile_id: string; p_until: string }
         Returns: undefined
@@ -1094,6 +1138,13 @@ export type Database = {
         Returns: {
           count: number
           status: string
+        }[]
+      }
+      get_location_notes: {
+        Args: { p_booking_id: string }
+        Returns: {
+          created_at: string
+          note: string
         }[]
       }
       get_my_bookings: {
@@ -1266,6 +1317,10 @@ export type Database = {
           reference_code: string
           status: Database["public"]["Enums"]["booking_status"]
         }[]
+      }
+      set_actual_price: {
+        Args: { p_amount: number; p_booking_id: string }
+        Returns: undefined
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }

@@ -27,6 +27,7 @@ import {
   Minus,
   Target,
   XCircle,
+  Download,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "~/lib/supabase";
@@ -44,6 +45,8 @@ import * as bookingsRepository from "~/repositories/bookingsRepository";
 import * as driversRepository from "~/repositories/driversRepository";
 import type { DriverStatsPeriod } from "~/repositories/driversRepository";
 import { notifyBookingAcceptedServerFn, notifyDriverRideAcceptedServerFn, notifyRideUnassignedServerFn } from "~/server/email";
+import { generateReceiptPdf } from "~/lib/receiptPdf";
+import { downloadCsv } from "~/lib/csvExport";
 import { logger } from "~/lib/logger";
 import type { Database } from "~/lib/database.types";
 
@@ -112,6 +115,10 @@ async function cancelSeriesRides(rideId: string): Promise<void> {
 
 async function rateRide(vars: { rideId: string; rating: number; comment?: string }): Promise<void> {
   await bookingsRepository.rateBookingAsDriver(supabase, vars.rideId, vars.rating, vars.comment);
+}
+
+async function setActualPrice(vars: { rideId: string; amount: number }): Promise<void> {
+  await bookingsRepository.setActualPrice(supabase, vars.rideId, vars.amount);
 }
 
 async function fetchMyAvailability(): Promise<driversRepository.MyDriverDetails | null> {
@@ -255,6 +262,8 @@ function DriverDashboard() {
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [cancellingSeriesId, setCancellingSeriesId] = useState<string | null>(null);
   const [ratingId, setRatingId] = useState<string | null>(null);
+  const [settingActualPriceId, setSettingActualPriceId] = useState<string | null>(null);
+  const [isExportingCsv, setIsExportingCsv] = useState(false);
   const [realtimeEnabled, setRealtimeEnabled] = useState(true);
   const [tab, setTab] = useState<"pool" | "my_rides">("pool");
   const [statsPeriod, setStatsPeriod] = useState<"today" | "week" | "month" | "total">("today");
@@ -536,6 +545,50 @@ function DriverDashboard() {
       toast({ title: "Erreur", description: error.message, variant: "error" });
     },
   });
+
+  const setActualPriceMutation = useMutation({
+    mutationFn: setActualPrice,
+    onMutate: (vars) => setSettingActualPriceId(vars.rideId),
+    onSuccess: () => {
+      toast({ title: "Tarif enregistré", variant: "success" });
+    },
+    onSettled: () => {
+      setSettingActualPriceId(null);
+      queryClient.invalidateQueries({ queryKey: ["my-rides"] });
+      queryClient.invalidateQueries({ queryKey: ["my-driver-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["driver-stats-since"] });
+    },
+    onError: (error, vars) => {
+      logger.error("driver.setActualPrice failed", { error: error.message, rideId: vars.rideId });
+      toast({ title: "Erreur", description: error.message, variant: "error" });
+    },
+  });
+
+  async function handleExportCsv() {
+    setIsExportingCsv(true);
+    try {
+      const rows = await driversRepository.fetchMyCompletedRidesForExport(supabase);
+      downloadCsv(
+        `courses-docteur-taxi-${new Date().toISOString().slice(0, 10)}.csv`,
+        ["Référence", "Date", "Patient", "Départ", "Destination", "Distance (km)", "Tarif estimé (€)", "Tarif réel (€)"],
+        rows.map((r) => [
+          r.reference_code ?? "",
+          r.pickup_datetime ? formatDateFr(r.pickup_datetime) : "",
+          r.patient_full_name ?? "",
+          r.pickup_address ?? "",
+          r.dropoff_address ?? "",
+          r.distance_km ?? "",
+          r.estimated_price?.toFixed(2) ?? "",
+          r.actual_price?.toFixed(2) ?? "",
+        ])
+      );
+    } catch (error) {
+      logger.error("driver.exportCsv failed", { error: error instanceof Error ? error.message : String(error) });
+      toast({ title: "Erreur", description: "Impossible de générer l'export.", variant: "error" });
+    } finally {
+      setIsExportingCsv(false);
+    }
+  }
 
   const poolRides = poolQuery.data ?? [];
   const todayRides = myRides.filter(
@@ -864,6 +917,16 @@ function DriverDashboard() {
                   );
                 })}
               </div>
+              <button
+                type="button"
+                onClick={handleExportCsv}
+                disabled={isExportingCsv}
+                className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-60 transition-colors"
+                title="Exporter mes courses terminées (CSV)"
+              >
+                <Download className="h-3.5 w-3.5" aria-hidden="true" />
+                {isExportingCsv ? "Export…" : "CSV"}
+              </button>
             </div>
           </div>
 
@@ -1137,6 +1200,11 @@ function DriverDashboard() {
                             onRate={(id, rating, comment) => rateMutation.mutate({ rideId: id, rating, comment })}
                             isRating={ratingId === ride.id && rateMutation.isPending}
                             seriesRides={ride.series_id ? ridesBySeries[ride.series_id] : undefined}
+                            onSetActualPrice={(id, amount) => setActualPriceMutation.mutate({ rideId: id, amount })}
+                            isSettingActualPrice={settingActualPriceId === ride.id && setActualPriceMutation.isPending}
+                            onDownloadReceipt={(r) => generateReceiptPdf(r).catch(() => {
+                              toast({ title: "Erreur", description: "Impossible de générer le justificatif.", variant: "error" });
+                            })}
                           />
                         </li>
                       ))}
