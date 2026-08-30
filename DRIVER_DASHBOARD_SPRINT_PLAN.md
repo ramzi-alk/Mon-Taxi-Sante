@@ -131,13 +131,21 @@ branche sur `main`** — pas avant, pas après.
 timing de merge : backfill pur, ou colonnes/bucket jamais référencés par le
 code de `main`).
 
-`063` (`bookings.actual_price` + `set_actual_price()`), `064` (colonnes
+`065` (table `booking_location_notes` + `has_location_notes` sur
+`bookings_pool_for_drivers`) est également déjà appliquée : purement
+additive (nouvelle colonne en fin de vue, nouvelles table/RPC), rien de
+`main` ne la référence donc rien à casser avant le merge.
+
+`063` (`bookings.actual_price` + `set_actual_price()`) et `064` (colonnes
 `picked_up_at`/`completed_at`/`reference_code` exposées sur
-`bookings_active_for_driver`) et `065` (table `booking_location_notes` +
-`has_location_notes` sur `bookings_pool_for_drivers`) sont également déjà
-appliquées : purement additives (nouvelles colonnes en fin de vue, nouvelles
-tables/RPC), rien de `main` ne les référence donc rien à casser avant le
-merge.
+`bookings_active_for_driver`) ont été appliquées puis **retirées par
+`066_revert_actual_price_and_receipt_fields.sql`** (également appliquée) —
+les tickets CA réel ajustable et justificatif PDF ont été abandonnés avant
+merge (décision produit). Les fichiers `063`/`064` restent dans
+l'historique des migrations (jamais on n'édite/supprime une migration déjà
+appliquée), `066` les neutralise proprement : colonne et fonction
+supprimées, `bookings_active_for_driver`/`get_my_driver_stats()` restaurées
+dans leur état d'avant Sprint 4.
 
 ---
 
@@ -234,21 +242,17 @@ merge.
 
 ## Sprint 4 — Revenu réel & différenciants
 
-- [x] **CA réel ajustable + export comptable (CSV).** `bookings.actual_price`
-      + RPC `set_actual_price()` (migration `063`, appliquée) —
-      `estimated_price` (estimation Haversine) n'est jamais écrasé, sert de
-      valeur par défaut éditable. `ActualPriceEditor` dans
-      `CompletedRideExtras.tsx`. Export CSV (bouton dans l'en-tête des stats,
-      `chauffeur.tsx`) via `fetchMyCompletedRidesForExport()` +
-      `src/lib/csvExport.ts` (point-virgule + BOM UTF-8, format Excel FR) —
-      pas de PDF comptable séparé, le CSV suffit pour un export multi-lignes.
-- [x] **Justificatif de transport PDF auto-généré.** `picked_up_at`/
-      `completed_at`/`reference_code` exposés sur `bookings_active_for_driver`
-      (migration `064`, appliquée). `src/lib/receiptPdf.ts` —
-      `generateReceiptPdf()` importe `jsPDF` dynamiquement (`await
-      import("jspdf")`, ~1.75 Mo minifié) plutôt qu'en import statique, même
-      leçon que `mapbox-gl` au Sprint 3 : chargé uniquement au clic sur
-      "Justificatif de transport (PDF)", jamais dans le chunk du dashboard.
+- [x] ~~CA réel ajustable + export comptable (CSV)~~ — **abandonné**
+      (décision produit). Avait été implémenté (`bookings.actual_price` +
+      `set_actual_price()`, migration `063`) puis entièrement retiré :
+      code frontend supprimé (`ActualPriceEditor`, `fetchMyCompletedRidesForExport`,
+      `src/lib/csvExport.ts`), colonne/fonction supprimées en base par
+      `066_revert_actual_price_and_receipt_fields.sql`.
+- [x] ~~Justificatif de transport PDF auto-généré~~ — **abandonné**
+      (décision produit), même sort que le ticket précédent : `picked_up_at`/
+      `completed_at`/`reference_code` retirés de `bookings_active_for_driver`,
+      `src/lib/receiptPdf.ts` supprimé, dépendance `jspdf` retirée de
+      `package.json`.
 - [x] **Tags non-identifiants sur les points de RDV.** Table
       `booking_location_notes` + RPCs `add_location_note()`/
       `get_location_notes()` (migration `065`, appliquée) — étend le pattern

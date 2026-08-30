@@ -6,7 +6,6 @@ import { logger } from "~/lib/logger";
 import * as bookingsRepository from "~/repositories/bookingsRepository";
 import { RideCard, type PoolRide } from "~/components/driver/RideCard";
 import { useToast } from "~/components/ui/toast";
-import { generateReceiptPdf } from "~/lib/receiptPdf";
 
 export const Route = createFileRoute("/tableau-de-bord/chauffeur_/course/$id")({
   head: () => ({
@@ -82,16 +81,6 @@ function DriverRideDetailPage() {
     },
   });
 
-  const setActualPriceMutation = useMutation({
-    mutationFn: (amount: number) => bookingsRepository.setActualPrice(supabase, id, amount),
-    onSuccess: () => toast({ title: "Tarif enregistré", variant: "success" }),
-    onSettled: invalidate,
-    onError: (error: Error) => {
-      logger.error("driver.setActualPrice (detail page) failed", { error: error.message, rideId: id });
-      toast({ title: "Erreur", description: error.message, variant: "error" });
-    },
-  });
-
   const ride = rideQuery.data;
 
   return (
@@ -126,11 +115,6 @@ function DriverRideDetailPage() {
           isCancelling={cancelMutation.isPending}
           onRate={(_, rating, comment) => rateMutation.mutate({ rating, comment })}
           isRating={rateMutation.isPending}
-          onSetActualPrice={(_, amount) => setActualPriceMutation.mutate(amount)}
-          isSettingActualPrice={setActualPriceMutation.isPending}
-          onDownloadReceipt={(r) => generateReceiptPdf(r).catch(() => {
-            toast({ title: "Erreur", description: "Impossible de générer le justificatif.", variant: "error" });
-          })}
         />
       )}
     </div>

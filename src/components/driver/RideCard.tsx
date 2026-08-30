@@ -50,15 +50,6 @@ export interface PoolRide {
   requires_oxygen: boolean;
   passenger_count: number;
   estimated_price: number | null;
-  // Tarif réellement facturé, saisi par le chauffeur après la course (voir
-  // migration 063) — estimated_price reste l'estimation Haversine, jamais
-  // écrasée, pour garder la formule de départ comparable dans le temps.
-  actual_price?: number | null;
-  // Horodatages réels (start_ride/complete_ride) et référence lisible —
-  // exposés depuis la migration 064 pour le justificatif de transport PDF.
-  picked_up_at?: string | null;
-  completed_at?: string | null;
-  reference_code?: string | null;
   status: string;
   created_at: string;
   distance_to_driver_km?: number | null;
@@ -109,9 +100,6 @@ interface RideCardProps {
   onRate?: (rideId: string, rating: number, comment?: string) => void;
   isRating?: boolean;
   seriesRides?: PoolRide[];
-  onSetActualPrice?: (rideId: string, amount: number) => void;
-  isSettingActualPrice?: boolean;
-  onDownloadReceipt?: (ride: PoolRide) => void;
 }
 
 
@@ -388,9 +376,6 @@ export function RideCard({
   onRate,
   isRating,
   seriesRides,
-  onSetActualPrice,
-  isSettingActualPrice,
-  onDownloadReceipt,
 }: RideCardProps) {
   const isCompleted = ride.status === "completed";
   // Collapsed by default when completed and already rated; expand if pending rating
@@ -947,14 +932,7 @@ export function RideCard({
         </div>
 
         {ride.status === "completed" && (
-          <CompletedRideExtras
-            ride={ride}
-            onRate={onRate}
-            isRating={isRating}
-            onSetActualPrice={onSetActualPrice}
-            isSettingActualPrice={isSettingActualPrice}
-            onDownloadReceipt={onDownloadReceipt}
-          />
+          <CompletedRideExtras ride={ride} onRate={onRate} isRating={isRating} />
         )}
 
         {/* Panneau sélection séances à accepter */}

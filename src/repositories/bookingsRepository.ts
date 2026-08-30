@@ -394,7 +394,7 @@ export async function fetchDriverRides(
   const { data, error } = await client
     .from("bookings_active_for_driver")
     .select(
-      "id, driver_id, patient_full_name, patient_phone, pickup_address, pickup_lat, pickup_lng, dropoff_address, dropoff_lat, dropoff_lng, distance_km, pickup_datetime, return_datetime, vehicle_type, trip_type, requires_wheelchair, requires_stretcher, requires_oxygen, passenger_count, estimated_price, actual_price, status, created_at, distance_to_driver_km, driver_rating_given, patient_rating_received, patient_rating_avg, pmt_declared, is_hospitalization, series_index, series_total, series_id, picked_up_at, completed_at, reference_code"
+      "id, driver_id, patient_full_name, patient_phone, pickup_address, pickup_lat, pickup_lng, dropoff_address, dropoff_lat, dropoff_lng, distance_km, pickup_datetime, return_datetime, vehicle_type, trip_type, requires_wheelchair, requires_stretcher, requires_oxygen, passenger_count, estimated_price, status, created_at, distance_to_driver_km, driver_rating_given, patient_rating_received, patient_rating_avg, pmt_declared, is_hospitalization, series_index, series_total, series_id"
     )
     .eq("driver_id", driverId)
     .in("status", ["accepted", "in_progress", "completed"])
@@ -421,7 +421,7 @@ export async function fetchDriverRideById(
   const { data, error } = await client
     .from("bookings_active_for_driver")
     .select(
-      "id, driver_id, patient_full_name, patient_phone, pickup_address, pickup_lat, pickup_lng, dropoff_address, dropoff_lat, dropoff_lng, distance_km, pickup_datetime, return_datetime, vehicle_type, trip_type, requires_wheelchair, requires_stretcher, requires_oxygen, passenger_count, estimated_price, actual_price, status, created_at, distance_to_driver_km, driver_rating_given, patient_rating_received, patient_rating_avg, pmt_declared, is_hospitalization, series_index, series_total, series_id, picked_up_at, completed_at, reference_code"
+      "id, driver_id, patient_full_name, patient_phone, pickup_address, pickup_lat, pickup_lng, dropoff_address, dropoff_lat, dropoff_lng, distance_km, pickup_datetime, return_datetime, vehicle_type, trip_type, requires_wheelchair, requires_stretcher, requires_oxygen, passenger_count, estimated_price, status, created_at, distance_to_driver_km, driver_rating_given, patient_rating_received, patient_rating_avg, pmt_declared, is_hospitalization, series_index, series_total, series_id"
     )
     .eq("id", rideId)
     .maybeSingle();
@@ -463,9 +463,6 @@ function mapRideLifecycleError(error: { message: string }, rideId: string, actio
   }
   if (error.message.includes("cancellation_reason_required")) {
     return new Error("Merci d'indiquer un motif d'annulation.");
-  }
-  if (error.message.includes("invalid_amount")) {
-    return new Error("Le tarif doit être un montant positif.");
   }
   if (error.message.includes("not_a_driver")) {
     return new Error("Action réservée aux chauffeurs.");
@@ -694,18 +691,6 @@ export async function cancelBookingViaReminder(client: SupabaseClient, token: st
     throw new Error(error.message);
   }
   return data;
-}
-
-/**
- * Le chauffeur ajuste le tarif réellement facturé d'une de ses courses
- * terminées (set_actual_price, migration 063) — estimated_price reste
- * l'estimation Haversine de départ, jamais écrasée.
- */
-export async function setActualPrice(client: SupabaseClient, rideId: string, amount: number): Promise<void> {
-  const { error } = await client.rpc("set_actual_price", { p_booking_id: rideId, p_amount: amount });
-  if (error) {
-    throw mapRideLifecycleError(error, rideId, "setActualPrice");
-  }
 }
 
 export type LocationNote = Database["public"]["Functions"]["get_location_notes"]["Returns"][number];

@@ -432,7 +432,6 @@ export type Database = {
       bookings: {
         Row: {
           accepted_at: string | null
-          actual_price: number | null
           booker_email: string | null
           booker_full_name: string | null
           booker_phone: string | null
@@ -486,7 +485,6 @@ export type Database = {
         }
         Insert: {
           accepted_at?: string | null
-          actual_price?: number | null
           booker_email?: string | null
           booker_full_name?: string | null
           booker_phone?: string | null
@@ -540,7 +538,6 @@ export type Database = {
         }
         Update: {
           accepted_at?: string | null
-          actual_price?: number | null
           booker_email?: string | null
           booker_full_name?: string | null
           booker_phone?: string | null
@@ -942,8 +939,6 @@ export type Database = {
     Views: {
       bookings_active_for_driver: {
         Row: {
-          actual_price: number | null
-          completed_at: string | null
           created_at: string | null
           distance_km: number | null
           distance_to_driver_km: number | null
@@ -964,9 +959,7 @@ export type Database = {
           pickup_datetime: string | null
           pickup_lat: number | null
           pickup_lng: number | null
-          picked_up_at: string | null
           pmt_declared: boolean | null
-          reference_code: string | null
           requires_oxygen: boolean | null
           requires_stretcher: boolean | null
           requires_wheelchair: boolean | null
@@ -1317,10 +1310,6 @@ export type Database = {
           reference_code: string
           status: Database["public"]["Enums"]["booking_status"]
         }[]
-      }
-      set_actual_price: {
-        Args: { p_amount: number; p_booking_id: string }
-        Returns: undefined
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }

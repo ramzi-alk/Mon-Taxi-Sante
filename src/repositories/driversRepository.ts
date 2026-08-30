@@ -394,39 +394,6 @@ export async function fetchMyCancellations(client: SupabaseClient): Promise<MyCa
   return data ?? [];
 }
 
-export interface CompletedRideExportRow {
-  reference_code: string | null;
-  // Toutes nullable côté types générés (colonnes de vue), alors qu'elles ne
-  // le sont jamais en pratique pour une course déjà terminée.
-  pickup_datetime: string | null;
-  patient_full_name: string | null;
-  pickup_address: string | null;
-  dropoff_address: string | null;
-  distance_km: number | null;
-  estimated_price: number | null;
-  actual_price: number | null;
-}
-
-/**
- * Toutes les courses terminées du chauffeur connecté, pour l'export
- * comptable CSV (Sprint 4) — bookings_active_for_driver déjà scopée à
- * auth.uid(), pas besoin de RPC dédiée.
- */
-export async function fetchMyCompletedRidesForExport(client: SupabaseClient): Promise<CompletedRideExportRow[]> {
-  const { data, error } = await client
-    .from("bookings_active_for_driver")
-    .select("reference_code, pickup_datetime, patient_full_name, pickup_address, dropoff_address, distance_km, estimated_price, actual_price")
-    .eq("status", "completed")
-    .order("pickup_datetime", { ascending: false })
-    .limit(1000);
-
-  if (error) {
-    logger.error("drivers.fetchMyCompletedRidesForExport failed", { error: error.message });
-    throw new Error(error.message);
-  }
-  return data ?? [];
-}
-
 export interface DriverStatsPeriod {
   rides: number;
   km: number;
@@ -439,7 +406,7 @@ export async function fetchDriverStatsSince(
 ): Promise<DriverStatsPeriod> {
   const { data, error } = await client
     .from("bookings")
-    .select("distance_km, estimated_price, actual_price")
+    .select("distance_km, estimated_price")
     .eq("status", "completed")
     .gte("completed_at", since.toISOString());
 
@@ -452,7 +419,6 @@ export async function fetchDriverStatsSince(
   return {
     rides: rows.length,
     km: Math.round(rows.reduce((sum, r) => sum + (r.distance_km ?? 0), 0)),
-    // Tarif réel quand le chauffeur l'a saisi (Sprint 4), estimation Haversine sinon.
-    earnings: rows.reduce((sum, r) => sum + (r.actual_price ?? r.estimated_price ?? 0), 0),
+    earnings: rows.reduce((sum, r) => sum + (r.estimated_price ?? 0), 0),
   };
 }
