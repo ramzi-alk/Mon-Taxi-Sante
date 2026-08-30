@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ShieldAlert, LayoutDashboard, ClipboardList, Users, UserSearch, MessageSquareText, History, ShieldCheck, BarChart3, Settings } from "lucide-react";
+import { ShieldAlert, LayoutDashboard, ClipboardList, Users, UserSearch, MessageSquareText, History, ShieldCheck, BarChart3, Settings, Car } from "lucide-react";
 import { supabase } from "~/lib/supabase";
 import * as authRepository from "~/repositories/authRepository";
 import { checkAdminAccessServerFn } from "~/server/adminAccess";
@@ -115,6 +115,13 @@ function AdminShell() {
 
           <div className="min-w-0">
             <div className="mb-6 flex justify-end md:justify-start items-center gap-2">
+              <Link
+                to="/tableau-de-bord/chauffeur"
+                className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50 hover:text-[#0B0F1C] transition-colors"
+              >
+                <Car className="h-4 w-4" aria-hidden="true" />
+                Vue tableau de bord
+              </Link>
               <AdminCommandSearch />
               <AdminNotificationBell />
             </div>
