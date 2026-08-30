@@ -9,8 +9,17 @@ import * as bookingsRepository from "~/repositories/bookingsRepository";
 import { notifyBookingCancelledServerFn } from "~/server/email";
 import { logger } from "~/lib/logger";
 
+// .catch() rather than a plain schema: an unhandled validateSearch failure
+// (a malformed/truncated token — SMS or email clients mangling links happens
+// in practice) crashes the whole app past every error boundary, including
+// React's own, instead of showing the page's built-in "lien invalide" state.
+// Falling back to "" keeps navigation alive; resolveReminderToken() already
+// treats an unrecognized token as invalid and renders that state normally.
 const confirmerTrajetSearchSchema = z.object({
-  token: z.string().min(20),
+  token: z
+    .string()
+    .min(20)
+    .catch(""),
 });
 
 export const Route = createFileRoute("/confirmer-trajet")({
@@ -34,7 +43,7 @@ function ConfirmerTrajetPage() {
   const { data: booking, isLoading, isError } = useQuery({
     queryKey: ["reminder-token", token],
     queryFn: () => bookingsRepository.resolveReminderToken(supabase, token),
-    enabled: outcome === null,
+    enabled: outcome === null && token.length > 0,
   });
 
   const confirmMutation = useMutation({
