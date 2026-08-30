@@ -553,6 +553,8 @@ function DriverDashboard() {
 
   const myRidesGrouped = (() => {
     const now = new Date();
+    const startOfToday = new Date(now);
+    startOfToday.setHours(0, 0, 0, 0);
     const todayStr = now.toDateString();
     const tomorrowStr = new Date(now.getTime() + 86400000).toDateString();
     const weekEnd = new Date(now.getTime() + 7 * 86400000);
@@ -561,11 +563,16 @@ function DriverDashboard() {
       { label: "Demain", rides: [] },
       { label: "Cette semaine", rides: [] },
       { label: "Plus tard", rides: [] },
+      { label: "Passées", rides: [] },
     ];
     for (const ride of myRides) {
       const d = new Date(ride.pickup_datetime);
       if (d.toDateString() === todayStr) groups[0].rides.push(ride);
       else if (d.toDateString() === tomorrowStr) groups[1].rides.push(ride);
+      // Une date antérieure à aujourd'hui n'est jamais "cette semaine" —
+      // sans ce garde-fou, `d < weekEnd` est vrai pour n'importe quelle
+      // course passée (même vieille de plusieurs mois).
+      else if (d < startOfToday) groups[4].rides.push(ride);
       else if (d < weekEnd) groups[2].rides.push(ride);
       else groups[3].rides.push(ride);
     }
