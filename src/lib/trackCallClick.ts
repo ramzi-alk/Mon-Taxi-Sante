@@ -17,7 +17,8 @@ export type CallButtonSource =
   | "ald_page"
   | "faq"
   | "my_bookings"
-  | "booking_confirmation";
+  | "booking_confirmation"
+  | "booking_step_date_urgent";
 
 /**
  * Compte, pour le panel admin, un clic sur un CTA "Appeler". Fire-and-forget :

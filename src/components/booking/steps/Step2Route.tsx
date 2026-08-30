@@ -113,7 +113,7 @@ export function Step2Route({ form }: StepProps) {
         <h2 className="text-2xl font-bold text-gray-900">Adresses de départ et d&apos;arrivée</h2>
         <p className="mt-1 text-muted-foreground">
           Saisissez l&apos;adresse exacte de prise en charge et celle de votre
-          établissement de soin. Réservation en 3 minutes environ.
+          établissement de soin. Réservation guidée en 5 à 7 minutes.
         </p>
       </div>
 

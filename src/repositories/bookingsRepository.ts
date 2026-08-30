@@ -98,6 +98,22 @@ export async function fetchMyBookings(client: SupabaseClient): Promise<MyBooking
 }
 
 /**
+ * Historique complet d'un patient authentifié par email vérifié (voir
+ * PatientEmailLogin.tsx / migration 069) — indépendant de l'appareil ou de
+ * la session anonyme qui a créé chaque réservation, contrairement à
+ * fetchMyBookings ci-dessus (scopé à auth.uid()).
+ */
+export async function fetchMyBookingsByEmail(client: SupabaseClient): Promise<MyBookingRow[]> {
+  const { data, error } = await client.rpc("get_my_bookings_by_email");
+
+  if (error) {
+    logger.error("bookings.fetchMyBookingsByEmail failed", { error: error.message });
+    throw new Error(error.message);
+  }
+  return data ?? [];
+}
+
+/**
  * Patient self-service cancellation. The only way a patient can change
  * their own booking's status — direct UPDATE on `bookings` is no longer
  * granted to patients (see migration 009).

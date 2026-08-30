@@ -6,6 +6,8 @@ import { supabase } from "~/lib/supabase";
 import { useRealtime } from "~/hooks/useRealtime";
 import { BookingStatusCard } from "~/components/booking/BookingStatusCard";
 import { BookingLookupForm } from "~/components/booking/BookingLookupForm";
+import { SavedBookingLookups } from "~/components/booking/SavedBookingLookups";
+import { PatientEmailLogin } from "~/components/booking/PatientEmailLogin";
 import { useToast } from "~/components/ui/toast";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL, CONTACT_EMAIL } from "~/lib/contact";
 import { trackCallButtonClick } from "~/lib/trackCallClick";
@@ -148,6 +150,14 @@ function MyBookingsPage() {
         {!isLoading && !isError && bookings.length === 0 && (
           <div className="mt-6">
             <BookingLookupForm defaultReferenceCode={ref} />
+          </div>
+        )}
+
+        {!isLoading && !isError && <SavedBookingLookups />}
+
+        {!isLoading && !isError && (
+          <div className="mt-10">
+            <PatientEmailLogin />
           </div>
         )}
 

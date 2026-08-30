@@ -341,25 +341,46 @@ export function BookingStatusCard({
             {allowCancel && isCancellable(status) && (
               <div className="border-t pt-3">
                 {confirmingCancel ? (
-                  <div className="flex items-center gap-3 text-sm">
-                    <span className="text-gray-700">Confirmer l&apos;annulation ?</span>
-                    <button
-                      type="button"
-                      onClick={() => cancelMutation.mutate()}
-                      disabled={cancelMutation.isPending}
-                      className="font-bold text-red-600 hover:underline disabled:opacity-60 flex items-center gap-1.5"
-                    >
-                      {cancelMutation.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
-                      Oui, annuler
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setConfirmingCancel(false)}
-                      disabled={cancelMutation.isPending}
-                      className="text-gray-500 hover:underline"
-                    >
-                      Non
-                    </button>
+                  <div className="space-y-2.5">
+                    {(() => {
+                      const hoursUntilPickup =
+                        (new Date(displayBooking.pickup_datetime).getTime() - Date.now()) / 3_600_000;
+                      const withinFreeCancelWindow = hoursUntilPickup >= 24;
+                      return (
+                        <p
+                          className={cn(
+                            "text-xs rounded-lg px-3 py-2",
+                            withinFreeCancelWindow
+                              ? "bg-brand-green-50 text-brand-green-800"
+                              : "bg-amber-50 text-amber-800"
+                          )}
+                        >
+                          {withinFreeCancelWindow
+                            ? "Vous êtes dans le délai d'annulation gratuite (plus de 24h avant le départ)."
+                            : "Ce départ est prévu dans moins de 24h — merci de nous prévenir au plus vite pour laisser une chance à un autre patient d'utiliser ce créneau."}
+                        </p>
+                      );
+                    })()}
+                    <div className="flex items-center gap-3 text-sm">
+                      <span className="text-gray-700">Confirmer l&apos;annulation ?</span>
+                      <button
+                        type="button"
+                        onClick={() => cancelMutation.mutate()}
+                        disabled={cancelMutation.isPending}
+                        className="font-bold text-red-600 hover:underline disabled:opacity-60 flex items-center gap-1.5"
+                      >
+                        {cancelMutation.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
+                        Oui, annuler
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmingCancel(false)}
+                        disabled={cancelMutation.isPending}
+                        className="text-gray-500 hover:underline"
+                      >
+                        Non
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <button

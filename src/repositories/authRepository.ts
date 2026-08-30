@@ -34,3 +34,19 @@ export function resetPasswordForEmail(client: SupabaseClient, email: string, red
 export function updatePassword(client: SupabaseClient, password: string) {
   return client.auth.updateUser({ password });
 }
+
+/**
+ * Envoie un code à usage unique à l'email indiqué — première étape de la
+ * connexion patient par email (voir PatientEmailLogin.tsx / migration 069).
+ * shouldCreateUser: true, car un patient qui n'a jamais eu de compte
+ * "authenticated" (uniquement des sessions anonymes jusqu'ici) doit pouvoir
+ * s'authentifier avec son email sans étape d'inscription séparée.
+ */
+export function requestPatientEmailCode(client: SupabaseClient, email: string) {
+  return client.auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
+}
+
+/** Deuxième étape : vérifie le code reçu et ouvre la session. */
+export function verifyPatientEmailCode(client: SupabaseClient, email: string, token: string) {
+  return client.auth.verifyOtp({ email, token, type: "email" });
+}

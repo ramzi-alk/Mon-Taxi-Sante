@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
-import { Search, AlertCircle } from "lucide-react";
+import { Search, AlertCircle, BookmarkPlus, BookmarkCheck } from "lucide-react";
 import { z } from "zod";
 import { logger } from "~/lib/logger";
 import { lookupBookingServerFn } from "~/server/bookingLookup";
@@ -10,6 +10,7 @@ import type { MyBookingRow } from "~/repositories/bookingsRepository";
 import { BookingStatusCard } from "./BookingStatusCard";
 import { Input } from "~/components/ui/input";
 import { useTurnstile, TURNSTILE_SITE_KEY } from "~/hooks/useTurnstile";
+import { saveLookup, isLookupSaved } from "~/lib/savedBookingLookups";
 
 const frenchPhone = /^(\+33|0)[1-9](\d{2}){4}$/;
 const referenceCodePattern = /^[A-Z2-9]{4}-?[A-Z2-9]{4}$/i;
@@ -44,6 +45,7 @@ export function BookingLookupForm({ defaultReferenceCode }: { defaultReferenceCo
   const { containerRef, token, reset } = useTurnstile(TURNSTILE_SITE_KEY);
   const [captchaRequired, setCaptchaRequired] = useState(false);
   const [credentials, setCredentials] = useState<{ referenceCode: string; phone: string } | null>(null);
+  const [justSaved, setJustSaved] = useState(false);
 
   const { mutate, data: found, isPending, isSuccess, error } = useMutation({
     mutationFn: lookupBooking,
@@ -59,6 +61,7 @@ export function BookingLookupForm({ defaultReferenceCode }: { defaultReferenceCo
       return;
     }
     setCaptchaRequired(false);
+    setJustSaved(false);
     const referenceCode = data.reference_code.replace(/-/g, "").toUpperCase();
     setCredentials({ referenceCode, phone: data.phone });
     mutate({ ...data, turnstileToken: token });
@@ -159,7 +162,27 @@ export function BookingLookupForm({ defaultReferenceCode }: { defaultReferenceCo
       )}
 
       {found && credentials && (
-        <div className="mt-4">
+        <div className="mt-4 space-y-3">
+          {isLookupSaved(credentials.referenceCode) || justSaved ? (
+            <p className="flex items-center gap-1.5 text-sm font-medium text-brand-green-700">
+              <BookmarkCheck className="h-4 w-4" aria-hidden="true" />
+              Enregistrée sur cet appareil — elle apparaîtra désormais dans
+              &laquo;&nbsp;Mes réservations&nbsp;&raquo; sans avoir à la
+              rechercher à nouveau.
+            </p>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                saveLookup(credentials.referenceCode, credentials.phone);
+                setJustSaved(true);
+              }}
+              className="flex items-center gap-1.5 text-sm font-semibold text-brand-blue-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+            >
+              <BookmarkPlus className="h-4 w-4" aria-hidden="true" />
+              Ajouter cette réservation à cet appareil
+            </button>
+          )}
           <BookingStatusCard
             booking={found}
             allowCancel

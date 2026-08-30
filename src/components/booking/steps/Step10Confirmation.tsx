@@ -8,8 +8,11 @@ import {
   ShieldCheck,
   FileText,
   AlertCircle,
+  Wallet,
 } from "lucide-react";
-import { formatDateFr } from "~/lib/utils";
+import { formatDateFr, formatPrice, combineLocalDateTimeToIso } from "~/lib/utils";
+import { computeSeriesDates } from "~/lib/seriesSchedule";
+import { calculatePrice, departementDepuisAdresse } from "~/lib/pricing";
 import type { BookingSchema } from "../schema";
 
 interface StepProps {
@@ -65,6 +68,33 @@ export function Step10Confirmation({ form, isSubmitting, submitError }: StepProp
   const pickupDatetime = data.pickup_date && data.pickup_time
     ? `${formatDateFr(data.pickup_date)} à ${data.pickup_time}`
     : "—";
+
+  // Estimation affichée uniquement pour les patients sans couverture
+  // Assurance Maladie (cpam_status "none") : dans ce cas partPatient === total
+  // (taux CPAM 0%), donc pas besoin du détail de répartition. Reprend
+  // exactement la formule du trigger DB compute_booking_price (migration
+  // 026) pour rester cohérente avec estimated_price une fois la réservation
+  // créée — voir src/lib/pricing.ts.
+  const priceEstimate = (() => {
+    if (data.cpam_status !== "none" || data.distance_km == null || !data.pickup_address) {
+      return null;
+    }
+    const codeDepartement = departementDepuisAdresse(data.pickup_address);
+    if (!codeDepartement) return null;
+    return calculatePrice({
+      distanceKm: data.distance_km,
+      codeDepartement,
+      adresseDepart: data.pickup_address,
+      adresseArrivee: data.dropoff_address ?? "",
+      pickupDatetime:
+        data.pickup_date && data.pickup_time
+          ? combineLocalDateTimeToIso(data.pickup_date, data.pickup_time)
+          : new Date().toISOString(),
+      cpamStatus: "none",
+      retourAVide: data.is_hospitalization,
+      tpmr: data.requires_wheelchair,
+    });
+  })();
 
   const specificities = [
     data.requires_wheelchair && "Fauteuil roulant",
@@ -138,17 +168,82 @@ export function Step10Confirmation({ form, isSubmitting, submitError }: StepProp
         </div>
       </div>
 
-      {/* Zero advance notice */}
-      <div className="flex items-start gap-3 rounded-xl bg-brand-green-50 border border-brand-green-100 p-4">
-        <CheckCircle2 className="h-5 w-5 text-brand-green-600 shrink-0 mt-0.5" aria-hidden="true" />
-        <div className="text-sm text-brand-green-900">
-          <p className="font-semibold">Zéro avance de frais — Tiers-Payant</p>
-          <p className="mt-0.5">
-            Vous ne paierez rien le jour du transport. L&apos;Assurance Maladie règle
-            directement le chauffeur via le Tiers-Payant.
-          </p>
+      {/* Série sans PMT : seule la 1ère séance sera réellement réservée —
+          avertissement répété ici (voir aussi Step5TripType et la page de
+          confirmation) pour qu'il reste visible jusqu'au dernier écran avant
+          l'envoi, quel que soit le nombre de séances configurées plus haut. */}
+      {data.trip_type === "multiple" && !data.pmt_declared && (() => {
+        const plannedDates =
+          data.series_days_of_week?.length && data.series_duration_weeks
+            ? computeSeriesDates(data.pickup_date, data.series_days_of_week, data.series_duration_weeks)
+            : [];
+        if (plannedDates.length <= 1) return null;
+        return (
+          <div
+            role="alert"
+            className="flex items-start gap-3 rounded-xl bg-amber-50 border-2 border-amber-300 p-4"
+          >
+            <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" aria-hidden="true" />
+            <div className="text-sm text-amber-900">
+              <p className="font-bold">
+                Une seule séance sera réservée, pas {plannedDates.length}
+              </p>
+              <p className="mt-0.5 leading-relaxed">
+                Vous avez planifié {plannedDates.length} séances, mais sans PMT
+                déclarée seule la 1ère (le {formatDateFr(plannedDates[0])}) sera
+                effectivement enregistrée. Transmettez votre PMT dès que possible
+                puis renouvelez votre réservation pour planifier les séances
+                suivantes.
+              </p>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Le Tiers-Payant ne s'applique qu'aux trajets pris en charge par
+          l'Assurance Maladie — pour "Sans couverture" (frais personnels),
+          afficher plutôt l'estimation de tarif promise à l'étape "Prise en
+          charge" ("le tarif exact vous sera communiqué avant la confirmation
+          de votre réservation"), au lieu de la promesse "zéro avance de
+          frais" qui serait fausse dans ce cas. */}
+      {data.cpam_status === "none" ? (
+        priceEstimate ? (
+          <div className="rounded-xl bg-amber-50 border border-amber-200 p-4">
+            <div className="flex items-center gap-2">
+              <Wallet className="h-5 w-5 text-amber-600 shrink-0" aria-hidden="true" />
+              <p className="font-semibold text-amber-900">
+                Estimation du tarif à votre charge
+              </p>
+            </div>
+            <p className="mt-1.5 text-2xl font-black text-amber-900">
+              {formatPrice(priceEstimate.total)}
+            </p>
+            <p className="mt-1.5 text-xs text-amber-700 leading-relaxed">
+              Calculée selon la distance, votre département et l&apos;heure du
+              trajet (convention nationale taxi 2025). Le tarif définitif est
+              confirmé par le chauffeur à la prise en charge.
+            </p>
+          </div>
+        ) : (
+          <div className="flex items-start gap-2 rounded-xl bg-amber-50 border border-amber-200 p-4 text-sm text-amber-800">
+            <AlertCircle className="h-5 w-5 shrink-0" aria-hidden="true" />
+            Le tarif exact vous sera communiqué par le chauffeur avant la prise
+            en charge — aucune estimation n&apos;a pu être calculée pour ce
+            trajet.
+          </div>
+        )
+      ) : (
+        <div className="flex items-start gap-3 rounded-xl bg-brand-green-50 border border-brand-green-100 p-4">
+          <CheckCircle2 className="h-5 w-5 text-brand-green-600 shrink-0 mt-0.5" aria-hidden="true" />
+          <div className="text-sm text-brand-green-900">
+            <p className="font-semibold">Zéro avance de frais — Tiers-Payant</p>
+            <p className="mt-0.5">
+              Vous ne paierez rien le jour du transport. L&apos;Assurance Maladie règle
+              directement le chauffeur via le Tiers-Payant.
+            </p>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Terms */}
       <div>

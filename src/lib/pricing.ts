@@ -165,6 +165,19 @@ export function detecterGrandeVille(address: string): boolean {
   return false;
 }
 
+/**
+ * Extrait le code département INSEE directement depuis une adresse complète
+ * (ex: "15 Rue de la Paix, 75001 Paris"), en repérant son code postal —
+ * même règle que la fonction SQL `departement_depuis_adresse` (migration
+ * 026), utilisée par le trigger qui calcule estimated_price en base.
+ * Retourne null si aucun code postal à 5 chiffres n'est trouvé.
+ */
+export function departementDepuisAdresse(address: string): string | null {
+  const match = address.match(/\b(\d{5})\b/);
+  if (!match) return null;
+  return departementDepuisCodePostal(match[1]);
+}
+
 /** Extrait le code département INSEE depuis un code postal 5 chiffres. */
 export function departementDepuisCodePostal(postalCode: string): string {
   if (!postalCode || postalCode.length < 5) return "";
