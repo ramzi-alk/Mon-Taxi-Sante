@@ -149,4 +149,14 @@ export const blogPosts: BlogPost[] = [
     readingTime: "6 min",
     publishedAt: "8 septembre 2026",
   },
+  {
+    slug: "reserver-taxi-conventionne-prescription-medicale",
+    to: "/blog/reserver-taxi-conventionne-prescription-medicale",
+    category: "Démarches",
+    title: "Réserver un taxi avec une prescription médicale de transport",
+    excerpt:
+      "Les 3 points à vérifier sur votre PMT avant de réserver, et comment planifier votre trajet en taxi conventionné sans mauvaise surprise.",
+    readingTime: "4 min",
+    publishedAt: "9 septembre 2026",
+  },
 ];
