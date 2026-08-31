@@ -9,6 +9,7 @@ import { supabase } from "~/lib/supabase";
 import { logger } from "~/lib/logger";
 import * as authRepository from "~/repositories/authRepository";
 import * as profilesRepository from "~/repositories/profilesRepository";
+import * as driversRepository from "~/repositories/driversRepository";
 import { Input } from "~/components/ui/input";
 
 export const Route = createFileRoute("/connexion")({
@@ -47,6 +48,20 @@ async function login(data: LoginSchema) {
     profilesRepository.getProfileRole(supabase, signInData.user.id),
     profilesRepository.hasAdminAccess(supabase, signInData.user.id),
   ]);
+
+  // Un chauffeur qui se connecte veut généralement prendre des courses tout
+  // de suite — le repasser "En ligne" par défaut à la connexion évite de lui
+  // faire manquer des courses le temps qu'il pense à basculer lui-même le
+  // statut, y compris après une déconnexion (fermeture d'onglet) qui l'avait
+  // laissé "Hors ligne" (voir api/driver-offline-beacon.ts). Ne bloque
+  // jamais la connexion en cas d'échec : best-effort, comme les autres
+  // effets de bord de cette page.
+  if (!isAdmin && role === "driver") {
+    driversRepository.setAvailability(supabase, signInData.user.id, "online").catch((err) => {
+      logger.warn("auth.login setAvailabilityOnline failed", { error: err.message });
+    });
+  }
+
   return { role: role ?? "patient", isAdmin };
 }
 
