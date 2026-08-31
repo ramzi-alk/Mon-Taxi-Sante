@@ -68,6 +68,25 @@ function TransportCpamArticle() {
         <li>Transport lié à la maternité</li>
         <li>Hospitalisation et sorties d'hospitalisation</li>
       </ul>
+      <p>
+        Attention toutefois pour la rééducation fonctionnelle : la prise en
+        charge n'est pas automatique pour de simples séances de
+        kinésithérapie en cabinet libéral. Le médecin prescripteur (et non
+        le kinésithérapeute) doit justifier que votre état physique vous
+        empêche de vous déplacer par vos propres moyens. Ce transport est
+        remboursé plus largement lorsqu'il est lié à une{" "}
+        <Link to="/blog/ald-transport">Affection de Longue Durée</Link> ou à
+        un{" "}
+        <Link to="/blog/taxi-conventionne-accident-travail">
+          accident du travail
+        </Link>
+        . Un transfert vers un centre de rééducation (SSR) après une
+        hospitalisation suit en revanche les mêmes règles qu'une{" "}
+        <Link to="/blog/retour-domicile-sortie-hopital">
+          sortie d'hospitalisation
+        </Link>
+        .
+      </p>
 
       <h2>Quel est le niveau de prise en charge ?</h2>
       <p>
