@@ -125,6 +125,16 @@ function VslOuTaxiConventionneArticle() {
         , 65 % pour un assuré standard.
       </p>
 
+      <p>
+        Pour le détail des critères qui font pencher la prescription vers
+        l'un ou l'autre, et ce qui se passe si le mode de transport réservé
+        ne correspond pas à l'ordonnance, consultez notre guide{" "}
+        <Link to="/blog/taxi-conventionne-ou-ambulance-rendez-vous">
+          Taxi conventionné ou ambulance : quel transport choisir ?
+        </Link>
+        .
+      </p>
+
       <h2>Que propose Docteur Taxi ?</h2>
       <p>
         Docteur Taxi permet de réserver en ligne un taxi conventionné, un VSL

@@ -129,4 +129,14 @@ export const blogPosts: BlogPost[] = [
     readingTime: "5 min",
     publishedAt: "6 septembre 2026",
   },
+  {
+    slug: "taxi-conventionne-ou-ambulance-rendez-vous",
+    to: "/blog/taxi-conventionne-ou-ambulance-rendez-vous",
+    category: "Transport sanitaire",
+    title: "Taxi conventionné ou ambulance : quel transport médical choisir ?",
+    excerpt:
+      "Transport assis ou allongé ? Qui décide entre taxi conventionné et ambulance pour un rendez-vous médical, et ce que dit votre prescription.",
+    readingTime: "5 min",
+    publishedAt: "7 septembre 2026",
+  },
 ];

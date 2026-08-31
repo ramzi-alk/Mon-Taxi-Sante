@@ -41,6 +41,7 @@ import { Route as BlogTransportCpamRouteImport } from './routes/blog/transport-c
 import { Route as BlogTraitementsReguliersTaxiConventionneRouteImport } from './routes/blog/traitements-reguliers-taxi-conventionne'
 import { Route as BlogTaxiSansPrescriptionRouteImport } from './routes/blog/taxi-sans-prescription'
 import { Route as BlogTaxiConventionneSansAvanceFraisRouteImport } from './routes/blog/taxi-conventionne-sans-avance-frais'
+import { Route as BlogTaxiConventionneOuAmbulanceRendezVousRouteImport } from './routes/blog/taxi-conventionne-ou-ambulance-rendez-vous'
 import { Route as BlogTaxiConventionneGrossesseRouteImport } from './routes/blog/taxi-conventionne-grossesse'
 import { Route as BlogRetourDomicileSortieHopitalRouteImport } from './routes/blog/retour-domicile-sortie-hopital'
 import { Route as BlogPmtPrescriptionRouteImport } from './routes/blog/pmt-prescription'
@@ -231,6 +232,12 @@ const BlogTaxiConventionneSansAvanceFraisRoute =
     path: '/blog/taxi-conventionne-sans-avance-frais',
     getParentRoute: () => rootRouteImport,
   } as any)
+const BlogTaxiConventionneOuAmbulanceRendezVousRoute =
+  BlogTaxiConventionneOuAmbulanceRendezVousRouteImport.update({
+    id: '/blog/taxi-conventionne-ou-ambulance-rendez-vous',
+    path: '/blog/taxi-conventionne-ou-ambulance-rendez-vous',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const BlogTaxiConventionneGrossesseRoute =
   BlogTaxiConventionneGrossesseRouteImport.update({
     id: '/blog/taxi-conventionne-grossesse',
@@ -384,6 +391,7 @@ export interface FileRoutesByFullPath {
   '/blog/pmt-prescription': typeof BlogPmtPrescriptionRoute
   '/blog/retour-domicile-sortie-hopital': typeof BlogRetourDomicileSortieHopitalRoute
   '/blog/taxi-conventionne-grossesse': typeof BlogTaxiConventionneGrossesseRoute
+  '/blog/taxi-conventionne-ou-ambulance-rendez-vous': typeof BlogTaxiConventionneOuAmbulanceRendezVousRoute
   '/blog/taxi-conventionne-sans-avance-frais': typeof BlogTaxiConventionneSansAvanceFraisRoute
   '/blog/taxi-sans-prescription': typeof BlogTaxiSansPrescriptionRoute
   '/blog/traitements-reguliers-taxi-conventionne': typeof BlogTraitementsReguliersTaxiConventionneRoute
@@ -440,6 +448,7 @@ export interface FileRoutesByTo {
   '/blog/pmt-prescription': typeof BlogPmtPrescriptionRoute
   '/blog/retour-domicile-sortie-hopital': typeof BlogRetourDomicileSortieHopitalRoute
   '/blog/taxi-conventionne-grossesse': typeof BlogTaxiConventionneGrossesseRoute
+  '/blog/taxi-conventionne-ou-ambulance-rendez-vous': typeof BlogTaxiConventionneOuAmbulanceRendezVousRoute
   '/blog/taxi-conventionne-sans-avance-frais': typeof BlogTaxiConventionneSansAvanceFraisRoute
   '/blog/taxi-sans-prescription': typeof BlogTaxiSansPrescriptionRoute
   '/blog/traitements-reguliers-taxi-conventionne': typeof BlogTraitementsReguliersTaxiConventionneRoute
@@ -498,6 +507,7 @@ export interface FileRoutesById {
   '/blog/pmt-prescription': typeof BlogPmtPrescriptionRoute
   '/blog/retour-domicile-sortie-hopital': typeof BlogRetourDomicileSortieHopitalRoute
   '/blog/taxi-conventionne-grossesse': typeof BlogTaxiConventionneGrossesseRoute
+  '/blog/taxi-conventionne-ou-ambulance-rendez-vous': typeof BlogTaxiConventionneOuAmbulanceRendezVousRoute
   '/blog/taxi-conventionne-sans-avance-frais': typeof BlogTaxiConventionneSansAvanceFraisRoute
   '/blog/taxi-sans-prescription': typeof BlogTaxiSansPrescriptionRoute
   '/blog/traitements-reguliers-taxi-conventionne': typeof BlogTraitementsReguliersTaxiConventionneRoute
@@ -557,6 +567,7 @@ export interface FileRouteTypes {
     | '/blog/pmt-prescription'
     | '/blog/retour-domicile-sortie-hopital'
     | '/blog/taxi-conventionne-grossesse'
+    | '/blog/taxi-conventionne-ou-ambulance-rendez-vous'
     | '/blog/taxi-conventionne-sans-avance-frais'
     | '/blog/taxi-sans-prescription'
     | '/blog/traitements-reguliers-taxi-conventionne'
@@ -613,6 +624,7 @@ export interface FileRouteTypes {
     | '/blog/pmt-prescription'
     | '/blog/retour-domicile-sortie-hopital'
     | '/blog/taxi-conventionne-grossesse'
+    | '/blog/taxi-conventionne-ou-ambulance-rendez-vous'
     | '/blog/taxi-conventionne-sans-avance-frais'
     | '/blog/taxi-sans-prescription'
     | '/blog/traitements-reguliers-taxi-conventionne'
@@ -670,6 +682,7 @@ export interface FileRouteTypes {
     | '/blog/pmt-prescription'
     | '/blog/retour-domicile-sortie-hopital'
     | '/blog/taxi-conventionne-grossesse'
+    | '/blog/taxi-conventionne-ou-ambulance-rendez-vous'
     | '/blog/taxi-conventionne-sans-avance-frais'
     | '/blog/taxi-sans-prescription'
     | '/blog/traitements-reguliers-taxi-conventionne'
@@ -720,6 +733,7 @@ export interface RootRouteChildren {
   BlogPmtPrescriptionRoute: typeof BlogPmtPrescriptionRoute
   BlogRetourDomicileSortieHopitalRoute: typeof BlogRetourDomicileSortieHopitalRoute
   BlogTaxiConventionneGrossesseRoute: typeof BlogTaxiConventionneGrossesseRoute
+  BlogTaxiConventionneOuAmbulanceRendezVousRoute: typeof BlogTaxiConventionneOuAmbulanceRendezVousRoute
   BlogTaxiConventionneSansAvanceFraisRoute: typeof BlogTaxiConventionneSansAvanceFraisRoute
   BlogTaxiSansPrescriptionRoute: typeof BlogTaxiSansPrescriptionRoute
   BlogTraitementsReguliersTaxiConventionneRoute: typeof BlogTraitementsReguliersTaxiConventionneRoute
@@ -972,6 +986,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BlogTaxiConventionneSansAvanceFraisRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/blog/taxi-conventionne-ou-ambulance-rendez-vous': {
+      id: '/blog/taxi-conventionne-ou-ambulance-rendez-vous'
+      path: '/blog/taxi-conventionne-ou-ambulance-rendez-vous'
+      fullPath: '/blog/taxi-conventionne-ou-ambulance-rendez-vous'
+      preLoaderRoute: typeof BlogTaxiConventionneOuAmbulanceRendezVousRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/blog/taxi-conventionne-grossesse': {
       id: '/blog/taxi-conventionne-grossesse'
       path: '/blog/taxi-conventionne-grossesse'
@@ -1185,6 +1206,8 @@ const rootRouteChildren: RootRouteChildren = {
   BlogPmtPrescriptionRoute: BlogPmtPrescriptionRoute,
   BlogRetourDomicileSortieHopitalRoute: BlogRetourDomicileSortieHopitalRoute,
   BlogTaxiConventionneGrossesseRoute: BlogTaxiConventionneGrossesseRoute,
+  BlogTaxiConventionneOuAmbulanceRendezVousRoute:
+    BlogTaxiConventionneOuAmbulanceRendezVousRoute,
   BlogTaxiConventionneSansAvanceFraisRoute:
     BlogTaxiConventionneSansAvanceFraisRoute,
   BlogTaxiSansPrescriptionRoute: BlogTaxiSansPrescriptionRoute,
