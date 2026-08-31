@@ -25,8 +25,8 @@ export const blogPosts: BlogPost[] = [
     category: "Démarches",
     title: "Prescription médicale de transport (PMT) : mode d'emploi",
     excerpt:
-      "Qu'est-ce qu'une PMT, qui peut la délivrer, sa durée de validité et comment la joindre à votre réservation.",
-    readingTime: "4 min",
+      "Qu'est-ce qu'une PMT, qui peut la délivrer, les 3 points à vérifier avant de réserver et comment la joindre à votre réservation.",
+    readingTime: "5 min",
     publishedAt: "28 mars 2026",
   },
   {
@@ -148,15 +148,5 @@ export const blogPosts: BlogPost[] = [
       "Aidant familial ? Les démarches pour organiser le transport médical d'un proche âgé ou malade en taxi conventionné, sans avance de frais.",
     readingTime: "6 min",
     publishedAt: "8 septembre 2026",
-  },
-  {
-    slug: "reserver-taxi-conventionne-prescription-medicale",
-    to: "/blog/reserver-taxi-conventionne-prescription-medicale",
-    category: "Démarches",
-    title: "Réserver un taxi avec une prescription médicale de transport",
-    excerpt:
-      "Les 3 points à vérifier sur votre PMT avant de réserver, et comment planifier votre trajet en taxi conventionné sans mauvaise surprise.",
-    readingTime: "4 min",
-    publishedAt: "9 septembre 2026",
   },
 ];

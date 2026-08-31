@@ -37,7 +37,6 @@ const STATIC_PAGES = [
   { path: "/blog/transport-medical-plusieurs-rendez-vous", changefreq: "yearly", priority: "0.6" },
   { path: "/blog/taxi-conventionne-ou-ambulance-rendez-vous", changefreq: "yearly", priority: "0.6" },
   { path: "/blog/transport-sanitaire-proche-demarches", changefreq: "yearly", priority: "0.6" },
-  { path: "/blog/reserver-taxi-conventionne-prescription-medicale", changefreq: "yearly", priority: "0.6" },
   { path: "/villes", changefreq: "monthly", priority: "0.8" },
   { path: "/maladies", changefreq: "monthly", priority: "0.8" },
   { path: "/cgv", changefreq: "yearly", priority: "0.3" },
