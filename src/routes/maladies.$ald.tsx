@@ -11,11 +11,15 @@ import { BreadcrumbSchema } from "~/components/BreadcrumbSchema";
 const aldBySlug = new Map(aldList.map((a) => [a.slug, a]));
 
 export const Route = createFileRoute("/maladies/$ald")({
-  head: ({ params }) => {
+  loader: async ({ params }) => {
     const affection = aldBySlug.get(params.ald);
-    if (!affection) return {};
-    const title = `Taxi conventionné ${affection.nomCourt} — 100% remboursé | Docteur Taxi`;
-    const description = `Taxi conventionné Assurance Maladie pour ${affection.nom.toLowerCase()} : prise en charge à 100% du transport, Tiers-Payant, zéro avance de frais.`;
+    if (!affection) throw notFound();
+    return affection;
+  },
+  head: ({ params, loaderData }) => {
+    if (!loaderData) return {};
+    const title = `Taxi conventionné ${loaderData.nomCourt} — 100% remboursé | Docteur Taxi`;
+    const description = `Taxi conventionné Assurance Maladie pour ${loaderData.nom.toLowerCase()} : prise en charge à 100% du transport, Tiers-Payant, zéro avance de frais.`;
     return {
       meta: [
         { title },
@@ -32,18 +36,11 @@ export const Route = createFileRoute("/maladies/$ald")({
     };
   },
   component: MaladiePage,
-  loader: async ({ params }) => {
-    const affection = aldBySlug.get(params.ald);
-    if (!affection) throw notFound();
-  },
 });
 
 function MaladiePage() {
-  const { ald: aldSlug } = Route.useParams();
-  const affection = aldBySlug.get(aldSlug);
+  const affection = Route.useLoaderData();
   const phoneVisible = usePhoneVisibility();
-  // Le loader a déjà validé l'existence de l'ALD (notFound() sinon).
-  if (!affection) return null;
 
   const faqItems = [
     {

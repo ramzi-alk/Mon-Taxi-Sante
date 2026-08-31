@@ -6,7 +6,7 @@ import { logger } from "~/lib/logger";
 // Runtime Logs. This relays the error through a server function so it gets
 // logged server-side where it's actually visible.
 export const logClientErrorServerFn = createServerFn({ method: "POST" })
-  .validator(
+  .inputValidator(
     (input: { message: string; stack?: string; url?: string; userAgent?: string }) => input
   )
   .handler(async ({ data }) => {

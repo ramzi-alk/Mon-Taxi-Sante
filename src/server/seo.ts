@@ -25,7 +25,7 @@ const departmentBySlug = new Map(departments.map((d) => [d.slug, d]));
 // fichiers dans le bundle JS client de sa route (voir ROADMAP-SEO.md).
 
 export const getCityPageDataServerFn = createServerFn({ method: "GET" })
-  .validator((input: { department: string; city: string }) => input)
+  .inputValidator((input: { department: string; city: string }) => input)
   .handler(
     async ({
       data,
@@ -49,7 +49,7 @@ export const getCityPageDataServerFn = createServerFn({ method: "GET" })
   );
 
 export const getDepartmentPageDataServerFn = createServerFn({ method: "GET" })
-  .validator((input: { department: string }) => input)
+  .inputValidator((input: { department: string }) => input)
   .handler(
     async ({
       data,
@@ -61,11 +61,11 @@ export const getDepartmentPageDataServerFn = createServerFn({ method: "GET" })
   );
 
 export const searchCommunesServerFn = createServerFn({ method: "GET" })
-  .validator((input: { query: string; limit?: number }) => input)
+  .inputValidator((input: { query: string; limit?: number }) => input)
   .handler(async ({ data }): Promise<Commune[]> => searchCommunes(data.query, data.limit));
 
 export const getHospitalPageDataServerFn = createServerFn({ method: "GET" })
-  .validator((input: { slug: string }) => input)
+  .inputValidator((input: { slug: string }) => input)
   .handler(
     async ({
       data,
@@ -80,7 +80,7 @@ export const getHospitalPageDataServerFn = createServerFn({ method: "GET" })
   );
 
 export const searchHospitalsServerFn = createServerFn({ method: "GET" })
-  .validator((input: { query: string; departmentSlug?: string; limit?: number }) => input)
+  .inputValidator((input: { query: string; departmentSlug?: string; limit?: number }) => input)
   .handler(
     async ({ data }): Promise<Hospital[]> =>
       searchHospitals(data.query, { departmentSlug: data.departmentSlug, limit: data.limit })

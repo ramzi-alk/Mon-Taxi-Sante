@@ -1,4 +1,4 @@
-import { createServerFileRoute } from "@tanstack/react-start/server";
+import { createFileRoute } from "@tanstack/react-router";
 import { getSupabaseAdminClient } from "~/lib/supabaseAdmin";
 import { getResendClient, EMAIL_FROM } from "~/lib/resend";
 import { bookingExpiredEmail } from "~/server/emailTemplates";
@@ -20,8 +20,10 @@ function isAuthorized(request: Request): boolean {
   return request.headers.get("authorization") === `Bearer ${expected}`;
 }
 
-export const ServerRoute = createServerFileRoute("/api/cron/expire-bookings").methods({
-  GET: async ({ request }) => {
+export const Route = createFileRoute("/api/cron/expire-bookings")({
+  server: {
+    handlers: {
+      GET: async ({ request }) => {
     if (!isAuthorized(request)) {
       logger.error("cron.expire-bookings unauthorized");
       return new Response("Unauthorized", { status: 401 });
@@ -90,6 +92,8 @@ export const ServerRoute = createServerFileRoute("/api/cron/expire-bookings").me
     }
 
     logger.info("cron.expire-bookings completed", { found: bookings.length, notified });
-    return Response.json({ notified });
+        return Response.json({ notified });
+      },
+    },
   },
 });

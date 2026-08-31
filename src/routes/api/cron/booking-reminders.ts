@@ -1,4 +1,4 @@
-import { createServerFileRoute } from "@tanstack/react-start/server";
+import { createFileRoute } from "@tanstack/react-router";
 import { randomBytes, createHash } from "node:crypto";
 import { getSupabaseAdminClient } from "~/lib/supabaseAdmin";
 import { getResendClient, EMAIL_FROM } from "~/lib/resend";
@@ -14,8 +14,10 @@ function isAuthorized(request: Request): boolean {
   return request.headers.get("authorization") === `Bearer ${expected}`;
 }
 
-export const ServerRoute = createServerFileRoute("/api/cron/booking-reminders").methods({
-  GET: async ({ request }) => {
+export const Route = createFileRoute("/api/cron/booking-reminders")({
+  server: {
+    handlers: {
+      GET: async ({ request }) => {
     if (!isAuthorized(request)) {
       logger.error("cron.booking-reminders unauthorized");
       return new Response("Unauthorized", { status: 401 });
@@ -101,6 +103,8 @@ export const ServerRoute = createServerFileRoute("/api/cron/booking-reminders").
     }
 
     logger.info("cron.booking-reminders completed", { found: bookings?.length ?? 0, sent });
-    return Response.json({ sent });
+        return Response.json({ sent });
+      },
+    },
   },
 });

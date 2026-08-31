@@ -23,8 +23,6 @@ const args = Object.fromEntries(
     return [k, v ?? true];
   })
 );
-const DEBUG = Boolean(args.debug);
-
 const DATASET_SEARCH_URL =
   "https://www.data.gouv.fr/api/1/datasets/?q=statistique+annuelle+des+etablissements+de+sante&page_size=20";
 

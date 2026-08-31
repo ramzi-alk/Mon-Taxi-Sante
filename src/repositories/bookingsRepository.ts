@@ -597,18 +597,6 @@ export async function rateBookingAsDriver(
 }
 
 /**
- * Accepts all available rides in the same series as p_booking_id in one call
- * (migration 037). Returns the number of rides accepted.
- */
-export async function acceptSeriesRides(client: SupabaseClient, rideId: string): Promise<void> {
-  const { error } = await client.rpc("accept_series", { p_booking_id: rideId });
-
-  if (error) {
-    throw mapRideLifecycleError(error, rideId, "acceptSeriesRides");
-  }
-}
-
-/**
  * Flips a freshly inserted booking from pending to available, putting it in
  * the driver pool — see migration 019. Called once, right after insertBooking
  * succeeds, since the patient insert RLS policy only allows status='pending'
@@ -656,18 +644,6 @@ export async function refuseRide(client: SupabaseClient, rideId: string): Promis
 
   if (error) {
     throw mapRideLifecycleError(error, rideId, "refuseRide");
-  }
-}
-
-/**
- * Driver backs out of all accepted rides in the same series as rideId
- * (migration 038). Counts as a single suspicious-cancellation event.
- */
-export async function cancelSeriesRides(client: SupabaseClient, rideId: string): Promise<void> {
-  const { error } = await client.rpc("cancel_series" as never, { p_booking_id: rideId } as never);
-
-  if (error) {
-    throw mapRideLifecycleError(error, rideId, "cancelSeriesRides");
   }
 }
 
@@ -762,11 +738,18 @@ export async function addLocationNote(client: SupabaseClient, rideId: string, no
 
 export async function insertBooking(
   client: SupabaseClient,
-  payload: BookingInsert
+  // reference_code is never supplied by callers — it's generated server-side
+  // by the bookings_set_reference_code trigger (migration 007) when NULL.
+  payload: Omit<BookingInsert, "reference_code">
 ): Promise<{ id: string; reference_code: string }> {
   const { data, error } = await client
     .from("bookings")
-    .insert(payload)
+    // The generated Insert type marks reference_code as required because the
+    // column has no SQL-level DEFAULT (it's populated by a BEFORE INSERT
+    // trigger instead) — the cast reflects the real, working contract: no
+    // caller ever supplies it, Postgres always fills it in before the row
+    // lands.
+    .insert(payload as BookingInsert)
     .select("id, reference_code")
     .single();
 

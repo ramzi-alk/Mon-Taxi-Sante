@@ -351,6 +351,7 @@ export function BookingEditForm({ booking, lookupCredentials, onClose, onSaved }
               <SelectItem value="taxi">Taxi</SelectItem>
               <SelectItem value="vsl">VSL</SelectItem>
               <SelectItem value="pmr">Véhicule PMR</SelectItem>
+              <SelectItem value="ambulance">Ambulance</SelectItem>
             </SelectContent>
           </Select>
         </div>

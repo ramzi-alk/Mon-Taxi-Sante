@@ -10,7 +10,7 @@ interface StepProps {
 }
 
 export function Step8PMT({ form }: StepProps) {
-  const { watch, setValue, register, formState: { errors } } = form;
+  const { watch, setValue, formState: { errors } } = form;
   const pmtDeclared = watch("pmt_declared");
   const [dragOver, setDragOver] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);

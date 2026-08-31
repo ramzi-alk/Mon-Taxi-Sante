@@ -9,7 +9,7 @@ import { withServerFnLogging } from "~/lib/logger";
 // in ./pushSend — never import that from here or from client code.
 
 export const savePushSubscriptionServerFn = createServerFn({ method: "POST" })
-  .validator(
+  .inputValidator(
     (input: { accessToken: string; endpoint: string; p256dh: string; auth: string }) => input
   )
   .handler(async ({ data }) =>
@@ -34,7 +34,7 @@ export const savePushSubscriptionServerFn = createServerFn({ method: "POST" })
   );
 
 export const deletePushSubscriptionServerFn = createServerFn({ method: "POST" })
-  .validator((input: { accessToken: string; endpoint: string }) => input)
+  .inputValidator((input: { accessToken: string; endpoint: string }) => input)
   .handler(async ({ data }) =>
     withServerFnLogging("deletePushSubscription", { endpoint: data.endpoint }, async () => {
       const supabase = createClient<Database>(

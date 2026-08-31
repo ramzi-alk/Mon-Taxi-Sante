@@ -45,7 +45,7 @@ async function getAuthenticatedDriver(accessToken: string) {
  * et driver_subscriptions une fois le paiement confirmé.
  */
 export const createDriverCheckoutSessionServerFn = createServerFn({ method: "POST" })
-  .validator((input: { accessToken: string; plan: DriverSubscriptionPlan }) =>
+  .inputValidator((input: { accessToken: string; plan: DriverSubscriptionPlan }) =>
     z
       .object({ accessToken: z.string().min(1), plan: z.enum(["mensuel", "annuel"]) })
       .parse(input)
@@ -94,7 +94,7 @@ export const createDriverCheckoutSessionServerFn = createServerFn({ method: "POS
  * stripe_customer_id existant, donc un premier passage par Checkout.
  */
 export const createDriverPortalSessionServerFn = createServerFn({ method: "POST" })
-  .validator((input: { accessToken: string }) => z.object({ accessToken: z.string().min(1) }).parse(input))
+  .inputValidator((input: { accessToken: string }) => z.object({ accessToken: z.string().min(1) }).parse(input))
   .handler(async ({ data }) =>
     withServerFnLogging("createDriverPortalSession", {}, async () => {
       const { driver } = await getAuthenticatedDriver(data.accessToken);

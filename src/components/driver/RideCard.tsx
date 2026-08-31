@@ -417,7 +417,7 @@ export function RideCard({
     ride.requires_wheelchair && "Fauteuil roulant",
     ride.requires_stretcher && "Brancard",
     ride.requires_oxygen && "Oxygène",
-  ].filter(Boolean);
+  ].filter((n): n is string => Boolean(n));
 
   return (
     <article
