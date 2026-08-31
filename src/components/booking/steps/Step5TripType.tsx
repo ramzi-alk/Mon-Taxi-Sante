@@ -232,7 +232,7 @@ export function Step5TripType({ form }: StepProps) {
                             Le patient sera hospitalisé (ne rentre pas le jour même)
                           </span>
                         </div>
-                        <p id="hospit-hint" className="text-xs text-muted-foreground mt-1">
+                        <p id="hospit-hint" className="text-sm text-muted-foreground mt-1">
                           Cochez cette case si le patient est admis et reste à l&apos;hôpital à
                           l&apos;issue du transport.
                         </p>
@@ -292,7 +292,7 @@ export function Step5TripType({ form }: StepProps) {
             />
           </div>
 
-          <p className="text-xs text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Si vous ne connaissez pas l&apos;heure exacte, vous pourrez la préciser ultérieurement.
           </p>
         </div>
@@ -333,7 +333,7 @@ export function Step5TripType({ form }: StepProps) {
               })}
             </div>
             {pickupDate && (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 Le jour de votre 1ère séance ({format(parseISO(pickupDate), "EEEE", { locale: fr })}) est inclus
                 automatiquement.
               </p>
@@ -384,12 +384,12 @@ export function Step5TripType({ form }: StepProps) {
                   {seriesSummary.count} séance{seriesSummary.count > 1 ? "s" : ""} planifiée
                   {seriesSummary.count > 1 ? "s" : ""}
                 </p>
-                <p className="text-xs text-brand-blue-700 mt-0.5">
+                <p className="text-sm text-brand-blue-700 mt-0.5">
                   Du {format(parseISO(seriesSummary.firstDate), "d MMMM yyyy", { locale: fr })} au{" "}
                   {format(parseISO(seriesSummary.lastDate), "d MMMM yyyy", { locale: fr })}
                 </p>
                 {seriesSummary.count > MAX_SERIES_SESSIONS && (
-                  <p className="text-xs text-red-600 mt-1">
+                  <p className="text-sm text-red-600 mt-1">
                     Maximum {MAX_SERIES_SESSIONS} séances par série&nbsp;: réduisez la durée ou le nombre de
                     jours.
                   </p>
@@ -398,7 +398,7 @@ export function Step5TripType({ form }: StepProps) {
             </div>
           )}
 
-          <p className="text-xs font-semibold text-amber-700">
+          <p className="text-sm font-semibold text-amber-700">
             Important&nbsp;: la génération automatique de l&apos;ensemble des séances
             nécessite votre prescription médicale de transport (étape suivante) ;
             sans elle, seule votre 1ère séance sera enregistrée.
@@ -409,7 +409,7 @@ export function Step5TripType({ form }: StepProps) {
               <AccordionTrigger className="text-xs text-muted-foreground">
                 Comment fonctionne le suivi de la série&nbsp;?
               </AccordionTrigger>
-              <AccordionContent className="pl-2 text-xs text-muted-foreground">
+              <AccordionContent className="pl-2 text-sm text-muted-foreground">
                 Une réservation distincte est créée et transmise aux chauffeurs
                 pour chaque séance — vous pourrez suivre, modifier ou annuler
                 chacune individuellement depuis « Mes réservations ».

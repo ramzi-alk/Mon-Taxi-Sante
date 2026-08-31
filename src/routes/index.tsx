@@ -384,7 +384,7 @@ function HowItWorksSection() {
             id="how-heading"
             className="text-4xl md:text-5xl font-black text-[#0B0F1C] tracking-tight leading-tight max-w-xl"
           >
-            Réservé en 5 minutes.<br />
+            Réservé en quelques minutes.<br />
             Pris en charge automatiquement.
           </h2>
         </div>

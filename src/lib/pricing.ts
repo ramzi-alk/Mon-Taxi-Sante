@@ -1,5 +1,16 @@
 // CPAM taxi conventionné pricing — Convention nationale 2025–2029
 // Applicable depuis le 1er novembre 2025 (arrêté du 29 juillet 2025)
+//
+// ⚠️ Cette formule existe EN DOUBLE : ici (pour l'estimation affichée au
+// patient avant confirmation, voir Step10Confirmation.tsx — aucune ligne
+// bookings n'existe encore à ce stade) et en SQL dans
+// public.compute_booking_price (supabase/migrations/026_tarif_cpam_2025_formula.sql),
+// qui calcule la valeur qui fait foi : bookings.estimated_price, via le
+// trigger bookings_set_distance_and_price. Toute évolution de la convention
+// tarifaire doit être répercutée dans LES DEUX implémentations. Après
+// modification de l'une ou l'autre, lancez
+// `node scripts/verify-pricing-parity.mjs` (ou `pnpm verify:pricing-parity`)
+// pour confirmer qu'elles restent synchronisées.
 
 // ---------------------------------------------------------------------------
 // Tarifs kilométriques départementaux (source: annexe convention 2025, p.18)
@@ -163,6 +174,19 @@ export function detecterGrandeVille(address: string): boolean {
   }
 
   return false;
+}
+
+/**
+ * Extrait le code département INSEE directement depuis une adresse complète
+ * (ex: "15 Rue de la Paix, 75001 Paris"), en repérant son code postal —
+ * même règle que la fonction SQL `departement_depuis_adresse` (migration
+ * 026), utilisée par le trigger qui calcule estimated_price en base.
+ * Retourne null si aucun code postal à 5 chiffres n'est trouvé.
+ */
+export function departementDepuisAdresse(address: string): string | null {
+  const match = address.match(/\b(\d{5})\b/);
+  if (!match) return null;
+  return departementDepuisCodePostal(match[1]);
 }
 
 /** Extrait le code département INSEE depuis un code postal 5 chiffres. */

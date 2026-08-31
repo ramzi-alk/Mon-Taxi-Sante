@@ -22,13 +22,11 @@ import {
   AlertTriangle,
   BellRing,
   X,
-  TrendingUp,
-  TrendingDown,
-  Minus,
   Target,
   XCircle,
   ChevronDown,
   ChevronUp,
+  Sparkles,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "~/lib/supabase";
@@ -40,6 +38,9 @@ import { RideCard, type PoolRide } from "~/components/driver/RideCard";
 import { DayTimeline } from "~/components/driver/DayTimeline";
 import { PoolList } from "~/components/driver/PoolList";
 import { SkeletonRideCard } from "~/components/driver/SkeletonCard";
+import { StatCard } from "~/components/driver/StatCard";
+import { RateCard } from "~/components/driver/RateCard";
+import { RatingTrendCard } from "~/components/driver/RatingTrendCard";
 import { useToast } from "~/components/ui/toast";
 import * as authRepository from "~/repositories/authRepository";
 import * as bookingsRepository from "~/repositories/bookingsRepository";
@@ -144,105 +145,6 @@ async function setAcceptanceRadius(radiusKm: number | null): Promise<void> {
   const user = await authRepository.getCurrentUser(supabase);
   if (!user) throw new Error("Non authentifié");
   await driversRepository.setAcceptanceRadius(supabase, user.id, radiusKm);
-}
-
-// ─── Stats card ─────────────────────────────────────────────────────────────
-
-function StatCard({
-  icon: Icon,
-  label,
-  value,
-  color,
-}: {
-  icon: React.FC<{ className?: string }>;
-  label: string;
-  value: string | number;
-  color: string;
-}) {
-  return (
-    <div className="flex items-center gap-2.5 rounded-xl bg-white p-3 shadow-sm ring-1 ring-gray-100 sm:gap-4 sm:rounded-2xl sm:p-5">
-      <div
-        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg sm:h-12 sm:w-12 sm:rounded-xl ${color}`}
-      >
-        <Icon className="h-5 w-5 sm:h-6 sm:w-6" aria-hidden="true" />
-      </div>
-      <div className="min-w-0">
-        <p className="text-lg font-black text-gray-900 leading-tight sm:text-2xl">{value}</p>
-        <p className="text-xs leading-snug text-muted-foreground sm:text-sm">{label}</p>
-      </div>
-    </div>
-  );
-}
-
-// ─── Performance card ───────────────────────────────────────────────────────
-
-function RateCard({
-  icon: Icon,
-  label,
-  value,
-  goodAbove,
-  invert,
-}: {
-  icon: React.FC<{ className?: string }>;
-  label: string;
-  value: number | null;
-  // Seuil au-delà duquel le taux est considéré "bon" (vert) plutôt
-  // qu'"à surveiller" (ambre) — sens inversé pour un taux d'annulation
-  // (bas = bon) via `invert`.
-  goodAbove: number;
-  invert?: boolean;
-}) {
-  const isGood = value != null && (invert ? value <= goodAbove : value >= goodAbove);
-  const color = value == null
-    ? "bg-gray-50 text-gray-400"
-    : isGood
-    ? "bg-brand-green-50 text-brand-green-600"
-    : "bg-amber-50 text-amber-600";
-  return (
-    <div className="flex items-center gap-2.5 rounded-xl bg-white p-3 shadow-sm ring-1 ring-gray-100 sm:gap-4 sm:rounded-2xl sm:p-5">
-      <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg sm:h-12 sm:w-12 sm:rounded-xl ${color}`}>
-        <Icon className="h-5 w-5 sm:h-6 sm:w-6" aria-hidden="true" />
-      </div>
-      <div className="min-w-0">
-        <p className="text-lg font-black text-gray-900 leading-tight sm:text-2xl">
-          {value != null ? `${value}%` : "—"}
-        </p>
-        <p className="text-xs leading-snug text-muted-foreground sm:text-sm">{label}</p>
-      </div>
-    </div>
-  );
-}
-
-function RatingTrendCard({ recent, previous }: { recent: number | null; previous: number | null }) {
-  const hasTrend = recent != null && previous != null;
-  const delta = hasTrend ? Math.round((recent - previous) * 100) / 100 : null;
-  const TrendIcon = delta == null ? Minus : delta > 0.05 ? TrendingUp : delta < -0.05 ? TrendingDown : Minus;
-  const color = delta == null
-    ? "bg-gray-50 text-gray-400"
-    : delta > 0.05
-    ? "bg-brand-green-50 text-brand-green-600"
-    : delta < -0.05
-    ? "bg-red-50 text-red-600"
-    : "bg-gray-50 text-gray-500";
-  return (
-    <div className="flex items-center gap-2.5 rounded-xl bg-white p-3 shadow-sm ring-1 ring-gray-100 sm:gap-4 sm:rounded-2xl sm:p-5">
-      <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg sm:h-12 sm:w-12 sm:rounded-xl ${color}`}>
-        <TrendIcon className="h-5 w-5 sm:h-6 sm:w-6" aria-hidden="true" />
-      </div>
-      <div className="min-w-0">
-        <p className="text-lg font-black text-gray-900 leading-tight sm:text-2xl">
-          {recent != null ? recent.toFixed(1) : "—"}
-          {delta != null && (
-            <span className="ml-1 text-xs font-semibold text-gray-400">
-              ({delta > 0 ? "+" : ""}
-              {delta})
-            </span>
-          )}
-        </p>
-        <p className="text-xs leading-snug text-muted-foreground sm:text-sm">Note (30 derniers jours)</p>
-      </div>
-    </div>
-  );
 }
 
 // ─── Main component ──────────────────────────────────────────────────────────
@@ -380,6 +282,11 @@ function DriverDashboard() {
     queryFn: fetchMyRides,
   });
   const myRides = myRidesQuery.data ?? [];
+  // Avant sa première course acceptée, "Ma performance" n'affiche que des
+  // tirets (taux calculés sur un historique vide) — plus déroutant qu'utile
+  // pour un chauffeur qui découvre le tableau de bord le jour même de son
+  // approbation. La section réapparaît dès la première course acceptée.
+  const isNewDriver = !myRidesQuery.isLoading && myRides.length === 0;
 
   // Realtime subscription — updates pool in real-time
   useRealtime({
@@ -632,12 +539,36 @@ function DriverDashboard() {
       .map((g) => ({ ...g, rides: [...g.rides].sort(byPickupDesc), sublabel: withSublabel(g.rides) }));
   })();
 
-  // Heartbeat toutes les 30 s quand le chauffeur est en ligne
+  // Heartbeat toutes les 30 s quand le chauffeur est en ligne. Le jeton
+  // d'accès est mis en cache dans une ref (rafraîchi à chaque battement) car
+  // beforeunload ne peut pas attendre un appel async au moment de fermer
+  // l'onglet — voir api/driver-offline-beacon.ts pour la route qui reçoit
+  // ce jeton et repasse réellement le chauffeur hors ligne.
+  const accessTokenRef = useRef<string | null>(null);
   useEffect(() => {
     if (availability !== "online") return;
+
+    const refreshAccessToken = () => {
+      supabase.auth.getSession().then(({ data }) => {
+        accessTokenRef.current = data.session?.access_token ?? null;
+      });
+    };
+
+    refreshAccessToken();
     updateHeartbeat().catch(() => {});
-    const id = setInterval(() => updateHeartbeat().catch(() => {}), 30_000);
-    const onUnload = () => navigator.sendBeacon?.("/api/noop"); // beacon placeholder
+    const id = setInterval(() => {
+      updateHeartbeat().catch(() => {});
+      refreshAccessToken();
+    }, 30_000);
+
+    const onUnload = () => {
+      const accessToken = accessTokenRef.current;
+      if (!accessToken) return;
+      navigator.sendBeacon?.(
+        "/api/driver-offline-beacon",
+        new Blob([JSON.stringify({ accessToken })], { type: "application/json" })
+      );
+    };
     window.addEventListener("beforeunload", onUnload);
     return () => { clearInterval(id); window.removeEventListener("beforeunload", onUnload); };
   }, [availability]);
@@ -855,6 +786,28 @@ function DriverDashboard() {
           </div>
         )}
 
+        {/* Bandeau de bienvenue — tant qu'aucune course n'a encore été
+            acceptée, "Ma performance" (taux d'acceptation/annulation) reste
+            masquée plus bas : rien à y afficher avant un premier historique.
+            Ce bandeau réoriente vers l'action à faire en premier plutôt que
+            de laisser deviner à quoi sert le reste du tableau de bord. */}
+        {isNewDriver && !myRidesQuery.isLoading && (
+          <div className="flex items-start gap-3 rounded-2xl bg-brand-blue-50 border border-brand-blue-200 px-5 py-4">
+            <Sparkles className="h-5 w-5 shrink-0 text-brand-blue-600 mt-0.5" aria-hidden="true" />
+            <div>
+              <p className="text-sm font-semibold text-brand-blue-900">
+                Bienvenue dans votre espace chauffeur
+              </p>
+              <p className="text-sm text-brand-blue-700 mt-0.5">
+                Passez « En ligne » en haut de la page, puis acceptez votre
+                première course dans l'onglet « Pool » ci-dessous. Vos
+                statistiques de performance apparaîtront ici après cette
+                première course.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Stats avec sélecteur de période */}
         <section aria-labelledby="stats-heading">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
@@ -969,7 +922,7 @@ function DriverDashboard() {
         </section>
 
         {/* Ma performance — signal sur la santé du compte avant suspension */}
-        {performanceQuery.data && (
+        {performanceQuery.data && !isNewDriver && (
           <section aria-labelledby="performance-heading">
             <div className="flex items-center gap-2 mb-4">
               <Target className="h-4 w-4 text-brand-blue-500" aria-hidden="true" />

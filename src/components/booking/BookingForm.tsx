@@ -13,6 +13,7 @@ import {
   type BookingDraft,
 } from "~/lib/bookingDraft";
 import { computeSeriesDates } from "~/lib/seriesSchedule";
+import { upsertProche } from "~/lib/proches";
 import { ProgressBar } from "./ProgressBar";
 // Step1Route is the only step visible on first paint; the rest are
 // code-split so the initial bundle doesn't pay for steps the user may
@@ -189,12 +190,25 @@ async function submitBooking(data: BookingSchema) {
         : null,
   }));
 
-  return submitBookingServerFn({
+  const booking = await submitBookingServerFn({
     data: {
       accessToken: session.access_token,
       payloads,
     },
   });
+
+  // Série "trajets multiples" configurée sans PMT : une seule séance est
+  // réellement créée (voir isPmtSeries ci-dessus) alors que l'utilisateur a
+  // pu voir un planning de plusieurs séances à l'étape "Nature du trajet".
+  // On transmet le nombre initialement prévu pour que la page de
+  // confirmation puisse le signaler, plutôt que de laisser croire que tout
+  // a été réservé silencieusement.
+  const plannedSeriesTotal =
+    !isPmtSeries && data.trip_type === "multiple" && data.series_days_of_week?.length && data.series_duration_weeks
+      ? computeSeriesDates(data.pickup_date, data.series_days_of_week, data.series_duration_weeks).length
+      : undefined;
+
+  return { ...booking, plannedSeriesTotal };
 }
 
 // Steps whose fields get repopulated by consumeBookingPrefill() (route,
@@ -277,7 +291,11 @@ export function BookingForm() {
       clearBookingDraft();
       navigate({
         to: "/reservation/confirmation",
-        search: { id: booking.id, seriesTotal: booking.seriesTotal },
+        search: {
+          id: booking.id,
+          seriesTotal: booking.seriesTotal,
+          plannedSeriesTotal: booking.plannedSeriesTotal,
+        },
       });
     },
     onError: (error: Error) => {
@@ -338,6 +356,21 @@ export function BookingForm() {
     setSubmitError(null);
     const data = form.getValues();
     await mutateAsync(data);
+
+    // Mémorise ce proche pour une prochaine réservation (voir Step1Identity,
+    // qui propose de le resélectionner en un clic) — uniquement quand la
+    // réservation concerne effectivement quelqu'un d'autre que le
+    // réservateur, seul cas où le carnet a un intérêt.
+    if (data.booking_for_other) {
+      upsertProche({
+        full_name: data.patient_full_name,
+        phone: data.patient_phone,
+        email: data.patient_email || undefined,
+        birth_date: data.patient_birth_date || undefined,
+        cpam_status: data.cpam_status,
+        mutual_name: data.mutual_name || undefined,
+      });
+    }
   }
 
   const isLastStep = currentStep === BOOKING_STEPS.length;
@@ -353,7 +386,7 @@ export function BookingForm() {
 
       <div className="container py-8 max-w-2xl">
         {!isLastStep && (
-          <div className="mb-6 flex items-center gap-2 rounded-xl bg-brand-green-50 border border-brand-green-100 px-4 py-2.5 text-xs sm:text-sm text-brand-green-800">
+          <div className="mb-6 flex items-center gap-2 rounded-xl bg-brand-green-50 border border-brand-green-100 px-4 py-2.5 text-sm text-brand-green-800">
             <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden="true" />
             <span>
               <strong>0&nbsp;€ à avancer</strong> — l&apos;Assurance Maladie règle

@@ -189,7 +189,7 @@ export function Step8PMT({ form }: StepProps) {
               Confidentialité de vos documents
             </span>
           </AccordionTrigger>
-          <AccordionContent className="pl-5 text-xs text-muted-foreground">
+          <AccordionContent className="pl-5 text-sm text-muted-foreground">
             Vos documents médicaux sont stockés de manière chiffrée sur un serveur HDS
             certifié. Ils ne sont accessibles qu&apos;au chauffeur assigné et au personnel
             administratif autorisé.

@@ -1,20 +1,24 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
-import { CheckCircle2, MapPin, Calendar, ShieldCheck, Phone, ClipboardList } from "lucide-react";
+import { CheckCircle2, MapPin, Calendar, ShieldCheck, Phone, ClipboardList, AlertTriangle } from "lucide-react";
 import { supabase } from "~/lib/supabase";
 import { formatDateFr, formatTimeFr, formatReferenceCode, cn } from "~/lib/utils";
-import { logger } from "~/lib/logger";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
 import { trackCallButtonClick } from "~/lib/trackCallClick";
 import { usePhoneVisibility } from "~/hooks/usePhoneVisibility";
 import { useRealtime } from "~/hooks/useRealtime";
 import { STATUS_LABELS, STATUS_BADGE_CLASSES, type BookingStatus } from "~/lib/bookingStatus";
 import { CPAM_LABELS } from "~/lib/cpam";
+import * as bookingsRepository from "~/repositories/bookingsRepository";
 
 const confirmationSearchSchema = z.object({
   id: z.string(),
   seriesTotal: z.coerce.number().optional(),
+  // Nombre de séances que le patient avait configuré à l'étape "Nature du
+  // trajet" — distinct de seriesTotal (réellement réservé) quand la série a
+  // été réduite à 1 seule séance faute de PMT déclarée (voir BookingForm.tsx).
+  plannedSeriesTotal: z.coerce.number().optional(),
 });
 
 export const Route = createFileRoute("/reservation/confirmation")({
@@ -29,24 +33,15 @@ export const Route = createFileRoute("/reservation/confirmation")({
 });
 
 async function fetchBooking(id: string) {
-  const { data, error } = await supabase
-    .from("bookings")
-    .select(
-      "id, reference_code, pickup_address, dropoff_address, pickup_datetime, cpam_status, status"
-    )
-    .eq("id", id)
-    .single();
-
-  if (error) {
-    logger.error("booking.fetchConfirmation failed", { error: error.message, id });
-    throw new Error(error.message);
-  }
-  return data;
+  return bookingsRepository.fetchBookingConfirmation(supabase, id);
 }
 
 function ConfirmationPage() {
-  const { id, seriesTotal } = Route.useSearch();
+  const { id, seriesTotal, plannedSeriesTotal } = Route.useSearch();
   const isSeries = !!seriesTotal && seriesTotal > 1;
+  // La série a été réduite (généralement à 1 séance) faute de PMT déclarée —
+  // voir plannedSeriesTotal dans BookingForm.tsx / schema de recherche ci-dessus.
+  const isPartialSeries = !!plannedSeriesTotal && plannedSeriesTotal > (seriesTotal ?? 1);
   const phoneVisible = usePhoneVisibility();
 
   const { data: booking, isLoading, isError } = useQuery({
@@ -81,6 +76,26 @@ function ConfirmationPage() {
             </p>
           )}
         </div>
+
+        {isPartialSeries && (
+          <div
+            role="alert"
+            className="mb-8 flex items-start gap-3 rounded-2xl bg-amber-50 border-2 border-amber-300 p-5"
+          >
+            <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" aria-hidden="true" />
+            <div className="text-sm text-amber-900">
+              <p className="font-bold">
+                Une seule séance a été réservée, pas {plannedSeriesTotal}
+              </p>
+              <p className="mt-0.5 leading-relaxed">
+                Vous aviez planifié {plannedSeriesTotal} séances, mais sans PMT
+                déclarée seule celle-ci a été enregistrée. Transmettez-nous votre
+                PMT dès que possible, puis renouvelez votre réservation pour
+                planifier les séances suivantes.
+              </p>
+            </div>
+          </div>
+        )}
 
         {isLoading && (
           <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-100 text-center text-muted-foreground">

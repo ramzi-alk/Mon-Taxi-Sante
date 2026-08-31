@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { UseFormReturn } from "react-hook-form";
-import { User, Phone, Mail, Heart, UserCheck, Lock } from "lucide-react";
+import { User, Phone, Mail, Heart, UserCheck, Lock, Users } from "lucide-react";
 import type { BookingSchema } from "../schema";
 import { Input } from "~/components/ui/input";
 import { Checkbox } from "~/components/ui/checkbox";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "~/components/ui/accordion";
 import { cn } from "~/lib/utils";
+import { listProches, type Proche } from "~/lib/proches";
 
 interface StepProps {
   form: UseFormReturn<BookingSchema>;
@@ -22,6 +23,21 @@ export function Step1Identity({ form }: StepProps) {
   const bookingForOther = watch("booking_for_other");
   const bookerPhone = watch("booker_phone");
   const [patientHasNoPhone, setPatientHasNoPhone] = useState(false);
+  // Proches déjà réservés depuis cet appareil (voir lib/proches.ts) —
+  // sélectionnable en un clic au lieu de ressaisir systématiquement les
+  // mêmes informations à chaque nouvelle réservation pour le même proche.
+  const [proches] = useState<Proche[]>(() => listProches());
+  const [selectedProcheId, setSelectedProcheId] = useState<string | null>(null);
+
+  function selectProche(proche: Proche) {
+    setSelectedProcheId(proche.id);
+    setValue("patient_full_name", proche.full_name, { shouldValidate: true });
+    setValue("patient_phone", proche.phone, { shouldValidate: true });
+    setValue("patient_email", proche.email ?? "");
+    if (proche.birth_date) setValue("patient_birth_date", proche.birth_date);
+    if (proche.cpam_status) setValue("cpam_status", proche.cpam_status);
+    if (proche.mutual_name) setValue("mutual_name", proche.mutual_name);
+  }
 
   // Certains patients âgés n'ont pas de téléphone propre : le numéro du
   // réservateur (rempli plus bas) sert alors aussi de contact patient,
@@ -91,6 +107,34 @@ export function Step1Identity({ form }: StepProps) {
           <strong>Vous réservez pour un proche.</strong> Renseignez d&apos;abord les informations
           de la <strong>personne qui va voyager</strong>, puis vos propres coordonnées
           pour recevoir la confirmation.
+        </div>
+      )}
+
+      {/* Proches déjà réservés — évite de ressaisir les mêmes informations */}
+      {bookingForOther && proches.length > 0 && (
+        <div className="space-y-2">
+          <p className="flex items-center gap-1.5 text-sm font-semibold text-gray-700">
+            <Users className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+            Réserver pour un proche déjà enregistré&nbsp;?
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {proches.map((proche) => (
+              <button
+                key={proche.id}
+                type="button"
+                onClick={() => selectProche(proche)}
+                aria-pressed={selectedProcheId === proche.id}
+                className={cn(
+                  "rounded-full border-2 px-3.5 py-1.5 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  selectedProcheId === proche.id
+                    ? "border-brand-blue-600 bg-brand-blue-50 text-brand-blue-700"
+                    : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50"
+                )}
+              >
+                {proche.full_name}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
@@ -170,7 +214,7 @@ export function Step1Identity({ form }: StepProps) {
               aria-invalid={!!errors.patient_phone && !(bookingForOther && patientHasNoPhone)}
             />
           </div>
-          <p id="phone-hint" className="text-xs text-muted-foreground">
+          <p id="phone-hint" className="text-sm text-muted-foreground">
             {bookingForOther && patientHasNoPhone
               ? "Sera renseigné avec votre numéro, à saisir plus bas."
               : bookingForOther
@@ -204,7 +248,7 @@ export function Step1Identity({ form }: StepProps) {
               className="block text-sm font-semibold text-gray-700"
             >
               Adresse email{" "}
-              <span className="text-red-500" aria-hidden="true">*</span>
+              <span className="text-muted-foreground text-xs font-normal">(optionnel)</span>
             </label>
             <div className="relative">
               <Mail
@@ -216,15 +260,16 @@ export function Step1Identity({ form }: StepProps) {
                 type="email"
                 autoComplete="email"
                 placeholder="marie.dupont@email.fr"
-                aria-required="true"
                 aria-describedby={errors.patient_email ? "email-error" : "email-hint"}
                 {...register("patient_email")}
                 className="pl-11 pr-4 py-3.5 text-base"
                 aria-invalid={!!errors.patient_email}
               />
             </div>
-            <p id="email-hint" className="text-xs text-muted-foreground">
-              Utilisée pour vous envoyer la confirmation de réservation.
+            <p id="email-hint" className="text-sm text-muted-foreground">
+              Utilisée pour vous envoyer la confirmation de réservation. Pas
+              d&apos;email ? Conservez la référence affichée à l&apos;écran à
+              la fin pour suivre votre course.
             </p>
             {errors.patient_email && (
               <p id="email-error" role="alert" className="text-sm text-red-600">
@@ -301,7 +346,7 @@ export function Step1Identity({ form }: StepProps) {
                 aria-invalid={!!errors.booker_phone}
               />
             </div>
-            <p id="booker-phone-hint" className="text-xs text-muted-foreground">
+            <p id="booker-phone-hint" className="text-sm text-muted-foreground">
               Contact secondaire pour le chauffeur en cas de besoin.
             </p>
             {errors.booker_phone && (
@@ -337,7 +382,7 @@ export function Step1Identity({ form }: StepProps) {
                 aria-invalid={!!errors.booker_email}
               />
             </div>
-            <p id="booker-email-hint" className="text-xs text-muted-foreground">
+            <p id="booker-email-hint" className="text-sm text-muted-foreground">
               La confirmation de réservation sera envoyée à cette adresse.
             </p>
             {errors.booker_email && (
@@ -373,7 +418,7 @@ export function Step1Identity({ form }: StepProps) {
                 aria-invalid={!!errors.patient_email}
               />
             </div>
-            <p id="patient-email-third-hint" className="text-xs text-muted-foreground">
+            <p id="patient-email-third-hint" className="text-sm text-muted-foreground">
               Si vous la connaissez, le patient recevra aussi une copie de la confirmation.
             </p>
             {errors.patient_email && (

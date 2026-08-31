@@ -164,16 +164,6 @@ const crossFieldChecks: CrossFieldCheck[] = [
     message: `Trop de séances (maximum ${MAX_SERIES_SESSIONS}) : réduisez la durée ou le nombre de jours`,
   },
   {
-    path: "patient_email",
-    check: (data) => {
-      if (!data.booking_for_other) {
-        return !!data.patient_email && data.patient_email.length > 0;
-      }
-      return true;
-    },
-    message: "Adresse email requise",
-  },
-  {
     path: "consent",
     check: (data) => data.consent === true,
     message: "Vous devez accepter les CGV et la politique de confidentialité pour continuer",

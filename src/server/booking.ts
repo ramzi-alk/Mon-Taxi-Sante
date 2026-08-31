@@ -4,7 +4,7 @@ import type { Database } from "~/lib/database.types";
 import * as bookingsRepository from "~/repositories/bookingsRepository";
 import * as profilesRepository from "~/repositories/profilesRepository";
 import { getSupabaseAdminClient } from "~/lib/supabaseAdmin";
-import { sendBookingConfirmationEmail } from "./email";
+import { sendBookingConfirmationEmail, resolveNotificationRecipient } from "./email";
 import { sendPushToAllDrivers } from "./pushSend";
 import { logger, withServerFnLogging } from "~/lib/logger";
 
@@ -93,10 +93,7 @@ export const submitBookingServerFn = createServerFn({ method: "POST" })
 
         const [firstBooking] = bookings;
 
-        const confirmationEmail =
-          firstPayload.booking_for_other && firstPayload.booker_email
-            ? firstPayload.booker_email
-            : firstPayload.patient_email;
+        const confirmationEmail = resolveNotificationRecipient(firstPayload);
 
         if (confirmationEmail) {
           await sendBookingConfirmationEmail({

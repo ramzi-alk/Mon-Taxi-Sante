@@ -341,6 +341,34 @@ export function atRiskBookingsAlertEmail(params: {
   };
 }
 
+// Contrepartie côté patient de atRiskBookingsAlertEmail ci-dessus : jusqu'ici
+// seul un admin voyait qu'une course restait sans chauffeur à l'approche du
+// départ, le patient n'ayant aucune visibilité avant l'expiration effective
+// (bookingExpiredEmail). Envoyée une seule fois par réservation (voir
+// patient_risk_alert_sent_at, migration 068) pour rester rassurante plutôt
+// qu'alarmante en cas de ré-exécution du cron.
+export function atRiskPatientEmail(params: {
+  patientFullName: string;
+  referenceCode: string;
+  pickupDatetime: string;
+}): EmailContent {
+  const { patientFullName, referenceCode, pickupDatetime } = params;
+  return {
+    subject: `Votre course du ${formatDateFr(pickupDatetime)} — recherche de chauffeur en cours`,
+    html: layout({
+      title: "Nous recherchons encore votre chauffeur",
+      icon: "🔎",
+      bodyHtml: `
+        ${badge("Recherche en cours", "amber")}
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${patientFullName},</p>
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Votre réservation du <strong>${formatDateFr(pickupDatetime)} à ${formatTimeFr(pickupDatetime)}</strong> (réf. ${formatReferenceCode(referenceCode)}) n'a pas encore de chauffeur assigné. Notre équipe en est informée et continue la recherche.</p>
+        <p style="margin:0;font-size:14px;color:#6b7280;line-height:1.5;">Si vous n'avez pas de nouvelles peu avant l'heure prévue, appelez-nous directement au ${CONTACT_PHONE_DISPLAY} pour que nous puissions organiser votre transport sans délai.</p>
+        ${ctaButton("Suivre ma réservation", trackingUrl(referenceCode))}
+      `,
+    }),
+  };
+}
+
 export function driverDocumentRequestEmail(params: { driverFullName: string; message: string }): EmailContent {
   const { driverFullName, message } = params;
   return {

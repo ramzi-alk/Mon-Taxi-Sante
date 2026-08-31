@@ -113,7 +113,7 @@ export function Step2Route({ form }: StepProps) {
         <h2 className="text-2xl font-bold text-gray-900">Adresses de départ et d&apos;arrivée</h2>
         <p className="mt-1 text-muted-foreground">
           Saisissez l&apos;adresse exacte de prise en charge et celle de votre
-          établissement de soin. Réservation en 3 minutes environ.
+          établissement de soin. Réservation guidée en 5 à 7 minutes.
         </p>
       </div>
 
@@ -161,11 +161,11 @@ export function Step2Route({ form }: StepProps) {
           ariaInvalid={!!errors.pickup_address}
           ariaRequired
         />
-        <p id="pickup-hint" className="text-xs text-muted-foreground">
+        <p id="pickup-hint" className="text-sm text-muted-foreground">
           Votre domicile ou autre lieu de prise en charge.
         </p>
         {locationError && (
-          <p role="alert" className="text-xs text-amber-700">
+          <p role="alert" className="text-sm text-amber-700">
             {locationError}
           </p>
         )}
@@ -219,7 +219,7 @@ export function Step2Route({ form }: StepProps) {
           ariaInvalid={!!errors.dropoff_address}
           ariaRequired
         />
-        <p id="dropoff-hint" className="text-xs text-muted-foreground">
+        <p id="dropoff-hint" className="text-sm text-muted-foreground">
           Hôpital, clinique, cabinet médical, centre de dialyse…
         </p>
         {errors.dropoff_address && (

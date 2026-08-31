@@ -262,27 +262,6 @@ export type Database = {
           },
         ]
       }
-      booking_lookup_attempts: {
-        Row: {
-          failed_count: number
-          locked_until: string | null
-          reference_code: string
-          updated_at: string
-        }
-        Insert: {
-          failed_count?: number
-          locked_until?: string | null
-          reference_code: string
-          updated_at?: string
-        }
-        Update: {
-          failed_count?: number
-          locked_until?: string | null
-          reference_code?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       booking_location_notes: {
         Row: {
           created_at: string
@@ -314,6 +293,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      booking_lookup_attempts: {
+        Row: {
+          failed_count: number
+          locked_until: string | null
+          reference_code: string
+          updated_at: string
+        }
+        Insert: {
+          failed_count?: number
+          locked_until?: string | null
+          reference_code: string
+          updated_at?: string
+        }
+        Update: {
+          failed_count?: number
+          locked_until?: string | null
+          reference_code?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       booking_ratings: {
         Row: {
@@ -458,6 +458,7 @@ export type Database = {
           patient_full_name: string
           patient_id: string
           patient_phone: string
+          patient_risk_alert_sent_at: string | null
           picked_up_at: string | null
           pickup_address: string
           pickup_datetime: string
@@ -511,6 +512,7 @@ export type Database = {
           patient_full_name: string
           patient_id: string
           patient_phone: string
+          patient_risk_alert_sent_at?: string | null
           picked_up_at?: string | null
           pickup_address: string
           pickup_datetime: string
@@ -564,6 +566,7 @@ export type Database = {
           patient_full_name?: string
           patient_id?: string
           patient_phone?: string
+          patient_risk_alert_sent_at?: string | null
           picked_up_at?: string | null
           pickup_address?: string
           pickup_datetime?: string
@@ -1182,6 +1185,48 @@ export type Database = {
           vehicle_type: Database["public"]["Enums"]["booking_vehicle_type"]
         }[]
       }
+      get_my_bookings_by_email: {
+        Args: never
+        Returns: {
+          cpam_status: Database["public"]["Enums"]["cpam_status"]
+          created_at: string
+          driver_full_name: string
+          driver_phone: string
+          driver_rating_avg: number
+          dropoff_address: string
+          dropoff_lat: number
+          dropoff_lng: number
+          estimated_price: number
+          id: string
+          medical_notes: string
+          mutual_name: string
+          passenger_count: number
+          patient_birth_date: string
+          patient_email: string
+          patient_full_name: string
+          patient_phone: string
+          patient_rating_given: number
+          pickup_address: string
+          pickup_datetime: string
+          pickup_lat: number
+          pickup_lng: number
+          pickup_municipality: string
+          reference_code: string
+          requires_oxygen: boolean
+          requires_stretcher: boolean
+          requires_wheelchair: boolean
+          return_datetime: string
+          series_id: string
+          series_index: number
+          series_total: number
+          status: Database["public"]["Enums"]["booking_status"]
+          trip_type: Database["public"]["Enums"]["trip_type"]
+          vehicle_brand: string
+          vehicle_model: string
+          vehicle_registration: string
+          vehicle_type: Database["public"]["Enums"]["booking_vehicle_type"]
+        }[]
+      }
       get_my_cancellations: {
         Args: never
         Returns: {
@@ -1315,7 +1360,10 @@ export type Database = {
       show_trgm: { Args: { "": string }; Returns: string[] }
       start_ride: { Args: { p_booking_id: string }; Returns: undefined }
       tarif_km_departement: { Args: { p_code: string }; Returns: number }
-      track_call_button_click: { Args: { p_source: string }; Returns: undefined }
+      track_call_button_click: {
+        Args: { p_source: string }
+        Returns: undefined
+      }
       update_booking: {
         Args: {
           p_booking_id: string
