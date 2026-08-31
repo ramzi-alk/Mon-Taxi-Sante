@@ -139,4 +139,14 @@ export const blogPosts: BlogPost[] = [
     readingTime: "5 min",
     publishedAt: "7 septembre 2026",
   },
+  {
+    slug: "transport-sanitaire-proche-demarches",
+    to: "/blog/transport-sanitaire-proche-demarches",
+    category: "Démarches",
+    title: "Transport sanitaire d'un proche : démarches et conseils",
+    excerpt:
+      "Aidant familial ? Les démarches pour organiser le transport médical d'un proche âgé ou malade en taxi conventionné, sans avance de frais.",
+    readingTime: "6 min",
+    publishedAt: "8 septembre 2026",
+  },
 ];
