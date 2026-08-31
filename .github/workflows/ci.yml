@@ -5,6 +5,12 @@ name: CI
 # ROADMAP.md Sprint 4. Un `tsc` ou un `vite build` cassé, ou une divergence
 # de la formule tarifaire CPAM (voir scripts/verify-pricing-parity.mjs),
 # pouvait donc atteindre main sans qu'on s'en aperçoive avant la prod.
+#
+# Un job par vérification (plutôt qu'une suite de steps séquentielle dans
+# un seul job) : lint/typecheck/tests unitaires/build/e2e ne dépendent pas
+# les uns des autres, donc GitHub Actions les exécute tous en parallèle —
+# le retour sur une PR reflète le plus lent d'entre eux (l'e2e, qui installe
+# Chromium) plutôt que la somme de tous.
 
 on:
   pull_request:
@@ -15,35 +21,74 @@ permissions:
   contents: read
 
 jobs:
-  typecheck-build-test:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: pnpm/action-setup@v4
         with:
           version: 10
-
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run lint
 
-      - name: Installer les dépendances
-        run: pnpm install --frozen-lockfile
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run typecheck
 
-      - name: Lint (eslint)
-        run: pnpm run lint
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run test:unit
 
-      - name: Typecheck (tsc --noEmit)
-        run: pnpm run typecheck
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build:vite
 
-      - name: Tests unitaires
-        run: pnpm run test:unit
-
-      - name: Build (vite build)
-        run: pnpm run build:vite
-
+  pricing-parity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
       - name: Parité tarifaire TS/SQL (pricing.ts vs compute_booking_price)
         # Nécessite un accès réseau réel + les identifiants du projet Supabase
         # (voir scripts/verify-pricing-parity.mjs) — ignoré si ces secrets ne
@@ -59,21 +104,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: pnpm/action-setup@v4
         with:
           version: 10
-
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
-
-      - name: Installer les dépendances
-        run: pnpm install --frozen-lockfile
-
+      - run: pnpm install --frozen-lockfile
       - name: Installer Chromium (Playwright)
         run: pnpm exec playwright install --with-deps chromium
-
       - name: Tests e2e
         run: pnpm run test:e2e
