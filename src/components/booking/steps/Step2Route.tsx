@@ -161,11 +161,11 @@ export function Step2Route({ form }: StepProps) {
           ariaInvalid={!!errors.pickup_address}
           ariaRequired
         />
-        <p id="pickup-hint" className="text-xs text-muted-foreground">
+        <p id="pickup-hint" className="text-sm text-muted-foreground">
           Votre domicile ou autre lieu de prise en charge.
         </p>
         {locationError && (
-          <p role="alert" className="text-xs text-amber-700">
+          <p role="alert" className="text-sm text-amber-700">
             {locationError}
           </p>
         )}
@@ -219,7 +219,7 @@ export function Step2Route({ form }: StepProps) {
           ariaInvalid={!!errors.dropoff_address}
           ariaRequired
         />
-        <p id="dropoff-hint" className="text-xs text-muted-foreground">
+        <p id="dropoff-hint" className="text-sm text-muted-foreground">
           Hôpital, clinique, cabinet médical, centre de dialyse…
         </p>
         {errors.dropoff_address && (

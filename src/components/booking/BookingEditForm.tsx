@@ -195,7 +195,7 @@ export function BookingEditForm({ booking, lookupCredentials, onClose, onSaved }
       {/* Addresses */}
       <div className="space-y-3">
         <div className="space-y-1">
-          <label htmlFor="edit_pickup_address" className="text-xs font-semibold text-gray-700">
+          <label htmlFor="edit_pickup_address" className="text-sm font-semibold text-gray-700">
             Adresse de départ
           </label>
           <AddressAutocomplete
@@ -218,12 +218,12 @@ export function BookingEditForm({ booking, lookupCredentials, onClose, onSaved }
             icon={<Navigation className="h-4 w-4 text-brand-blue-500" aria-hidden="true" />}
           />
           {errors.pickup_address && (
-            <p role="alert" className="text-xs text-red-600">{errors.pickup_address.message}</p>
+            <p role="alert" className="text-sm text-red-600">{errors.pickup_address.message}</p>
           )}
         </div>
 
         <div className="space-y-1">
-          <label htmlFor="edit_dropoff_address" className="text-xs font-semibold text-gray-700">
+          <label htmlFor="edit_dropoff_address" className="text-sm font-semibold text-gray-700">
             Adresse de destination
           </label>
           <AddressAutocomplete
@@ -244,12 +244,12 @@ export function BookingEditForm({ booking, lookupCredentials, onClose, onSaved }
             icon={<MapPin className="h-4 w-4 text-red-500" aria-hidden="true" />}
           />
           {errors.dropoff_address && (
-            <p role="alert" className="text-xs text-red-600">{errors.dropoff_address.message}</p>
+            <p role="alert" className="text-sm text-red-600">{errors.dropoff_address.message}</p>
           )}
         </div>
 
         {(isComputingDistance || distanceKm != null) && (
-          <p className="flex items-center gap-1.5 text-xs text-muted-foreground" aria-live="polite">
+          <p className="flex items-center gap-1.5 text-sm text-muted-foreground" aria-live="polite">
             {isComputingDistance ? (
               <>
                 <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
@@ -268,7 +268,7 @@ export function BookingEditForm({ booking, lookupCredentials, onClose, onSaved }
       {/* Date / time */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="space-y-1">
-          <label htmlFor="edit_pickup_date" className="text-xs font-semibold text-gray-700">
+          <label htmlFor="edit_pickup_date" className="text-sm font-semibold text-gray-700">
             Date
           </label>
           <Input
@@ -279,11 +279,11 @@ export function BookingEditForm({ booking, lookupCredentials, onClose, onSaved }
             className="py-3"
           />
           {errors.pickup_date && (
-            <p role="alert" className="text-xs text-red-600">{errors.pickup_date.message}</p>
+            <p role="alert" className="text-sm text-red-600">{errors.pickup_date.message}</p>
           )}
         </div>
         <div className="space-y-1">
-          <label htmlFor="edit_pickup_time" className="text-xs font-semibold text-gray-700">
+          <label htmlFor="edit_pickup_time" className="text-sm font-semibold text-gray-700">
             Heure
           </label>
           <Input
@@ -306,7 +306,7 @@ export function BookingEditForm({ booking, lookupCredentials, onClose, onSaved }
       {isReturnTrip && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="space-y-1">
-            <label htmlFor="edit_return_date" className="text-xs font-semibold text-gray-700">
+            <label htmlFor="edit_return_date" className="text-sm font-semibold text-gray-700">
               Date de retour
             </label>
             <Input
@@ -317,11 +317,11 @@ export function BookingEditForm({ booking, lookupCredentials, onClose, onSaved }
               className="py-3"
             />
             {errors.return_date && (
-              <p role="alert" className="text-xs text-red-600">{errors.return_date.message}</p>
+              <p role="alert" className="text-sm text-red-600">{errors.return_date.message}</p>
             )}
           </div>
           <div className="space-y-1">
-            <label htmlFor="edit_return_time" className="text-xs font-semibold text-gray-700">
+            <label htmlFor="edit_return_time" className="text-sm font-semibold text-gray-700">
               Heure de retour
             </label>
             <Input
@@ -337,7 +337,7 @@ export function BookingEditForm({ booking, lookupCredentials, onClose, onSaved }
       {/* Vehicle / trip type / cpam */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="space-y-1">
-          <label htmlFor="edit_vehicle_type" className="text-xs font-semibold text-gray-700">
+          <label htmlFor="edit_vehicle_type" className="text-sm font-semibold text-gray-700">
             Véhicule
           </label>
           <Select
@@ -355,7 +355,7 @@ export function BookingEditForm({ booking, lookupCredentials, onClose, onSaved }
           </Select>
         </div>
         <div className="space-y-1">
-          <label htmlFor="edit_trip_type" className="text-xs font-semibold text-gray-700">
+          <label htmlFor="edit_trip_type" className="text-sm font-semibold text-gray-700">
             Nature du trajet
           </label>
           <Select
@@ -376,7 +376,7 @@ export function BookingEditForm({ booking, lookupCredentials, onClose, onSaved }
 
       {/* Specific needs */}
       <div className="space-y-2">
-        <p className="text-xs font-semibold text-gray-700">Besoins spécifiques</p>
+        <p className="text-sm font-semibold text-gray-700">Besoins spécifiques</p>
         <div className="flex flex-wrap gap-4">
           <label className="flex items-center gap-2 text-sm text-gray-700">
             <Checkbox
@@ -403,7 +403,7 @@ export function BookingEditForm({ booking, lookupCredentials, onClose, onSaved }
       </div>
 
       <div className="space-y-1">
-        <label htmlFor="edit_passenger_count" className="text-xs font-semibold text-gray-700">
+        <label htmlFor="edit_passenger_count" className="text-sm font-semibold text-gray-700">
           Nombre de passagers
         </label>
         <Input
@@ -420,7 +420,7 @@ export function BookingEditForm({ booking, lookupCredentials, onClose, onSaved }
       {/* CPAM / mutuelle */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="space-y-1">
-          <label htmlFor="edit_cpam_status" className="text-xs font-semibold text-gray-700">
+          <label htmlFor="edit_cpam_status" className="text-sm font-semibold text-gray-700">
             Prise en charge
           </label>
           <Select
@@ -440,7 +440,7 @@ export function BookingEditForm({ booking, lookupCredentials, onClose, onSaved }
           </Select>
         </div>
         <div className="space-y-1">
-          <label htmlFor="edit_mutual_name" className="text-xs font-semibold text-gray-700">
+          <label htmlFor="edit_mutual_name" className="text-sm font-semibold text-gray-700">
             Mutuelle (optionnel)
           </label>
           <Input id="edit_mutual_name" type="text" {...register("mutual_name")} className="py-3" />
@@ -449,7 +449,7 @@ export function BookingEditForm({ booking, lookupCredentials, onClose, onSaved }
 
       {/* Notes */}
       <div className="space-y-1">
-        <label htmlFor="edit_medical_notes" className="text-xs font-semibold text-gray-700">
+        <label htmlFor="edit_medical_notes" className="text-sm font-semibold text-gray-700">
           Message au chauffeur (optionnel)
         </label>
         <Textarea
@@ -459,7 +459,7 @@ export function BookingEditForm({ booking, lookupCredentials, onClose, onSaved }
           className="resize-none"
         />
         {errors.medical_notes && (
-          <p role="alert" className="text-xs text-red-600">{errors.medical_notes.message}</p>
+          <p role="alert" className="text-sm text-red-600">{errors.medical_notes.message}</p>
         )}
       </div>
 

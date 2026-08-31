@@ -85,7 +85,7 @@ export function BookingLookupForm({ defaultReferenceCode }: { defaultReferenceCo
         aria-label="Retrouver une réservation"
       >
         <div className="space-y-1">
-          <label htmlFor="reference_code" className="block text-xs font-semibold text-gray-700">
+          <label htmlFor="reference_code" className="block text-sm font-semibold text-gray-700">
             Référence de réservation
           </label>
           <Input
@@ -97,14 +97,14 @@ export function BookingLookupForm({ defaultReferenceCode }: { defaultReferenceCo
             className="uppercase placeholder:normal-case"
           />
           {errors.reference_code && (
-            <p role="alert" className="text-xs text-red-600">
+            <p role="alert" className="text-sm text-red-600">
               {errors.reference_code.message}
             </p>
           )}
         </div>
 
         <div className="space-y-1">
-          <label htmlFor="lookup_phone" className="block text-xs font-semibold text-gray-700">
+          <label htmlFor="lookup_phone" className="block text-sm font-semibold text-gray-700">
             Numéro de téléphone utilisé
           </label>
           <Input
@@ -116,7 +116,7 @@ export function BookingLookupForm({ defaultReferenceCode }: { defaultReferenceCo
             {...register("phone")}
           />
           {errors.phone && (
-            <p role="alert" className="text-xs text-red-600">
+            <p role="alert" className="text-sm text-red-600">
               {errors.phone.message}
             </p>
           )}
@@ -124,7 +124,7 @@ export function BookingLookupForm({ defaultReferenceCode }: { defaultReferenceCo
 
         {TURNSTILE_SITE_KEY && <div ref={containerRef} />}
         {captchaRequired && (
-          <p role="alert" className="text-xs text-red-600">
+          <p role="alert" className="text-sm text-red-600">
             Veuillez valider la vérification anti-robot avant de continuer.
           </p>
         )}

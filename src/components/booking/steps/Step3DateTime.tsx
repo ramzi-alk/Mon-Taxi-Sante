@@ -103,7 +103,7 @@ export function Step3DateTime({ form }: StepProps) {
           {...register("pickup_time")}
           className="py-3.5 text-base"
         />
-        <p id="time-hint" className="text-xs text-muted-foreground">
+        <p id="time-hint" className="text-sm text-muted-foreground">
           Prévoyez une marge de 30 minutes avant votre rendez-vous.
         </p>
       </div>

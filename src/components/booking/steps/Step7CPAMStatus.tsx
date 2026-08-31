@@ -184,7 +184,7 @@ export function Step7CPAMStatus({ form }: StepProps) {
             />
           </PopoverContent>
         </Popover>
-        <p id="birth-hint" className="text-xs text-muted-foreground">
+        <p id="birth-hint" className="text-sm text-muted-foreground">
           Demandée pour vérifier certains droits ALD, CMU-C ou CSS auprès de l&apos;Assurance Maladie.
         </p>
       </div>

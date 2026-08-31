@@ -93,7 +93,7 @@ export function SavedBookingLookups() {
           </div>
           {TURNSTILE_SITE_KEY && <div ref={containerRef} />}
           {captchaRequired && (
-            <p role="alert" className="text-xs text-red-600">
+            <p role="alert" className="text-sm text-red-600">
               Veuillez valider la vérification anti-robot avant de continuer.
             </p>
           )}

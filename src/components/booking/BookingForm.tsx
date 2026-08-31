@@ -386,7 +386,7 @@ export function BookingForm() {
 
       <div className="container py-8 max-w-2xl">
         {!isLastStep && (
-          <div className="mb-6 flex items-center gap-2 rounded-xl bg-brand-green-50 border border-brand-green-100 px-4 py-2.5 text-xs sm:text-sm text-brand-green-800">
+          <div className="mb-6 flex items-center gap-2 rounded-xl bg-brand-green-50 border border-brand-green-100 px-4 py-2.5 text-sm text-brand-green-800">
             <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden="true" />
             <span>
               <strong>0&nbsp;€ à avancer</strong> — l&apos;Assurance Maladie règle

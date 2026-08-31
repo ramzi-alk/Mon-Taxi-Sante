@@ -213,7 +213,7 @@ export function PatientEmailLogin() {
           )}
           {bookingsQuery.data && bookingsQuery.data.length > 0 && (
             <>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 Pour annuler ou modifier une réservation active, utilisez le
                 suivi ci-dessus depuis cet appareil, ou la recherche par
                 référence plus bas.

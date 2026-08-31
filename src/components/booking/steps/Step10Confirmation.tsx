@@ -218,7 +218,7 @@ export function Step10Confirmation({ form, isSubmitting, submitError }: StepProp
             <p className="mt-1.5 text-2xl font-black text-amber-900">
               {formatPrice(priceEstimate.total)}
             </p>
-            <p className="mt-1.5 text-xs text-amber-700 leading-relaxed">
+            <p className="mt-1.5 text-sm text-amber-700 leading-relaxed">
               Calculée selon la distance, votre département et l&apos;heure du
               trajet (convention nationale taxi 2025). Le tarif définitif est
               confirmé par le chauffeur à la prise en charge.
@@ -307,7 +307,7 @@ export function Step10Confirmation({ form, isSubmitting, submitError }: StepProp
         )}
       </button>
 
-      <p className="text-center text-xs text-muted-foreground">
+      <p className="text-center text-sm text-muted-foreground">
         Vous recevrez une confirmation par email dans les minutes qui suivent.
       </p>
     </div>

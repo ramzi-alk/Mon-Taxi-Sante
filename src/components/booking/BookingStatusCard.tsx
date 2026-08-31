@@ -145,7 +145,7 @@ export function BookingStatusCard({
               {formatDateFr(displayBooking.pickup_datetime)} à {formatTimeFr(displayBooking.pickup_datetime)}
             </time>
           </span>
-          <span className="text-xs text-muted-foreground tracking-wide">
+          <span className="text-sm text-muted-foreground tracking-wide">
             Réf. {formatReferenceCode(displayBooking.reference_code)}
           </span>
         </span>
@@ -206,7 +206,7 @@ export function BookingStatusCard({
               )}
             </p>
             {(displayBooking.vehicle_brand || displayBooking.vehicle_model || displayBooking.vehicle_registration) && (
-              <p className="text-xs text-gray-600 pl-6">
+              <p className="text-sm text-gray-600 pl-6">
                 {[displayBooking.vehicle_brand, displayBooking.vehicle_model].filter(Boolean).join(" ")}
                 {displayBooking.vehicle_registration ? ` — ${displayBooking.vehicle_registration}` : ""}
               </p>
@@ -349,7 +349,7 @@ export function BookingStatusCard({
                       return (
                         <p
                           className={cn(
-                            "text-xs rounded-lg px-3 py-2",
+                            "text-sm rounded-lg px-3 py-2",
                             withinFreeCancelWindow
                               ? "bg-brand-green-50 text-brand-green-800"
                               : "bg-amber-50 text-amber-800"

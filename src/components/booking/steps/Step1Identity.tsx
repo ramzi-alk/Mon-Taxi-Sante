@@ -214,7 +214,7 @@ export function Step1Identity({ form }: StepProps) {
               aria-invalid={!!errors.patient_phone && !(bookingForOther && patientHasNoPhone)}
             />
           </div>
-          <p id="phone-hint" className="text-xs text-muted-foreground">
+          <p id="phone-hint" className="text-sm text-muted-foreground">
             {bookingForOther && patientHasNoPhone
               ? "Sera renseigné avec votre numéro, à saisir plus bas."
               : bookingForOther
@@ -266,7 +266,7 @@ export function Step1Identity({ form }: StepProps) {
                 aria-invalid={!!errors.patient_email}
               />
             </div>
-            <p id="email-hint" className="text-xs text-muted-foreground">
+            <p id="email-hint" className="text-sm text-muted-foreground">
               Utilisée pour vous envoyer la confirmation de réservation. Pas
               d&apos;email ? Conservez la référence affichée à l&apos;écran à
               la fin pour suivre votre course.
@@ -346,7 +346,7 @@ export function Step1Identity({ form }: StepProps) {
                 aria-invalid={!!errors.booker_phone}
               />
             </div>
-            <p id="booker-phone-hint" className="text-xs text-muted-foreground">
+            <p id="booker-phone-hint" className="text-sm text-muted-foreground">
               Contact secondaire pour le chauffeur en cas de besoin.
             </p>
             {errors.booker_phone && (
@@ -382,7 +382,7 @@ export function Step1Identity({ form }: StepProps) {
                 aria-invalid={!!errors.booker_email}
               />
             </div>
-            <p id="booker-email-hint" className="text-xs text-muted-foreground">
+            <p id="booker-email-hint" className="text-sm text-muted-foreground">
               La confirmation de réservation sera envoyée à cette adresse.
             </p>
             {errors.booker_email && (
@@ -418,7 +418,7 @@ export function Step1Identity({ form }: StepProps) {
                 aria-invalid={!!errors.patient_email}
               />
             </div>
-            <p id="patient-email-third-hint" className="text-xs text-muted-foreground">
+            <p id="patient-email-third-hint" className="text-sm text-muted-foreground">
               Si vous la connaissez, le patient recevra aussi une copie de la confirmation.
             </p>
             {errors.patient_email && (

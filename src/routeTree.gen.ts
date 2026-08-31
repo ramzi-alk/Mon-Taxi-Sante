@@ -54,6 +54,7 @@ import { Route as AdminAvisRouteImport } from './routes/admin/avis'
 import { Route as DepartmentCityRouteImport } from './routes/$department.$city'
 import { Route as TableauDeBordChauffeurCompteRouteImport } from './routes/tableau-de-bord/chauffeur_.compte'
 import { Route as TableauDeBordChauffeurCourseIdRouteImport } from './routes/tableau-de-bord/chauffeur_.course.$id'
+import { ServerRoute as ApiDriverOfflineBeaconServerRouteImport } from './routes/api/driver-offline-beacon'
 import { ServerRoute as ApiWebhooksStripeServerRouteImport } from './routes/api/webhooks/stripe'
 import { ServerRoute as ApiCronExpireDriverTrialsServerRouteImport } from './routes/api/cron/expire-driver-trials'
 import { ServerRoute as ApiCronExpireBookingsServerRouteImport } from './routes/api/cron/expire-bookings'
@@ -281,6 +282,12 @@ const TableauDeBordChauffeurCourseIdRoute =
     id: '/tableau-de-bord/chauffeur_/course/$id',
     path: '/tableau-de-bord/chauffeur/course/$id',
     getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiDriverOfflineBeaconServerRoute =
+  ApiDriverOfflineBeaconServerRouteImport.update({
+    id: '/api/driver-offline-beacon',
+    path: '/api/driver-offline-beacon',
+    getParentRoute: () => rootServerRouteImport,
   } as any)
 const ApiWebhooksStripeServerRoute = ApiWebhooksStripeServerRouteImport.update({
   id: '/api/webhooks/stripe',
@@ -621,6 +628,7 @@ export interface RootRouteChildren {
   TableauDeBordChauffeurCourseIdRoute: typeof TableauDeBordChauffeurCourseIdRoute
 }
 export interface FileServerRoutesByFullPath {
+  '/api/driver-offline-beacon': typeof ApiDriverOfflineBeaconServerRoute
   '/api/cron/at-risk-bookings': typeof ApiCronAtRiskBookingsServerRoute
   '/api/cron/booking-reminders': typeof ApiCronBookingRemindersServerRoute
   '/api/cron/expire-bookings': typeof ApiCronExpireBookingsServerRoute
@@ -628,6 +636,7 @@ export interface FileServerRoutesByFullPath {
   '/api/webhooks/stripe': typeof ApiWebhooksStripeServerRoute
 }
 export interface FileServerRoutesByTo {
+  '/api/driver-offline-beacon': typeof ApiDriverOfflineBeaconServerRoute
   '/api/cron/at-risk-bookings': typeof ApiCronAtRiskBookingsServerRoute
   '/api/cron/booking-reminders': typeof ApiCronBookingRemindersServerRoute
   '/api/cron/expire-bookings': typeof ApiCronExpireBookingsServerRoute
@@ -636,6 +645,7 @@ export interface FileServerRoutesByTo {
 }
 export interface FileServerRoutesById {
   __root__: typeof rootServerRouteImport
+  '/api/driver-offline-beacon': typeof ApiDriverOfflineBeaconServerRoute
   '/api/cron/at-risk-bookings': typeof ApiCronAtRiskBookingsServerRoute
   '/api/cron/booking-reminders': typeof ApiCronBookingRemindersServerRoute
   '/api/cron/expire-bookings': typeof ApiCronExpireBookingsServerRoute
@@ -645,6 +655,7 @@ export interface FileServerRoutesById {
 export interface FileServerRouteTypes {
   fileServerRoutesByFullPath: FileServerRoutesByFullPath
   fullPaths:
+    | '/api/driver-offline-beacon'
     | '/api/cron/at-risk-bookings'
     | '/api/cron/booking-reminders'
     | '/api/cron/expire-bookings'
@@ -652,6 +663,7 @@ export interface FileServerRouteTypes {
     | '/api/webhooks/stripe'
   fileServerRoutesByTo: FileServerRoutesByTo
   to:
+    | '/api/driver-offline-beacon'
     | '/api/cron/at-risk-bookings'
     | '/api/cron/booking-reminders'
     | '/api/cron/expire-bookings'
@@ -659,6 +671,7 @@ export interface FileServerRouteTypes {
     | '/api/webhooks/stripe'
   id:
     | '__root__'
+    | '/api/driver-offline-beacon'
     | '/api/cron/at-risk-bookings'
     | '/api/cron/booking-reminders'
     | '/api/cron/expire-bookings'
@@ -667,6 +680,7 @@ export interface FileServerRouteTypes {
   fileServerRoutesById: FileServerRoutesById
 }
 export interface RootServerRouteChildren {
+  ApiDriverOfflineBeaconServerRoute: typeof ApiDriverOfflineBeaconServerRoute
   ApiCronAtRiskBookingsServerRoute: typeof ApiCronAtRiskBookingsServerRoute
   ApiCronBookingRemindersServerRoute: typeof ApiCronBookingRemindersServerRoute
   ApiCronExpireBookingsServerRoute: typeof ApiCronExpireBookingsServerRoute
@@ -981,6 +995,13 @@ declare module '@tanstack/react-router' {
 }
 declare module '@tanstack/react-start/server' {
   interface ServerFileRoutesByPath {
+    '/api/driver-offline-beacon': {
+      id: '/api/driver-offline-beacon'
+      path: '/api/driver-offline-beacon'
+      fullPath: '/api/driver-offline-beacon'
+      preLoaderRoute: typeof ApiDriverOfflineBeaconServerRouteImport
+      parentRoute: typeof rootServerRouteImport
+    }
     '/api/webhooks/stripe': {
       id: '/api/webhooks/stripe'
       path: '/api/webhooks/stripe'
@@ -1085,6 +1106,7 @@ export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
 const rootServerRouteChildren: RootServerRouteChildren = {
+  ApiDriverOfflineBeaconServerRoute: ApiDriverOfflineBeaconServerRoute,
   ApiCronAtRiskBookingsServerRoute: ApiCronAtRiskBookingsServerRoute,
   ApiCronBookingRemindersServerRoute: ApiCronBookingRemindersServerRoute,
   ApiCronExpireBookingsServerRoute: ApiCronExpireBookingsServerRoute,

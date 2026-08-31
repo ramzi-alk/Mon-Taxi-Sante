@@ -98,7 +98,7 @@ export function Step4VehicleAndNeeds({ form }: StepProps) {
             />
             <div>
               <p className="text-sm font-semibold text-gray-800">Fauteuil roulant</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <p className="text-sm text-muted-foreground mt-0.5">
                 Manuel ou électrique — recommande un Taxi PMR aménagé.
               </p>
             </div>
@@ -115,7 +115,7 @@ export function Step4VehicleAndNeeds({ form }: StepProps) {
             />
             <div>
               <p className="text-sm font-semibold text-gray-800">Brancard / position allongée</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <p className="text-sm text-muted-foreground mt-0.5">
                 Transport couché — sélectionne une ambulance automatiquement.
               </p>
             </div>
@@ -132,7 +132,7 @@ export function Step4VehicleAndNeeds({ form }: StepProps) {
             />
             <div>
               <p className="text-sm font-semibold text-gray-800">Oxygène thérapeutique</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <p className="text-sm text-muted-foreground mt-0.5">
                 Le chauffeur sera informé avant la prise en charge.
               </p>
             </div>
@@ -194,7 +194,7 @@ export function Step4VehicleAndNeeds({ form }: StepProps) {
                     Sélectionné automatiquement
                   </span>
                 </div>
-                <p className="text-xs text-muted-foreground mt-0.5">
+                <p className="text-sm text-muted-foreground mt-0.5">
                   Transport en position allongée sur brancard.
                 </p>
               </div>
@@ -205,7 +205,7 @@ export function Step4VehicleAndNeeds({ form }: StepProps) {
                 <div className="h-2 w-2 rounded-full bg-white" />
               </div>
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Taxi et VSL ne sont pas adaptés au brancard. Décochez &laquo;&nbsp;Brancard&nbsp;&raquo; pour choisir un autre véhicule.
             </p>
           </>
@@ -265,7 +265,7 @@ export function Step4VehicleAndNeeds({ form }: StepProps) {
                           </span>
                         )}
                       </div>
-                      <p id={`vehicle-desc-${value}`} className="text-xs text-muted-foreground mt-0.5">
+                      <p id={`vehicle-desc-${value}`} className="text-sm text-muted-foreground mt-0.5">
                         {description}
                       </p>
                     </div>
