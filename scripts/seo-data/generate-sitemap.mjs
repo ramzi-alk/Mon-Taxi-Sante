@@ -31,6 +31,7 @@ const STATIC_PAGES = [
   { path: "/blog/transport-pmr-personnes-agees", changefreq: "yearly", priority: "0.6" },
   { path: "/blog/accompagnant-taxi-conventionne", changefreq: "yearly", priority: "0.6" },
   { path: "/blog/traitements-reguliers-taxi-conventionne", changefreq: "yearly", priority: "0.6" },
+  { path: "/blog/taxi-conventionne-grossesse", changefreq: "yearly", priority: "0.6" },
   { path: "/villes", changefreq: "monthly", priority: "0.8" },
   { path: "/maladies", changefreq: "monthly", priority: "0.8" },
   { path: "/cgv", changefreq: "yearly", priority: "0.3" },

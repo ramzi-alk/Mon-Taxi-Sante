@@ -39,6 +39,7 @@ import { Route as BlogTransportPmrPersonnesAgeesRouteImport } from './routes/blo
 import { Route as BlogTransportCpamRouteImport } from './routes/blog/transport-cpam'
 import { Route as BlogTraitementsReguliersTaxiConventionneRouteImport } from './routes/blog/traitements-reguliers-taxi-conventionne'
 import { Route as BlogTaxiSansPrescriptionRouteImport } from './routes/blog/taxi-sans-prescription'
+import { Route as BlogTaxiConventionneGrossesseRouteImport } from './routes/blog/taxi-conventionne-grossesse'
 import { Route as BlogPmtPrescriptionRouteImport } from './routes/blog/pmt-prescription'
 import { Route as BlogAldTransportRouteImport } from './routes/blog/ald-transport'
 import { Route as BlogAccompagnantTaxiConventionneRouteImport } from './routes/blog/accompagnant-taxi-conventionne'
@@ -215,6 +216,12 @@ const BlogTaxiSansPrescriptionRoute =
     path: '/blog/taxi-sans-prescription',
     getParentRoute: () => rootRouteImport,
   } as any)
+const BlogTaxiConventionneGrossesseRoute =
+  BlogTaxiConventionneGrossesseRouteImport.update({
+    id: '/blog/taxi-conventionne-grossesse',
+    path: '/blog/taxi-conventionne-grossesse',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const BlogPmtPrescriptionRoute = BlogPmtPrescriptionRouteImport.update({
   id: '/blog/pmt-prescription',
   path: '/blog/pmt-prescription',
@@ -354,6 +361,7 @@ export interface FileRoutesByFullPath {
   '/blog/accompagnant-taxi-conventionne': typeof BlogAccompagnantTaxiConventionneRoute
   '/blog/ald-transport': typeof BlogAldTransportRoute
   '/blog/pmt-prescription': typeof BlogPmtPrescriptionRoute
+  '/blog/taxi-conventionne-grossesse': typeof BlogTaxiConventionneGrossesseRoute
   '/blog/taxi-sans-prescription': typeof BlogTaxiSansPrescriptionRoute
   '/blog/traitements-reguliers-taxi-conventionne': typeof BlogTraitementsReguliersTaxiConventionneRoute
   '/blog/transport-cpam': typeof BlogTransportCpamRoute
@@ -406,6 +414,7 @@ export interface FileRoutesByTo {
   '/blog/accompagnant-taxi-conventionne': typeof BlogAccompagnantTaxiConventionneRoute
   '/blog/ald-transport': typeof BlogAldTransportRoute
   '/blog/pmt-prescription': typeof BlogPmtPrescriptionRoute
+  '/blog/taxi-conventionne-grossesse': typeof BlogTaxiConventionneGrossesseRoute
   '/blog/taxi-sans-prescription': typeof BlogTaxiSansPrescriptionRoute
   '/blog/traitements-reguliers-taxi-conventionne': typeof BlogTraitementsReguliersTaxiConventionneRoute
   '/blog/transport-cpam': typeof BlogTransportCpamRoute
@@ -460,6 +469,7 @@ export interface FileRoutesById {
   '/blog/accompagnant-taxi-conventionne': typeof BlogAccompagnantTaxiConventionneRoute
   '/blog/ald-transport': typeof BlogAldTransportRoute
   '/blog/pmt-prescription': typeof BlogPmtPrescriptionRoute
+  '/blog/taxi-conventionne-grossesse': typeof BlogTaxiConventionneGrossesseRoute
   '/blog/taxi-sans-prescription': typeof BlogTaxiSansPrescriptionRoute
   '/blog/traitements-reguliers-taxi-conventionne': typeof BlogTraitementsReguliersTaxiConventionneRoute
   '/blog/transport-cpam': typeof BlogTransportCpamRoute
@@ -515,6 +525,7 @@ export interface FileRouteTypes {
     | '/blog/accompagnant-taxi-conventionne'
     | '/blog/ald-transport'
     | '/blog/pmt-prescription'
+    | '/blog/taxi-conventionne-grossesse'
     | '/blog/taxi-sans-prescription'
     | '/blog/traitements-reguliers-taxi-conventionne'
     | '/blog/transport-cpam'
@@ -567,6 +578,7 @@ export interface FileRouteTypes {
     | '/blog/accompagnant-taxi-conventionne'
     | '/blog/ald-transport'
     | '/blog/pmt-prescription'
+    | '/blog/taxi-conventionne-grossesse'
     | '/blog/taxi-sans-prescription'
     | '/blog/traitements-reguliers-taxi-conventionne'
     | '/blog/transport-cpam'
@@ -620,6 +632,7 @@ export interface FileRouteTypes {
     | '/blog/accompagnant-taxi-conventionne'
     | '/blog/ald-transport'
     | '/blog/pmt-prescription'
+    | '/blog/taxi-conventionne-grossesse'
     | '/blog/taxi-sans-prescription'
     | '/blog/traitements-reguliers-taxi-conventionne'
     | '/blog/transport-cpam'
@@ -666,6 +679,7 @@ export interface RootRouteChildren {
   BlogAccompagnantTaxiConventionneRoute: typeof BlogAccompagnantTaxiConventionneRoute
   BlogAldTransportRoute: typeof BlogAldTransportRoute
   BlogPmtPrescriptionRoute: typeof BlogPmtPrescriptionRoute
+  BlogTaxiConventionneGrossesseRoute: typeof BlogTaxiConventionneGrossesseRoute
   BlogTaxiSansPrescriptionRoute: typeof BlogTaxiSansPrescriptionRoute
   BlogTraitementsReguliersTaxiConventionneRoute: typeof BlogTraitementsReguliersTaxiConventionneRoute
   BlogTransportCpamRoute: typeof BlogTransportCpamRoute
@@ -902,6 +916,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BlogTaxiSansPrescriptionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/blog/taxi-conventionne-grossesse': {
+      id: '/blog/taxi-conventionne-grossesse'
+      path: '/blog/taxi-conventionne-grossesse'
+      fullPath: '/blog/taxi-conventionne-grossesse'
+      preLoaderRoute: typeof BlogTaxiConventionneGrossesseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/blog/pmt-prescription': {
       id: '/blog/pmt-prescription'
       path: '/blog/pmt-prescription'
@@ -1099,6 +1120,7 @@ const rootRouteChildren: RootRouteChildren = {
   BlogAccompagnantTaxiConventionneRoute: BlogAccompagnantTaxiConventionneRoute,
   BlogAldTransportRoute: BlogAldTransportRoute,
   BlogPmtPrescriptionRoute: BlogPmtPrescriptionRoute,
+  BlogTaxiConventionneGrossesseRoute: BlogTaxiConventionneGrossesseRoute,
   BlogTaxiSansPrescriptionRoute: BlogTaxiSansPrescriptionRoute,
   BlogTraitementsReguliersTaxiConventionneRoute:
     BlogTraitementsReguliersTaxiConventionneRoute,

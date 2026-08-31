@@ -89,4 +89,14 @@ export const blogPosts: BlogPost[] = [
     readingTime: "6 min",
     publishedAt: "2 septembre 2026",
   },
+  {
+    slug: "taxi-conventionne-grossesse",
+    to: "/blog/taxi-conventionne-grossesse",
+    category: "Prise en charge",
+    title: "Taxi conventionné et grossesse : prise en charge et conseils",
+    excerpt:
+      "Échographies, rendez-vous mensuels, préparation à l'accouchement : comment bénéficier d'un taxi conventionné pendant votre grossesse avec la CPAM.",
+    readingTime: "5 min",
+    publishedAt: "3 septembre 2026",
+  },
 ];
