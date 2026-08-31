@@ -25,6 +25,7 @@ export interface AdminBookingRow {
 
 export interface AdminBookingDetail extends AdminBookingRow {
   patient_email: string | null;
+  patient_birth_date: string | null;
   cpam_status: Database["public"]["Tables"]["bookings"]["Row"]["cpam_status"];
   mutual_name: string | null;
   medical_notes: string | null;
@@ -92,7 +93,7 @@ export async function fetchBookingDetailAdmin(
   const { data, error } = await client
     .from("bookings")
     .select(
-      `${ADMIN_BOOKING_COLUMNS}, patient_email, cpam_status, mutual_name, medical_notes, cancellation_reason, created_at`
+      `${ADMIN_BOOKING_COLUMNS}, patient_email, patient_birth_date, cpam_status, mutual_name, medical_notes, cancellation_reason, created_at`
     )
     .eq("id", bookingId)
     .maybeSingle();
