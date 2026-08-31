@@ -36,6 +36,7 @@ import { Route as ChauffeursTarifsRouteImport } from './routes/chauffeurs/tarifs
 import { Route as ChauffeursInscriptionRouteImport } from './routes/chauffeurs/inscription'
 import { Route as BlogVslOuTaxiConventionneRouteImport } from './routes/blog/vsl-ou-taxi-conventionne'
 import { Route as BlogTransportPmrPersonnesAgeesRouteImport } from './routes/blog/transport-pmr-personnes-agees'
+import { Route as BlogTransportMedicalPlusieursRendezVousRouteImport } from './routes/blog/transport-medical-plusieurs-rendez-vous'
 import { Route as BlogTransportCpamRouteImport } from './routes/blog/transport-cpam'
 import { Route as BlogTraitementsReguliersTaxiConventionneRouteImport } from './routes/blog/traitements-reguliers-taxi-conventionne'
 import { Route as BlogTaxiSansPrescriptionRouteImport } from './routes/blog/taxi-sans-prescription'
@@ -199,6 +200,12 @@ const BlogTransportPmrPersonnesAgeesRoute =
   BlogTransportPmrPersonnesAgeesRouteImport.update({
     id: '/blog/transport-pmr-personnes-agees',
     path: '/blog/transport-pmr-personnes-agees',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const BlogTransportMedicalPlusieursRendezVousRoute =
+  BlogTransportMedicalPlusieursRendezVousRouteImport.update({
+    id: '/blog/transport-medical-plusieurs-rendez-vous',
+    path: '/blog/transport-medical-plusieurs-rendez-vous',
     getParentRoute: () => rootRouteImport,
   } as any)
 const BlogTransportCpamRoute = BlogTransportCpamRouteImport.update({
@@ -381,6 +388,7 @@ export interface FileRoutesByFullPath {
   '/blog/taxi-sans-prescription': typeof BlogTaxiSansPrescriptionRoute
   '/blog/traitements-reguliers-taxi-conventionne': typeof BlogTraitementsReguliersTaxiConventionneRoute
   '/blog/transport-cpam': typeof BlogTransportCpamRoute
+  '/blog/transport-medical-plusieurs-rendez-vous': typeof BlogTransportMedicalPlusieursRendezVousRoute
   '/blog/transport-pmr-personnes-agees': typeof BlogTransportPmrPersonnesAgeesRoute
   '/blog/vsl-ou-taxi-conventionne': typeof BlogVslOuTaxiConventionneRoute
   '/chauffeurs/inscription': typeof ChauffeursInscriptionRoute
@@ -436,6 +444,7 @@ export interface FileRoutesByTo {
   '/blog/taxi-sans-prescription': typeof BlogTaxiSansPrescriptionRoute
   '/blog/traitements-reguliers-taxi-conventionne': typeof BlogTraitementsReguliersTaxiConventionneRoute
   '/blog/transport-cpam': typeof BlogTransportCpamRoute
+  '/blog/transport-medical-plusieurs-rendez-vous': typeof BlogTransportMedicalPlusieursRendezVousRoute
   '/blog/transport-pmr-personnes-agees': typeof BlogTransportPmrPersonnesAgeesRoute
   '/blog/vsl-ou-taxi-conventionne': typeof BlogVslOuTaxiConventionneRoute
   '/chauffeurs/inscription': typeof ChauffeursInscriptionRoute
@@ -493,6 +502,7 @@ export interface FileRoutesById {
   '/blog/taxi-sans-prescription': typeof BlogTaxiSansPrescriptionRoute
   '/blog/traitements-reguliers-taxi-conventionne': typeof BlogTraitementsReguliersTaxiConventionneRoute
   '/blog/transport-cpam': typeof BlogTransportCpamRoute
+  '/blog/transport-medical-plusieurs-rendez-vous': typeof BlogTransportMedicalPlusieursRendezVousRoute
   '/blog/transport-pmr-personnes-agees': typeof BlogTransportPmrPersonnesAgeesRoute
   '/blog/vsl-ou-taxi-conventionne': typeof BlogVslOuTaxiConventionneRoute
   '/chauffeurs/inscription': typeof ChauffeursInscriptionRoute
@@ -551,6 +561,7 @@ export interface FileRouteTypes {
     | '/blog/taxi-sans-prescription'
     | '/blog/traitements-reguliers-taxi-conventionne'
     | '/blog/transport-cpam'
+    | '/blog/transport-medical-plusieurs-rendez-vous'
     | '/blog/transport-pmr-personnes-agees'
     | '/blog/vsl-ou-taxi-conventionne'
     | '/chauffeurs/inscription'
@@ -606,6 +617,7 @@ export interface FileRouteTypes {
     | '/blog/taxi-sans-prescription'
     | '/blog/traitements-reguliers-taxi-conventionne'
     | '/blog/transport-cpam'
+    | '/blog/transport-medical-plusieurs-rendez-vous'
     | '/blog/transport-pmr-personnes-agees'
     | '/blog/vsl-ou-taxi-conventionne'
     | '/chauffeurs/inscription'
@@ -662,6 +674,7 @@ export interface FileRouteTypes {
     | '/blog/taxi-sans-prescription'
     | '/blog/traitements-reguliers-taxi-conventionne'
     | '/blog/transport-cpam'
+    | '/blog/transport-medical-plusieurs-rendez-vous'
     | '/blog/transport-pmr-personnes-agees'
     | '/blog/vsl-ou-taxi-conventionne'
     | '/chauffeurs/inscription'
@@ -711,6 +724,7 @@ export interface RootRouteChildren {
   BlogTaxiSansPrescriptionRoute: typeof BlogTaxiSansPrescriptionRoute
   BlogTraitementsReguliersTaxiConventionneRoute: typeof BlogTraitementsReguliersTaxiConventionneRoute
   BlogTransportCpamRoute: typeof BlogTransportCpamRoute
+  BlogTransportMedicalPlusieursRendezVousRoute: typeof BlogTransportMedicalPlusieursRendezVousRoute
   BlogTransportPmrPersonnesAgeesRoute: typeof BlogTransportPmrPersonnesAgeesRoute
   BlogVslOuTaxiConventionneRoute: typeof BlogVslOuTaxiConventionneRoute
   ChauffeursInscriptionRoute: typeof ChauffeursInscriptionRoute
@@ -921,6 +935,13 @@ declare module '@tanstack/react-router' {
       path: '/blog/transport-pmr-personnes-agees'
       fullPath: '/blog/transport-pmr-personnes-agees'
       preLoaderRoute: typeof BlogTransportPmrPersonnesAgeesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog/transport-medical-plusieurs-rendez-vous': {
+      id: '/blog/transport-medical-plusieurs-rendez-vous'
+      path: '/blog/transport-medical-plusieurs-rendez-vous'
+      fullPath: '/blog/transport-medical-plusieurs-rendez-vous'
+      preLoaderRoute: typeof BlogTransportMedicalPlusieursRendezVousRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/blog/transport-cpam': {
@@ -1170,6 +1191,8 @@ const rootRouteChildren: RootRouteChildren = {
   BlogTraitementsReguliersTaxiConventionneRoute:
     BlogTraitementsReguliersTaxiConventionneRoute,
   BlogTransportCpamRoute: BlogTransportCpamRoute,
+  BlogTransportMedicalPlusieursRendezVousRoute:
+    BlogTransportMedicalPlusieursRendezVousRoute,
   BlogTransportPmrPersonnesAgeesRoute: BlogTransportPmrPersonnesAgeesRoute,
   BlogVslOuTaxiConventionneRoute: BlogVslOuTaxiConventionneRoute,
   ChauffeursInscriptionRoute: ChauffeursInscriptionRoute,

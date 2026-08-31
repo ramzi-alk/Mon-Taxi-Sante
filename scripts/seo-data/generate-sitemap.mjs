@@ -34,6 +34,7 @@ const STATIC_PAGES = [
   { path: "/blog/taxi-conventionne-grossesse", changefreq: "yearly", priority: "0.6" },
   { path: "/blog/retour-domicile-sortie-hopital", changefreq: "yearly", priority: "0.6" },
   { path: "/blog/taxi-conventionne-sans-avance-frais", changefreq: "yearly", priority: "0.6" },
+  { path: "/blog/transport-medical-plusieurs-rendez-vous", changefreq: "yearly", priority: "0.6" },
   { path: "/villes", changefreq: "monthly", priority: "0.8" },
   { path: "/maladies", changefreq: "monthly", priority: "0.8" },
   { path: "/cgv", changefreq: "yearly", priority: "0.3" },

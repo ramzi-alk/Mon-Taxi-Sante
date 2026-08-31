@@ -119,4 +119,14 @@ export const blogPosts: BlogPost[] = [
     readingTime: "4 min",
     publishedAt: "5 septembre 2026",
   },
+  {
+    slug: "transport-medical-plusieurs-rendez-vous",
+    to: "/blog/transport-medical-plusieurs-rendez-vous",
+    category: "Démarches",
+    title: "Transport médical : gérer plusieurs rendez-vous en taxi conventionné",
+    excerpt:
+      "Plusieurs consultations le même jour ou la même semaine ? Comment organiser vos trajets en taxi conventionné, PMT à l'appui, sans stress.",
+    readingTime: "5 min",
+    publishedAt: "6 septembre 2026",
+  },
 ];
