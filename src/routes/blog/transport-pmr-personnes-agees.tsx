@@ -101,6 +101,16 @@ function TransportPmrArticle() {
         .
       </p>
 
+      <p>
+        Pour le détail de ce que vous pouvez emporter (bagages,
+        déambulateur) et la différence avec un fauteuil manuel transporté
+        dans un taxi classique, voir notre guide{" "}
+        <Link to="/blog/bagages-materiel-taxi-conventionne">
+          Bagages et matériel en taxi conventionné
+        </Link>
+        .
+      </p>
+
       <h2>Comment réserver un Taxi PMR ?</h2>
       <p>
         Lors de votre réservation en ligne, sélectionnez le véhicule « Taxi

@@ -179,4 +179,14 @@ export const blogPosts: BlogPost[] = [
     readingTime: "4 min",
     publishedAt: "15 septembre 2026",
   },
+  {
+    slug: "bagages-materiel-taxi-conventionne",
+    to: "/blog/bagages-materiel-taxi-conventionne",
+    category: "Prise en charge",
+    title: "Bagages et matériel en taxi conventionné : que peut-on emporter ?",
+    excerpt:
+      "Valise d'hospitalisation, déambulateur, fauteuil roulant : quel matériel emporter lors de votre trajet en taxi médicalisé.",
+    readingTime: "4 min",
+    publishedAt: "16 septembre 2026",
+  },
 ];
