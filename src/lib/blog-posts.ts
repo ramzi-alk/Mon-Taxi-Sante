@@ -209,4 +209,14 @@ export const blogPosts: BlogPost[] = [
     readingTime: "4 min",
     publishedAt: "18 septembre 2026",
   },
+  {
+    slug: "transfert-inter-hospitalier-taxi-conventionne",
+    to: "/blog/transfert-inter-hospitalier-taxi-conventionne",
+    category: "Démarches",
+    title: "Transfert entre deux hôpitaux : qui organise et paie le transport ?",
+    excerpt:
+      "Vous ou un proche êtes transféré d'un hôpital à un autre ? Les règles du transfert inter-hospitalier et la prise en charge financière.",
+    readingTime: "4 min",
+    publishedAt: "19 septembre 2026",
+  },
 ];

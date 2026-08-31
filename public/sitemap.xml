@@ -136,6 +136,11 @@
     <priority>0.6</priority>
   </url>
   <url>
+    <loc>https://docteurtaxi.fr/blog/transfert-inter-hospitalier-taxi-conventionne</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://docteurtaxi.fr/villes</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
