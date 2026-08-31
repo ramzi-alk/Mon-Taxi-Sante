@@ -23,6 +23,23 @@ import {
 // booking/cancellation/approval flow it's attached to, so every function
 // catches and logs rather than throwing.
 
+/**
+ * Who actually receives a patient-facing notification for this booking —
+ * the booker (proche) when the booking was made on someone else's behalf
+ * and they gave an email, the patient otherwise. Shared by every
+ * notifyX function below (and its client-side mirror in server/booking.ts)
+ * so this rule is defined once instead of re-derived at each call site.
+ */
+export function resolveNotificationRecipient(booking: {
+  booking_for_other: boolean;
+  booker_email: string | null;
+  patient_email: string | null;
+}): string | null {
+  return booking.booking_for_other && booking.booker_email
+    ? booking.booker_email
+    : booking.patient_email;
+}
+
 export async function sendBookingConfirmationEmail(params: {
   to: string;
   patientFullName: string;
@@ -68,10 +85,7 @@ async function notifyBookingCancelled(data: { bookingId: string }): Promise<void
   }
 
   const bookingTyped = booking as typeof booking & { booking_for_other: boolean; booker_email: string | null };
-  const cancellationRecipient =
-    bookingTyped.booking_for_other && bookingTyped.booker_email
-      ? bookingTyped.booker_email
-      : booking.patient_email;
+  const cancellationRecipient = resolveNotificationRecipient(bookingTyped);
 
   if (cancellationRecipient) {
     try {
@@ -161,10 +175,7 @@ async function notifyBookingAccepted(data: { bookingId: string }): Promise<void>
     booker_email: string | null;
     series_id: string | null;
   };
-  const acceptedRecipient =
-    bookingTyped2.booking_for_other && bookingTyped2.booker_email
-      ? bookingTyped2.booker_email
-      : booking.patient_email;
+  const acceptedRecipient = resolveNotificationRecipient(bookingTyped2);
 
   if (!acceptedRecipient) {
     return;
@@ -407,10 +418,7 @@ async function notifyRideUnassigned(data: { bookingId: string; seriesAffectedCou
     booker_email: string | null;
     series_id: string | null;
   };
-  const unassignedRecipient =
-    bookingTyped3.booking_for_other && bookingTyped3.booker_email
-      ? bookingTyped3.booker_email
-      : booking.patient_email;
+  const unassignedRecipient = resolveNotificationRecipient(bookingTyped3);
 
   if (!unassignedRecipient) {
     return;

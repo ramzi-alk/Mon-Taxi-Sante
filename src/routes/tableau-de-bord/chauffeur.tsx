@@ -22,9 +22,6 @@ import {
   AlertTriangle,
   BellRing,
   X,
-  TrendingUp,
-  TrendingDown,
-  Minus,
   Target,
   XCircle,
   ChevronDown,
@@ -41,6 +38,9 @@ import { RideCard, type PoolRide } from "~/components/driver/RideCard";
 import { DayTimeline } from "~/components/driver/DayTimeline";
 import { PoolList } from "~/components/driver/PoolList";
 import { SkeletonRideCard } from "~/components/driver/SkeletonCard";
+import { StatCard } from "~/components/driver/StatCard";
+import { RateCard } from "~/components/driver/RateCard";
+import { RatingTrendCard } from "~/components/driver/RatingTrendCard";
 import { useToast } from "~/components/ui/toast";
 import * as authRepository from "~/repositories/authRepository";
 import * as bookingsRepository from "~/repositories/bookingsRepository";
@@ -145,105 +145,6 @@ async function setAcceptanceRadius(radiusKm: number | null): Promise<void> {
   const user = await authRepository.getCurrentUser(supabase);
   if (!user) throw new Error("Non authentifié");
   await driversRepository.setAcceptanceRadius(supabase, user.id, radiusKm);
-}
-
-// ─── Stats card ─────────────────────────────────────────────────────────────
-
-function StatCard({
-  icon: Icon,
-  label,
-  value,
-  color,
-}: {
-  icon: React.FC<{ className?: string }>;
-  label: string;
-  value: string | number;
-  color: string;
-}) {
-  return (
-    <div className="flex items-center gap-2.5 rounded-xl bg-white p-3 shadow-sm ring-1 ring-gray-100 sm:gap-4 sm:rounded-2xl sm:p-5">
-      <div
-        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg sm:h-12 sm:w-12 sm:rounded-xl ${color}`}
-      >
-        <Icon className="h-5 w-5 sm:h-6 sm:w-6" aria-hidden="true" />
-      </div>
-      <div className="min-w-0">
-        <p className="text-lg font-black text-gray-900 leading-tight sm:text-2xl">{value}</p>
-        <p className="text-xs leading-snug text-muted-foreground sm:text-sm">{label}</p>
-      </div>
-    </div>
-  );
-}
-
-// ─── Performance card ───────────────────────────────────────────────────────
-
-function RateCard({
-  icon: Icon,
-  label,
-  value,
-  goodAbove,
-  invert,
-}: {
-  icon: React.FC<{ className?: string }>;
-  label: string;
-  value: number | null;
-  // Seuil au-delà duquel le taux est considéré "bon" (vert) plutôt
-  // qu'"à surveiller" (ambre) — sens inversé pour un taux d'annulation
-  // (bas = bon) via `invert`.
-  goodAbove: number;
-  invert?: boolean;
-}) {
-  const isGood = value != null && (invert ? value <= goodAbove : value >= goodAbove);
-  const color = value == null
-    ? "bg-gray-50 text-gray-400"
-    : isGood
-    ? "bg-brand-green-50 text-brand-green-600"
-    : "bg-amber-50 text-amber-600";
-  return (
-    <div className="flex items-center gap-2.5 rounded-xl bg-white p-3 shadow-sm ring-1 ring-gray-100 sm:gap-4 sm:rounded-2xl sm:p-5">
-      <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg sm:h-12 sm:w-12 sm:rounded-xl ${color}`}>
-        <Icon className="h-5 w-5 sm:h-6 sm:w-6" aria-hidden="true" />
-      </div>
-      <div className="min-w-0">
-        <p className="text-lg font-black text-gray-900 leading-tight sm:text-2xl">
-          {value != null ? `${value}%` : "—"}
-        </p>
-        <p className="text-xs leading-snug text-muted-foreground sm:text-sm">{label}</p>
-      </div>
-    </div>
-  );
-}
-
-function RatingTrendCard({ recent, previous }: { recent: number | null; previous: number | null }) {
-  const hasTrend = recent != null && previous != null;
-  const delta = hasTrend ? Math.round((recent - previous) * 100) / 100 : null;
-  const TrendIcon = delta == null ? Minus : delta > 0.05 ? TrendingUp : delta < -0.05 ? TrendingDown : Minus;
-  const color = delta == null
-    ? "bg-gray-50 text-gray-400"
-    : delta > 0.05
-    ? "bg-brand-green-50 text-brand-green-600"
-    : delta < -0.05
-    ? "bg-red-50 text-red-600"
-    : "bg-gray-50 text-gray-500";
-  return (
-    <div className="flex items-center gap-2.5 rounded-xl bg-white p-3 shadow-sm ring-1 ring-gray-100 sm:gap-4 sm:rounded-2xl sm:p-5">
-      <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg sm:h-12 sm:w-12 sm:rounded-xl ${color}`}>
-        <TrendIcon className="h-5 w-5 sm:h-6 sm:w-6" aria-hidden="true" />
-      </div>
-      <div className="min-w-0">
-        <p className="text-lg font-black text-gray-900 leading-tight sm:text-2xl">
-          {recent != null ? recent.toFixed(1) : "—"}
-          {delta != null && (
-            <span className="ml-1 text-xs font-semibold text-gray-400">
-              ({delta > 0 ? "+" : ""}
-              {delta})
-            </span>
-          )}
-        </p>
-        <p className="text-xs leading-snug text-muted-foreground sm:text-sm">Note (30 derniers jours)</p>
-      </div>
-    </div>
-  );
 }
 
 // ─── Main component ──────────────────────────────────────────────────────────

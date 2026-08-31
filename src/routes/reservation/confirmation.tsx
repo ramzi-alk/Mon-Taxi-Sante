@@ -4,13 +4,13 @@ import { z } from "zod";
 import { CheckCircle2, MapPin, Calendar, ShieldCheck, Phone, ClipboardList, AlertTriangle } from "lucide-react";
 import { supabase } from "~/lib/supabase";
 import { formatDateFr, formatTimeFr, formatReferenceCode, cn } from "~/lib/utils";
-import { logger } from "~/lib/logger";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
 import { trackCallButtonClick } from "~/lib/trackCallClick";
 import { usePhoneVisibility } from "~/hooks/usePhoneVisibility";
 import { useRealtime } from "~/hooks/useRealtime";
 import { STATUS_LABELS, STATUS_BADGE_CLASSES, type BookingStatus } from "~/lib/bookingStatus";
 import { CPAM_LABELS } from "~/lib/cpam";
+import * as bookingsRepository from "~/repositories/bookingsRepository";
 
 const confirmationSearchSchema = z.object({
   id: z.string(),
@@ -33,19 +33,7 @@ export const Route = createFileRoute("/reservation/confirmation")({
 });
 
 async function fetchBooking(id: string) {
-  const { data, error } = await supabase
-    .from("bookings")
-    .select(
-      "id, reference_code, pickup_address, dropoff_address, pickup_datetime, cpam_status, status"
-    )
-    .eq("id", id)
-    .single();
-
-  if (error) {
-    logger.error("booking.fetchConfirmation failed", { error: error.message, id });
-    throw new Error(error.message);
-  }
-  return data;
+  return bookingsRepository.fetchBookingConfirmation(supabase, id);
 }
 
 function ConfirmationPage() {

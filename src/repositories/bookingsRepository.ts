@@ -87,6 +87,29 @@ export interface UpdateBookingPayload {
  * a driver is assigned, since patients have no direct RLS access to other
  * users' profile rows.
  */
+export type BookingConfirmationRow = Pick<
+  BookingRow,
+  "id" | "reference_code" | "pickup_address" | "dropoff_address" | "pickup_datetime" | "cpam_status" | "status"
+>;
+
+/** Récapitulatif affiché sur /reservation/confirmation juste après l'envoi. */
+export async function fetchBookingConfirmation(
+  client: SupabaseClient,
+  id: string
+): Promise<BookingConfirmationRow> {
+  const { data, error } = await client
+    .from("bookings")
+    .select("id, reference_code, pickup_address, dropoff_address, pickup_datetime, cpam_status, status")
+    .eq("id", id)
+    .single();
+
+  if (error) {
+    logger.error("bookings.fetchBookingConfirmation failed", { error: error.message, id });
+    throw new Error(error.message);
+  }
+  return data;
+}
+
 export async function fetchMyBookings(client: SupabaseClient): Promise<MyBookingRow[]> {
   const { data, error } = await client.rpc("get_my_bookings");
 

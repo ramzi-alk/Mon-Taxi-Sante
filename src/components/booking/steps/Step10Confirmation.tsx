@@ -13,6 +13,8 @@ import {
 import { formatDateFr, formatPrice, combineLocalDateTimeToIso } from "~/lib/utils";
 import { computeSeriesDates } from "~/lib/seriesSchedule";
 import { calculatePrice, departementDepuisAdresse } from "~/lib/pricing";
+import { VEHICLE_LABELS } from "~/lib/vehicle";
+import { CPAM_LABELS } from "~/lib/cpam";
 import type { BookingSchema } from "../schema";
 
 interface StepProps {
@@ -21,24 +23,10 @@ interface StepProps {
   submitError?: string | null;
 }
 
-const vehicleLabels: Record<string, string> = {
-  taxi: "Taxi conventionné",
-  vsl: "VSL",
-  pmr: "Taxi PMR (Handicap)",
-};
-
 const tripTypeLabels: Record<string, string> = {
   aller_simple: "Aller simple",
   aller_retour: "Aller-retour",
   multiple: "Trajets en série",
-};
-
-const cpamLabels: Record<string, string> = {
-  ald: "ALD — 100% Sécurité Sociale",
-  cmu: "CMU-C — Prise en charge totale",
-  css: "CSS — Prise en charge totale",
-  standard: "Assuré standard (65% SS)",
-  none: "Frais personnels",
 };
 
 function SummaryRow({
@@ -142,7 +130,7 @@ export function Step10Confirmation({ form, isSubmitting, submitError }: StepProp
           <SummaryRow icon={MapPin} label="Départ" value={data.pickup_address || "—"} />
           <SummaryRow icon={MapPin} label="Destination" value={data.dropoff_address || "—"} />
           <SummaryRow icon={Calendar} label="Date & heure" value={pickupDatetime} />
-          <SummaryRow icon={Car} label="Véhicule" value={vehicleLabels[data.vehicle_type] ?? "—"} />
+          <SummaryRow icon={Car} label="Véhicule" value={VEHICLE_LABELS[data.vehicle_type] ?? "—"} />
           <SummaryRow icon={Car} label="Type de trajet" value={tripTypeLabels[data.trip_type] ?? "—"} />
           <SummaryRow
             icon={AlertCircle}
@@ -152,7 +140,7 @@ export function Step10Confirmation({ form, isSubmitting, submitError }: StepProp
           <SummaryRow
             icon={ShieldCheck}
             label="Prise en charge"
-            value={cpamLabels[data.cpam_status] ?? "—"}
+            value={CPAM_LABELS[data.cpam_status] ?? "—"}
           />
           <SummaryRow
             icon={FileText}
