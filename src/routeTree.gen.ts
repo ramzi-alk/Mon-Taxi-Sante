@@ -39,6 +39,7 @@ import { Route as BlogTransportPmrPersonnesAgeesRouteImport } from './routes/blo
 import { Route as BlogTransportCpamRouteImport } from './routes/blog/transport-cpam'
 import { Route as BlogTraitementsReguliersTaxiConventionneRouteImport } from './routes/blog/traitements-reguliers-taxi-conventionne'
 import { Route as BlogTaxiSansPrescriptionRouteImport } from './routes/blog/taxi-sans-prescription'
+import { Route as BlogTaxiConventionneSansAvanceFraisRouteImport } from './routes/blog/taxi-conventionne-sans-avance-frais'
 import { Route as BlogTaxiConventionneGrossesseRouteImport } from './routes/blog/taxi-conventionne-grossesse'
 import { Route as BlogRetourDomicileSortieHopitalRouteImport } from './routes/blog/retour-domicile-sortie-hopital'
 import { Route as BlogPmtPrescriptionRouteImport } from './routes/blog/pmt-prescription'
@@ -217,6 +218,12 @@ const BlogTaxiSansPrescriptionRoute =
     path: '/blog/taxi-sans-prescription',
     getParentRoute: () => rootRouteImport,
   } as any)
+const BlogTaxiConventionneSansAvanceFraisRoute =
+  BlogTaxiConventionneSansAvanceFraisRouteImport.update({
+    id: '/blog/taxi-conventionne-sans-avance-frais',
+    path: '/blog/taxi-conventionne-sans-avance-frais',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const BlogTaxiConventionneGrossesseRoute =
   BlogTaxiConventionneGrossesseRouteImport.update({
     id: '/blog/taxi-conventionne-grossesse',
@@ -370,6 +377,7 @@ export interface FileRoutesByFullPath {
   '/blog/pmt-prescription': typeof BlogPmtPrescriptionRoute
   '/blog/retour-domicile-sortie-hopital': typeof BlogRetourDomicileSortieHopitalRoute
   '/blog/taxi-conventionne-grossesse': typeof BlogTaxiConventionneGrossesseRoute
+  '/blog/taxi-conventionne-sans-avance-frais': typeof BlogTaxiConventionneSansAvanceFraisRoute
   '/blog/taxi-sans-prescription': typeof BlogTaxiSansPrescriptionRoute
   '/blog/traitements-reguliers-taxi-conventionne': typeof BlogTraitementsReguliersTaxiConventionneRoute
   '/blog/transport-cpam': typeof BlogTransportCpamRoute
@@ -424,6 +432,7 @@ export interface FileRoutesByTo {
   '/blog/pmt-prescription': typeof BlogPmtPrescriptionRoute
   '/blog/retour-domicile-sortie-hopital': typeof BlogRetourDomicileSortieHopitalRoute
   '/blog/taxi-conventionne-grossesse': typeof BlogTaxiConventionneGrossesseRoute
+  '/blog/taxi-conventionne-sans-avance-frais': typeof BlogTaxiConventionneSansAvanceFraisRoute
   '/blog/taxi-sans-prescription': typeof BlogTaxiSansPrescriptionRoute
   '/blog/traitements-reguliers-taxi-conventionne': typeof BlogTraitementsReguliersTaxiConventionneRoute
   '/blog/transport-cpam': typeof BlogTransportCpamRoute
@@ -480,6 +489,7 @@ export interface FileRoutesById {
   '/blog/pmt-prescription': typeof BlogPmtPrescriptionRoute
   '/blog/retour-domicile-sortie-hopital': typeof BlogRetourDomicileSortieHopitalRoute
   '/blog/taxi-conventionne-grossesse': typeof BlogTaxiConventionneGrossesseRoute
+  '/blog/taxi-conventionne-sans-avance-frais': typeof BlogTaxiConventionneSansAvanceFraisRoute
   '/blog/taxi-sans-prescription': typeof BlogTaxiSansPrescriptionRoute
   '/blog/traitements-reguliers-taxi-conventionne': typeof BlogTraitementsReguliersTaxiConventionneRoute
   '/blog/transport-cpam': typeof BlogTransportCpamRoute
@@ -537,6 +547,7 @@ export interface FileRouteTypes {
     | '/blog/pmt-prescription'
     | '/blog/retour-domicile-sortie-hopital'
     | '/blog/taxi-conventionne-grossesse'
+    | '/blog/taxi-conventionne-sans-avance-frais'
     | '/blog/taxi-sans-prescription'
     | '/blog/traitements-reguliers-taxi-conventionne'
     | '/blog/transport-cpam'
@@ -591,6 +602,7 @@ export interface FileRouteTypes {
     | '/blog/pmt-prescription'
     | '/blog/retour-domicile-sortie-hopital'
     | '/blog/taxi-conventionne-grossesse'
+    | '/blog/taxi-conventionne-sans-avance-frais'
     | '/blog/taxi-sans-prescription'
     | '/blog/traitements-reguliers-taxi-conventionne'
     | '/blog/transport-cpam'
@@ -646,6 +658,7 @@ export interface FileRouteTypes {
     | '/blog/pmt-prescription'
     | '/blog/retour-domicile-sortie-hopital'
     | '/blog/taxi-conventionne-grossesse'
+    | '/blog/taxi-conventionne-sans-avance-frais'
     | '/blog/taxi-sans-prescription'
     | '/blog/traitements-reguliers-taxi-conventionne'
     | '/blog/transport-cpam'
@@ -694,6 +707,7 @@ export interface RootRouteChildren {
   BlogPmtPrescriptionRoute: typeof BlogPmtPrescriptionRoute
   BlogRetourDomicileSortieHopitalRoute: typeof BlogRetourDomicileSortieHopitalRoute
   BlogTaxiConventionneGrossesseRoute: typeof BlogTaxiConventionneGrossesseRoute
+  BlogTaxiConventionneSansAvanceFraisRoute: typeof BlogTaxiConventionneSansAvanceFraisRoute
   BlogTaxiSansPrescriptionRoute: typeof BlogTaxiSansPrescriptionRoute
   BlogTraitementsReguliersTaxiConventionneRoute: typeof BlogTraitementsReguliersTaxiConventionneRoute
   BlogTransportCpamRoute: typeof BlogTransportCpamRoute
@@ -930,6 +944,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BlogTaxiSansPrescriptionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/blog/taxi-conventionne-sans-avance-frais': {
+      id: '/blog/taxi-conventionne-sans-avance-frais'
+      path: '/blog/taxi-conventionne-sans-avance-frais'
+      fullPath: '/blog/taxi-conventionne-sans-avance-frais'
+      preLoaderRoute: typeof BlogTaxiConventionneSansAvanceFraisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/blog/taxi-conventionne-grossesse': {
       id: '/blog/taxi-conventionne-grossesse'
       path: '/blog/taxi-conventionne-grossesse'
@@ -1143,6 +1164,8 @@ const rootRouteChildren: RootRouteChildren = {
   BlogPmtPrescriptionRoute: BlogPmtPrescriptionRoute,
   BlogRetourDomicileSortieHopitalRoute: BlogRetourDomicileSortieHopitalRoute,
   BlogTaxiConventionneGrossesseRoute: BlogTaxiConventionneGrossesseRoute,
+  BlogTaxiConventionneSansAvanceFraisRoute:
+    BlogTaxiConventionneSansAvanceFraisRoute,
   BlogTaxiSansPrescriptionRoute: BlogTaxiSansPrescriptionRoute,
   BlogTraitementsReguliersTaxiConventionneRoute:
     BlogTraitementsReguliersTaxiConventionneRoute,

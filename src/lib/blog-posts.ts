@@ -109,4 +109,14 @@ export const blogPosts: BlogPost[] = [
     readingTime: "5 min",
     publishedAt: "4 septembre 2026",
   },
+  {
+    slug: "taxi-conventionne-sans-avance-frais",
+    to: "/blog/taxi-conventionne-sans-avance-frais",
+    category: "Prise en charge",
+    title: "Taxi conventionné : comment être remboursé sans avancer les frais ?",
+    excerpt:
+      "Les conditions concrètes du Tiers-Payant en taxi conventionné : documents à fournir, et ce qui se passe s'il en manque un le jour du trajet.",
+    readingTime: "4 min",
+    publishedAt: "5 septembre 2026",
+  },
 ];

@@ -104,6 +104,11 @@ function TransportCpamArticle() {
         <Link to="/blog/pmt-prescription">
           Prescription médicale de transport (PMT) : mode d'emploi
         </Link>
+        . Pour le détail des conditions et documents à réunir pour ne rien
+        avancer le jour du trajet, voir{" "}
+        <Link to="/blog/taxi-conventionne-sans-avance-frais">
+          comment être remboursé sans avancer les frais
+        </Link>
         .
       </p>
     </BlogLayout>
