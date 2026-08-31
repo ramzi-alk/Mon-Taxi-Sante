@@ -169,4 +169,14 @@ export const blogPosts: BlogPost[] = [
     readingTime: "4 min",
     publishedAt: "14 septembre 2026",
   },
+  {
+    slug: "taxi-conventionne-dimanche-nuit-jour-ferie",
+    to: "/blog/taxi-conventionne-dimanche-nuit-jour-ferie",
+    category: "Prise en charge",
+    title: "Taxi conventionné la nuit ou le dimanche : est-ce possible ?",
+    excerpt:
+      "Peut-on réserver un taxi conventionné en dehors des heures ouvrées ? Les règles de la CPAM pour la nuit, les dimanches et les jours fériés.",
+    readingTime: "4 min",
+    publishedAt: "15 septembre 2026",
+  },
 ];

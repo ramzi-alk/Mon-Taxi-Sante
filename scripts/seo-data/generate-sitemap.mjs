@@ -39,6 +39,7 @@ const STATIC_PAGES = [
   { path: "/blog/transport-sanitaire-proche-demarches", changefreq: "yearly", priority: "0.6" },
   { path: "/blog/taxi-conventionne-accident-travail", changefreq: "yearly", priority: "0.6" },
   { path: "/blog/taxi-conventionne-cure-thermale", changefreq: "yearly", priority: "0.6" },
+  { path: "/blog/taxi-conventionne-dimanche-nuit-jour-ferie", changefreq: "yearly", priority: "0.6" },
   { path: "/villes", changefreq: "monthly", priority: "0.8" },
   { path: "/maladies", changefreq: "monthly", priority: "0.8" },
   { path: "/cgv", changefreq: "yearly", priority: "0.3" },

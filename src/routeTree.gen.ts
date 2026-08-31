@@ -44,6 +44,7 @@ import { Route as BlogTaxiSansPrescriptionRouteImport } from './routes/blog/taxi
 import { Route as BlogTaxiConventionneSansAvanceFraisRouteImport } from './routes/blog/taxi-conventionne-sans-avance-frais'
 import { Route as BlogTaxiConventionneOuAmbulanceRendezVousRouteImport } from './routes/blog/taxi-conventionne-ou-ambulance-rendez-vous'
 import { Route as BlogTaxiConventionneGrossesseRouteImport } from './routes/blog/taxi-conventionne-grossesse'
+import { Route as BlogTaxiConventionneDimancheNuitJourFerieRouteImport } from './routes/blog/taxi-conventionne-dimanche-nuit-jour-ferie'
 import { Route as BlogTaxiConventionneCureThermaleRouteImport } from './routes/blog/taxi-conventionne-cure-thermale'
 import { Route as BlogTaxiConventionneAccidentTravailRouteImport } from './routes/blog/taxi-conventionne-accident-travail'
 import { Route as BlogRetourDomicileSortieHopitalRouteImport } from './routes/blog/retour-domicile-sortie-hopital'
@@ -253,6 +254,12 @@ const BlogTaxiConventionneGrossesseRoute =
     path: '/blog/taxi-conventionne-grossesse',
     getParentRoute: () => rootRouteImport,
   } as any)
+const BlogTaxiConventionneDimancheNuitJourFerieRoute =
+  BlogTaxiConventionneDimancheNuitJourFerieRouteImport.update({
+    id: '/blog/taxi-conventionne-dimanche-nuit-jour-ferie',
+    path: '/blog/taxi-conventionne-dimanche-nuit-jour-ferie',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const BlogTaxiConventionneCureThermaleRoute =
   BlogTaxiConventionneCureThermaleRouteImport.update({
     id: '/blog/taxi-conventionne-cure-thermale',
@@ -413,6 +420,7 @@ export interface FileRoutesByFullPath {
   '/blog/retour-domicile-sortie-hopital': typeof BlogRetourDomicileSortieHopitalRoute
   '/blog/taxi-conventionne-accident-travail': typeof BlogTaxiConventionneAccidentTravailRoute
   '/blog/taxi-conventionne-cure-thermale': typeof BlogTaxiConventionneCureThermaleRoute
+  '/blog/taxi-conventionne-dimanche-nuit-jour-ferie': typeof BlogTaxiConventionneDimancheNuitJourFerieRoute
   '/blog/taxi-conventionne-grossesse': typeof BlogTaxiConventionneGrossesseRoute
   '/blog/taxi-conventionne-ou-ambulance-rendez-vous': typeof BlogTaxiConventionneOuAmbulanceRendezVousRoute
   '/blog/taxi-conventionne-sans-avance-frais': typeof BlogTaxiConventionneSansAvanceFraisRoute
@@ -473,6 +481,7 @@ export interface FileRoutesByTo {
   '/blog/retour-domicile-sortie-hopital': typeof BlogRetourDomicileSortieHopitalRoute
   '/blog/taxi-conventionne-accident-travail': typeof BlogTaxiConventionneAccidentTravailRoute
   '/blog/taxi-conventionne-cure-thermale': typeof BlogTaxiConventionneCureThermaleRoute
+  '/blog/taxi-conventionne-dimanche-nuit-jour-ferie': typeof BlogTaxiConventionneDimancheNuitJourFerieRoute
   '/blog/taxi-conventionne-grossesse': typeof BlogTaxiConventionneGrossesseRoute
   '/blog/taxi-conventionne-ou-ambulance-rendez-vous': typeof BlogTaxiConventionneOuAmbulanceRendezVousRoute
   '/blog/taxi-conventionne-sans-avance-frais': typeof BlogTaxiConventionneSansAvanceFraisRoute
@@ -535,6 +544,7 @@ export interface FileRoutesById {
   '/blog/retour-domicile-sortie-hopital': typeof BlogRetourDomicileSortieHopitalRoute
   '/blog/taxi-conventionne-accident-travail': typeof BlogTaxiConventionneAccidentTravailRoute
   '/blog/taxi-conventionne-cure-thermale': typeof BlogTaxiConventionneCureThermaleRoute
+  '/blog/taxi-conventionne-dimanche-nuit-jour-ferie': typeof BlogTaxiConventionneDimancheNuitJourFerieRoute
   '/blog/taxi-conventionne-grossesse': typeof BlogTaxiConventionneGrossesseRoute
   '/blog/taxi-conventionne-ou-ambulance-rendez-vous': typeof BlogTaxiConventionneOuAmbulanceRendezVousRoute
   '/blog/taxi-conventionne-sans-avance-frais': typeof BlogTaxiConventionneSansAvanceFraisRoute
@@ -598,6 +608,7 @@ export interface FileRouteTypes {
     | '/blog/retour-domicile-sortie-hopital'
     | '/blog/taxi-conventionne-accident-travail'
     | '/blog/taxi-conventionne-cure-thermale'
+    | '/blog/taxi-conventionne-dimanche-nuit-jour-ferie'
     | '/blog/taxi-conventionne-grossesse'
     | '/blog/taxi-conventionne-ou-ambulance-rendez-vous'
     | '/blog/taxi-conventionne-sans-avance-frais'
@@ -658,6 +669,7 @@ export interface FileRouteTypes {
     | '/blog/retour-domicile-sortie-hopital'
     | '/blog/taxi-conventionne-accident-travail'
     | '/blog/taxi-conventionne-cure-thermale'
+    | '/blog/taxi-conventionne-dimanche-nuit-jour-ferie'
     | '/blog/taxi-conventionne-grossesse'
     | '/blog/taxi-conventionne-ou-ambulance-rendez-vous'
     | '/blog/taxi-conventionne-sans-avance-frais'
@@ -719,6 +731,7 @@ export interface FileRouteTypes {
     | '/blog/retour-domicile-sortie-hopital'
     | '/blog/taxi-conventionne-accident-travail'
     | '/blog/taxi-conventionne-cure-thermale'
+    | '/blog/taxi-conventionne-dimanche-nuit-jour-ferie'
     | '/blog/taxi-conventionne-grossesse'
     | '/blog/taxi-conventionne-ou-ambulance-rendez-vous'
     | '/blog/taxi-conventionne-sans-avance-frais'
@@ -773,6 +786,7 @@ export interface RootRouteChildren {
   BlogRetourDomicileSortieHopitalRoute: typeof BlogRetourDomicileSortieHopitalRoute
   BlogTaxiConventionneAccidentTravailRoute: typeof BlogTaxiConventionneAccidentTravailRoute
   BlogTaxiConventionneCureThermaleRoute: typeof BlogTaxiConventionneCureThermaleRoute
+  BlogTaxiConventionneDimancheNuitJourFerieRoute: typeof BlogTaxiConventionneDimancheNuitJourFerieRoute
   BlogTaxiConventionneGrossesseRoute: typeof BlogTaxiConventionneGrossesseRoute
   BlogTaxiConventionneOuAmbulanceRendezVousRoute: typeof BlogTaxiConventionneOuAmbulanceRendezVousRoute
   BlogTaxiConventionneSansAvanceFraisRoute: typeof BlogTaxiConventionneSansAvanceFraisRoute
@@ -1049,6 +1063,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BlogTaxiConventionneGrossesseRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/blog/taxi-conventionne-dimanche-nuit-jour-ferie': {
+      id: '/blog/taxi-conventionne-dimanche-nuit-jour-ferie'
+      path: '/blog/taxi-conventionne-dimanche-nuit-jour-ferie'
+      fullPath: '/blog/taxi-conventionne-dimanche-nuit-jour-ferie'
+      preLoaderRoute: typeof BlogTaxiConventionneDimancheNuitJourFerieRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/blog/taxi-conventionne-cure-thermale': {
       id: '/blog/taxi-conventionne-cure-thermale'
       path: '/blog/taxi-conventionne-cure-thermale'
@@ -1271,6 +1292,8 @@ const rootRouteChildren: RootRouteChildren = {
   BlogTaxiConventionneAccidentTravailRoute:
     BlogTaxiConventionneAccidentTravailRoute,
   BlogTaxiConventionneCureThermaleRoute: BlogTaxiConventionneCureThermaleRoute,
+  BlogTaxiConventionneDimancheNuitJourFerieRoute:
+    BlogTaxiConventionneDimancheNuitJourFerieRoute,
   BlogTaxiConventionneGrossesseRoute: BlogTaxiConventionneGrossesseRoute,
   BlogTaxiConventionneOuAmbulanceRendezVousRoute:
     BlogTaxiConventionneOuAmbulanceRendezVousRoute,
