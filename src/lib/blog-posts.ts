@@ -79,4 +79,14 @@ export const blogPosts: BlogPost[] = [
     readingTime: "5 min",
     publishedAt: "1er septembre 2026",
   },
+  {
+    slug: "traitements-reguliers-taxi-conventionne",
+    to: "/blog/traitements-reguliers-taxi-conventionne",
+    category: "ALD",
+    title: "Taxi conventionné et soins réguliers : chimio, radiothérapie, dialyse",
+    excerpt:
+      "Chimiothérapie, radiothérapie, dialyse : comment organiser vos transports réguliers en taxi conventionné, avec prise en charge à 100 % et zéro avance de frais.",
+    readingTime: "6 min",
+    publishedAt: "2 septembre 2026",
+  },
 ];
