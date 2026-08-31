@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Car,
   CheckCircle2,
@@ -34,6 +34,9 @@ import { cn, formatPrice, formatDateFr, formatTimeFr } from "~/lib/utils";
 import { useRealtime } from "~/hooks/useRealtime";
 import { useOnlineStatus } from "~/hooks/useOnlineStatus";
 import { usePushNotifications } from "~/hooks/usePushNotifications";
+import { useDriverAvailability } from "~/hooks/useDriverAvailability";
+import { useDriverRideActions } from "~/hooks/useDriverRideActions";
+import { useDriverStats } from "~/hooks/useDriverStats";
 import { RideCard, type PoolRide } from "~/components/driver/RideCard";
 import { DayTimeline } from "~/components/driver/DayTimeline";
 import { PoolList } from "~/components/driver/PoolList";
@@ -44,13 +47,6 @@ import { RatingTrendCard } from "~/components/driver/RatingTrendCard";
 import { useToast } from "~/components/ui/toast";
 import * as authRepository from "~/repositories/authRepository";
 import * as bookingsRepository from "~/repositories/bookingsRepository";
-import * as driversRepository from "~/repositories/driversRepository";
-import type { DriverStatsPeriod } from "~/repositories/driversRepository";
-import { notifyBookingAcceptedServerFn, notifyDriverRideAcceptedServerFn, notifyRideUnassignedServerFn } from "~/server/email";
-import { logger } from "~/lib/logger";
-import type { Database } from "~/lib/database.types";
-
-type DriverAvailability = Database["public"]["Enums"]["driver_availability"];
 
 export const Route = createFileRoute("/tableau-de-bord/chauffeur")({
   head: () => ({
@@ -81,90 +77,20 @@ async function fetchMyRides(): Promise<PoolRide[]> {
   })) as unknown as PoolRide[];
 }
 
-async function acceptRide(rideId: string): Promise<void> {
-  await bookingsRepository.acceptRide(supabase, rideId);
-}
-
-async function updateHeartbeat(): Promise<void> {
-  await supabase.rpc("update_driver_heartbeat");
-}
-
-async function startRide(rideId: string): Promise<void> {
-  await bookingsRepository.startRide(supabase, rideId);
-}
-
-async function completeRide(rideId: string): Promise<void> {
-  await bookingsRepository.completeRide(supabase, rideId);
-}
-
-async function cancelRideByDriver(rideId: string, reason: string): Promise<void> {
-  await bookingsRepository.cancelRideByDriver(supabase, rideId, reason);
-}
-
-async function refuseRide(rideId: string): Promise<void> {
-  await bookingsRepository.refuseRide(supabase, rideId);
-}
-
-async function rateRide(vars: { rideId: string; rating: number; comment?: string }): Promise<void> {
-  await bookingsRepository.rateBookingAsDriver(supabase, vars.rideId, vars.rating, vars.comment);
-}
-
-async function fetchMyAvailability(): Promise<driversRepository.MyDriverDetails | null> {
-  const user = await authRepository.getCurrentUser(supabase);
-  if (!user) return null;
-  return driversRepository.fetchMyAvailability(supabase, user.id);
-}
-
-async function setAvailability(availability: DriverAvailability): Promise<void> {
-  const user = await authRepository.getCurrentUser(supabase);
-  if (!user) throw new Error("Non authentifié");
-  await driversRepository.setAvailability(supabase, user.id, availability);
-}
-
-async function fetchMyDriverStats(): Promise<driversRepository.MyDriverStats | null> {
-  return driversRepository.fetchMyDriverStats(supabase);
-}
-
-async function fetchMyDriverPerformance(): Promise<driversRepository.MyDriverPerformance | null> {
-  return driversRepository.fetchMyDriverPerformance(supabase);
-}
-
-async function fetchDriverStatsSince(since: Date): Promise<DriverStatsPeriod> {
-  return driversRepository.fetchDriverStatsSince(supabase, since);
-}
-
-async function setAcceptanceRadius(radiusKm: number | null): Promise<void> {
-  const user = await authRepository.getCurrentUser(supabase);
-  if (!user) throw new Error("Non authentifié");
-  await driversRepository.setAcceptanceRadius(supabase, user.id, radiusKm);
-}
-
 // ─── Main component ──────────────────────────────────────────────────────────
 
 function DriverDashboard() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const [acceptingId, setAcceptingId] = useState<string | null>(null);
-  const [refusingId, setRefusingId] = useState<string | null>(null);
-  const [startingId, setStartingId] = useState<string | null>(null);
-  const [completingId, setCompletingId] = useState<string | null>(null);
-  const [cancellingId, setCancellingId] = useState<string | null>(null);
-  const [cancellingSeriesId, setCancellingSeriesId] = useState<string | null>(null);
-  const [ratingId, setRatingId] = useState<string | null>(null);
   const [realtimeEnabled, setRealtimeEnabled] = useState(true);
   const [tab, setTab] = useState<"pool" | "my_rides">("pool");
-  const [statsPeriod, setStatsPeriod] = useState<"today" | "week" | "month" | "total">("today");
   const [soundEnabled, setSoundEnabled] = useState(() => {
     try { return localStorage.getItem("driver-sound") !== "off"; } catch { return true; }
   });
   const push = usePushNotifications();
   const prevPoolCountRef = useRef<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [acceptingSeriesId, setAcceptingSeriesId] = useState<string | null>(null);
   const isOnline = useOnlineStatus();
-  const [dismissedSubscriptionWarningFor, setDismissedSubscriptionWarningFor] = useState<string | null>(() => {
-    try { return localStorage.getItem("driver-subscription-warning-dismissed-for"); } catch { return null; }
-  });
   const [pushBannerDismissed, setPushBannerDismissed] = useState(() => {
     try { return localStorage.getItem("driver-push-banner-dismissed") === "1"; } catch { return false; }
   });
@@ -180,86 +106,41 @@ function DriverDashboard() {
     });
   };
 
-  // Driver's own online/paused/offline status — the pool only shows rides
-  // to drivers who are "online" (see migration 018).
-  const availabilityQuery = useQuery({
-    queryKey: ["my-availability"],
-    queryFn: fetchMyAvailability,
-  });
-  const availability = availabilityQuery.data?.availability ?? "offline";
-  // Suspension temporaire du pool suite à des annulations suspectes répétées
-  // (cf. cancel_ride_by_driver, migration 030) — distincte du statut
-  // online/paused/offline, qui reste sous le contrôle du chauffeur.
-  const poolSuspendedUntil = availabilityQuery.data?.pool_suspended_until ?? null;
-  const isPoolSuspended = poolSuspendedUntil != null && new Date(poolSuspendedUntil) > new Date();
+  const {
+    availabilityQuery,
+    availability,
+    isPoolSuspended,
+    poolSuspendedUntil,
+    showSubscriptionWarning,
+    daysUntilSubscriptionEnds,
+    dismissSubscriptionWarning,
+    availabilityMutation,
+    radiusMutation,
+  } = useDriverAvailability();
 
-  // Bandeau proactif d'échéance d'abonnement — la donnée existait déjà
-  // (affichée en lecture seule sur "Mon compte") mais rien n'alertait le
-  // chauffeur avant la coupure d'accès au passage en 'past_due'.
-  const subscriptionStatus = availabilityQuery.data?.subscription_status;
-  const subscriptionEndsAt = availabilityQuery.data?.subscription_ends_at ?? null;
-  const daysUntilSubscriptionEnds =
-    subscriptionEndsAt != null
-      ? Math.ceil((new Date(subscriptionEndsAt).getTime() - Date.now()) / 86_400_000)
-      : null;
-  const showSubscriptionWarning =
-    (subscriptionStatus === "trial" || subscriptionStatus === "active") &&
-    daysUntilSubscriptionEnds != null &&
-    daysUntilSubscriptionEnds >= 0 &&
-    daysUntilSubscriptionEnds <= 7 &&
-    dismissedSubscriptionWarningFor !== subscriptionEndsAt;
+  const {
+    acceptMutation,
+    acceptingId,
+    refuseMutation,
+    refusingId,
+    startMutation,
+    startingId,
+    completeMutation,
+    completingId,
+    cancelMutation,
+    cancellingId,
+    cancelSeriesMutation,
+    cancellingSeriesId,
+    acceptSeriesMutation,
+    acceptingSeriesId,
+    rateMutation,
+    ratingId,
+  } = useDriverRideActions();
+
+  const { performanceQuery, statsPeriod, setStatsPeriod, periodSummary } = useDriverStats();
 
   const showPushBanner =
     push.isSupported && push.permission === "default" && !push.isSubscribed && !pushBannerDismissed;
-
-  const statsQuery = useQuery({
-    queryKey: ["my-driver-stats"],
-    queryFn: fetchMyDriverStats,
-  });
-
-  const performanceQuery = useQuery({
-    queryKey: ["my-driver-performance"],
-    queryFn: fetchMyDriverPerformance,
-  });
-
-  const periodSince = (() => {
-    const d = new Date();
-    if (statsPeriod === "today") { d.setHours(0, 0, 0, 0); return d; }
-    if (statsPeriod === "week") { d.setDate(d.getDate() - 7); return d; }
-    if (statsPeriod === "month") { d.setDate(d.getDate() - 30); return d; }
-    return d;
-  })();
-
-  const periodStatsQuery = useQuery({
-    queryKey: ["driver-stats-since", statsPeriod],
-    queryFn: () => fetchDriverStatsSince(periodSince),
-    enabled: statsPeriod !== "total",
-  });
-
-  const radiusMutation = useMutation({
-    mutationFn: setAcceptanceRadius,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["my-availability"] });
-      queryClient.invalidateQueries({ queryKey: ["ride-pool"] });
-      toast({ title: "Rayon mis à jour", variant: "success" });
-    },
-    onError: (error) => {
-      logger.error("driver.setAcceptanceRadius failed", { error: error.message });
-      toast({ title: "Erreur", description: error.message, variant: "error" });
-    },
-  });
-
-  const availabilityMutation = useMutation({
-    mutationFn: setAvailability,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["my-availability"] });
-      queryClient.invalidateQueries({ queryKey: ["ride-pool"] });
-    },
-    onError: (error) => {
-      logger.error("driver.setAvailability failed", { error: error.message });
-      toast({ title: "Erreur", description: error.message, variant: "error" });
-    },
-  });
 
   // Pool query
   const poolQuery = useQuery({
@@ -313,139 +194,6 @@ function DriverDashboard() {
           variant: "default",
         });
       }
-    },
-  });
-
-  const acceptMutation = useMutation({
-    mutationFn: acceptRide,
-    onMutate: (rideId) => setAcceptingId(rideId),
-    onSuccess: (_, rideId) => {
-      toast({ title: "Course acceptée — coordonnées du patient envoyées par email", variant: "success" });
-      notifyBookingAcceptedServerFn({ data: { bookingId: rideId } }).catch((err) => {
-        logger.warn("email.notifyBookingAccepted failed", { error: err.message, rideId });
-      });
-      notifyDriverRideAcceptedServerFn({ data: { bookingId: rideId } }).catch((err) => {
-        logger.warn("email.notifyDriverRideAccepted failed", { error: err.message, rideId });
-      });
-    },
-    onSettled: () => {
-      setAcceptingId(null);
-      queryClient.invalidateQueries({ queryKey: ["ride-pool"] });
-      queryClient.invalidateQueries({ queryKey: ["my-rides"] });
-    },
-    onError: (error, rideId) => {
-      logger.error("driver.acceptRide failed", { error: error.message, rideId });
-      toast({ title: "Course non disponible", description: error.message, variant: "error" });
-    },
-  });
-
-  const refuseMutation = useMutation({
-    mutationFn: refuseRide,
-    onMutate: (rideId) => setRefusingId(rideId),
-    onSuccess: () => {
-      toast({ title: "Course refusée", description: "Elle n'apparaîtra plus dans votre pool.", variant: "default" });
-    },
-    onSettled: () => {
-      setRefusingId(null);
-      queryClient.invalidateQueries({ queryKey: ["ride-pool"] });
-    },
-    onError: (error, rideId) => {
-      logger.error("driver.refuseRide failed", { error: error.message, rideId });
-      toast({ title: "Erreur", description: error.message, variant: "error" });
-    },
-  });
-
-  const startMutation = useMutation({
-    mutationFn: startRide,
-    onMutate: (rideId) => setStartingId(rideId),
-    onSuccess: () => {
-      toast({ title: "Course démarrée", variant: "success" });
-    },
-    onSettled: () => {
-      setStartingId(null);
-      queryClient.invalidateQueries({ queryKey: ["my-rides"] });
-    },
-    onError: (error, rideId) => {
-      logger.error("driver.startRide failed", { error: error.message, rideId });
-      toast({ title: "Erreur", description: error.message, variant: "error" });
-    },
-  });
-
-  const completeMutation = useMutation({
-    mutationFn: completeRide,
-    onMutate: (rideId) => setCompletingId(rideId),
-    onSuccess: () => {
-      toast({ title: "Course terminée !", variant: "success" });
-    },
-    onSettled: () => {
-      setCompletingId(null);
-      queryClient.invalidateQueries({ queryKey: ["my-rides"] });
-    },
-    onError: (error, rideId) => {
-      logger.error("driver.completeRide failed", { error: error.message, rideId });
-      toast({ title: "Erreur", description: error.message, variant: "error" });
-    },
-  });
-
-  const cancelMutation = useMutation({
-    mutationFn: ({ rideId, reason }: { rideId: string; reason: string }) => cancelRideByDriver(rideId, reason),
-    onMutate: ({ rideId }) => setCancellingId(rideId),
-    onSuccess: (_, { rideId }) => {
-      toast({ title: "Course annulée", description: "La course est retournée dans le pool.", variant: "default" });
-      notifyRideUnassignedServerFn({ data: { bookingId: rideId } }).catch((err) => {
-        logger.warn("email.notifyRideUnassigned failed", { error: err.message, rideId });
-      });
-    },
-    onSettled: () => {
-      setCancellingId(null);
-      queryClient.invalidateQueries({ queryKey: ["ride-pool"] });
-      queryClient.invalidateQueries({ queryKey: ["my-rides"] });
-    },
-    onError: (error, { rideId }) => {
-      logger.error("driver.cancelRideByDriver failed", { error: error.message, rideId });
-      toast({ title: "Erreur", description: error.message, variant: "error" });
-    },
-  });
-
-  const cancelSeriesMutation = useMutation({
-    mutationFn: async ({ rideIds, reason }: { rideIds: string[]; reason: string }) => {
-      for (const id of rideIds) await cancelRideByDriver(id, reason);
-    },
-    onMutate: ({ rideIds: [firstId] }) => setCancellingSeriesId(firstId),
-    onSuccess: (_, { rideIds }) => {
-      const n = rideIds.length;
-      toast({ title: `${n} séance${n > 1 ? "s" : ""} annulée${n > 1 ? "s" : ""}`, description: "Retournées dans le pool.", variant: "default" });
-      // Un seul email récap : on passe le compte exact annulé pour que l'email
-      // reflète les séances réellement perdues (sélection partielle possible)
-      notifyRideUnassignedServerFn({ data: { bookingId: rideIds[0], seriesAffectedCount: rideIds.length } }).catch((err) => {
-        logger.warn("email.notifyRideUnassigned (series) failed", { error: err.message, rideId: rideIds[0] });
-      });
-    },
-    onSettled: () => {
-      setCancellingSeriesId(null);
-      queryClient.invalidateQueries({ queryKey: ["ride-pool"] });
-      queryClient.invalidateQueries({ queryKey: ["my-rides"] });
-    },
-    onError: (error) => {
-      logger.error("driver.cancelSeriesRides failed", { error: error.message });
-      toast({ title: "Erreur", description: error.message, variant: "error" });
-    },
-  });
-
-  const rateMutation = useMutation({
-    mutationFn: rateRide,
-    onMutate: (vars) => setRatingId(vars.rideId),
-    onSuccess: () => {
-      toast({ title: "Avis envoyé", variant: "success" });
-    },
-    onSettled: () => {
-      setRatingId(null);
-      queryClient.invalidateQueries({ queryKey: ["my-rides"] });
-      queryClient.invalidateQueries({ queryKey: ["my-driver-stats"] });
-    },
-    onError: (error, vars) => {
-      logger.error("driver.rateBookingAsDriver failed", { error: error.message, rideId: vars.rideId });
-      toast({ title: "Erreur", description: error.message, variant: "error" });
     },
   });
 
@@ -530,66 +278,6 @@ function DriverDashboard() {
       .sort((a, b) => b.sortKey - a.sortKey)
       .map((g) => ({ ...g, rides: [...g.rides].sort(byPickupDesc), sublabel: withSublabel(g.rides) }));
   })();
-
-  // Heartbeat toutes les 30 s quand le chauffeur est en ligne. Le jeton
-  // d'accès est mis en cache dans une ref (rafraîchi à chaque battement) car
-  // beforeunload ne peut pas attendre un appel async au moment de fermer
-  // l'onglet — voir api/driver-offline-beacon.ts pour la route qui reçoit
-  // ce jeton et repasse réellement le chauffeur hors ligne.
-  const accessTokenRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (availability !== "online") return;
-
-    const refreshAccessToken = () => {
-      supabase.auth.getSession().then(({ data }) => {
-        accessTokenRef.current = data.session?.access_token ?? null;
-      });
-    };
-
-    refreshAccessToken();
-    updateHeartbeat().catch(() => {});
-    const id = setInterval(() => {
-      updateHeartbeat().catch(() => {});
-      refreshAccessToken();
-    }, 30_000);
-
-    const onUnload = () => {
-      const accessToken = accessTokenRef.current;
-      if (!accessToken) return;
-      navigator.sendBeacon?.(
-        "/api/driver-offline-beacon",
-        new Blob([JSON.stringify({ accessToken })], { type: "application/json" })
-      );
-    };
-    window.addEventListener("beforeunload", onUnload);
-    return () => { clearInterval(id); window.removeEventListener("beforeunload", onUnload); };
-  }, [availability]);
-
-  const acceptSeriesMutation = useMutation({
-    mutationFn: async (rideIds: string[]) => {
-      for (const id of rideIds) await acceptRide(id);
-    },
-    onMutate: ([firstId]) => setAcceptingSeriesId(firstId),
-    onSuccess: (_, rideIds) => {
-      const n = rideIds.length;
-      toast({ title: `${n} séance${n > 1 ? "s" : ""} acceptée${n > 1 ? "s" : ""} — coordonnées du patient envoyées par email`, variant: "success" });
-      notifyBookingAcceptedServerFn({ data: { bookingId: rideIds[0] } }).catch((err) => {
-        logger.warn("email.notifySeriesAccepted failed", { error: err.message, rideId: rideIds[0] });
-      });
-      notifyDriverRideAcceptedServerFn({ data: { bookingId: rideIds[0], seriesAcceptedCount: n } }).catch((err) => {
-        logger.warn("email.notifyDriverSeriesAccepted failed", { error: err.message, rideId: rideIds[0] });
-      });
-    },
-    onSettled: () => {
-      setAcceptingSeriesId(null);
-      queryClient.invalidateQueries({ queryKey: ["ride-pool"] });
-      queryClient.invalidateQueries({ queryKey: ["my-rides"] });
-    },
-    onError: (error) => {
-      logger.error("driver.acceptSeriesRides failed", { error: error.message });
-      toast({ title: "Erreur série", description: error.message, variant: "error" });
-    },
-  });
 
   // Sound + vibration when a new ride appears in the pool
   useEffect(() => {
@@ -727,10 +415,7 @@ function DriverDashboard() {
             </div>
             <button
               type="button"
-              onClick={() => {
-                setDismissedSubscriptionWarningFor(subscriptionEndsAt);
-                try { localStorage.setItem("driver-subscription-warning-dismissed-for", subscriptionEndsAt ?? ""); } catch {}
-              }}
+              onClick={dismissSubscriptionWarning}
               aria-label="Masquer cet avertissement"
               className="shrink-0 rounded-lg p-1 text-amber-500 hover:bg-amber-100 transition-colors"
             >
@@ -883,15 +568,7 @@ function DriverDashboard() {
           </div>
 
           {(() => {
-            const s = statsQuery.data;
-            const p = periodStatsQuery.data;
-            const rides = statsPeriod === "today" ? (s?.rides_today ?? 0)
-              : statsPeriod === "total" ? (s?.rides_completed ?? 0)
-              : (p?.rides ?? 0);
-            const earnings = statsPeriod === "today" ? (s?.earnings_today ?? 0)
-              : statsPeriod === "total" ? (s?.total_earnings ?? 0)
-              : (p?.earnings ?? 0);
-            const km = statsPeriod === "total" ? (s?.total_km ?? 0) : (p?.km ?? 0);
+            const { rides, earnings, km } = periodSummary;
             const nextRide = myRides.find((r) => r.status === "accepted");
             return (
               <div className="grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4">
