@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
+import { format, parseISO } from "date-fns";
+import { fr } from "date-fns/locale";
 import { AlertTriangle, ArrowLeft, ArrowRight, ClipboardList, ExternalLink, UserCog, XCircle } from "lucide-react";
 import { supabase } from "~/lib/supabase";
 import * as adminBookingsRepository from "~/repositories/adminBookingsRepository";
@@ -431,6 +433,12 @@ function BookingDetailDialog({ bookingId, onClose }: { bookingId: string; onClos
               <DetailField label="Patient" value={booking.patient_full_name} />
               <DetailField label="Téléphone" value={booking.patient_phone} />
               {booking.patient_email && <DetailField label="Email" value={booking.patient_email} />}
+              {booking.patient_birth_date && (
+                <DetailField
+                  label="Date de naissance"
+                  value={format(parseISO(booking.patient_birth_date), "d MMMM yyyy", { locale: fr })}
+                />
+              )}
               <DetailField label="Départ" value={`${formatDateFr(booking.pickup_datetime)} à ${formatTimeFr(booking.pickup_datetime)}`} />
               <DetailField label="Adresse de départ" value={booking.pickup_address} />
               <DetailField label="Adresse d'arrivée" value={booking.dropoff_address} />
