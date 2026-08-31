@@ -17,7 +17,9 @@
     "seo:discover-sae": "node scripts/seo-data/fetch-sae.mjs",
     "seo:discover-insee-local": "node scripts/seo-data/fetch-insee-local.mjs",
     "verify:pricing-parity": "node scripts/verify-pricing-parity.mjs",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:unit": "vitest run",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -74,6 +76,7 @@
     "tailwindcss-animate": "^1.0.7",
     "typescript": "^5",
     "vite": "^7.0.0",
-    "vite-tsconfig-paths": "^6.1.1"
+    "vite-tsconfig-paths": "^6.1.1",
+    "vitest": "^3.2.7"
   }
 }

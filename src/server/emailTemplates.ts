@@ -10,6 +10,20 @@ interface EmailContent {
 // date in any email body — those stay in the app behind RLS. Email is not
 // an HDS-compliant channel for that data (see migrations 001/009 comments).
 
+// Every field below (patient/booker/driver name, address, cancellation
+// reason, admin message...) is free text entered by a patient or a driver
+// through a public form, then interpolated straight into an HTML email sent
+// via Resend. Without this, a name like `<img src=x onerror=...>` would be
+// injected as-is into every email built from it.
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function layout(params: { title: string; icon: string; bodyHtml: string }): string {
   const { title, icon, bodyHtml } = params;
   return `
@@ -88,8 +102,8 @@ function detailsCard(rows: Array<{ label: string; value: string }>): string {
         .map(
           (row, i) => `
         <tr style="${i % 2 === 0 ? "background:#F7F8FC;" : ""}">
-          <td style="padding:12px 16px;font-size:13px;color:#6b7280;white-space:nowrap;">${row.label}</td>
-          <td style="padding:12px 16px;font-size:14px;font-weight:700;text-align:right;">${row.value}</td>
+          <td style="padding:12px 16px;font-size:13px;color:#6b7280;white-space:nowrap;">${escapeHtml(row.label)}</td>
+          <td style="padding:12px 16px;font-size:14px;font-weight:700;text-align:right;">${escapeHtml(row.value)}</td>
         </tr>
       `
         )
@@ -128,12 +142,12 @@ export function bookingConfirmationEmail(params: {
     ? `${seriesTotal} séances, du ${formatDateFr(pickupDatetime)} au ${formatDateFr(seriesLastPickupDatetime!)}`
     : `${formatDateFr(pickupDatetime)} à ${formatTimeFr(pickupDatetime)}`;
   const greeting = isThirdParty
-    ? `Bonjour ${bookerFullName},`
-    : `Bonjour ${patientFullName},`;
+    ? `Bonjour ${escapeHtml(bookerFullName!)},`
+    : `Bonjour ${escapeHtml(patientFullName)},`;
   const intro = isThirdParty
     ? isSeries
-      ? `Vous avez réservé une série de ${seriesTotal} séances de transport médical pour <strong>${patientFullName}</strong>. Un chauffeur conventionné Assurance Maladie sera affecté à chaque séance.`
-      : `Vous avez réservé un transport médical pour <strong>${patientFullName}</strong>. Un chauffeur conventionné Assurance Maladie va prendre en charge la course.`
+      ? `Vous avez réservé une série de ${seriesTotal} séances de transport médical pour <strong>${escapeHtml(patientFullName)}</strong>. Un chauffeur conventionné Assurance Maladie sera affecté à chaque séance.`
+      : `Vous avez réservé un transport médical pour <strong>${escapeHtml(patientFullName)}</strong>. Un chauffeur conventionné Assurance Maladie va prendre en charge la course.`
     : isSeries
     ? `Votre série de ${seriesTotal} séances de transport médical a bien été enregistrée. Un chauffeur conventionné Assurance Maladie sera affecté à chaque séance.`
     : `Votre réservation de transport médical a bien été enregistrée. Un chauffeur conventionné Assurance Maladie va prendre en charge votre course.`;
@@ -209,7 +223,7 @@ export function bookingAcceptedEmail(params: {
       icon: "🚗",
       bodyHtml: `
         ${badge("Chauffeur affecté", "blue")}
-        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${patientFullName},</p>
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${escapeHtml(patientFullName)},</p>
         <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">${intro}</p>
         ${detailsCard([
           { label: "Référence", value: formatReferenceCode(referenceCode) },
@@ -226,7 +240,7 @@ export function bookingAcceptedEmail(params: {
           <tr>
             <td style="background:#EFF4FF;border:1px solid #c7d7fd;border-radius:12px;padding:16px 20px;">
               <p style="margin:0 0 4px;font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#4361c2;">Contacter votre chauffeur</p>
-              <a href="tel:${driverPhone}" style="font-size:22px;font-weight:800;color:#1244E8;text-decoration:none;letter-spacing:0.02em;">${driverPhone}</a>
+              <a href="tel:${encodeURIComponent(driverPhone)}" style="font-size:22px;font-weight:800;color:#1244E8;text-decoration:none;letter-spacing:0.02em;">${escapeHtml(driverPhone)}</a>
               <p style="margin:6px 0 0;font-size:12px;color:#6b7280;">Appuyez sur ce numéro depuis votre téléphone pour appeler directement.</p>
             </td>
           </tr>
@@ -252,11 +266,11 @@ export function bookingCancellationEmail(params: {
       icon: "🚫",
       bodyHtml: `
         ${badge("Annulée", "red")}
-        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${patientFullName},</p>
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${escapeHtml(patientFullName)},</p>
         <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Votre réservation prévue le <strong>${formatDateFr(pickupDatetime)} à ${formatTimeFr(pickupDatetime)}</strong> (réf. ${formatReferenceCode(referenceCode)}) a bien été annulée.</p>
         ${
           cancellationReason
-            ? `<div style="background:#F7F8FC;border-radius:10px;padding:12px 16px;margin:0 0 16px;font-size:14px;color:#374151;"><strong style="color:#6b7280;font-weight:600;">Motif indiqué :</strong> ${cancellationReason}</div>`
+            ? `<div style="background:#F7F8FC;border-radius:10px;padding:12px 16px;margin:0 0 16px;font-size:14px;color:#374151;"><strong style="color:#6b7280;font-weight:600;">Motif indiqué :</strong> ${escapeHtml(cancellationReason)}</div>`
             : ""
         }
         <p style="margin:0;font-size:14px;color:#6b7280;line-height:1.5;">Vous pouvez créer une nouvelle réservation à tout moment depuis notre site.</p>
@@ -278,7 +292,7 @@ export function bookingExpiredEmail(params: {
       icon: "⚠️",
       bodyHtml: `
         ${badge("Course expirée", "amber")}
-        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${patientFullName},</p>
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${escapeHtml(patientFullName)},</p>
         <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Nous n'avons malheureusement pas réussi à vous trouver de chauffeur avant l'heure prévue de votre course du <strong>${formatDateFr(pickupDatetime)} à ${formatTimeFr(pickupDatetime)}</strong> (réf. ${formatReferenceCode(referenceCode)}).</p>
         <p style="margin:0;font-size:14px;color:#6b7280;line-height:1.5;">Contactez-nous directement pour organiser une nouvelle prise en charge, ou créez une nouvelle réservation depuis notre site.</p>
       `,
@@ -360,7 +374,7 @@ export function atRiskPatientEmail(params: {
       icon: "🔎",
       bodyHtml: `
         ${badge("Recherche en cours", "amber")}
-        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${patientFullName},</p>
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${escapeHtml(patientFullName)},</p>
         <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Votre réservation du <strong>${formatDateFr(pickupDatetime)} à ${formatTimeFr(pickupDatetime)}</strong> (réf. ${formatReferenceCode(referenceCode)}) n'a pas encore de chauffeur assigné. Notre équipe en est informée et continue la recherche.</p>
         <p style="margin:0;font-size:14px;color:#6b7280;line-height:1.5;">Si vous n'avez pas de nouvelles peu avant l'heure prévue, appelez-nous directement au ${CONTACT_PHONE_DISPLAY} pour que nous puissions organiser votre transport sans délai.</p>
         ${ctaButton("Suivre ma réservation", trackingUrl(referenceCode))}
@@ -378,9 +392,9 @@ export function driverDocumentRequestEmail(params: { driverFullName: string; mes
       icon: "📄",
       bodyHtml: `
         ${badge("Action requise", "amber")}
-        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${driverFullName},</p>
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${escapeHtml(driverFullName)},</p>
         <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Notre équipe a besoin d'une mise à jour de vos documents pour maintenir votre compte chauffeur actif :</p>
-        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;background:#FFFBEB;border-radius:10px;padding:14px 16px;">${message}</p>
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;background:#FFFBEB;border-radius:10px;padding:14px 16px;">${escapeHtml(message)}</p>
         <p style="margin:0;font-size:14px;color:#6b7280;line-height:1.5;">Répondez directement à cet email ou contactez-nous pour transmettre les documents demandés.</p>
       `,
     }),
@@ -396,7 +410,7 @@ export function driverApprovedEmail(params: { driverFullName: string }): EmailCo
       icon: "🎉",
       bodyHtml: `
         ${badge("Compte activé", "green")}
-        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${driverFullName},</p>
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${escapeHtml(driverFullName)},</p>
         <p style="margin:0;font-size:15px;line-height:1.5;">Bonne nouvelle : votre candidature chauffeur a été validée par notre équipe. Vous pouvez désormais accéder à votre tableau de bord et accepter des courses disponibles dans la file d'attente.</p>
       `,
     }),
@@ -412,7 +426,7 @@ export function driverRejectedEmail(params: { driverFullName: string; reason: st
       icon: "📋",
       bodyHtml: `
         ${badge("Candidature non retenue", "amber")}
-        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${driverFullName},</p>
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${escapeHtml(driverFullName)},</p>
         <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Après examen de votre dossier, nous ne sommes pas en mesure de valider votre candidature chauffeur pour le moment, pour la raison suivante :</p>
         ${detailsCard([{ label: "Motif", value: reason }])}
         <p style="margin:0;font-size:14px;color:#6b7280;line-height:1.5;">Vous pouvez soumettre une nouvelle candidature une fois ce point corrigé. Pour toute question, contactez-nous directement.</p>
@@ -437,7 +451,7 @@ export function bookingReminderEmail(params: {
       icon: "📅",
       bodyHtml: `
         ${badge("Confirmation requise", "blue")}
-        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${patientFullName},</p>
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${escapeHtml(patientFullName)},</p>
         <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Pour rappel, vous avez une course prévue demain. Merci de confirmer ou d'annuler ce trajet ci-dessous.</p>
         ${detailsCard([
           { label: "Référence", value: formatReferenceCode(referenceCode) },
@@ -467,7 +481,7 @@ export function bookingUpdatedDriverEmail(params: {
       icon: "✏️",
       bodyHtml: `
         ${badge("Mise à jour", "blue")}
-        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${driverFullName},</p>
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${escapeHtml(driverFullName)},</p>
         <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Le patient a modifié les détails d'une course que vous avez acceptée.</p>
         ${detailsCard([
           { label: "Référence", value: formatReferenceCode(referenceCode) },
@@ -502,7 +516,7 @@ export function rideUnassignedByDriverEmail(params: {
       icon: "🔄",
       bodyHtml: `
         ${badge("Nouvelle recherche en cours", "amber")}
-        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${patientFullName},</p>
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${escapeHtml(patientFullName)},</p>
         <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">${body}</p>
         ${ctaButton("Suivre ma réservation", trackingUrl(referenceCode))}
       `,
@@ -523,7 +537,7 @@ export function driverReassignedAwayEmail(params: {
       icon: "🔄",
       bodyHtml: `
         ${badge("Retirée de votre planning", "amber")}
-        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${driverFullName},</p>
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${escapeHtml(driverFullName)},</p>
         <p style="margin:0;font-size:15px;line-height:1.5;">Votre course du <strong>${formatDateFr(pickupDatetime)} à ${formatTimeFr(pickupDatetime)}</strong> (réf. ${formatReferenceCode(referenceCode)}) a été réattribuée à un autre chauffeur par notre équipe. Elle n'apparaît plus dans votre tableau de bord. Pour toute question, contactez-nous directement.</p>
       `,
     }),
@@ -565,7 +579,7 @@ export function rideAcceptedDriverEmail(params: {
 
   let phoneHtml: string;
   if (patientPhone) {
-    phoneHtml = `<a href="tel:${patientPhone}" style="font-size:22px;font-weight:800;color:#16a34a;text-decoration:none;letter-spacing:0.02em;">${patientPhone}</a>
+    phoneHtml = `<a href="tel:${encodeURIComponent(patientPhone)}" style="font-size:22px;font-weight:800;color:#16a34a;text-decoration:none;letter-spacing:0.02em;">${escapeHtml(patientPhone)}</a>
                  <p style="margin:6px 0 0;font-size:12px;color:#6b7280;">Appuyez sur ce numéro depuis votre téléphone pour appeler directement.</p>`;
   } else if (patientPhoneMasked) {
     phoneHtml = `<p style="margin:0;font-size:14px;color:#b45309;font-style:italic;">📵 Numéro disponible dans votre tableau de bord à l'approche de la course.</p>`;
@@ -582,13 +596,13 @@ export function rideAcceptedDriverEmail(params: {
       icon: "✅",
       bodyHtml: `
         ${badge(isSeries ? `${seriesTotal} séances acceptées` : "Course acceptée", "green")}
-        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${driverFullName},</p>
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${escapeHtml(driverFullName)},</p>
         <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">${intro}</p>
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;">
           <tr>
             <td style="background:#F0FDF4;border:1px solid #bbf7d0;border-radius:12px;padding:16px 20px;">
               <p style="margin:0 0 4px;font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#16a34a;">Coordonnées du patient</p>
-              <p style="margin:0 0 8px;font-size:17px;font-weight:800;color:#14532d;">${patientFullName}</p>
+              <p style="margin:0 0 8px;font-size:17px;font-weight:800;color:#14532d;">${escapeHtml(patientFullName)}</p>
               ${phoneHtml}
             </td>
           </tr>
@@ -618,7 +632,7 @@ export function bookingCancelledDriverEmail(params: {
       icon: "🚫",
       bodyHtml: `
         ${badge("Annulée", "red")}
-        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${driverFullName},</p>
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${escapeHtml(driverFullName)},</p>
         <p style="margin:0;font-size:15px;line-height:1.5;">Le patient a annulé la course prévue le <strong>${formatDateFr(pickupDatetime)} à ${formatTimeFr(pickupDatetime)}</strong> (réf. ${formatReferenceCode(referenceCode)}) que vous aviez acceptée. Elle n'apparaîtra plus dans votre tableau de bord.</p>
       `,
     }),

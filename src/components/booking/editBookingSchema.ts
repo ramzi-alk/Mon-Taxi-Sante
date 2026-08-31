@@ -17,7 +17,7 @@ export const editBookingSchema = z
     has_return: z.boolean(),
     return_date: z.string().optional().or(z.literal("")),
     return_time: z.string().optional().or(z.literal("")),
-    vehicle_type: z.enum(["taxi", "vsl", "pmr"]),
+    vehicle_type: z.enum(["taxi", "vsl", "pmr", "ambulance"]),
     trip_type: z.enum(["aller_simple", "aller_retour", "multiple"]),
     requires_wheelchair: z.boolean(),
     requires_stretcher: z.boolean(),

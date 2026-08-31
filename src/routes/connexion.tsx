@@ -7,10 +7,11 @@ import { Mail, Lock, AlertCircle } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "~/lib/supabase";
 import { logger } from "~/lib/logger";
-import * as authRepository from "~/repositories/authRepository";
 import * as profilesRepository from "~/repositories/profilesRepository";
 import * as driversRepository from "~/repositories/driversRepository";
 import { Input } from "~/components/ui/input";
+import { loginServerFn } from "~/server/auth";
+import { useTurnstile, TURNSTILE_SITE_KEY } from "~/hooks/useTurnstile";
 
 export const Route = createFileRoute("/connexion")({
   head: () => ({
@@ -29,15 +30,24 @@ const loginSchema = z.object({
 
 type LoginSchema = z.infer<typeof loginSchema>;
 
-async function login(data: LoginSchema) {
-  const { data: signInData, error } = await authRepository.signInWithPassword(
-    supabase,
-    data.email,
-    data.password
-  );
-  if (error) {
-    logger.warn("auth.login failed", { error: error.message });
-    throw new Error("Email ou mot de passe incorrect.");
+const ERROR_MESSAGES: Record<string, string> = {
+  too_many_attempts: "Trop de tentatives pour cet email. Réessayez dans 15 minutes.",
+  captcha_invalid: "Vérification anti-robot invalide, réessayez.",
+  invalid_credentials: "Email ou mot de passe incorrect.",
+};
+
+async function login(data: LoginSchema & { turnstileToken: string }) {
+  const { access_token, refresh_token } = await loginServerFn({ data });
+
+  const { error: sessionError } = await supabase.auth.setSession({ access_token, refresh_token });
+  if (sessionError) {
+    logger.error("auth.login setSession failed", { error: sessionError.message });
+    throw new Error("Connexion réussie mais impossible d'ouvrir la session. Réessayez.");
+  }
+
+  const { data: userData } = await supabase.auth.getUser();
+  if (!userData.user) {
+    throw new Error("Connexion réussie mais impossible d'ouvrir la session. Réessayez.");
   }
 
   // isAdmin checked separately from role: an account can be 'driver' (or
@@ -45,8 +55,8 @@ async function login(data: LoginSchema) {
   // admin_grants (migration 044) — role alone no longer decides where an
   // admin-capable account lands after login.
   const [role, isAdmin] = await Promise.all([
-    profilesRepository.getProfileRole(supabase, signInData.user.id),
-    profilesRepository.hasAdminAccess(supabase, signInData.user.id),
+    profilesRepository.getProfileRole(supabase, userData.user.id),
+    profilesRepository.hasAdminAccess(supabase, userData.user.id),
   ]);
 
   // Un chauffeur qui se connecte veut généralement prendre des courses tout
@@ -57,7 +67,7 @@ async function login(data: LoginSchema) {
   // jamais la connexion en cas d'échec : best-effort, comme les autres
   // effets de bord de cette page.
   if (!isAdmin && role === "driver") {
-    driversRepository.setAvailability(supabase, signInData.user.id, "online").catch((err) => {
+    driversRepository.setAvailability(supabase, userData.user.id, "online").catch((err) => {
       logger.warn("auth.login setAvailabilityOnline failed", { error: err.message });
     });
   }
@@ -68,6 +78,8 @@ async function login(data: LoginSchema) {
 function ConnexionPage() {
   const navigate = useNavigate();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { containerRef, token, reset } = useTurnstile(TURNSTILE_SITE_KEY);
+  const [captchaRequired, setCaptchaRequired] = useState(false);
 
   const {
     register,
@@ -84,12 +96,20 @@ function ConnexionPage() {
       else if (role === "driver") navigate({ to: "/tableau-de-bord/chauffeur" });
       else navigate({ to: "/" });
     },
-    onError: (error: Error) => setErrorMessage(error.message),
+    onError: (error: Error) => {
+      setErrorMessage(ERROR_MESSAGES[error.message] ?? error.message);
+      reset();
+    },
   });
 
   function onSubmit(data: LoginSchema) {
     setErrorMessage(null);
-    mutate(data);
+    if (!token) {
+      setCaptchaRequired(true);
+      return;
+    }
+    setCaptchaRequired(false);
+    mutate({ ...data, turnstileToken: token });
   }
 
   return (
@@ -174,6 +194,13 @@ function ConnexionPage() {
               </p>
             )}
           </div>
+
+          {TURNSTILE_SITE_KEY && <div ref={containerRef} />}
+          {captchaRequired && (
+            <p role="alert" className="text-sm text-red-600">
+              Veuillez valider la vérification anti-robot avant de continuer.
+            </p>
+          )}
 
           <div className="text-right">
             <Link
