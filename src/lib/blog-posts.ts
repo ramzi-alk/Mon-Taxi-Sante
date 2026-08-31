@@ -69,4 +69,14 @@ export const blogPosts: BlogPost[] = [
     readingTime: "3 min",
     publishedAt: "21 juillet 2026",
   },
+  {
+    slug: "accompagnant-taxi-conventionne",
+    to: "/blog/accompagnant-taxi-conventionne",
+    category: "Démarches",
+    title: "Accompagnant en taxi conventionné : règles et prise en charge",
+    excerpt:
+      "Un proche peut-il vous accompagner en taxi conventionné ou VSL ? Les règles de l'Assurance Maladie et comment réserver votre trajet.",
+    readingTime: "5 min",
+    publishedAt: "1er septembre 2026",
+  },
 ];

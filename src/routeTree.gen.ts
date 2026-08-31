@@ -40,6 +40,7 @@ import { Route as BlogTransportCpamRouteImport } from './routes/blog/transport-c
 import { Route as BlogTaxiSansPrescriptionRouteImport } from './routes/blog/taxi-sans-prescription'
 import { Route as BlogPmtPrescriptionRouteImport } from './routes/blog/pmt-prescription'
 import { Route as BlogAldTransportRouteImport } from './routes/blog/ald-transport'
+import { Route as BlogAccompagnantTaxiConventionneRouteImport } from './routes/blog/accompagnant-taxi-conventionne'
 import { Route as ApiDriverOfflineBeaconRouteImport } from './routes/api/driver-offline-beacon'
 import { Route as AdminConnexionRouteImport } from './routes/admin_.connexion'
 import { Route as AdminStatistiquesRouteImport } from './routes/admin/statistiques'
@@ -217,6 +218,12 @@ const BlogAldTransportRoute = BlogAldTransportRouteImport.update({
   path: '/blog/ald-transport',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BlogAccompagnantTaxiConventionneRoute =
+  BlogAccompagnantTaxiConventionneRouteImport.update({
+    id: '/blog/accompagnant-taxi-conventionne',
+    path: '/blog/accompagnant-taxi-conventionne',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiDriverOfflineBeaconRoute = ApiDriverOfflineBeaconRouteImport.update({
   id: '/api/driver-offline-beacon',
   path: '/api/driver-offline-beacon',
@@ -337,6 +344,7 @@ export interface FileRoutesByFullPath {
   '/admin/statistiques': typeof AdminStatistiquesRoute
   '/admin/connexion': typeof AdminConnexionRoute
   '/api/driver-offline-beacon': typeof ApiDriverOfflineBeaconRoute
+  '/blog/accompagnant-taxi-conventionne': typeof BlogAccompagnantTaxiConventionneRoute
   '/blog/ald-transport': typeof BlogAldTransportRoute
   '/blog/pmt-prescription': typeof BlogPmtPrescriptionRoute
   '/blog/taxi-sans-prescription': typeof BlogTaxiSansPrescriptionRoute
@@ -387,6 +395,7 @@ export interface FileRoutesByTo {
   '/admin/statistiques': typeof AdminStatistiquesRoute
   '/admin/connexion': typeof AdminConnexionRoute
   '/api/driver-offline-beacon': typeof ApiDriverOfflineBeaconRoute
+  '/blog/accompagnant-taxi-conventionne': typeof BlogAccompagnantTaxiConventionneRoute
   '/blog/ald-transport': typeof BlogAldTransportRoute
   '/blog/pmt-prescription': typeof BlogPmtPrescriptionRoute
   '/blog/taxi-sans-prescription': typeof BlogTaxiSansPrescriptionRoute
@@ -439,6 +448,7 @@ export interface FileRoutesById {
   '/admin/statistiques': typeof AdminStatistiquesRoute
   '/admin_/connexion': typeof AdminConnexionRoute
   '/api/driver-offline-beacon': typeof ApiDriverOfflineBeaconRoute
+  '/blog/accompagnant-taxi-conventionne': typeof BlogAccompagnantTaxiConventionneRoute
   '/blog/ald-transport': typeof BlogAldTransportRoute
   '/blog/pmt-prescription': typeof BlogPmtPrescriptionRoute
   '/blog/taxi-sans-prescription': typeof BlogTaxiSansPrescriptionRoute
@@ -492,6 +502,7 @@ export interface FileRouteTypes {
     | '/admin/statistiques'
     | '/admin/connexion'
     | '/api/driver-offline-beacon'
+    | '/blog/accompagnant-taxi-conventionne'
     | '/blog/ald-transport'
     | '/blog/pmt-prescription'
     | '/blog/taxi-sans-prescription'
@@ -542,6 +553,7 @@ export interface FileRouteTypes {
     | '/admin/statistiques'
     | '/admin/connexion'
     | '/api/driver-offline-beacon'
+    | '/blog/accompagnant-taxi-conventionne'
     | '/blog/ald-transport'
     | '/blog/pmt-prescription'
     | '/blog/taxi-sans-prescription'
@@ -593,6 +605,7 @@ export interface FileRouteTypes {
     | '/admin/statistiques'
     | '/admin_/connexion'
     | '/api/driver-offline-beacon'
+    | '/blog/accompagnant-taxi-conventionne'
     | '/blog/ald-transport'
     | '/blog/pmt-prescription'
     | '/blog/taxi-sans-prescription'
@@ -637,6 +650,7 @@ export interface RootRouteChildren {
   DepartmentCityRoute: typeof DepartmentCityRoute
   AdminConnexionRoute: typeof AdminConnexionRoute
   ApiDriverOfflineBeaconRoute: typeof ApiDriverOfflineBeaconRoute
+  BlogAccompagnantTaxiConventionneRoute: typeof BlogAccompagnantTaxiConventionneRoute
   BlogAldTransportRoute: typeof BlogAldTransportRoute
   BlogPmtPrescriptionRoute: typeof BlogPmtPrescriptionRoute
   BlogTaxiSansPrescriptionRoute: typeof BlogTaxiSansPrescriptionRoute
@@ -881,6 +895,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BlogAldTransportRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/blog/accompagnant-taxi-conventionne': {
+      id: '/blog/accompagnant-taxi-conventionne'
+      path: '/blog/accompagnant-taxi-conventionne'
+      fullPath: '/blog/accompagnant-taxi-conventionne'
+      preLoaderRoute: typeof BlogAccompagnantTaxiConventionneRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/driver-offline-beacon': {
       id: '/api/driver-offline-beacon'
       path: '/api/driver-offline-beacon'
@@ -1054,6 +1075,7 @@ const rootRouteChildren: RootRouteChildren = {
   DepartmentCityRoute: DepartmentCityRoute,
   AdminConnexionRoute: AdminConnexionRoute,
   ApiDriverOfflineBeaconRoute: ApiDriverOfflineBeaconRoute,
+  BlogAccompagnantTaxiConventionneRoute: BlogAccompagnantTaxiConventionneRoute,
   BlogAldTransportRoute: BlogAldTransportRoute,
   BlogPmtPrescriptionRoute: BlogPmtPrescriptionRoute,
   BlogTaxiSansPrescriptionRoute: BlogTaxiSansPrescriptionRoute,

@@ -51,6 +51,21 @@
     <priority>0.6</priority>
   </url>
   <url>
+    <loc>https://docteurtaxi.fr/blog/vsl-ou-taxi-conventionne</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://docteurtaxi.fr/blog/taxi-sans-prescription</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://docteurtaxi.fr/blog/transport-pmr-personnes-agees</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://docteurtaxi.fr/villes</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -49626,11 +49641,6 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://docteurtaxi.fr/hopitaux/hospices-civils-de-lyon-siege-lyon</loc>
-    <changefreq>yearly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
     <loc>https://docteurtaxi.fr/hopitaux/hj-adulte-tarare-tarare</loc>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
@@ -51787,11 +51797,6 @@
   </url>
   <url>
     <loc>https://docteurtaxi.fr/hopitaux/unite-de-dialyse-aura-pelleport-paris</loc>
-    <changefreq>yearly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://docteurtaxi.fr/hopitaux/agence-centrale-des-equipements-et-des-produits-de-sante-paris</loc>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -57137,11 +57142,6 @@
   </url>
   <url>
     <loc>https://docteurtaxi.fr/hopitaux/unite-de-dialyse-aura-corbeil-corbeil-essonnes</loc>
-    <changefreq>yearly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://docteurtaxi.fr/hopitaux/agence-generale-des-equipements-et-produits-de-sante-aphp-nanterre</loc>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
   </url>
