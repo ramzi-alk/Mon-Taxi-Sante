@@ -7,10 +7,7 @@
 //
 // Usage : node scripts/seo-data/fetch-communes.mjs [--threshold=2000]
 import { writeFile, readFile } from "node:fs/promises";
-import { fileURLToPath } from "node:url";
 import { slugify } from "./slug.mjs";
-
-const root = fileURLToPath(new URL("../..", import.meta.url));
 
 // Seuil de population en dessous duquel une commune n'a pas de page dédiée :
 // évite le contenu fin/dupliqué (des milliers de communes de quelques dizaines

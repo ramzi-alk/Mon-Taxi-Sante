@@ -245,7 +245,7 @@ export function getNeighboringCommunes(commune: Commune, limit = 4): Commune[] {
 
   const half = Math.ceil(limit / 2);
   let start = Math.max(0, index - half);
-  let end = Math.min(deptCommunes.length, start + limit + 1);
+  const end = Math.min(deptCommunes.length, start + limit + 1);
   start = Math.max(0, end - (limit + 1));
 
   return deptCommunes.slice(start, end).filter((c) => c.codeInsee !== commune.codeInsee);

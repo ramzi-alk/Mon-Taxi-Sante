@@ -6,7 +6,6 @@ import { useEffect, useState } from "react";
 import {
   ArrowLeft,
   User,
-  Phone,
   Mail,
   Lock,
   Car,

@@ -597,18 +597,6 @@ export async function rateBookingAsDriver(
 }
 
 /**
- * Accepts all available rides in the same series as p_booking_id in one call
- * (migration 037). Returns the number of rides accepted.
- */
-export async function acceptSeriesRides(client: SupabaseClient, rideId: string): Promise<void> {
-  const { error } = await client.rpc("accept_series", { p_booking_id: rideId });
-
-  if (error) {
-    throw mapRideLifecycleError(error, rideId, "acceptSeriesRides");
-  }
-}
-
-/**
  * Flips a freshly inserted booking from pending to available, putting it in
  * the driver pool — see migration 019. Called once, right after insertBooking
  * succeeds, since the patient insert RLS policy only allows status='pending'
@@ -656,18 +644,6 @@ export async function refuseRide(client: SupabaseClient, rideId: string): Promis
 
   if (error) {
     throw mapRideLifecycleError(error, rideId, "refuseRide");
-  }
-}
-
-/**
- * Driver backs out of all accepted rides in the same series as rideId
- * (migration 038). Counts as a single suspicious-cancellation event.
- */
-export async function cancelSeriesRides(client: SupabaseClient, rideId: string): Promise<void> {
-  const { error } = await client.rpc("cancel_series" as never, { p_booking_id: rideId } as never);
-
-  if (error) {
-    throw mapRideLifecycleError(error, rideId, "cancelSeriesRides");
   }
 }
 

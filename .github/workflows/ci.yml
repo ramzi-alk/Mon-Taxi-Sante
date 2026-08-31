@@ -32,6 +32,9 @@ jobs:
       - name: Installer les dépendances
         run: pnpm install --frozen-lockfile
 
+      - name: Lint (eslint)
+        run: pnpm run lint
+
       - name: Typecheck (tsc --noEmit)
         run: pnpm run typecheck
 

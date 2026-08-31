@@ -82,7 +82,7 @@ export function DayTimeline({ rides, driverLat, driverLng }: DayTimelineProps) {
       </div>
       <ol className="space-y-0 list-none">
         {sorted.map((ride, i) => {
-          const { start, end } = busyWindow(ride);
+          const { end } = busyWindow(ride);
           const next = sorted[i + 1];
           const gapMin = next ? (new Date(next.pickup_datetime).getTime() - end.getTime()) / 60_000 : null;
 

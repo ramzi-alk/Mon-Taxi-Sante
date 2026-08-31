@@ -85,10 +85,6 @@ async function acceptRide(rideId: string): Promise<void> {
   await bookingsRepository.acceptRide(supabase, rideId);
 }
 
-async function acceptSeriesRides(rideId: string): Promise<void> {
-  await bookingsRepository.acceptSeriesRides(supabase, rideId);
-}
-
 async function updateHeartbeat(): Promise<void> {
   await supabase.rpc("update_driver_heartbeat");
 }
@@ -107,10 +103,6 @@ async function cancelRideByDriver(rideId: string, reason: string): Promise<void>
 
 async function refuseRide(rideId: string): Promise<void> {
   await bookingsRepository.refuseRide(supabase, rideId);
-}
-
-async function cancelSeriesRides(rideId: string): Promise<void> {
-  await bookingsRepository.cancelSeriesRides(supabase, rideId);
 }
 
 async function rateRide(vars: { rideId: string; rating: number; comment?: string }): Promise<void> {
