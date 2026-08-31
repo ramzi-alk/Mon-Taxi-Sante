@@ -189,4 +189,14 @@ export const blogPosts: BlogPost[] = [
     readingTime: "4 min",
     publishedAt: "16 septembre 2026",
   },
+  {
+    slug: "transport-sanitaire-psychiatrie-ald-23",
+    to: "/blog/transport-sanitaire-psychiatrie-ald-23",
+    category: "ALD",
+    title: "Santé mentale (ALD 23) : vos droits au transport médicalisé",
+    excerpt:
+      "Vos droits au taxi conventionné pour vos soins psychiatriques (CMP, hôpital de jour) dans le cadre de l'ALD 23, sans avance de frais.",
+    readingTime: "4 min",
+    publishedAt: "17 septembre 2026",
+  },
 ];

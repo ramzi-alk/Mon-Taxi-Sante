@@ -35,6 +35,7 @@ import { Route as HopitauxSlugRouteImport } from './routes/hopitaux.$slug'
 import { Route as ChauffeursTarifsRouteImport } from './routes/chauffeurs/tarifs'
 import { Route as ChauffeursInscriptionRouteImport } from './routes/chauffeurs/inscription'
 import { Route as BlogVslOuTaxiConventionneRouteImport } from './routes/blog/vsl-ou-taxi-conventionne'
+import { Route as BlogTransportSanitairePsychiatrieAld23RouteImport } from './routes/blog/transport-sanitaire-psychiatrie-ald-23'
 import { Route as BlogTransportSanitaireProcheDemarchesRouteImport } from './routes/blog/transport-sanitaire-proche-demarches'
 import { Route as BlogTransportPmrPersonnesAgeesRouteImport } from './routes/blog/transport-pmr-personnes-agees'
 import { Route as BlogTransportMedicalPlusieursRendezVousRouteImport } from './routes/blog/transport-medical-plusieurs-rendez-vous'
@@ -200,6 +201,12 @@ const BlogVslOuTaxiConventionneRoute =
   BlogVslOuTaxiConventionneRouteImport.update({
     id: '/blog/vsl-ou-taxi-conventionne',
     path: '/blog/vsl-ou-taxi-conventionne',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const BlogTransportSanitairePsychiatrieAld23Route =
+  BlogTransportSanitairePsychiatrieAld23RouteImport.update({
+    id: '/blog/transport-sanitaire-psychiatrie-ald-23',
+    path: '/blog/transport-sanitaire-psychiatrie-ald-23',
     getParentRoute: () => rootRouteImport,
   } as any)
 const BlogTransportSanitaireProcheDemarchesRoute =
@@ -438,6 +445,7 @@ export interface FileRoutesByFullPath {
   '/blog/transport-medical-plusieurs-rendez-vous': typeof BlogTransportMedicalPlusieursRendezVousRoute
   '/blog/transport-pmr-personnes-agees': typeof BlogTransportPmrPersonnesAgeesRoute
   '/blog/transport-sanitaire-proche-demarches': typeof BlogTransportSanitaireProcheDemarchesRoute
+  '/blog/transport-sanitaire-psychiatrie-ald-23': typeof BlogTransportSanitairePsychiatrieAld23Route
   '/blog/vsl-ou-taxi-conventionne': typeof BlogVslOuTaxiConventionneRoute
   '/chauffeurs/inscription': typeof ChauffeursInscriptionRoute
   '/chauffeurs/tarifs': typeof ChauffeursTarifsRoute
@@ -500,6 +508,7 @@ export interface FileRoutesByTo {
   '/blog/transport-medical-plusieurs-rendez-vous': typeof BlogTransportMedicalPlusieursRendezVousRoute
   '/blog/transport-pmr-personnes-agees': typeof BlogTransportPmrPersonnesAgeesRoute
   '/blog/transport-sanitaire-proche-demarches': typeof BlogTransportSanitaireProcheDemarchesRoute
+  '/blog/transport-sanitaire-psychiatrie-ald-23': typeof BlogTransportSanitairePsychiatrieAld23Route
   '/blog/vsl-ou-taxi-conventionne': typeof BlogVslOuTaxiConventionneRoute
   '/chauffeurs/inscription': typeof ChauffeursInscriptionRoute
   '/chauffeurs/tarifs': typeof ChauffeursTarifsRoute
@@ -564,6 +573,7 @@ export interface FileRoutesById {
   '/blog/transport-medical-plusieurs-rendez-vous': typeof BlogTransportMedicalPlusieursRendezVousRoute
   '/blog/transport-pmr-personnes-agees': typeof BlogTransportPmrPersonnesAgeesRoute
   '/blog/transport-sanitaire-proche-demarches': typeof BlogTransportSanitaireProcheDemarchesRoute
+  '/blog/transport-sanitaire-psychiatrie-ald-23': typeof BlogTransportSanitairePsychiatrieAld23Route
   '/blog/vsl-ou-taxi-conventionne': typeof BlogVslOuTaxiConventionneRoute
   '/chauffeurs/inscription': typeof ChauffeursInscriptionRoute
   '/chauffeurs/tarifs': typeof ChauffeursTarifsRoute
@@ -629,6 +639,7 @@ export interface FileRouteTypes {
     | '/blog/transport-medical-plusieurs-rendez-vous'
     | '/blog/transport-pmr-personnes-agees'
     | '/blog/transport-sanitaire-proche-demarches'
+    | '/blog/transport-sanitaire-psychiatrie-ald-23'
     | '/blog/vsl-ou-taxi-conventionne'
     | '/chauffeurs/inscription'
     | '/chauffeurs/tarifs'
@@ -691,6 +702,7 @@ export interface FileRouteTypes {
     | '/blog/transport-medical-plusieurs-rendez-vous'
     | '/blog/transport-pmr-personnes-agees'
     | '/blog/transport-sanitaire-proche-demarches'
+    | '/blog/transport-sanitaire-psychiatrie-ald-23'
     | '/blog/vsl-ou-taxi-conventionne'
     | '/chauffeurs/inscription'
     | '/chauffeurs/tarifs'
@@ -754,6 +766,7 @@ export interface FileRouteTypes {
     | '/blog/transport-medical-plusieurs-rendez-vous'
     | '/blog/transport-pmr-personnes-agees'
     | '/blog/transport-sanitaire-proche-demarches'
+    | '/blog/transport-sanitaire-psychiatrie-ald-23'
     | '/blog/vsl-ou-taxi-conventionne'
     | '/chauffeurs/inscription'
     | '/chauffeurs/tarifs'
@@ -810,6 +823,7 @@ export interface RootRouteChildren {
   BlogTransportMedicalPlusieursRendezVousRoute: typeof BlogTransportMedicalPlusieursRendezVousRoute
   BlogTransportPmrPersonnesAgeesRoute: typeof BlogTransportPmrPersonnesAgeesRoute
   BlogTransportSanitaireProcheDemarchesRoute: typeof BlogTransportSanitaireProcheDemarchesRoute
+  BlogTransportSanitairePsychiatrieAld23Route: typeof BlogTransportSanitairePsychiatrieAld23Route
   BlogVslOuTaxiConventionneRoute: typeof BlogVslOuTaxiConventionneRoute
   ChauffeursInscriptionRoute: typeof ChauffeursInscriptionRoute
   ChauffeursTarifsRoute: typeof ChauffeursTarifsRoute
@@ -1012,6 +1026,13 @@ declare module '@tanstack/react-router' {
       path: '/blog/vsl-ou-taxi-conventionne'
       fullPath: '/blog/vsl-ou-taxi-conventionne'
       preLoaderRoute: typeof BlogVslOuTaxiConventionneRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog/transport-sanitaire-psychiatrie-ald-23': {
+      id: '/blog/transport-sanitaire-psychiatrie-ald-23'
+      path: '/blog/transport-sanitaire-psychiatrie-ald-23'
+      fullPath: '/blog/transport-sanitaire-psychiatrie-ald-23'
+      preLoaderRoute: typeof BlogTransportSanitairePsychiatrieAld23RouteImport
       parentRoute: typeof rootRouteImport
     }
     '/blog/transport-sanitaire-proche-demarches': {
@@ -1331,6 +1352,8 @@ const rootRouteChildren: RootRouteChildren = {
   BlogTransportPmrPersonnesAgeesRoute: BlogTransportPmrPersonnesAgeesRoute,
   BlogTransportSanitaireProcheDemarchesRoute:
     BlogTransportSanitaireProcheDemarchesRoute,
+  BlogTransportSanitairePsychiatrieAld23Route:
+    BlogTransportSanitairePsychiatrieAld23Route,
   BlogVslOuTaxiConventionneRoute: BlogVslOuTaxiConventionneRoute,
   ChauffeursInscriptionRoute: ChauffeursInscriptionRoute,
   ChauffeursTarifsRoute: ChauffeursTarifsRoute,
