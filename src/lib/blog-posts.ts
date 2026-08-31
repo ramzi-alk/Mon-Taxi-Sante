@@ -149,4 +149,14 @@ export const blogPosts: BlogPost[] = [
     readingTime: "6 min",
     publishedAt: "8 septembre 2026",
   },
+  {
+    slug: "taxi-conventionne-accident-travail",
+    to: "/blog/taxi-conventionne-accident-travail",
+    category: "Prise en charge",
+    title: "Accident du travail et taxi conventionné : prise en charge",
+    excerpt:
+      "Victime d'un accident du travail ou d'une maladie professionnelle ? Comment bénéficier d'un transport sanitaire à 100 % sans avance de frais.",
+    readingTime: "5 min",
+    publishedAt: "10 septembre 2026",
+  },
 ];
