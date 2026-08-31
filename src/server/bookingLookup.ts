@@ -13,7 +13,7 @@ interface LookupBookingInput {
 }
 
 export const lookupBookingServerFn = createServerFn({ method: "POST" })
-  .validator((input: LookupBookingInput) => input)
+  .inputValidator((input: LookupBookingInput) => input)
   .handler(async ({ data }): Promise<MyBookingRow | null> =>
     withServerFnLogging("lookupBooking", { referenceCode: data.reference_code }, async () => {
       const isHuman = await verifyTurnstile(data.turnstileToken);
@@ -49,7 +49,7 @@ const MAX_BATCH_LOOKUPS = 10;
  * ce lot ne le contourne pas, il en agrège seulement les appels.
  */
 export const lookupSavedBookingsServerFn = createServerFn({ method: "POST" })
-  .validator((input: LookupSavedBookingsInput) => input)
+  .inputValidator((input: LookupSavedBookingsInput) => input)
   .handler(async ({ data }): Promise<Array<{ referenceCode: string; booking: MyBookingRow | null }>> =>
     withServerFnLogging(
       "lookupSavedBookings",

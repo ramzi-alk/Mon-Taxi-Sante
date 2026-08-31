@@ -1,4 +1,4 @@
-import { createServerFileRoute } from "@tanstack/react-start/server";
+import { createFileRoute } from "@tanstack/react-router";
 import { getSupabaseAdminClient } from "~/lib/supabaseAdmin";
 import { getResendClient, EMAIL_FROM, ADMIN_NOTIFICATION_EMAIL } from "~/lib/resend";
 import { atRiskBookingsAlertEmail, atRiskPatientEmail } from "~/server/emailTemplates";
@@ -22,8 +22,10 @@ function isAuthorized(request: Request): boolean {
   return request.headers.get("authorization") === `Bearer ${expected}`;
 }
 
-export const ServerRoute = createServerFileRoute("/api/cron/at-risk-bookings").methods({
-  GET: async ({ request }) => {
+export const Route = createFileRoute("/api/cron/at-risk-bookings")({
+  server: {
+    handlers: {
+      GET: async ({ request }) => {
     if (!isAuthorized(request)) {
       logger.error("cron.at-risk-bookings unauthorized");
       return new Response("Unauthorized", { status: 401 });
@@ -137,6 +139,8 @@ export const ServerRoute = createServerFileRoute("/api/cron/at-risk-bookings").m
     }
 
     logger.info("cron.at-risk-bookings completed", { atRisk: bookings.length, patientsNotified });
-    return Response.json({ alerted: bookings.length, patientsNotified });
+        return Response.json({ alerted: bookings.length, patientsNotified });
+      },
+    },
   },
 });

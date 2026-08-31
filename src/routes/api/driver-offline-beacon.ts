@@ -1,4 +1,4 @@
-import { createServerFileRoute } from "@tanstack/react-start/server";
+import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "~/lib/database.types";
 import { logger } from "~/lib/logger";
@@ -17,43 +17,47 @@ import { logger } from "~/lib/logger";
 // jusqu'au timeout du heartbeat côté serveur (30s de battement, mais aucune
 // détection de déconnexion propre) — des courses pouvaient lui être
 // proposées alors qu'il n'était plus joignable.
-export const ServerRoute = createServerFileRoute("/api/driver-offline-beacon").methods({
-  POST: async ({ request }) => {
-    try {
-      const rawBody = await request.text();
-      const { accessToken } = JSON.parse(rawBody) as { accessToken?: string };
-      if (!accessToken) {
-        return new Response("Missing accessToken", { status: 400 });
-      }
+export const Route = createFileRoute("/api/driver-offline-beacon")({
+  server: {
+    handlers: {
+      POST: async ({ request }) => {
+        try {
+          const rawBody = await request.text();
+          const { accessToken } = JSON.parse(rawBody) as { accessToken?: string };
+          if (!accessToken) {
+            return new Response("Missing accessToken", { status: 400 });
+          }
 
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
-      const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
-        global: { headers: { Authorization: `Bearer ${accessToken}` } },
-        auth: { persistSession: false },
-      });
+          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
+          const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+          const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+            global: { headers: { Authorization: `Bearer ${accessToken}` } },
+            auth: { persistSession: false },
+          });
 
-      const { data: userData, error: userError } = await supabase.auth.getUser();
-      if (userError || !userData.user) {
-        return new Response("Invalid token", { status: 401 });
-      }
+          const { data: userData, error: userError } = await supabase.auth.getUser();
+          if (userError || !userData.user) {
+            return new Response("Invalid token", { status: 401 });
+          }
 
-      const { error } = await supabase
-        .from("drivers_details")
-        .update({ availability: "offline", availability_changed_at: new Date().toISOString() })
-        .eq("profile_id", userData.user.id);
+          const { error } = await supabase
+            .from("drivers_details")
+            .update({ availability: "offline", availability_changed_at: new Date().toISOString() })
+            .eq("profile_id", userData.user.id);
 
-      if (error) {
-        logger.error("driverOfflineBeacon.update failed", { error: error.message });
-        return new Response("Update failed", { status: 500 });
-      }
+          if (error) {
+            logger.error("driverOfflineBeacon.update failed", { error: error.message });
+            return new Response("Update failed", { status: 500 });
+          }
 
-      return new Response(null, { status: 204 });
-    } catch (err) {
-      logger.error("driverOfflineBeacon failed", {
-        error: err instanceof Error ? err.message : String(err),
-      });
-      return new Response("Error", { status: 500 });
-    }
+          return new Response(null, { status: 204 });
+        } catch (err) {
+          logger.error("driverOfflineBeacon failed", {
+            error: err instanceof Error ? err.message : String(err),
+          });
+          return new Response("Error", { status: 500 });
+        }
+      },
+    },
   },
 });

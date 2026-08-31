@@ -8,8 +8,6 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { createServerRootRoute } from '@tanstack/react-start/server'
-
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as VillesRouteImport } from './routes/villes'
 import { Route as TarifsCpamRouteImport } from './routes/tarifs-cpam'
@@ -42,6 +40,7 @@ import { Route as BlogTransportCpamRouteImport } from './routes/blog/transport-c
 import { Route as BlogTaxiSansPrescriptionRouteImport } from './routes/blog/taxi-sans-prescription'
 import { Route as BlogPmtPrescriptionRouteImport } from './routes/blog/pmt-prescription'
 import { Route as BlogAldTransportRouteImport } from './routes/blog/ald-transport'
+import { Route as ApiDriverOfflineBeaconRouteImport } from './routes/api/driver-offline-beacon'
 import { Route as AdminConnexionRouteImport } from './routes/admin_.connexion'
 import { Route as AdminStatistiquesRouteImport } from './routes/admin/statistiques'
 import { Route as AdminSecuriteRouteImport } from './routes/admin/securite'
@@ -53,15 +52,12 @@ import { Route as AdminChauffeursRouteImport } from './routes/admin/chauffeurs'
 import { Route as AdminAvisRouteImport } from './routes/admin/avis'
 import { Route as DepartmentCityRouteImport } from './routes/$department.$city'
 import { Route as TableauDeBordChauffeurCompteRouteImport } from './routes/tableau-de-bord/chauffeur_.compte'
+import { Route as ApiWebhooksStripeRouteImport } from './routes/api/webhooks/stripe'
+import { Route as ApiCronExpireDriverTrialsRouteImport } from './routes/api/cron/expire-driver-trials'
+import { Route as ApiCronExpireBookingsRouteImport } from './routes/api/cron/expire-bookings'
+import { Route as ApiCronBookingRemindersRouteImport } from './routes/api/cron/booking-reminders'
+import { Route as ApiCronAtRiskBookingsRouteImport } from './routes/api/cron/at-risk-bookings'
 import { Route as TableauDeBordChauffeurCourseIdRouteImport } from './routes/tableau-de-bord/chauffeur_.course.$id'
-import { ServerRoute as ApiDriverOfflineBeaconServerRouteImport } from './routes/api/driver-offline-beacon'
-import { ServerRoute as ApiWebhooksStripeServerRouteImport } from './routes/api/webhooks/stripe'
-import { ServerRoute as ApiCronExpireDriverTrialsServerRouteImport } from './routes/api/cron/expire-driver-trials'
-import { ServerRoute as ApiCronExpireBookingsServerRouteImport } from './routes/api/cron/expire-bookings'
-import { ServerRoute as ApiCronBookingRemindersServerRouteImport } from './routes/api/cron/booking-reminders'
-import { ServerRoute as ApiCronAtRiskBookingsServerRouteImport } from './routes/api/cron/at-risk-bookings'
-
-const rootServerRouteImport = createServerRootRoute()
 
 const VillesRoute = VillesRouteImport.update({
   id: '/villes',
@@ -221,6 +217,11 @@ const BlogAldTransportRoute = BlogAldTransportRouteImport.update({
   path: '/blog/ald-transport',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiDriverOfflineBeaconRoute = ApiDriverOfflineBeaconRouteImport.update({
+  id: '/api/driver-offline-beacon',
+  path: '/api/driver-offline-beacon',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminConnexionRoute = AdminConnexionRouteImport.update({
   id: '/admin_/connexion',
   path: '/admin/connexion',
@@ -277,46 +278,37 @@ const TableauDeBordChauffeurCompteRoute =
     path: '/tableau-de-bord/chauffeur/compte',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiWebhooksStripeRoute = ApiWebhooksStripeRouteImport.update({
+  id: '/api/webhooks/stripe',
+  path: '/api/webhooks/stripe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCronExpireDriverTrialsRoute =
+  ApiCronExpireDriverTrialsRouteImport.update({
+    id: '/api/cron/expire-driver-trials',
+    path: '/api/cron/expire-driver-trials',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiCronExpireBookingsRoute = ApiCronExpireBookingsRouteImport.update({
+  id: '/api/cron/expire-bookings',
+  path: '/api/cron/expire-bookings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCronBookingRemindersRoute = ApiCronBookingRemindersRouteImport.update({
+  id: '/api/cron/booking-reminders',
+  path: '/api/cron/booking-reminders',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCronAtRiskBookingsRoute = ApiCronAtRiskBookingsRouteImport.update({
+  id: '/api/cron/at-risk-bookings',
+  path: '/api/cron/at-risk-bookings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TableauDeBordChauffeurCourseIdRoute =
   TableauDeBordChauffeurCourseIdRouteImport.update({
     id: '/tableau-de-bord/chauffeur_/course/$id',
     path: '/tableau-de-bord/chauffeur/course/$id',
     getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiDriverOfflineBeaconServerRoute =
-  ApiDriverOfflineBeaconServerRouteImport.update({
-    id: '/api/driver-offline-beacon',
-    path: '/api/driver-offline-beacon',
-    getParentRoute: () => rootServerRouteImport,
-  } as any)
-const ApiWebhooksStripeServerRoute = ApiWebhooksStripeServerRouteImport.update({
-  id: '/api/webhooks/stripe',
-  path: '/api/webhooks/stripe',
-  getParentRoute: () => rootServerRouteImport,
-} as any)
-const ApiCronExpireDriverTrialsServerRoute =
-  ApiCronExpireDriverTrialsServerRouteImport.update({
-    id: '/api/cron/expire-driver-trials',
-    path: '/api/cron/expire-driver-trials',
-    getParentRoute: () => rootServerRouteImport,
-  } as any)
-const ApiCronExpireBookingsServerRoute =
-  ApiCronExpireBookingsServerRouteImport.update({
-    id: '/api/cron/expire-bookings',
-    path: '/api/cron/expire-bookings',
-    getParentRoute: () => rootServerRouteImport,
-  } as any)
-const ApiCronBookingRemindersServerRoute =
-  ApiCronBookingRemindersServerRouteImport.update({
-    id: '/api/cron/booking-reminders',
-    path: '/api/cron/booking-reminders',
-    getParentRoute: () => rootServerRouteImport,
-  } as any)
-const ApiCronAtRiskBookingsServerRoute =
-  ApiCronAtRiskBookingsServerRouteImport.update({
-    id: '/api/cron/at-risk-bookings',
-    path: '/api/cron/at-risk-bookings',
-    getParentRoute: () => rootServerRouteImport,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -344,6 +336,7 @@ export interface FileRoutesByFullPath {
   '/admin/securite': typeof AdminSecuriteRoute
   '/admin/statistiques': typeof AdminStatistiquesRoute
   '/admin/connexion': typeof AdminConnexionRoute
+  '/api/driver-offline-beacon': typeof ApiDriverOfflineBeaconRoute
   '/blog/ald-transport': typeof BlogAldTransportRoute
   '/blog/pmt-prescription': typeof BlogPmtPrescriptionRoute
   '/blog/taxi-sans-prescription': typeof BlogTaxiSansPrescriptionRoute
@@ -361,6 +354,11 @@ export interface FileRoutesByFullPath {
   '/blog': typeof BlogIndexRoute
   '/maladies': typeof MaladiesIndexRoute
   '/reservation': typeof ReservationIndexRoute
+  '/api/cron/at-risk-bookings': typeof ApiCronAtRiskBookingsRoute
+  '/api/cron/booking-reminders': typeof ApiCronBookingRemindersRoute
+  '/api/cron/expire-bookings': typeof ApiCronExpireBookingsRoute
+  '/api/cron/expire-driver-trials': typeof ApiCronExpireDriverTrialsRoute
+  '/api/webhooks/stripe': typeof ApiWebhooksStripeRoute
   '/tableau-de-bord/chauffeur/compte': typeof TableauDeBordChauffeurCompteRoute
   '/tableau-de-bord/chauffeur/course/$id': typeof TableauDeBordChauffeurCourseIdRoute
 }
@@ -388,6 +386,7 @@ export interface FileRoutesByTo {
   '/admin/securite': typeof AdminSecuriteRoute
   '/admin/statistiques': typeof AdminStatistiquesRoute
   '/admin/connexion': typeof AdminConnexionRoute
+  '/api/driver-offline-beacon': typeof ApiDriverOfflineBeaconRoute
   '/blog/ald-transport': typeof BlogAldTransportRoute
   '/blog/pmt-prescription': typeof BlogPmtPrescriptionRoute
   '/blog/taxi-sans-prescription': typeof BlogTaxiSansPrescriptionRoute
@@ -405,6 +404,11 @@ export interface FileRoutesByTo {
   '/blog': typeof BlogIndexRoute
   '/maladies': typeof MaladiesIndexRoute
   '/reservation': typeof ReservationIndexRoute
+  '/api/cron/at-risk-bookings': typeof ApiCronAtRiskBookingsRoute
+  '/api/cron/booking-reminders': typeof ApiCronBookingRemindersRoute
+  '/api/cron/expire-bookings': typeof ApiCronExpireBookingsRoute
+  '/api/cron/expire-driver-trials': typeof ApiCronExpireDriverTrialsRoute
+  '/api/webhooks/stripe': typeof ApiWebhooksStripeRoute
   '/tableau-de-bord/chauffeur/compte': typeof TableauDeBordChauffeurCompteRoute
   '/tableau-de-bord/chauffeur/course/$id': typeof TableauDeBordChauffeurCourseIdRoute
 }
@@ -434,6 +438,7 @@ export interface FileRoutesById {
   '/admin/securite': typeof AdminSecuriteRoute
   '/admin/statistiques': typeof AdminStatistiquesRoute
   '/admin_/connexion': typeof AdminConnexionRoute
+  '/api/driver-offline-beacon': typeof ApiDriverOfflineBeaconRoute
   '/blog/ald-transport': typeof BlogAldTransportRoute
   '/blog/pmt-prescription': typeof BlogPmtPrescriptionRoute
   '/blog/taxi-sans-prescription': typeof BlogTaxiSansPrescriptionRoute
@@ -451,6 +456,11 @@ export interface FileRoutesById {
   '/blog/': typeof BlogIndexRoute
   '/maladies/': typeof MaladiesIndexRoute
   '/reservation/': typeof ReservationIndexRoute
+  '/api/cron/at-risk-bookings': typeof ApiCronAtRiskBookingsRoute
+  '/api/cron/booking-reminders': typeof ApiCronBookingRemindersRoute
+  '/api/cron/expire-bookings': typeof ApiCronExpireBookingsRoute
+  '/api/cron/expire-driver-trials': typeof ApiCronExpireDriverTrialsRoute
+  '/api/webhooks/stripe': typeof ApiWebhooksStripeRoute
   '/tableau-de-bord/chauffeur_/compte': typeof TableauDeBordChauffeurCompteRoute
   '/tableau-de-bord/chauffeur_/course/$id': typeof TableauDeBordChauffeurCourseIdRoute
 }
@@ -481,6 +491,7 @@ export interface FileRouteTypes {
     | '/admin/securite'
     | '/admin/statistiques'
     | '/admin/connexion'
+    | '/api/driver-offline-beacon'
     | '/blog/ald-transport'
     | '/blog/pmt-prescription'
     | '/blog/taxi-sans-prescription'
@@ -498,6 +509,11 @@ export interface FileRouteTypes {
     | '/blog'
     | '/maladies'
     | '/reservation'
+    | '/api/cron/at-risk-bookings'
+    | '/api/cron/booking-reminders'
+    | '/api/cron/expire-bookings'
+    | '/api/cron/expire-driver-trials'
+    | '/api/webhooks/stripe'
     | '/tableau-de-bord/chauffeur/compte'
     | '/tableau-de-bord/chauffeur/course/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -525,6 +541,7 @@ export interface FileRouteTypes {
     | '/admin/securite'
     | '/admin/statistiques'
     | '/admin/connexion'
+    | '/api/driver-offline-beacon'
     | '/blog/ald-transport'
     | '/blog/pmt-prescription'
     | '/blog/taxi-sans-prescription'
@@ -542,6 +559,11 @@ export interface FileRouteTypes {
     | '/blog'
     | '/maladies'
     | '/reservation'
+    | '/api/cron/at-risk-bookings'
+    | '/api/cron/booking-reminders'
+    | '/api/cron/expire-bookings'
+    | '/api/cron/expire-driver-trials'
+    | '/api/webhooks/stripe'
     | '/tableau-de-bord/chauffeur/compte'
     | '/tableau-de-bord/chauffeur/course/$id'
   id:
@@ -570,6 +592,7 @@ export interface FileRouteTypes {
     | '/admin/securite'
     | '/admin/statistiques'
     | '/admin_/connexion'
+    | '/api/driver-offline-beacon'
     | '/blog/ald-transport'
     | '/blog/pmt-prescription'
     | '/blog/taxi-sans-prescription'
@@ -587,6 +610,11 @@ export interface FileRouteTypes {
     | '/blog/'
     | '/maladies/'
     | '/reservation/'
+    | '/api/cron/at-risk-bookings'
+    | '/api/cron/booking-reminders'
+    | '/api/cron/expire-bookings'
+    | '/api/cron/expire-driver-trials'
+    | '/api/webhooks/stripe'
     | '/tableau-de-bord/chauffeur_/compte'
     | '/tableau-de-bord/chauffeur_/course/$id'
   fileRoutesById: FileRoutesById
@@ -608,6 +636,7 @@ export interface RootRouteChildren {
   VillesRoute: typeof VillesRoute
   DepartmentCityRoute: typeof DepartmentCityRoute
   AdminConnexionRoute: typeof AdminConnexionRoute
+  ApiDriverOfflineBeaconRoute: typeof ApiDriverOfflineBeaconRoute
   BlogAldTransportRoute: typeof BlogAldTransportRoute
   BlogPmtPrescriptionRoute: typeof BlogPmtPrescriptionRoute
   BlogTaxiSansPrescriptionRoute: typeof BlogTaxiSansPrescriptionRoute
@@ -624,68 +653,13 @@ export interface RootRouteChildren {
   BlogIndexRoute: typeof BlogIndexRoute
   MaladiesIndexRoute: typeof MaladiesIndexRoute
   ReservationIndexRoute: typeof ReservationIndexRoute
+  ApiCronAtRiskBookingsRoute: typeof ApiCronAtRiskBookingsRoute
+  ApiCronBookingRemindersRoute: typeof ApiCronBookingRemindersRoute
+  ApiCronExpireBookingsRoute: typeof ApiCronExpireBookingsRoute
+  ApiCronExpireDriverTrialsRoute: typeof ApiCronExpireDriverTrialsRoute
+  ApiWebhooksStripeRoute: typeof ApiWebhooksStripeRoute
   TableauDeBordChauffeurCompteRoute: typeof TableauDeBordChauffeurCompteRoute
   TableauDeBordChauffeurCourseIdRoute: typeof TableauDeBordChauffeurCourseIdRoute
-}
-export interface FileServerRoutesByFullPath {
-  '/api/driver-offline-beacon': typeof ApiDriverOfflineBeaconServerRoute
-  '/api/cron/at-risk-bookings': typeof ApiCronAtRiskBookingsServerRoute
-  '/api/cron/booking-reminders': typeof ApiCronBookingRemindersServerRoute
-  '/api/cron/expire-bookings': typeof ApiCronExpireBookingsServerRoute
-  '/api/cron/expire-driver-trials': typeof ApiCronExpireDriverTrialsServerRoute
-  '/api/webhooks/stripe': typeof ApiWebhooksStripeServerRoute
-}
-export interface FileServerRoutesByTo {
-  '/api/driver-offline-beacon': typeof ApiDriverOfflineBeaconServerRoute
-  '/api/cron/at-risk-bookings': typeof ApiCronAtRiskBookingsServerRoute
-  '/api/cron/booking-reminders': typeof ApiCronBookingRemindersServerRoute
-  '/api/cron/expire-bookings': typeof ApiCronExpireBookingsServerRoute
-  '/api/cron/expire-driver-trials': typeof ApiCronExpireDriverTrialsServerRoute
-  '/api/webhooks/stripe': typeof ApiWebhooksStripeServerRoute
-}
-export interface FileServerRoutesById {
-  __root__: typeof rootServerRouteImport
-  '/api/driver-offline-beacon': typeof ApiDriverOfflineBeaconServerRoute
-  '/api/cron/at-risk-bookings': typeof ApiCronAtRiskBookingsServerRoute
-  '/api/cron/booking-reminders': typeof ApiCronBookingRemindersServerRoute
-  '/api/cron/expire-bookings': typeof ApiCronExpireBookingsServerRoute
-  '/api/cron/expire-driver-trials': typeof ApiCronExpireDriverTrialsServerRoute
-  '/api/webhooks/stripe': typeof ApiWebhooksStripeServerRoute
-}
-export interface FileServerRouteTypes {
-  fileServerRoutesByFullPath: FileServerRoutesByFullPath
-  fullPaths:
-    | '/api/driver-offline-beacon'
-    | '/api/cron/at-risk-bookings'
-    | '/api/cron/booking-reminders'
-    | '/api/cron/expire-bookings'
-    | '/api/cron/expire-driver-trials'
-    | '/api/webhooks/stripe'
-  fileServerRoutesByTo: FileServerRoutesByTo
-  to:
-    | '/api/driver-offline-beacon'
-    | '/api/cron/at-risk-bookings'
-    | '/api/cron/booking-reminders'
-    | '/api/cron/expire-bookings'
-    | '/api/cron/expire-driver-trials'
-    | '/api/webhooks/stripe'
-  id:
-    | '__root__'
-    | '/api/driver-offline-beacon'
-    | '/api/cron/at-risk-bookings'
-    | '/api/cron/booking-reminders'
-    | '/api/cron/expire-bookings'
-    | '/api/cron/expire-driver-trials'
-    | '/api/webhooks/stripe'
-  fileServerRoutesById: FileServerRoutesById
-}
-export interface RootServerRouteChildren {
-  ApiDriverOfflineBeaconServerRoute: typeof ApiDriverOfflineBeaconServerRoute
-  ApiCronAtRiskBookingsServerRoute: typeof ApiCronAtRiskBookingsServerRoute
-  ApiCronBookingRemindersServerRoute: typeof ApiCronBookingRemindersServerRoute
-  ApiCronExpireBookingsServerRoute: typeof ApiCronExpireBookingsServerRoute
-  ApiCronExpireDriverTrialsServerRoute: typeof ApiCronExpireDriverTrialsServerRoute
-  ApiWebhooksStripeServerRoute: typeof ApiWebhooksStripeServerRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -907,6 +881,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BlogAldTransportRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/driver-offline-beacon': {
+      id: '/api/driver-offline-beacon'
+      path: '/api/driver-offline-beacon'
+      fullPath: '/api/driver-offline-beacon'
+      preLoaderRoute: typeof ApiDriverOfflineBeaconRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin_/connexion': {
       id: '/admin_/connexion'
       path: '/admin/connexion'
@@ -984,58 +965,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TableauDeBordChauffeurCompteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/webhooks/stripe': {
+      id: '/api/webhooks/stripe'
+      path: '/api/webhooks/stripe'
+      fullPath: '/api/webhooks/stripe'
+      preLoaderRoute: typeof ApiWebhooksStripeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/cron/expire-driver-trials': {
+      id: '/api/cron/expire-driver-trials'
+      path: '/api/cron/expire-driver-trials'
+      fullPath: '/api/cron/expire-driver-trials'
+      preLoaderRoute: typeof ApiCronExpireDriverTrialsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/cron/expire-bookings': {
+      id: '/api/cron/expire-bookings'
+      path: '/api/cron/expire-bookings'
+      fullPath: '/api/cron/expire-bookings'
+      preLoaderRoute: typeof ApiCronExpireBookingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/cron/booking-reminders': {
+      id: '/api/cron/booking-reminders'
+      path: '/api/cron/booking-reminders'
+      fullPath: '/api/cron/booking-reminders'
+      preLoaderRoute: typeof ApiCronBookingRemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/cron/at-risk-bookings': {
+      id: '/api/cron/at-risk-bookings'
+      path: '/api/cron/at-risk-bookings'
+      fullPath: '/api/cron/at-risk-bookings'
+      preLoaderRoute: typeof ApiCronAtRiskBookingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tableau-de-bord/chauffeur_/course/$id': {
       id: '/tableau-de-bord/chauffeur_/course/$id'
       path: '/tableau-de-bord/chauffeur/course/$id'
       fullPath: '/tableau-de-bord/chauffeur/course/$id'
       preLoaderRoute: typeof TableauDeBordChauffeurCourseIdRouteImport
       parentRoute: typeof rootRouteImport
-    }
-  }
-}
-declare module '@tanstack/react-start/server' {
-  interface ServerFileRoutesByPath {
-    '/api/driver-offline-beacon': {
-      id: '/api/driver-offline-beacon'
-      path: '/api/driver-offline-beacon'
-      fullPath: '/api/driver-offline-beacon'
-      preLoaderRoute: typeof ApiDriverOfflineBeaconServerRouteImport
-      parentRoute: typeof rootServerRouteImport
-    }
-    '/api/webhooks/stripe': {
-      id: '/api/webhooks/stripe'
-      path: '/api/webhooks/stripe'
-      fullPath: '/api/webhooks/stripe'
-      preLoaderRoute: typeof ApiWebhooksStripeServerRouteImport
-      parentRoute: typeof rootServerRouteImport
-    }
-    '/api/cron/expire-driver-trials': {
-      id: '/api/cron/expire-driver-trials'
-      path: '/api/cron/expire-driver-trials'
-      fullPath: '/api/cron/expire-driver-trials'
-      preLoaderRoute: typeof ApiCronExpireDriverTrialsServerRouteImport
-      parentRoute: typeof rootServerRouteImport
-    }
-    '/api/cron/expire-bookings': {
-      id: '/api/cron/expire-bookings'
-      path: '/api/cron/expire-bookings'
-      fullPath: '/api/cron/expire-bookings'
-      preLoaderRoute: typeof ApiCronExpireBookingsServerRouteImport
-      parentRoute: typeof rootServerRouteImport
-    }
-    '/api/cron/booking-reminders': {
-      id: '/api/cron/booking-reminders'
-      path: '/api/cron/booking-reminders'
-      fullPath: '/api/cron/booking-reminders'
-      preLoaderRoute: typeof ApiCronBookingRemindersServerRouteImport
-      parentRoute: typeof rootServerRouteImport
-    }
-    '/api/cron/at-risk-bookings': {
-      id: '/api/cron/at-risk-bookings'
-      path: '/api/cron/at-risk-bookings'
-      fullPath: '/api/cron/at-risk-bookings'
-      preLoaderRoute: typeof ApiCronAtRiskBookingsServerRouteImport
-      parentRoute: typeof rootServerRouteImport
     }
   }
 }
@@ -1083,6 +1053,7 @@ const rootRouteChildren: RootRouteChildren = {
   VillesRoute: VillesRoute,
   DepartmentCityRoute: DepartmentCityRoute,
   AdminConnexionRoute: AdminConnexionRoute,
+  ApiDriverOfflineBeaconRoute: ApiDriverOfflineBeaconRoute,
   BlogAldTransportRoute: BlogAldTransportRoute,
   BlogPmtPrescriptionRoute: BlogPmtPrescriptionRoute,
   BlogTaxiSansPrescriptionRoute: BlogTaxiSansPrescriptionRoute,
@@ -1099,20 +1070,22 @@ const rootRouteChildren: RootRouteChildren = {
   BlogIndexRoute: BlogIndexRoute,
   MaladiesIndexRoute: MaladiesIndexRoute,
   ReservationIndexRoute: ReservationIndexRoute,
+  ApiCronAtRiskBookingsRoute: ApiCronAtRiskBookingsRoute,
+  ApiCronBookingRemindersRoute: ApiCronBookingRemindersRoute,
+  ApiCronExpireBookingsRoute: ApiCronExpireBookingsRoute,
+  ApiCronExpireDriverTrialsRoute: ApiCronExpireDriverTrialsRoute,
+  ApiWebhooksStripeRoute: ApiWebhooksStripeRoute,
   TableauDeBordChauffeurCompteRoute: TableauDeBordChauffeurCompteRoute,
   TableauDeBordChauffeurCourseIdRoute: TableauDeBordChauffeurCourseIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-const rootServerRouteChildren: RootServerRouteChildren = {
-  ApiDriverOfflineBeaconServerRoute: ApiDriverOfflineBeaconServerRoute,
-  ApiCronAtRiskBookingsServerRoute: ApiCronAtRiskBookingsServerRoute,
-  ApiCronBookingRemindersServerRoute: ApiCronBookingRemindersServerRoute,
-  ApiCronExpireBookingsServerRoute: ApiCronExpireBookingsServerRoute,
-  ApiCronExpireDriverTrialsServerRoute: ApiCronExpireDriverTrialsServerRoute,
-  ApiWebhooksStripeServerRoute: ApiWebhooksStripeServerRoute,
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
 }
-export const serverRouteTree = rootServerRouteImport
-  ._addFileChildren(rootServerRouteChildren)
-  ._addFileTypes<FileServerRouteTypes>()

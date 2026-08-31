@@ -50,7 +50,7 @@ interface SubmitBookingInput {
 }
 
 export const submitBookingServerFn = createServerFn({ method: "POST" })
-  .validator((input: SubmitBookingInput) => input)
+  .inputValidator((input: SubmitBookingInput) => input)
   .handler(async ({ data }) =>
     withServerFnLogging(
       "submitBooking",

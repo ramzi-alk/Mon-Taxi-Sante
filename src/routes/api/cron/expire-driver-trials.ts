@@ -1,4 +1,4 @@
-import { createServerFileRoute } from "@tanstack/react-start/server";
+import { createFileRoute } from "@tanstack/react-router";
 import { getSupabaseAdminClient } from "~/lib/supabaseAdmin";
 import { logger } from "~/lib/logger";
 
@@ -17,8 +17,10 @@ function isAuthorized(request: Request): boolean {
   return request.headers.get("authorization") === `Bearer ${expected}`;
 }
 
-export const ServerRoute = createServerFileRoute("/api/cron/expire-driver-trials").methods({
-  GET: async ({ request }) => {
+export const Route = createFileRoute("/api/cron/expire-driver-trials")({
+  server: {
+    handlers: {
+      GET: async ({ request }) => {
     if (!isAuthorized(request)) {
       logger.error("cron.expire-driver-trials unauthorized");
       return new Response("Unauthorized", { status: 401 });
@@ -41,7 +43,9 @@ export const ServerRoute = createServerFileRoute("/api/cron/expire-driver-trials
     }
 
     const expired = data?.length ?? 0;
-    logger.info("cron.expire-driver-trials completed", { expired });
-    return Response.json({ expired });
+        logger.info("cron.expire-driver-trials completed", { expired });
+        return Response.json({ expired });
+      },
+    },
   },
 });

@@ -95,5 +95,5 @@ async function login(input: LoginInput): Promise<LoginResult> {
 }
 
 export const loginServerFn = createServerFn({ method: "POST" })
-  .validator((input: LoginInput) => input)
+  .inputValidator((input: LoginInput) => input)
   .handler(async ({ data }) => withServerFnLogging("login", { email: data.email }, () => login(data)));

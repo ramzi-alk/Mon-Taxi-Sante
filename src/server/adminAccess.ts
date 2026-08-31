@@ -30,7 +30,7 @@ async function checkAdminAccess(input: { accessToken: string }): Promise<boolean
 }
 
 export const checkAdminAccessServerFn = createServerFn({ method: "POST" })
-  .validator((input: { accessToken: string }) => input)
+  .inputValidator((input: { accessToken: string }) => input)
   .handler(async ({ data }) =>
     withServerFnLogging("checkAdminAccess", {}, () => checkAdminAccess(data))
   );

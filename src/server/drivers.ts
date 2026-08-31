@@ -25,7 +25,7 @@ const submitDriverApplicationSchema = z.object({
 // on the caller's client-side auth session — right after signUp() the
 // browser may not have one yet (e.g. when email confirmation is required).
 export const submitDriverApplicationServerFn = createServerFn({ method: "POST" })
-  .validator((input: z.infer<typeof submitDriverApplicationSchema>) =>
+  .inputValidator((input: z.infer<typeof submitDriverApplicationSchema>) =>
     submitDriverApplicationSchema.parse(input)
   )
   .handler(async ({ data }) =>

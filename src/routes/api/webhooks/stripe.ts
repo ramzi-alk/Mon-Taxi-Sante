@@ -1,4 +1,4 @@
-import { createServerFileRoute } from "@tanstack/react-start/server";
+import { createFileRoute } from "@tanstack/react-router";
 import type Stripe from "stripe";
 import { getSupabaseAdminClient } from "~/lib/supabaseAdmin";
 import { getStripeClient } from "~/lib/stripe";
@@ -110,8 +110,10 @@ async function syncSubscriptionToDriver(
   }
 }
 
-export const ServerRoute = createServerFileRoute("/api/webhooks/stripe").methods({
-  POST: async ({ request }) => {
+export const Route = createFileRoute("/api/webhooks/stripe")({
+  server: {
+    handlers: {
+      POST: async ({ request }) => {
     const signature = request.headers.get("stripe-signature");
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
     if (!signature || !webhookSecret) {
@@ -178,5 +180,7 @@ export const ServerRoute = createServerFileRoute("/api/webhooks/stripe").methods
     }
 
     return Response.json({ received: true });
+      },
+    },
   },
 });

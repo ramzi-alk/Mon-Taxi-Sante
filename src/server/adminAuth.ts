@@ -106,7 +106,7 @@ async function adminLogin(input: AdminLoginInput): Promise<AdminLoginResult> {
 }
 
 export const adminLoginServerFn = createServerFn({ method: "POST" })
-  .validator((input: AdminLoginInput) => input)
+  .inputValidator((input: AdminLoginInput) => input)
   .handler(async ({ data }) =>
     withServerFnLogging("adminLogin", { email: data.email }, () => adminLogin(data))
   );

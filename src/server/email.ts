@@ -149,7 +149,7 @@ async function notifyBookingCancelled(data: { bookingId: string }): Promise<void
 }
 
 export const notifyBookingCancelledServerFn = createServerFn({ method: "POST" })
-  .validator((input: { bookingId: string }) => input)
+  .inputValidator((input: { bookingId: string }) => input)
   .handler(async ({ data }) =>
     withServerFnLogging("notifyBookingCancelled", { bookingId: data.bookingId }, () =>
       notifyBookingCancelled(data)
@@ -250,7 +250,7 @@ async function notifyBookingAccepted(data: { bookingId: string }): Promise<void>
 }
 
 export const notifyBookingAcceptedServerFn = createServerFn({ method: "POST" })
-  .validator((input: { bookingId: string }) => input)
+  .inputValidator((input: { bookingId: string }) => input)
   .handler(async ({ data }) =>
     withServerFnLogging("notifyBookingAccepted", { bookingId: data.bookingId }, () =>
       notifyBookingAccepted(data)
@@ -331,7 +331,7 @@ async function notifyDriverRideAccepted(data: { bookingId: string; seriesAccepte
 }
 
 export const notifyDriverRideAcceptedServerFn = createServerFn({ method: "POST" })
-  .validator((input: { bookingId: string; seriesAcceptedCount?: number }) => input)
+  .inputValidator((input: { bookingId: string; seriesAcceptedCount?: number }) => input)
   .handler(async ({ data }) =>
     withServerFnLogging("notifyDriverRideAccepted", { bookingId: data.bookingId }, () =>
       notifyDriverRideAccepted(data)
@@ -394,7 +394,7 @@ async function notifyBookingUpdated(data: { bookingId: string }): Promise<void> 
 }
 
 export const notifyBookingUpdatedServerFn = createServerFn({ method: "POST" })
-  .validator((input: { bookingId: string }) => input)
+  .inputValidator((input: { bookingId: string }) => input)
   .handler(async ({ data }) =>
     withServerFnLogging("notifyBookingUpdated", { bookingId: data.bookingId }, () =>
       notifyBookingUpdated(data)
@@ -467,7 +467,7 @@ async function notifyRideUnassigned(data: { bookingId: string; seriesAffectedCou
 }
 
 export const notifyRideUnassignedServerFn = createServerFn({ method: "POST" })
-  .validator((input: { bookingId: string; seriesAffectedCount?: number }) => input)
+  .inputValidator((input: { bookingId: string; seriesAffectedCount?: number }) => input)
   .handler(async ({ data }) =>
     withServerFnLogging("notifyRideUnassigned", { bookingId: data.bookingId }, () =>
       notifyRideUnassigned(data)
@@ -522,7 +522,7 @@ async function notifyDriverPatientCancelled(data: { bookingId: string }): Promis
 }
 
 export const notifyDriverPatientCancelledServerFn = createServerFn({ method: "POST" })
-  .validator((input: { bookingId: string }) => input)
+  .inputValidator((input: { bookingId: string }) => input)
   .handler(async ({ data }) =>
     withServerFnLogging("notifyDriverPatientCancelled", { bookingId: data.bookingId }, () =>
       notifyDriverPatientCancelled(data)
@@ -577,7 +577,7 @@ async function notifyAdminNewDriverApplication(input: { driverDetailsId: string 
 }
 
 export const notifyAdminNewDriverApplicationServerFn = createServerFn({ method: "POST" })
-  .validator((input: { driverDetailsId: string }) => input)
+  .inputValidator((input: { driverDetailsId: string }) => input)
   .handler(async ({ data: input }) =>
     withServerFnLogging("notifyAdminNewDriverApplication", { driverDetailsId: input.driverDetailsId }, () =>
       notifyAdminNewDriverApplication(input)
@@ -630,7 +630,7 @@ async function notifyDriverApproved(input: { driverDetailsId: string }): Promise
 }
 
 export const notifyDriverApprovedServerFn = createServerFn({ method: "POST" })
-  .validator((input: { driverDetailsId: string }) => input)
+  .inputValidator((input: { driverDetailsId: string }) => input)
   .handler(async ({ data: input }) =>
     withServerFnLogging("notifyDriverApproved", { driverDetailsId: input.driverDetailsId }, () =>
       notifyDriverApproved(input)
@@ -682,7 +682,7 @@ async function notifyDriverRejected(input: { driverDetailsId: string }): Promise
 }
 
 export const notifyDriverRejectedServerFn = createServerFn({ method: "POST" })
-  .validator((input: { driverDetailsId: string }) => input)
+  .inputValidator((input: { driverDetailsId: string }) => input)
   .handler(async ({ data: input }) =>
     withServerFnLogging("notifyDriverRejected", { driverDetailsId: input.driverDetailsId }, () =>
       notifyDriverRejected(input)
@@ -743,7 +743,7 @@ async function notifyDriverReassignedAway(input: {
 }
 
 export const notifyDriverReassignedAwayServerFn = createServerFn({ method: "POST" })
-  .validator((input: { bookingId: string; previousDriverId: string }) => input)
+  .inputValidator((input: { bookingId: string; previousDriverId: string }) => input)
   .handler(async ({ data: input }) =>
     withServerFnLogging("notifyDriverReassignedAway", { bookingId: input.bookingId }, () =>
       notifyDriverReassignedAway(input)
@@ -796,7 +796,7 @@ async function notifyDriverDocumentRequest(input: {
 }
 
 export const notifyDriverDocumentRequestServerFn = createServerFn({ method: "POST" })
-  .validator((input: { driverProfileId: string; message: string }) => input)
+  .inputValidator((input: { driverProfileId: string; message: string }) => input)
   .handler(async ({ data: input }) =>
     withServerFnLogging("notifyDriverDocumentRequest", { driverProfileId: input.driverProfileId }, () =>
       notifyDriverDocumentRequest(input)

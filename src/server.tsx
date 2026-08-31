@@ -2,11 +2,11 @@ import {
   createStartHandler,
   defaultStreamHandler,
 } from "@tanstack/react-start/server";
-import { createRouter } from "./router";
 
-const startFetch = createStartHandler({
-  createRouter,
-})(defaultStreamHandler);
+// createRouter (./router.tsx) is picked up by convention by the TanStack
+// Start Vite plugin — createStartHandler no longer takes it directly (API
+// change between 1.132.0-alpha.25 and the 1.132.0 stable release).
+const startFetch = createStartHandler(defaultStreamHandler);
 
 // Pages under these prefixes are personalized (auth-gated dashboards, booking
 // flow with per-session state, side-effecting cron/API endpoints) and must
