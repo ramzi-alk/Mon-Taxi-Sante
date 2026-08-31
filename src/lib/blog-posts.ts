@@ -99,4 +99,14 @@ export const blogPosts: BlogPost[] = [
     readingTime: "5 min",
     publishedAt: "3 septembre 2026",
   },
+  {
+    slug: "retour-domicile-sortie-hopital",
+    to: "/blog/retour-domicile-sortie-hopital",
+    category: "Démarches",
+    title: "Sortie d'hôpital : votre retour en taxi conventionné",
+    excerpt:
+      "Comment organiser votre retour à domicile après une hospitalisation ? Qui rédige votre bon de transport et comment bénéficier du Tiers-Payant.",
+    readingTime: "5 min",
+    publishedAt: "4 septembre 2026",
+  },
 ];
