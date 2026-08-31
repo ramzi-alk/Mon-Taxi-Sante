@@ -159,4 +159,14 @@ export const blogPosts: BlogPost[] = [
     readingTime: "5 min",
     publishedAt: "10 septembre 2026",
   },
+  {
+    slug: "taxi-conventionne-cure-thermale",
+    to: "/blog/taxi-conventionne-cure-thermale",
+    category: "Prise en charge",
+    title: "Cure thermale : le transport en taxi conventionné est-il remboursé ?",
+    excerpt:
+      "Les règles strictes de l'Assurance Maladie pour le remboursement de vos trajets vers une cure thermale : conditions de ressources et base de remboursement.",
+    readingTime: "4 min",
+    publishedAt: "14 septembre 2026",
+  },
 ];
