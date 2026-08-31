@@ -1,30 +1,25 @@
 import { useEffect, useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { MapPin, Calendar, Car, XCircle, AlertTriangle, User, Phone, Download, Loader2, Pencil, Repeat } from "lucide-react";
+import { MapPin, Calendar, Car, User, Phone, Download, Pencil, Repeat } from "lucide-react";
 import { formatDateFr, formatTimeFr, formatReferenceCode, cn } from "~/lib/utils";
 import { bookingToPrefillData, storeBookingPrefill } from "~/lib/bookingPrefill";
 import { VEHICLE_LABELS } from "~/lib/vehicle";
 import { openBookingReceipt } from "~/lib/receipt";
-import { supabase } from "~/lib/supabase";
-import { useToast } from "~/components/ui/toast";
 import { StarRating } from "~/components/ui/star-rating";
-import { RatingForm } from "./RatingForm";
 import {
-  STATUS_ORDER,
   STATUS_LABELS,
-  STATUS_DESCRIPTIONS,
   STATUS_BADGE_CLASSES,
-  getStatusStepState,
   isCancellable,
   isEditable,
   isEditableAuthenticated,
   type BookingStatus,
 } from "~/lib/bookingStatus";
-import * as bookingsRepository from "~/repositories/bookingsRepository";
 import type { MyBookingRow, UpdateBookingPayload, LookupCredentials } from "~/repositories/bookingsRepository";
 import { BookingEditForm } from "./BookingEditForm";
-import { notifyBookingCancelledServerFn, notifyBookingUpdatedServerFn, notifyDriverPatientCancelledServerFn } from "~/server/email";
+import { CancelBookingAction } from "./CancelBookingAction";
+import { BookingRatingSection } from "./BookingRatingSection";
+import { BookingProgressTimeline } from "./BookingProgressTimeline";
+import { notifyBookingUpdatedServerFn } from "~/server/email";
 import { logger } from "~/lib/logger";
 
 interface BookingStatusCardProps {
@@ -37,6 +32,14 @@ interface BookingStatusCardProps {
   lookupCredentials?: LookupCredentials;
 }
 
+/**
+ * Composition root for a booking's card: display (header, route, driver
+ * info) plus whichever actions apply (cancel, edit, rate, rebook). Each
+ * action with its own state/mutation lives in its own component
+ * (CancelBookingAction, BookingRatingSection) — a read-only consumer like
+ * PatientEmailLogin only renders the display part below, without allowCancel
+ * or allowEdit, and never pulls in the cancellation/rating mutations at all.
+ */
 export function BookingStatusCard({
   booking,
   allowCancel = false,
@@ -49,74 +52,13 @@ export function BookingStatusCard({
   }, [booking]);
 
   const status = displayBooking.status as BookingStatus;
-  const isCancelled = status === "cancelled";
-  const isExpired = status === "expired";
-  const [confirmingCancel, setConfirmingCancel] = useState(false);
   const [editing, setEditing] = useState(false);
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
   const navigate = useNavigate();
 
   function handleRebook() {
     storeBookingPrefill(bookingToPrefillData(displayBooking));
     navigate({ to: "/reservation" });
   }
-
-  const cancelMutation = useMutation({
-    mutationFn: () =>
-      lookupCredentials
-        ? bookingsRepository.cancelBookingByReference(
-            supabase,
-            lookupCredentials.referenceCode,
-            lookupCredentials.phone
-          )
-        : bookingsRepository.cancelBooking(supabase, displayBooking.id),
-    onSuccess: () => {
-      setConfirmingCancel(false);
-      toast({ title: "Réservation annulée", variant: "success" });
-      setDisplayBooking((prev) => ({ ...prev, status: "cancelled" }));
-      queryClient.invalidateQueries({ queryKey: ["my-bookings"] });
-      notifyBookingCancelledServerFn({ data: { bookingId: displayBooking.id } }).catch((err) => {
-        logger.error("email.notifyBookingCancelled call failed", {
-          error: err instanceof Error ? err.message : String(err),
-          bookingId: displayBooking.id,
-        });
-      });
-      // Notify the assigned driver (if any) that the patient has cancelled.
-      notifyDriverPatientCancelledServerFn({ data: { bookingId: displayBooking.id } }).catch((err) => {
-        logger.error("email.notifyDriverPatientCancelled call failed", {
-          error: err instanceof Error ? err.message : String(err),
-          bookingId: displayBooking.id,
-        });
-      });
-    },
-    onError: (err: Error) => {
-      setConfirmingCancel(false);
-      logger.error("booking.cancel failed", { error: err.message, bookingId: displayBooking.id });
-      toast({ title: "Impossible d'annuler", description: err.message, variant: "error" });
-    },
-  });
-
-  const rateMutation = useMutation({
-    mutationFn: (vars: { rating: number; comment?: string }) =>
-      lookupCredentials
-        ? bookingsRepository.rateBookingAsPatientByReference(
-            supabase,
-            lookupCredentials.referenceCode,
-            lookupCredentials.phone,
-            vars.rating,
-            vars.comment
-          )
-        : bookingsRepository.rateBookingAsPatient(supabase, displayBooking.id, vars.rating, vars.comment),
-    onSuccess: (_, vars) => {
-      toast({ title: "Merci pour votre avis !", variant: "success" });
-      setDisplayBooking((prev) => ({ ...prev, patient_rating_given: vars.rating }));
-      queryClient.invalidateQueries({ queryKey: ["my-bookings"] });
-    },
-    onError: (err: Error) => {
-      toast({ title: "Impossible d'enregistrer votre avis", description: err.message, variant: "error" });
-    },
-  });
 
   const hasDriver = !!displayBooking.driver_full_name;
 
@@ -149,12 +91,7 @@ export function BookingStatusCard({
             Réf. {formatReferenceCode(displayBooking.reference_code)}
           </span>
         </span>
-        <span
-          className={cn(
-            "rounded-full px-3 py-1 text-xs font-bold",
-            STATUS_BADGE_CLASSES[status]
-          )}
-        >
+        <span className={cn("rounded-full px-3 py-1 text-xs font-bold", STATUS_BADGE_CLASSES[status])}>
           {STATUS_LABELS[status]}
         </span>
       </div>
@@ -163,15 +100,11 @@ export function BookingStatusCard({
         <div className="space-y-2">
           <div className="flex items-start gap-2.5">
             <MapPin className="h-4 w-4 text-brand-blue-500 shrink-0 mt-0.5" aria-hidden="true" />
-            <p className="text-sm font-medium text-gray-900 leading-snug">
-              {displayBooking.pickup_address}
-            </p>
+            <p className="text-sm font-medium text-gray-900 leading-snug">{displayBooking.pickup_address}</p>
           </div>
           <div className="flex items-start gap-2.5">
             <MapPin className="h-4 w-4 text-red-500 shrink-0 mt-0.5" aria-hidden="true" />
-            <p className="text-sm font-medium text-gray-900 leading-snug">
-              {displayBooking.dropoff_address}
-            </p>
+            <p className="text-sm font-medium text-gray-900 leading-snug">{displayBooking.dropoff_address}</p>
           </div>
         </div>
 
@@ -232,52 +165,7 @@ export function BookingStatusCard({
           />
         ) : (
           <>
-            {isCancelled ? (
-              <div className="flex items-start gap-2 rounded-xl bg-red-50 border border-red-100 p-3 text-sm text-red-700">
-                <XCircle className="h-5 w-5 shrink-0" aria-hidden="true" />
-                {STATUS_DESCRIPTIONS.cancelled}
-              </div>
-            ) : isExpired ? (
-              <div className="flex items-start gap-2 rounded-xl bg-amber-50 border border-amber-100 p-3 text-sm text-amber-700">
-                <AlertTriangle className="h-5 w-5 shrink-0" aria-hidden="true" />
-                {STATUS_DESCRIPTIONS.expired}
-              </div>
-            ) : (
-              <div>
-                <ol
-                  className="flex items-center"
-                  aria-label={`Avancement : ${STATUS_LABELS[status]}`}
-                >
-                  {STATUS_ORDER.map((step, i) => {
-                    const state = getStatusStepState(step, status);
-                    return (
-                      <li key={step} className="flex-1 flex items-center last:flex-none">
-                        <span
-                          className={cn(
-                            "h-2.5 w-2.5 rounded-full shrink-0",
-                            state === "done" && "bg-brand-green-500",
-                            state === "active" &&
-                              "bg-brand-blue-600 ring-4 ring-brand-blue-100",
-                            state === "pending" && "bg-gray-200"
-                          )}
-                          aria-current={state === "active" ? "step" : undefined}
-                        />
-                        {i < STATUS_ORDER.length - 1 && (
-                          <span
-                            className={cn(
-                              "h-0.5 flex-1",
-                              state === "done" ? "bg-brand-green-500" : "bg-gray-200"
-                            )}
-                            aria-hidden="true"
-                          />
-                        )}
-                      </li>
-                    );
-                  })}
-                </ol>
-                <p className="mt-2.5 text-sm text-gray-600">{STATUS_DESCRIPTIONS[status]}</p>
-              </div>
-            )}
+            <BookingProgressTimeline status={status} />
 
             {status === "completed" && (
               <button
@@ -291,19 +179,14 @@ export function BookingStatusCard({
             )}
 
             {status === "completed" && hasDriver && (
-              displayBooking.patient_rating_given != null ? (
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <span>Votre avis sur le chauffeur :</span>
-                  <StarRating value={displayBooking.patient_rating_given} readOnly size="sm" />
-                </div>
-              ) : (
-                <RatingForm
-                  prompt="Comment s'est passée votre course avec ce chauffeur ?"
-                  submitLabel="Envoyer mon avis"
-                  isSubmitting={rateMutation.isPending}
-                  onSubmit={(rating, comment) => rateMutation.mutate({ rating, comment })}
-                />
-              )
+              <BookingRatingSection
+                bookingId={displayBooking.id}
+                patientRatingGiven={displayBooking.patient_rating_given}
+                lookupCredentials={lookupCredentials}
+                onRated={(rating) =>
+                  setDisplayBooking((prev) => ({ ...prev, patient_rating_given: rating }))
+                }
+              />
             )}
 
             <div className="border-t pt-3">
@@ -340,58 +223,12 @@ export function BookingStatusCard({
 
             {allowCancel && isCancellable(status) && (
               <div className="border-t pt-3">
-                {confirmingCancel ? (
-                  <div className="space-y-2.5">
-                    {(() => {
-                      const hoursUntilPickup =
-                        (new Date(displayBooking.pickup_datetime).getTime() - Date.now()) / 3_600_000;
-                      const withinFreeCancelWindow = hoursUntilPickup >= 24;
-                      return (
-                        <p
-                          className={cn(
-                            "text-sm rounded-lg px-3 py-2",
-                            withinFreeCancelWindow
-                              ? "bg-brand-green-50 text-brand-green-800"
-                              : "bg-amber-50 text-amber-800"
-                          )}
-                        >
-                          {withinFreeCancelWindow
-                            ? "Vous êtes dans le délai d'annulation gratuite (plus de 24h avant le départ)."
-                            : "Ce départ est prévu dans moins de 24h — merci de nous prévenir au plus vite pour laisser une chance à un autre patient d'utiliser ce créneau."}
-                        </p>
-                      );
-                    })()}
-                    <div className="flex items-center gap-3 text-sm">
-                      <span className="text-gray-700">Confirmer l&apos;annulation ?</span>
-                      <button
-                        type="button"
-                        onClick={() => cancelMutation.mutate()}
-                        disabled={cancelMutation.isPending}
-                        className="font-bold text-red-600 hover:underline disabled:opacity-60 flex items-center gap-1.5"
-                      >
-                        {cancelMutation.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
-                        Oui, annuler
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setConfirmingCancel(false)}
-                        disabled={cancelMutation.isPending}
-                        className="text-gray-500 hover:underline"
-                      >
-                        Non
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setConfirmingCancel(true)}
-                    className="flex items-center gap-2 text-sm font-semibold text-red-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
-                  >
-                    <XCircle className="h-4 w-4" aria-hidden="true" />
-                    Annuler cette réservation
-                  </button>
-                )}
+                <CancelBookingAction
+                  bookingId={displayBooking.id}
+                  pickupDatetime={displayBooking.pickup_datetime}
+                  lookupCredentials={lookupCredentials}
+                  onCancelled={() => setDisplayBooking((prev) => ({ ...prev, status: "cancelled" }))}
+                />
               </div>
             )}
           </>

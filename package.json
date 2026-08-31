@@ -16,6 +16,7 @@
     "seo:copy": "node scripts/seo-data/generate-copy.mjs",
     "seo:discover-sae": "node scripts/seo-data/fetch-sae.mjs",
     "seo:discover-insee-local": "node scripts/seo-data/fetch-insee-local.mjs",
+    "verify:pricing-parity": "node scripts/verify-pricing-parity.mjs",
     "test:e2e": "playwright test"
   },
   "dependencies": {
