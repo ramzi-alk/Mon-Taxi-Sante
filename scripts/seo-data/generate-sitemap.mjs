@@ -42,6 +42,7 @@ const STATIC_PAGES = [
   { path: "/blog/taxi-conventionne-dimanche-nuit-jour-ferie", changefreq: "yearly", priority: "0.6" },
   { path: "/blog/bagages-materiel-taxi-conventionne", changefreq: "yearly", priority: "0.6" },
   { path: "/blog/transport-sanitaire-psychiatrie-ald-23", changefreq: "yearly", priority: "0.6" },
+  { path: "/blog/annulation-retard-taxi-conventionne", changefreq: "yearly", priority: "0.6" },
   { path: "/villes", changefreq: "monthly", priority: "0.8" },
   { path: "/maladies", changefreq: "monthly", priority: "0.8" },
   { path: "/cgv", changefreq: "yearly", priority: "0.3" },

@@ -199,4 +199,14 @@ export const blogPosts: BlogPost[] = [
     readingTime: "4 min",
     publishedAt: "17 septembre 2026",
   },
+  {
+    slug: "annulation-retard-taxi-conventionne",
+    to: "/blog/annulation-retard-taxi-conventionne",
+    category: "Démarches",
+    title: "Annulation ou retard de rendez-vous : quid de votre taxi ?",
+    excerpt:
+      "Rendez-vous annulé ou retard imprévu ? Comment gérer ces aléas avec votre taxi conventionné, sans frais et sans nouvelle prescription.",
+    readingTime: "4 min",
+    publishedAt: "18 septembre 2026",
+  },
 ];

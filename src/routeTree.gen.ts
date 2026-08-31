@@ -51,6 +51,7 @@ import { Route as BlogTaxiConventionneAccidentTravailRouteImport } from './route
 import { Route as BlogRetourDomicileSortieHopitalRouteImport } from './routes/blog/retour-domicile-sortie-hopital'
 import { Route as BlogPmtPrescriptionRouteImport } from './routes/blog/pmt-prescription'
 import { Route as BlogBagagesMaterielTaxiConventionneRouteImport } from './routes/blog/bagages-materiel-taxi-conventionne'
+import { Route as BlogAnnulationRetardTaxiConventionneRouteImport } from './routes/blog/annulation-retard-taxi-conventionne'
 import { Route as BlogAldTransportRouteImport } from './routes/blog/ald-transport'
 import { Route as BlogAccompagnantTaxiConventionneRouteImport } from './routes/blog/accompagnant-taxi-conventionne'
 import { Route as ApiDriverOfflineBeaconRouteImport } from './routes/api/driver-offline-beacon'
@@ -297,6 +298,12 @@ const BlogBagagesMaterielTaxiConventionneRoute =
     path: '/blog/bagages-materiel-taxi-conventionne',
     getParentRoute: () => rootRouteImport,
   } as any)
+const BlogAnnulationRetardTaxiConventionneRoute =
+  BlogAnnulationRetardTaxiConventionneRouteImport.update({
+    id: '/blog/annulation-retard-taxi-conventionne',
+    path: '/blog/annulation-retard-taxi-conventionne',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const BlogAldTransportRoute = BlogAldTransportRouteImport.update({
   id: '/blog/ald-transport',
   path: '/blog/ald-transport',
@@ -430,6 +437,7 @@ export interface FileRoutesByFullPath {
   '/api/driver-offline-beacon': typeof ApiDriverOfflineBeaconRoute
   '/blog/accompagnant-taxi-conventionne': typeof BlogAccompagnantTaxiConventionneRoute
   '/blog/ald-transport': typeof BlogAldTransportRoute
+  '/blog/annulation-retard-taxi-conventionne': typeof BlogAnnulationRetardTaxiConventionneRoute
   '/blog/bagages-materiel-taxi-conventionne': typeof BlogBagagesMaterielTaxiConventionneRoute
   '/blog/pmt-prescription': typeof BlogPmtPrescriptionRoute
   '/blog/retour-domicile-sortie-hopital': typeof BlogRetourDomicileSortieHopitalRoute
@@ -493,6 +501,7 @@ export interface FileRoutesByTo {
   '/api/driver-offline-beacon': typeof ApiDriverOfflineBeaconRoute
   '/blog/accompagnant-taxi-conventionne': typeof BlogAccompagnantTaxiConventionneRoute
   '/blog/ald-transport': typeof BlogAldTransportRoute
+  '/blog/annulation-retard-taxi-conventionne': typeof BlogAnnulationRetardTaxiConventionneRoute
   '/blog/bagages-materiel-taxi-conventionne': typeof BlogBagagesMaterielTaxiConventionneRoute
   '/blog/pmt-prescription': typeof BlogPmtPrescriptionRoute
   '/blog/retour-domicile-sortie-hopital': typeof BlogRetourDomicileSortieHopitalRoute
@@ -558,6 +567,7 @@ export interface FileRoutesById {
   '/api/driver-offline-beacon': typeof ApiDriverOfflineBeaconRoute
   '/blog/accompagnant-taxi-conventionne': typeof BlogAccompagnantTaxiConventionneRoute
   '/blog/ald-transport': typeof BlogAldTransportRoute
+  '/blog/annulation-retard-taxi-conventionne': typeof BlogAnnulationRetardTaxiConventionneRoute
   '/blog/bagages-materiel-taxi-conventionne': typeof BlogBagagesMaterielTaxiConventionneRoute
   '/blog/pmt-prescription': typeof BlogPmtPrescriptionRoute
   '/blog/retour-domicile-sortie-hopital': typeof BlogRetourDomicileSortieHopitalRoute
@@ -624,6 +634,7 @@ export interface FileRouteTypes {
     | '/api/driver-offline-beacon'
     | '/blog/accompagnant-taxi-conventionne'
     | '/blog/ald-transport'
+    | '/blog/annulation-retard-taxi-conventionne'
     | '/blog/bagages-materiel-taxi-conventionne'
     | '/blog/pmt-prescription'
     | '/blog/retour-domicile-sortie-hopital'
@@ -687,6 +698,7 @@ export interface FileRouteTypes {
     | '/api/driver-offline-beacon'
     | '/blog/accompagnant-taxi-conventionne'
     | '/blog/ald-transport'
+    | '/blog/annulation-retard-taxi-conventionne'
     | '/blog/bagages-materiel-taxi-conventionne'
     | '/blog/pmt-prescription'
     | '/blog/retour-domicile-sortie-hopital'
@@ -751,6 +763,7 @@ export interface FileRouteTypes {
     | '/api/driver-offline-beacon'
     | '/blog/accompagnant-taxi-conventionne'
     | '/blog/ald-transport'
+    | '/blog/annulation-retard-taxi-conventionne'
     | '/blog/bagages-materiel-taxi-conventionne'
     | '/blog/pmt-prescription'
     | '/blog/retour-domicile-sortie-hopital'
@@ -808,6 +821,7 @@ export interface RootRouteChildren {
   ApiDriverOfflineBeaconRoute: typeof ApiDriverOfflineBeaconRoute
   BlogAccompagnantTaxiConventionneRoute: typeof BlogAccompagnantTaxiConventionneRoute
   BlogAldTransportRoute: typeof BlogAldTransportRoute
+  BlogAnnulationRetardTaxiConventionneRoute: typeof BlogAnnulationRetardTaxiConventionneRoute
   BlogBagagesMaterielTaxiConventionneRoute: typeof BlogBagagesMaterielTaxiConventionneRoute
   BlogPmtPrescriptionRoute: typeof BlogPmtPrescriptionRoute
   BlogRetourDomicileSortieHopitalRoute: typeof BlogRetourDomicileSortieHopitalRoute
@@ -1140,6 +1154,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BlogBagagesMaterielTaxiConventionneRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/blog/annulation-retard-taxi-conventionne': {
+      id: '/blog/annulation-retard-taxi-conventionne'
+      path: '/blog/annulation-retard-taxi-conventionne'
+      fullPath: '/blog/annulation-retard-taxi-conventionne'
+      preLoaderRoute: typeof BlogAnnulationRetardTaxiConventionneRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/blog/ald-transport': {
       id: '/blog/ald-transport'
       path: '/blog/ald-transport'
@@ -1329,6 +1350,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiDriverOfflineBeaconRoute: ApiDriverOfflineBeaconRoute,
   BlogAccompagnantTaxiConventionneRoute: BlogAccompagnantTaxiConventionneRoute,
   BlogAldTransportRoute: BlogAldTransportRoute,
+  BlogAnnulationRetardTaxiConventionneRoute:
+    BlogAnnulationRetardTaxiConventionneRoute,
   BlogBagagesMaterielTaxiConventionneRoute:
     BlogBagagesMaterielTaxiConventionneRoute,
   BlogPmtPrescriptionRoute: BlogPmtPrescriptionRoute,
