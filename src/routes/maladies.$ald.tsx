@@ -7,6 +7,7 @@ import { usePhoneVisibility } from "~/hooks/usePhoneVisibility";
 import { CitySearch } from "~/components/CitySearch";
 import { FaqSchema } from "~/components/FaqSchema";
 import { BreadcrumbSchema } from "~/components/BreadcrumbSchema";
+import { canonicalLinks } from "~/lib/seoLinks";
 
 const aldBySlug = new Map(aldList.map((a) => [a.slug, a]));
 
@@ -27,12 +28,7 @@ export const Route = createFileRoute("/maladies/$ald")({
         { property: "og:title", content: title },
         { property: "og:description", content: description },
       ],
-      links: [
-        {
-          rel: "canonical",
-          href: `https://docteurtaxi.fr/maladies/${params.ald}`,
-        },
-      ],
+      links: canonicalLinks(`https://docteurtaxi.fr/maladies/${params.ald}`),
     };
   },
   component: MaladiePage,

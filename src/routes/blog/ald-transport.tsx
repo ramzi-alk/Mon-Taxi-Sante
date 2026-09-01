@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BlogLayout } from "~/components/BlogLayout";
 import { FaqSchema } from "~/components/FaqSchema";
+import { canonicalLinks } from "~/lib/seoLinks";
 
 export const Route = createFileRoute("/blog/ald-transport")({
   head: () => ({
@@ -12,7 +13,7 @@ export const Route = createFileRoute("/blog/ald-transport")({
           "ALD et transport sanitaire : prise en charge à 100% avec Prescription Médicale de Transport, pathologies concernées, démarches et Tiers-Payant sans avance de frais.",
       },
     ],
-    links: [{ rel: "canonical", href: "https://docteurtaxi.fr/blog/ald-transport" }],
+    links: canonicalLinks("https://docteurtaxi.fr/blog/ald-transport"),
   }),
   component: AldTransportArticle,
 });

@@ -5,6 +5,7 @@ import { aldList as ald } from "~/lib/aldData";
 import { Input } from "~/components/ui/input";
 import { slugify } from "~/lib/utils";
 import { BreadcrumbSchema } from "~/components/BreadcrumbSchema";
+import { canonicalLinks } from "~/lib/seoLinks";
 
 export const Route = createFileRoute("/maladies/")({
   head: () => ({
@@ -19,7 +20,7 @@ export const Route = createFileRoute("/maladies/")({
           "Transport pris en charge à 100% pour les 30 Affections de Longue Durée (ALD) : dialyse, cancer, diabète, sclérose en plaques... Trouvez votre pathologie.",
       },
     ],
-    links: [{ rel: "canonical", href: "https://docteurtaxi.fr/maladies" }],
+    links: canonicalLinks("https://docteurtaxi.fr/maladies"),
   }),
   component: MaladiesPage,
 });

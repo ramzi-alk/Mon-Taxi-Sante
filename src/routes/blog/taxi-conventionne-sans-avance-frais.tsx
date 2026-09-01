@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BlogLayout } from "~/components/BlogLayout";
 import { FaqSchema } from "~/components/FaqSchema";
+import { canonicalLinks } from "~/lib/seoLinks";
 
 export const Route = createFileRoute(
   "/blog/taxi-conventionne-sans-avance-frais",
@@ -14,12 +15,7 @@ export const Route = createFileRoute(
           "Comment bénéficier d'un taxi conventionné remboursé sans avance de frais ? Le fonctionnement concret du Tiers-Payant et les documents à préparer.",
       },
     ],
-    links: [
-      {
-        rel: "canonical",
-        href: "https://docteurtaxi.fr/blog/taxi-conventionne-sans-avance-frais",
-      },
-    ],
+    links: canonicalLinks("https://docteurtaxi.fr/blog/taxi-conventionne-sans-avance-frais"),
   }),
   component: TaxiConventionneSansAvanceFraisArticle,
 });

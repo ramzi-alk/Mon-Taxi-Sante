@@ -7,6 +7,7 @@ import { Input } from "~/components/ui/input";
 import { CitySearch } from "~/components/CitySearch";
 import { slugify } from "~/lib/utils";
 import { BreadcrumbSchema } from "~/components/BreadcrumbSchema";
+import { canonicalLinks } from "~/lib/seoLinks";
 
 const departmentsByRegion = new Map<string, typeof departments>();
 for (const d of departments) {
@@ -28,7 +29,7 @@ export const Route = createFileRoute("/villes")({
           "Trouvez votre taxi médical conventionné Assurance Maladie par région et département, partout en France métropolitaine et outre-mer.",
       },
     ],
-    links: [{ rel: "canonical", href: "https://docteurtaxi.fr/villes" }],
+    links: canonicalLinks("https://docteurtaxi.fr/villes"),
   }),
   component: VillesPage,
 });

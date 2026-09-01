@@ -13,6 +13,7 @@ import { SiretAutocomplete } from "~/components/chauffeurs/SiretAutocomplete";
 import { AddressAutocomplete } from "~/components/booking/AddressAutocomplete";
 import { Input } from "~/components/ui/input";
 import type { CompanySuggestion } from "~/lib/siren";
+import { canonicalLinks } from "~/lib/seoLinks";
 
 export const Route = createFileRoute("/chauffeurs/inscription")({
   head: () => ({
@@ -24,6 +25,7 @@ export const Route = createFileRoute("/chauffeurs/inscription")({
           "Rejoignez le réseau Docteur Taxi : chauffeurs de taxi et VSL conventionnés Assurance Maladie. Inscription en ligne, validation par notre équipe.",
       },
     ],
+    links: canonicalLinks("https://docteurtaxi.fr/chauffeurs/inscription"),
   }),
   component: InscriptionChauffeurPage,
 });

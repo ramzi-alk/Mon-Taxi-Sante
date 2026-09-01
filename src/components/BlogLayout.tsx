@@ -62,6 +62,7 @@ export function BlogLayout({
         <div className="container max-w-3xl py-16 md:py-20">
           <BlogCoverImage
             slug={slug}
+            title={title}
             className="w-full aspect-video object-cover object-left-top rounded-2xl mb-10"
           />
           <div className="prose prose-gray max-w-none prose-headings:font-bold prose-headings:text-[#0B0F1C] prose-a:text-[#1244E8] prose-a:no-underline hover:prose-a:underline">

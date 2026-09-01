@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BlogLayout } from "~/components/BlogLayout";
 import { FaqSchema } from "~/components/FaqSchema";
+import { canonicalLinks } from "~/lib/seoLinks";
 
 export const Route = createFileRoute("/blog/pmt-prescription")({
   head: () => ({
@@ -15,7 +16,7 @@ export const Route = createFileRoute("/blog/pmt-prescription")({
           "Qu'est-ce qu'une PMT, qui peut la délivrer, sa durée de validité et comment la joindre à votre réservation de taxi conventionné pour être remboursé sans avance de frais.",
       },
     ],
-    links: [{ rel: "canonical", href: "https://docteurtaxi.fr/blog/pmt-prescription" }],
+    links: canonicalLinks("https://docteurtaxi.fr/blog/pmt-prescription"),
   }),
   component: PmtPrescriptionArticle,
 });

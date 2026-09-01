@@ -3,6 +3,7 @@ import { ChevronDown } from "lucide-react";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL, CONTACT_EMAIL } from "~/lib/contact";
 import { trackCallButtonClick } from "~/lib/trackCallClick";
 import { usePhoneVisibility } from "~/hooks/usePhoneVisibility";
+import { canonicalLinks } from "~/lib/seoLinks";
 
 export const Route = createFileRoute("/faq")({
   head: () => ({
@@ -14,7 +15,7 @@ export const Route = createFileRoute("/faq")({
           "Toutes les réponses à vos questions sur la réservation, la prise en charge Assurance Maladie, le Tiers-Payant et les chauffeurs partenaires.",
       },
     ],
-    links: [{ rel: "canonical", href: "https://docteurtaxi.fr/faq" }],
+    links: canonicalLinks("https://docteurtaxi.fr/faq"),
   }),
   component: FaqPage,
 });

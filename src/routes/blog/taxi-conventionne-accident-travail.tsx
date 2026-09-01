@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BlogLayout } from "~/components/BlogLayout";
 import { FaqSchema } from "~/components/FaqSchema";
+import { canonicalLinks } from "~/lib/seoLinks";
 
 export const Route = createFileRoute(
   "/blog/taxi-conventionne-accident-travail",
@@ -14,12 +15,7 @@ export const Route = createFileRoute(
           "Victime d'un accident du travail ou d'une maladie professionnelle ? Comment réserver un taxi conventionné pris en charge à 100 %, sans avance de frais.",
       },
     ],
-    links: [
-      {
-        rel: "canonical",
-        href: "https://docteurtaxi.fr/blog/taxi-conventionne-accident-travail",
-      },
-    ],
+    links: canonicalLinks("https://docteurtaxi.fr/blog/taxi-conventionne-accident-travail"),
   }),
   component: TaxiConventionneAccidentTravailArticle,
 });

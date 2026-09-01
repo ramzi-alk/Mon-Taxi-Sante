@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BlogLayout } from "~/components/BlogLayout";
 import { FaqSchema } from "~/components/FaqSchema";
+import { canonicalLinks } from "~/lib/seoLinks";
 
 export const Route = createFileRoute(
   "/blog/taxi-conventionne-ou-ambulance-rendez-vous",
@@ -14,12 +15,7 @@ export const Route = createFileRoute(
           "Taxi conventionné ou ambulance pour votre rendez-vous médical ? Les critères de décision, qui tranche, et les règles de prise en charge CPAM.",
       },
     ],
-    links: [
-      {
-        rel: "canonical",
-        href: "https://docteurtaxi.fr/blog/taxi-conventionne-ou-ambulance-rendez-vous",
-      },
-    ],
+    links: canonicalLinks("https://docteurtaxi.fr/blog/taxi-conventionne-ou-ambulance-rendez-vous"),
   }),
   component: TaxiConventionneOuAmbulanceRendezVousArticle,
 });

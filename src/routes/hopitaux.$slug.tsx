@@ -8,6 +8,7 @@ import { FaqSchema } from "~/components/FaqSchema";
 import { BreadcrumbSchema } from "~/components/BreadcrumbSchema";
 import { aldList } from "~/lib/aldData";
 import type { Hospital } from "~/lib/seoData";
+import { canonicalLinks } from "~/lib/seoLinks";
 
 // Recoupement catégorie FINESS -> ALD la plus pertinente. Volontairement
 // limité aux libellés de catégorie effectivement présents dans les données
@@ -44,12 +45,7 @@ export const Route = createFileRoute("/hopitaux/$slug")({
         { property: "og:title", content: title },
         { property: "og:description", content: description },
       ],
-      links: [
-        {
-          rel: "canonical",
-          href: `https://docteurtaxi.fr/hopitaux/${params.slug}`,
-        },
-      ],
+      links: canonicalLinks(`https://docteurtaxi.fr/hopitaux/${params.slug}`),
     };
   },
   component: HospitalPage,

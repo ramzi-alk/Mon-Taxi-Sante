@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BlogLayout } from "~/components/BlogLayout";
 import { FaqSchema } from "~/components/FaqSchema";
+import { canonicalLinks } from "~/lib/seoLinks";
 
 export const Route = createFileRoute("/blog/taxi-conventionne-cure-thermale")({
   head: () => ({
@@ -12,9 +13,7 @@ export const Route = createFileRoute("/blog/taxi-conventionne-cure-thermale")({
           "Les règles strictes de la CPAM pour le remboursement du transport vers une cure thermale : conditions de ressources et prise en charge expliquées.",
       },
     ],
-    links: [
-      { rel: "canonical", href: "https://docteurtaxi.fr/blog/taxi-conventionne-cure-thermale" },
-    ],
+    links: canonicalLinks("https://docteurtaxi.fr/blog/taxi-conventionne-cure-thermale"),
   }),
   component: TaxiConventionneCureThermaleArticle,
 });

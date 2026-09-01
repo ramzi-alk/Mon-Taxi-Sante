@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BlogLayout } from "~/components/BlogLayout";
 import { FaqSchema } from "~/components/FaqSchema";
+import { canonicalLinks } from "~/lib/seoLinks";
 
 export const Route = createFileRoute(
   "/blog/transport-sanitaire-proche-demarches",
@@ -14,12 +15,7 @@ export const Route = createFileRoute(
           "Aidant familial ? Les démarches pour organiser le transport sanitaire d'un proche malade en taxi conventionné, avec Tiers-Payant intégral.",
       },
     ],
-    links: [
-      {
-        rel: "canonical",
-        href: "https://docteurtaxi.fr/blog/transport-sanitaire-proche-demarches",
-      },
-    ],
+    links: canonicalLinks("https://docteurtaxi.fr/blog/transport-sanitaire-proche-demarches"),
   }),
   component: TransportSanitaireProcheDemarchesArticle,
 });

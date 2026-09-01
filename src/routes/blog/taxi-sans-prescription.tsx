@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BlogLayout } from "~/components/BlogLayout";
 import { FaqSchema } from "~/components/FaqSchema";
+import { canonicalLinks } from "~/lib/seoLinks";
 
 export const Route = createFileRoute("/blog/taxi-sans-prescription")({
   head: () => ({
@@ -12,7 +13,7 @@ export const Route = createFileRoute("/blog/taxi-sans-prescription")({
           "Puis-je réserver un taxi conventionné sans Prescription Médicale de Transport ? Ce qui change pour votre remboursement et comment régulariser votre dossier.",
       },
     ],
-    links: [{ rel: "canonical", href: "https://docteurtaxi.fr/blog/taxi-sans-prescription" }],
+    links: canonicalLinks("https://docteurtaxi.fr/blog/taxi-sans-prescription"),
   }),
   component: TaxiSansPrescriptionArticle,
 });

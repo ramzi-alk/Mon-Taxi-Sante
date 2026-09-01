@@ -3,6 +3,7 @@ import { ArrowRight, CheckCircle2, Info } from "lucide-react";
 import { FaqSchema } from "~/components/FaqSchema";
 import { BreadcrumbSchema } from "~/components/BreadcrumbSchema";
 import { FareEstimateForm } from "~/components/FareEstimateForm";
+import { canonicalLinks } from "~/lib/seoLinks";
 
 export const Route = createFileRoute("/tarifs-cpam")({
   head: () => ({
@@ -20,7 +21,7 @@ export const Route = createFileRoute("/tarifs-cpam")({
           "Forfait 13€, tarif/km par département, remboursement à 100% en ALD. Le détail complet de la convention nationale 2025.",
       },
     ],
-    links: [{ rel: "canonical", href: "https://docteurtaxi.fr/tarifs-cpam" }],
+    links: canonicalLinks("https://docteurtaxi.fr/tarifs-cpam"),
   }),
   component: TarifsCpamPage,
 });

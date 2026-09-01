@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BlogLayout } from "~/components/BlogLayout";
 import { FaqSchema } from "~/components/FaqSchema";
+import { canonicalLinks } from "~/lib/seoLinks";
 
 export const Route = createFileRoute(
   "/blog/traitements-reguliers-taxi-conventionne",
@@ -14,12 +15,7 @@ export const Route = createFileRoute(
           "Chimiothérapie, radiothérapie, dialyse : organisez vos transports réguliers en taxi conventionné, prise en charge à 100 % et zéro avance de frais.",
       },
     ],
-    links: [
-      {
-        rel: "canonical",
-        href: "https://docteurtaxi.fr/blog/traitements-reguliers-taxi-conventionne",
-      },
-    ],
+    links: canonicalLinks("https://docteurtaxi.fr/blog/traitements-reguliers-taxi-conventionne"),
   }),
   component: TraitementsReguliersTaxiConventionneArticle,
 });

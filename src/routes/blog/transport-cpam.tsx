@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BlogLayout } from "~/components/BlogLayout";
 import { FaqSchema } from "~/components/FaqSchema";
+import { canonicalLinks } from "~/lib/seoLinks";
 
 export const Route = createFileRoute("/blog/transport-cpam")({
   head: () => ({
@@ -12,7 +13,7 @@ export const Route = createFileRoute("/blog/transport-cpam")({
           "Dialyse, chimiothérapie, ALD, maternité : quelles situations ouvrent droit à un transport remboursé à 100% ou 65%, comment fonctionne le Tiers-Payant et les démarches à suivre.",
       },
     ],
-    links: [{ rel: "canonical", href: "https://docteurtaxi.fr/blog/transport-cpam" }],
+    links: canonicalLinks("https://docteurtaxi.fr/blog/transport-cpam"),
   }),
   component: TransportCpamArticle,
 });

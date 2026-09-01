@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BlogLayout } from "~/components/BlogLayout";
 import { FaqSchema } from "~/components/FaqSchema";
+import { canonicalLinks } from "~/lib/seoLinks";
 
 export const Route = createFileRoute(
   "/blog/annulation-retard-taxi-conventionne",
@@ -14,12 +15,7 @@ export const Route = createFileRoute(
           "Votre rendez-vous médical est annulé ou en retard ? Comment gérer ces imprévus avec votre taxi conventionné, et s'il y a des frais à prévoir.",
       },
     ],
-    links: [
-      {
-        rel: "canonical",
-        href: "https://docteurtaxi.fr/blog/annulation-retard-taxi-conventionne",
-      },
-    ],
+    links: canonicalLinks("https://docteurtaxi.fr/blog/annulation-retard-taxi-conventionne"),
   }),
   component: AnnulationRetardTaxiConventionneArticle,
 });

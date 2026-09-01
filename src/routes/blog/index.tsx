@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import { blogPosts } from "~/lib/blog-posts";
 import { BlogCoverImage } from "~/components/BlogCoverImage";
+import { canonicalLinks } from "~/lib/seoLinks";
 
 export const Route = createFileRoute("/blog/")({
   head: () => ({
@@ -13,7 +14,7 @@ export const Route = createFileRoute("/blog/")({
           "Tous nos guides pour comprendre la prise en charge Assurance Maladie de votre transport médical : ALD, prescription médicale de transport, Tiers-Payant.",
       },
     ],
-    links: [{ rel: "canonical", href: "https://docteurtaxi.fr/blog" }],
+    links: canonicalLinks("https://docteurtaxi.fr/blog"),
   }),
   component: BlogIndexPage,
 });
@@ -45,7 +46,7 @@ function BlogIndexPage() {
                   to={to}
                   className="group flex h-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  <BlogCoverImage slug={slug} className="h-40 w-full object-cover object-left-top" />
+                  <BlogCoverImage slug={slug} title={title} className="h-40 w-full object-cover object-left-top" />
                   <div className="flex flex-1 flex-col p-6">
                     <p className="text-xs font-bold tracking-[0.1em] text-[#1244E8] uppercase mb-3">
                       {category}

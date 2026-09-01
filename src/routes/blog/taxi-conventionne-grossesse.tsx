@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BlogLayout } from "~/components/BlogLayout";
 import { FaqSchema } from "~/components/FaqSchema";
+import { canonicalLinks } from "~/lib/seoLinks";
 
 export const Route = createFileRoute("/blog/taxi-conventionne-grossesse")({
   head: () => ({
@@ -12,9 +13,7 @@ export const Route = createFileRoute("/blog/taxi-conventionne-grossesse")({
           "Les règles de la CPAM pour le taxi conventionné pendant la grossesse : remboursement à 100 % dès le 6ème mois, zéro avance de frais pour vos échographies.",
       },
     ],
-    links: [
-      { rel: "canonical", href: "https://docteurtaxi.fr/blog/taxi-conventionne-grossesse" },
-    ],
+    links: canonicalLinks("https://docteurtaxi.fr/blog/taxi-conventionne-grossesse"),
   }),
   component: TaxiConventionneGrossesseArticle,
 });
