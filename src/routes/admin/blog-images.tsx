@@ -4,6 +4,7 @@ import { ImageIcon, Upload, Loader2, CheckCircle2 } from "lucide-react";
 import { supabase } from "~/lib/supabase";
 import { blogPosts } from "~/lib/blog-posts";
 import { compressImageToWebp } from "~/lib/imageCompression";
+import { getBlogImageUrl } from "~/lib/blogImages";
 import * as storageRepository from "~/repositories/storageRepository";
 import { useToast } from "~/components/ui/toast";
 import { cn } from "~/lib/utils";
@@ -18,8 +19,8 @@ export const Route = createFileRoute("/admin/blog-images")({
 const BUCKET = "blog-images";
 
 function publicImageUrl(slug: string, cacheBust?: number) {
-  const { data } = supabase.storage.from(BUCKET).getPublicUrl(`${slug}.webp`);
-  return cacheBust ? `${data.publicUrl}?v=${cacheBust}` : data.publicUrl;
+  const url = getBlogImageUrl(slug);
+  return cacheBust ? `${url}?v=${cacheBust}` : url;
 }
 
 function AdminBlogImagesPage() {

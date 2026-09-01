@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import { blogPosts } from "~/lib/blog-posts";
+import { BlogCoverImage } from "~/components/BlogCoverImage";
 
 export const Route = createFileRoute("/blog/")({
   head: () => ({
@@ -38,29 +39,32 @@ function BlogIndexPage() {
       <section className="bg-[#F7F8FC]">
         <div className="container pb-20 md:pb-28">
           <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 list-none" role="list">
-            {blogPosts.map(({ to, category, title, excerpt, readingTime, publishedAt }) => (
+            {blogPosts.map(({ to, slug, category, title, excerpt, readingTime, publishedAt }) => (
               <li key={to}>
                 <Link
                   to={to}
-                  className="group flex h-full flex-col rounded-xl border border-gray-200 bg-white p-6 hover:border-gray-300 hover:shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="group flex h-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  <p className="text-xs font-bold tracking-[0.1em] text-[#1244E8] uppercase mb-3">
-                    {category}
-                  </p>
-                  <h2 className="font-bold text-[#0B0F1C] text-lg mb-2 leading-snug">
-                    {title}
-                  </h2>
-                  <p className="text-sm text-gray-500 leading-relaxed flex-1">
-                    {excerpt}
-                  </p>
-                  <div className="mt-5 flex items-center justify-between text-xs text-gray-400">
-                    <span>
-                      {publishedAt} · {readingTime} de lecture
-                    </span>
-                    <ArrowRight
-                      className="h-4 w-4 text-[#1244E8] group-hover:translate-x-0.5 transition-transform"
-                      aria-hidden="true"
-                    />
+                  <BlogCoverImage slug={slug} className="h-40 w-full object-cover" />
+                  <div className="flex flex-1 flex-col p-6">
+                    <p className="text-xs font-bold tracking-[0.1em] text-[#1244E8] uppercase mb-3">
+                      {category}
+                    </p>
+                    <h2 className="font-bold text-[#0B0F1C] text-lg mb-2 leading-snug">
+                      {title}
+                    </h2>
+                    <p className="text-sm text-gray-500 leading-relaxed flex-1">
+                      {excerpt}
+                    </p>
+                    <div className="mt-5 flex items-center justify-between text-xs text-gray-400">
+                      <span>
+                        {publishedAt} · {readingTime} de lecture
+                      </span>
+                      <ArrowRight
+                        className="h-4 w-4 text-[#1244E8] group-hover:translate-x-0.5 transition-transform"
+                        aria-hidden="true"
+                      />
+                    </div>
                   </div>
                 </Link>
               </li>
