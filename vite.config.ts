@@ -14,5 +14,11 @@ export default defineConfig(({ command }) => ({
   // Only bundle all deps during production build (for self-contained Vercel SSR).
   // No ssr config in dev — avoids Vite 7 bug where noExternal:false triggers
   // "filename.replace is not a function" in shouldExternalize.
-  ...(command === "build" ? { ssr: { noExternal: true } } : {}),
+  //
+  // sharp is kept external: it ships a native .node binary (per-platform,
+  // via optional deps like @img/sharp-linux-x64) that Rollup cannot inline
+  // into server.js. Left as a real `require`/`import "sharp"`, resolved at
+  // runtime from node_modules — scripts/vercel-build.mjs copies sharp's
+  // real (symlink-dereferenced) directory next to server.js for this.
+  ...(command === "build" ? { ssr: { noExternal: true, external: ["sharp"] } } : {}),
 }));

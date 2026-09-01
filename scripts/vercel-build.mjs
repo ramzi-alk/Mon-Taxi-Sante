@@ -1,6 +1,7 @@
-import { cp, mkdir, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { cp, mkdir, realpath, writeFile } from "node:fs/promises";
+import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { execFileSync } from "node:child_process";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const out = join(root, ".vercel/output");
@@ -22,6 +23,27 @@ await cp(
   join(out, "functions/ssr.func/assets"),
   { recursive: true }
 ).catch(() => null);
+
+// sharp is excluded from the server.js bundle (see vite.config.ts, ssr.external)
+// because it ships a native .node binary that Rollup can't inline — Node
+// resolves `import "sharp"` against node_modules at runtime instead, so a
+// real (non-bundled) copy needs to sit next to server.js.
+//
+// pnpm's isolated node_modules layout resolves a package's own dependencies
+// as symlinks *siblings* to it, one level up (e.g. .../sharp@0.35.4.../
+// node_modules/{sharp,@img,detect-libc,semver}/) — not nested inside the
+// package's own folder — so the parent of node_modules/sharp's realpath
+// (not sharp's own directory) is what needs copying, sharp included.
+//
+// Node's fs.cp({dereference:true}) does not actually follow *nested*
+// directory symlinks (verified: it lists @img/sharp-linux-x64 as an entry
+// but copies it empty, no binary) — shelling out to `cp -rL`, which does
+// not have this bug, is a deliberate exception to "no shell-outs in build
+// scripts" for this reason alone.
+const sharpModulesDir = dirname(await realpath(join(root, "node_modules/sharp")));
+const sharpDest = join(out, "functions/ssr.func/node_modules");
+await mkdir(sharpDest, { recursive: true });
+execFileSync("cp", ["-rL", sharpModulesDir + "/.", sharpDest]);
 
 // Thin Node.js wrapper — imports from server.js and adapts fetch API → Node http
 await writeFile(

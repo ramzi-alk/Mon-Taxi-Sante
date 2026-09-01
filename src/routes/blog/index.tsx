@@ -45,7 +45,7 @@ function BlogIndexPage() {
                   to={to}
                   className="group flex h-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  <BlogCoverImage slug={slug} className="h-40 w-full object-cover" />
+                  <BlogCoverImage slug={slug} className="h-40 w-full object-cover object-left-top" />
                   <div className="flex flex-1 flex-col p-6">
                     <p className="text-xs font-bold tracking-[0.1em] text-[#1244E8] uppercase mb-3">
                       {category}
