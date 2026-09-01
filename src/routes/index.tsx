@@ -14,17 +14,18 @@ import { CitySearch } from "~/components/CitySearch";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
 import { trackCallButtonClick } from "~/lib/trackCallClick";
 import { usePhoneVisibility } from "~/hooks/usePhoneVisibility";
+import { canonicalLinks } from "~/lib/seoLinks";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       {
-        title: "Docteur Taxi — Réservez votre taxi conventionné Assurance Maladie en ligne",
+        title: "Docteur Taxi — Taxi conventionné Assurance Maladie",
       },
       {
         name: "description",
         content:
-          "Réservez votre taxi médical agréé Sécurité Sociale en 2 minutes. Tiers-Payant intégral, chauffeurs certifiés Assurance Maladie. Zéro avance de frais pour ALD, dialyse, chimiothérapie.",
+          "Réservez votre taxi médical conventionné en ligne. Tiers-payant intégral, zéro avance de frais, chauffeurs certifiés Assurance Maladie.",
       },
       { property: "og:title", content: "Docteur Taxi — Taxi conventionné Assurance Maladie" },
       {
@@ -35,7 +36,7 @@ export const Route = createFileRoute("/")({
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
-    links: [{ rel: "canonical", href: "https://docteurtaxi.fr/" }],
+    links: canonicalLinks("https://docteurtaxi.fr/"),
   }),
   component: HomePage,
 });
@@ -633,6 +634,7 @@ function HomeStructuredData() {
         "@id": "https://docteurtaxi.fr/#organization",
         name: "Docteur Taxi",
         url: "https://docteurtaxi.fr",
+        logo: "https://docteurtaxi.fr/icons/icon-512.png",
         description:
           "Plateforme de réservation de taxis conventionnés agréés Sécurité Sociale pour le transport médical en France.",
         ...(phoneVisible ? { telephone: CONTACT_PHONE_TEL } : {}),
@@ -646,11 +648,6 @@ function HomeStructuredData() {
         url: "https://docteurtaxi.fr",
         name: "Docteur Taxi",
         publisher: { "@id": "https://docteurtaxi.fr/#organization" },
-        potentialAction: {
-          "@type": "SearchAction",
-          target: "https://docteurtaxi.fr/search?q={search_term_string}",
-          "query-input": "required name=search_term_string",
-        },
       },
     ],
   };

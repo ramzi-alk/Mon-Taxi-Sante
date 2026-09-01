@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BlogLayout } from "~/components/BlogLayout";
 import { FaqSchema } from "~/components/FaqSchema";
+import { canonicalLinks } from "~/lib/seoLinks";
 
 export const Route = createFileRoute(
   "/blog/transfert-inter-hospitalier-taxi-conventionne",
@@ -14,12 +15,7 @@ export const Route = createFileRoute(
           "Vous êtes transféré d'un hôpital à un autre ? Qui organise et paie votre transport en taxi conventionné lors d'un transfert inter-hospitalier.",
       },
     ],
-    links: [
-      {
-        rel: "canonical",
-        href: "https://docteurtaxi.fr/blog/transfert-inter-hospitalier-taxi-conventionne",
-      },
-    ],
+    links: canonicalLinks("https://docteurtaxi.fr/blog/transfert-inter-hospitalier-taxi-conventionne"),
   }),
   component: TransfertInterHospitalierTaxiConventionneArticle,
 });

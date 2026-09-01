@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BlogLayout } from "~/components/BlogLayout";
 import { FaqSchema } from "~/components/FaqSchema";
+import { canonicalLinks } from "~/lib/seoLinks";
 
 export const Route = createFileRoute(
   "/blog/transport-sanitaire-psychiatrie-ald-23",
@@ -14,12 +15,7 @@ export const Route = createFileRoute(
           "Vos soins psychiatriques nécessitent des déplacements réguliers ? Vos droits au taxi conventionné sans avance de frais dans le cadre de l'ALD 23.",
       },
     ],
-    links: [
-      {
-        rel: "canonical",
-        href: "https://docteurtaxi.fr/blog/transport-sanitaire-psychiatrie-ald-23",
-      },
-    ],
+    links: canonicalLinks("https://docteurtaxi.fr/blog/transport-sanitaire-psychiatrie-ald-23"),
   }),
   component: TransportSanitairePsychiatrieAld23Article,
 });

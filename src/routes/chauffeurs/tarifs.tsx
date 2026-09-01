@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
+import { canonicalLinks } from "~/lib/seoLinks";
 
 export const Route = createFileRoute("/chauffeurs/tarifs")({
   head: () => ({
@@ -11,6 +12,7 @@ export const Route = createFileRoute("/chauffeurs/tarifs")({
           "Découvrez nos formules d'abonnement pour chauffeurs conventionnés : essai gratuit, abonnement mensuel ou annuel, sans engagement.",
       },
     ],
+    links: canonicalLinks("https://docteurtaxi.fr/chauffeurs/tarifs"),
   }),
   component: TarifsChauffeurPage,
 });

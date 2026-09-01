@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BlogLayout } from "~/components/BlogLayout";
 import { FaqSchema } from "~/components/FaqSchema";
+import { canonicalLinks } from "~/lib/seoLinks";
 
 export const Route = createFileRoute("/blog/transport-pmr-personnes-agees")({
   head: () => ({
@@ -12,7 +13,7 @@ export const Route = createFileRoute("/blog/transport-pmr-personnes-agees")({
           "Taxi PMR pour personnes à mobilité réduite ou en fauteuil roulant : véhicule adapté, prise en charge Assurance Maladie et comment réserver.",
       },
     ],
-    links: [{ rel: "canonical", href: "https://docteurtaxi.fr/blog/transport-pmr-personnes-agees" }],
+    links: canonicalLinks("https://docteurtaxi.fr/blog/transport-pmr-personnes-agees"),
   }),
   component: TransportPmrArticle,
 });

@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BlogLayout } from "~/components/BlogLayout";
 import { FaqSchema } from "~/components/FaqSchema";
+import { canonicalLinks } from "~/lib/seoLinks";
 
 export const Route = createFileRoute(
   "/blog/transport-medical-plusieurs-rendez-vous",
@@ -14,12 +15,7 @@ export const Route = createFileRoute(
           "Comment organiser plusieurs rendez-vous médicaux le même jour avec un taxi conventionné ? Règles de la PMT et réservation sans avance de frais.",
       },
     ],
-    links: [
-      {
-        rel: "canonical",
-        href: "https://docteurtaxi.fr/blog/transport-medical-plusieurs-rendez-vous",
-      },
-    ],
+    links: canonicalLinks("https://docteurtaxi.fr/blog/transport-medical-plusieurs-rendez-vous"),
   }),
   component: TransportMedicalPlusieursRendezVousArticle,
 });

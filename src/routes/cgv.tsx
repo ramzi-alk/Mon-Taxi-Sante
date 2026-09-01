@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { LegalPageLayout } from "~/components/LegalPageLayout";
 import { CONTACT_PHONE_DISPLAY } from "~/lib/contact";
 import { usePhoneVisibility } from "~/hooks/usePhoneVisibility";
+import { canonicalLinks } from "~/lib/seoLinks";
 
 export const Route = createFileRoute("/cgv")({
   head: () => ({
@@ -13,6 +14,7 @@ export const Route = createFileRoute("/cgv")({
           "Conditions Générales de Vente de Docteur Taxi : réservation, prise en charge Assurance Maladie, annulation et responsabilité.",
       },
     ],
+    links: canonicalLinks("https://docteurtaxi.fr/cgv"),
   }),
   component: CgvPage,
 });

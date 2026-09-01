@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BlogLayout } from "~/components/BlogLayout";
 import { FaqSchema } from "~/components/FaqSchema";
+import { canonicalLinks } from "~/lib/seoLinks";
 
 export const Route = createFileRoute(
   "/blog/bagages-materiel-taxi-conventionne",
@@ -14,12 +15,7 @@ export const Route = createFileRoute(
           "Valise, déambulateur ou fauteuil roulant : le matériel que vous pouvez emporter dans un taxi conventionné pour votre hospitalisation.",
       },
     ],
-    links: [
-      {
-        rel: "canonical",
-        href: "https://docteurtaxi.fr/blog/bagages-materiel-taxi-conventionne",
-      },
-    ],
+    links: canonicalLinks("https://docteurtaxi.fr/blog/bagages-materiel-taxi-conventionne"),
   }),
   component: BagagesMaterielTaxiConventionneArticle,
 });

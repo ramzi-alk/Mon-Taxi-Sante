@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { LegalPageLayout } from "~/components/LegalPageLayout";
+import { canonicalLinks } from "~/lib/seoLinks";
 
 export const Route = createFileRoute("/confidentialite")({
   head: () => ({
@@ -11,6 +12,7 @@ export const Route = createFileRoute("/confidentialite")({
           "Politique de confidentialité de Docteur Taxi : données collectées, hébergement HDS, durée de conservation et vos droits RGPD.",
       },
     ],
+    links: canonicalLinks("https://docteurtaxi.fr/confidentialite"),
   }),
   component: ConfidentialitePage,
 });

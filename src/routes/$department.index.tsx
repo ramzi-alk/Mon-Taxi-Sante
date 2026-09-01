@@ -5,6 +5,7 @@ import { getDepartmentPageDataServerFn } from "~/server/seo";
 import { Input } from "~/components/ui/input";
 import { slugify } from "~/lib/utils";
 import { BreadcrumbSchema } from "~/components/BreadcrumbSchema";
+import { canonicalLinks } from "~/lib/seoLinks";
 
 export const Route = createFileRoute("/$department/")({
   // Voir le commentaire équivalent dans $department.$city.tsx : la fonction
@@ -27,12 +28,7 @@ export const Route = createFileRoute("/$department/")({
         { property: "og:title", content: title },
         { property: "og:description", content: description },
       ],
-      links: [
-        {
-          rel: "canonical",
-          href: `https://docteurtaxi.fr/${params.department}`,
-        },
-      ],
+      links: canonicalLinks(`https://docteurtaxi.fr/${params.department}`),
     };
   },
   component: DepartmentPage,

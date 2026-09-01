@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { LegalPageLayout } from "~/components/LegalPageLayout";
 import { CONTACT_PHONE_DISPLAY, CONTACT_EMAIL } from "~/lib/contact";
 import { usePhoneVisibility } from "~/hooks/usePhoneVisibility";
+import { canonicalLinks } from "~/lib/seoLinks";
 
 export const Route = createFileRoute("/mentions-legales")({
   head: () => ({
@@ -13,6 +14,7 @@ export const Route = createFileRoute("/mentions-legales")({
           "Mentions légales du site Docteur Taxi : éditeur, hébergement, propriété intellectuelle et droit applicable.",
       },
     ],
+    links: canonicalLinks("https://docteurtaxi.fr/mentions-legales"),
   }),
   component: MentionsLegalesPage,
 });

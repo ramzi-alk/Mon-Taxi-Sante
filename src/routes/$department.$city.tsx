@@ -8,6 +8,7 @@ import { HospitalSearch } from "~/components/HospitalSearch";
 import { FaqSchema } from "~/components/FaqSchema";
 import { BreadcrumbSchema } from "~/components/BreadcrumbSchema";
 import type { Commune, Hospital } from "~/lib/seoData";
+import { canonicalLinks } from "~/lib/seoLinks";
 
 // Sélection de pathologies parmi les 30 ALD, à forte notoriété/volume de
 // recherche, pour le maillage croisé ville -> maladie (le lien "toutes les
@@ -53,12 +54,7 @@ export const Route = createFileRoute("/$department/$city")({
         { name: "geo.region", content: `FR-${commune.codeDepartement}` },
         { name: "geo.placename", content: commune.nom },
       ],
-      links: [
-        {
-          rel: "canonical",
-          href: `https://docteurtaxi.fr/${params.department}/${params.city}`,
-        },
-      ],
+      links: canonicalLinks(`https://docteurtaxi.fr/${params.department}/${params.city}`),
     };
   },
   component: LocalPage,
@@ -75,7 +71,7 @@ function LocalBusinessSchema({ commune, hospitals }: { commune: Commune; hospita
     url: "https://docteurtaxi.fr",
     ...(phoneVisible ? { telephone: CONTACT_PHONE_TEL } : {}),
     priceRange: "Pris en charge Assurance Maladie",
-    image: "https://docteurtaxi.fr/og-image.jpg",
+    image: "https://docteurtaxi.fr/icons/icon-512.png",
     address: {
       "@type": "PostalAddress",
       addressLocality: commune.nom,
