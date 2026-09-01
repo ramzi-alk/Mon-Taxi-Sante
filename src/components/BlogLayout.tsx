@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import { BreadcrumbSchema } from "~/components/BreadcrumbSchema";
+import { BlogCoverImage } from "~/components/BlogCoverImage";
 
 interface BlogLayoutProps {
   category: string;
@@ -59,6 +60,7 @@ export function BlogLayout({
 
       <section className="bg-white">
         <div className="container max-w-3xl py-16 md:py-20">
+          <BlogCoverImage slug={slug} className="w-full aspect-video object-cover rounded-2xl mb-10" />
           <div className="prose prose-gray max-w-none prose-headings:font-bold prose-headings:text-[#0B0F1C] prose-a:text-[#1244E8] prose-a:no-underline hover:prose-a:underline">
             {children}
           </div>

@@ -5,9 +5,13 @@ export async function uploadFile(
   client: SupabaseClient,
   bucket: string,
   path: string,
-  file: File
+  file: File | Blob,
+  options?: { upsert?: boolean; contentType?: string }
 ): Promise<string | null> {
-  const { error } = await client.storage.from(bucket).upload(path, file, { upsert: false });
+  const { error } = await client.storage.from(bucket).upload(path, file, {
+    upsert: options?.upsert ?? false,
+    contentType: options?.contentType,
+  });
   if (error) {
     logger.warn("storage.uploadFile failed, continuing without file", {
       error: error.message,

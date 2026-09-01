@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ShieldAlert, LayoutDashboard, ClipboardList, Users, UserSearch, MessageSquareText, History, ShieldCheck, BarChart3, Settings, Car } from "lucide-react";
+import { ShieldAlert, LayoutDashboard, ClipboardList, Users, UserSearch, MessageSquareText, History, ShieldCheck, BarChart3, Settings, Car, Image as ImageIcon } from "lucide-react";
 import { supabase } from "~/lib/supabase";
 import * as authRepository from "~/repositories/authRepository";
 import { checkAdminAccessServerFn } from "~/server/adminAccess";
@@ -35,6 +35,7 @@ const NAV_ITEMS = [
   { to: "/admin/chauffeurs", label: "Chauffeurs", icon: Users, exact: false },
   { to: "/admin/patients", label: "Patients", icon: UserSearch, exact: false },
   { to: "/admin/avis", label: "Avis", icon: MessageSquareText, exact: false },
+  { to: "/admin/blog-images", label: "Images du blog", icon: ImageIcon, exact: false },
   { to: "/admin/journal", label: "Journal", icon: History, exact: false },
   { to: "/admin/statistiques", label: "Statistiques", icon: BarChart3, exact: false },
   { to: "/admin/securite", label: "Sécurité", icon: ShieldCheck, exact: false },

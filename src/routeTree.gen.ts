@@ -64,6 +64,7 @@ import { Route as AdminPatientsRouteImport } from './routes/admin/patients'
 import { Route as AdminParametresRouteImport } from './routes/admin/parametres'
 import { Route as AdminJournalRouteImport } from './routes/admin/journal'
 import { Route as AdminChauffeursRouteImport } from './routes/admin/chauffeurs'
+import { Route as AdminBlogImagesRouteImport } from './routes/admin/blog-images'
 import { Route as AdminAvisRouteImport } from './routes/admin/avis'
 import { Route as DepartmentCityRouteImport } from './routes/$department.$city'
 import { Route as TableauDeBordChauffeurCompteRouteImport } from './routes/tableau-de-bord/chauffeur_.compte'
@@ -367,6 +368,11 @@ const AdminChauffeursRoute = AdminChauffeursRouteImport.update({
   path: '/chauffeurs',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminBlogImagesRoute = AdminBlogImagesRouteImport.update({
+  id: '/blog-images',
+  path: '/blog-images',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminAvisRoute = AdminAvisRouteImport.update({
   id: '/avis',
   path: '/avis',
@@ -433,6 +439,7 @@ export interface FileRoutesByFullPath {
   '/villes': typeof VillesRoute
   '/$department/$city': typeof DepartmentCityRoute
   '/admin/avis': typeof AdminAvisRoute
+  '/admin/blog-images': typeof AdminBlogImagesRoute
   '/admin/chauffeurs': typeof AdminChauffeursRoute
   '/admin/journal': typeof AdminJournalRoute
   '/admin/parametres': typeof AdminParametresRoute
@@ -498,6 +505,7 @@ export interface FileRoutesByTo {
   '/villes': typeof VillesRoute
   '/$department/$city': typeof DepartmentCityRoute
   '/admin/avis': typeof AdminAvisRoute
+  '/admin/blog-images': typeof AdminBlogImagesRoute
   '/admin/chauffeurs': typeof AdminChauffeursRoute
   '/admin/journal': typeof AdminJournalRoute
   '/admin/parametres': typeof AdminParametresRoute
@@ -565,6 +573,7 @@ export interface FileRoutesById {
   '/villes': typeof VillesRoute
   '/$department/$city': typeof DepartmentCityRoute
   '/admin/avis': typeof AdminAvisRoute
+  '/admin/blog-images': typeof AdminBlogImagesRoute
   '/admin/chauffeurs': typeof AdminChauffeursRoute
   '/admin/journal': typeof AdminJournalRoute
   '/admin/parametres': typeof AdminParametresRoute
@@ -633,6 +642,7 @@ export interface FileRouteTypes {
     | '/villes'
     | '/$department/$city'
     | '/admin/avis'
+    | '/admin/blog-images'
     | '/admin/chauffeurs'
     | '/admin/journal'
     | '/admin/parametres'
@@ -698,6 +708,7 @@ export interface FileRouteTypes {
     | '/villes'
     | '/$department/$city'
     | '/admin/avis'
+    | '/admin/blog-images'
     | '/admin/chauffeurs'
     | '/admin/journal'
     | '/admin/parametres'
@@ -764,6 +775,7 @@ export interface FileRouteTypes {
     | '/villes'
     | '/$department/$city'
     | '/admin/avis'
+    | '/admin/blog-images'
     | '/admin/chauffeurs'
     | '/admin/journal'
     | '/admin/parametres'
@@ -1259,6 +1271,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminChauffeursRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/blog-images': {
+      id: '/admin/blog-images'
+      path: '/blog-images'
+      fullPath: '/admin/blog-images'
+      preLoaderRoute: typeof AdminBlogImagesRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/avis': {
       id: '/admin/avis'
       path: '/avis'
@@ -1327,6 +1346,7 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminAvisRoute: typeof AdminAvisRoute
+  AdminBlogImagesRoute: typeof AdminBlogImagesRoute
   AdminChauffeursRoute: typeof AdminChauffeursRoute
   AdminJournalRoute: typeof AdminJournalRoute
   AdminParametresRoute: typeof AdminParametresRoute
@@ -1339,6 +1359,7 @@ interface AdminRouteChildren {
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAvisRoute: AdminAvisRoute,
+  AdminBlogImagesRoute: AdminBlogImagesRoute,
   AdminChauffeursRoute: AdminChauffeursRoute,
   AdminJournalRoute: AdminJournalRoute,
   AdminParametresRoute: AdminParametresRoute,
