@@ -3,8 +3,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ImageIcon, Upload, Loader2, CheckCircle2 } from "lucide-react";
 import { supabase } from "~/lib/supabase";
 import { blogPosts } from "~/lib/blog-posts";
-import { compressImageToWebp } from "~/lib/imageCompression";
+import { resizeImageToPng, blobToBase64 } from "~/lib/imageResize";
 import { getBlogImageUrl } from "~/lib/blogImages";
+import { uploadBlogImageServerFn } from "~/server/blogImages";
+import * as authRepository from "~/repositories/authRepository";
 import { useToast } from "~/components/ui/toast";
 import { cn } from "~/lib/utils";
 
@@ -14,8 +16,6 @@ export const Route = createFileRoute("/admin/blog-images")({
   }),
   component: AdminBlogImagesPage,
 });
-
-const BUCKET = "blog-images";
 
 function publicImageUrl(slug: string, cacheBust?: number) {
   const url = getBlogImageUrl(slug);
@@ -31,22 +31,23 @@ function AdminBlogImagesPage() {
   async function handleFile(slug: string, title: string, file: File) {
     setUploadingSlug(slug);
     try {
-      const originalKb = Math.round(file.size / 1024);
-      const compressed = await compressImageToWebp(file);
-      const compressedKb = Math.round(compressed.size / 1024);
+      const session = await authRepository.getCurrentSession(supabase);
+      if (!session) throw new Error("Session expirée, reconnectez-vous.");
 
-      // Appel direct (plutôt que storageRepository.uploadFile, qui avale
-      // l'erreur et retourne null) pour pouvoir afficher la vraie raison
-      // de l'échec à l'admin plutôt qu'un message générique.
-      const { error } = await supabase.storage
-        .from(BUCKET)
-        .upload(`${slug}.webp`, compressed, { upsert: true, contentType: "image/webp" });
-      if (error) throw error;
+      // Redimensionnement en PNG côté navigateur (universel, y compris
+      // Safari). La conversion en WebP se fait côté serveur avec sharp
+      // (uploadBlogImageServerFn), indépendamment du navigateur utilisé.
+      const resized = await resizeImageToPng(file);
+      const imagePngBase64 = await blobToBase64(resized);
+
+      const result = await uploadBlogImageServerFn({
+        data: { accessToken: session.access_token, slug, imagePngBase64 },
+      });
 
       setVersions((prev) => ({ ...prev, [slug]: Date.now() }));
       toast({
         title: "Image mise à jour",
-        description: `« ${title} » — ${originalKb} Ko → ${compressedKb} Ko (WebP)`,
+        description: `« ${title} » — ${result.originalKb} Ko → ${result.compressedKb} Ko (WebP)`,
         variant: "success",
       });
     } catch (error) {
