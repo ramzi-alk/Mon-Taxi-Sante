@@ -5,7 +5,6 @@ import { supabase } from "~/lib/supabase";
 import { blogPosts } from "~/lib/blog-posts";
 import { compressImageToWebp } from "~/lib/imageCompression";
 import { getBlogImageUrl } from "~/lib/blogImages";
-import * as storageRepository from "~/repositories/storageRepository";
 import { useToast } from "~/components/ui/toast";
 import { cn } from "~/lib/utils";
 
@@ -36,11 +35,13 @@ function AdminBlogImagesPage() {
       const compressed = await compressImageToWebp(file);
       const compressedKb = Math.round(compressed.size / 1024);
 
-      const url = await storageRepository.uploadFile(supabase, BUCKET, `${slug}.webp`, compressed, {
-        upsert: true,
-        contentType: "image/webp",
-      });
-      if (!url) throw new Error("upload failed");
+      // Appel direct (plutôt que storageRepository.uploadFile, qui avale
+      // l'erreur et retourne null) pour pouvoir afficher la vraie raison
+      // de l'échec à l'admin plutôt qu'un message générique.
+      const { error } = await supabase.storage
+        .from(BUCKET)
+        .upload(`${slug}.webp`, compressed, { upsert: true, contentType: "image/webp" });
+      if (error) throw error;
 
       setVersions((prev) => ({ ...prev, [slug]: Date.now() }));
       toast({
@@ -48,10 +49,13 @@ function AdminBlogImagesPage() {
         description: `« ${title} » — ${originalKb} Ko → ${compressedKb} Ko (WebP)`,
         variant: "success",
       });
-    } catch {
+    } catch (error) {
       toast({
         title: "Échec de l'envoi",
-        description: `L'image de « ${title} » n'a pas pu être enregistrée.`,
+        description:
+          error instanceof Error
+            ? `« ${title} » : ${error.message}`
+            : `L'image de « ${title} » n'a pas pu être enregistrée.`,
         variant: "error",
       });
     } finally {
