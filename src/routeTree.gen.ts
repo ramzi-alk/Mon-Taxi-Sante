@@ -35,11 +35,26 @@ import { Route as HopitauxSlugRouteImport } from './routes/hopitaux.$slug'
 import { Route as ChauffeursTarifsRouteImport } from './routes/chauffeurs/tarifs'
 import { Route as ChauffeursInscriptionRouteImport } from './routes/chauffeurs/inscription'
 import { Route as BlogVslOuTaxiConventionneRouteImport } from './routes/blog/vsl-ou-taxi-conventionne'
+import { Route as BlogTransportSanitairePsychiatrieAld23RouteImport } from './routes/blog/transport-sanitaire-psychiatrie-ald-23'
+import { Route as BlogTransportSanitaireProcheDemarchesRouteImport } from './routes/blog/transport-sanitaire-proche-demarches'
 import { Route as BlogTransportPmrPersonnesAgeesRouteImport } from './routes/blog/transport-pmr-personnes-agees'
+import { Route as BlogTransportMedicalPlusieursRendezVousRouteImport } from './routes/blog/transport-medical-plusieurs-rendez-vous'
 import { Route as BlogTransportCpamRouteImport } from './routes/blog/transport-cpam'
+import { Route as BlogTransfertInterHospitalierTaxiConventionneRouteImport } from './routes/blog/transfert-inter-hospitalier-taxi-conventionne'
+import { Route as BlogTraitementsReguliersTaxiConventionneRouteImport } from './routes/blog/traitements-reguliers-taxi-conventionne'
 import { Route as BlogTaxiSansPrescriptionRouteImport } from './routes/blog/taxi-sans-prescription'
+import { Route as BlogTaxiConventionneSansAvanceFraisRouteImport } from './routes/blog/taxi-conventionne-sans-avance-frais'
+import { Route as BlogTaxiConventionneOuAmbulanceRendezVousRouteImport } from './routes/blog/taxi-conventionne-ou-ambulance-rendez-vous'
+import { Route as BlogTaxiConventionneGrossesseRouteImport } from './routes/blog/taxi-conventionne-grossesse'
+import { Route as BlogTaxiConventionneDimancheNuitJourFerieRouteImport } from './routes/blog/taxi-conventionne-dimanche-nuit-jour-ferie'
+import { Route as BlogTaxiConventionneCureThermaleRouteImport } from './routes/blog/taxi-conventionne-cure-thermale'
+import { Route as BlogTaxiConventionneAccidentTravailRouteImport } from './routes/blog/taxi-conventionne-accident-travail'
+import { Route as BlogRetourDomicileSortieHopitalRouteImport } from './routes/blog/retour-domicile-sortie-hopital'
 import { Route as BlogPmtPrescriptionRouteImport } from './routes/blog/pmt-prescription'
+import { Route as BlogBagagesMaterielTaxiConventionneRouteImport } from './routes/blog/bagages-materiel-taxi-conventionne'
+import { Route as BlogAnnulationRetardTaxiConventionneRouteImport } from './routes/blog/annulation-retard-taxi-conventionne'
 import { Route as BlogAldTransportRouteImport } from './routes/blog/ald-transport'
+import { Route as BlogAccompagnantTaxiConventionneRouteImport } from './routes/blog/accompagnant-taxi-conventionne'
 import { Route as ApiDriverOfflineBeaconRouteImport } from './routes/api/driver-offline-beacon'
 import { Route as AdminConnexionRouteImport } from './routes/admin_.connexion'
 import { Route as AdminStatistiquesRouteImport } from './routes/admin/statistiques'
@@ -190,10 +205,28 @@ const BlogVslOuTaxiConventionneRoute =
     path: '/blog/vsl-ou-taxi-conventionne',
     getParentRoute: () => rootRouteImport,
   } as any)
+const BlogTransportSanitairePsychiatrieAld23Route =
+  BlogTransportSanitairePsychiatrieAld23RouteImport.update({
+    id: '/blog/transport-sanitaire-psychiatrie-ald-23',
+    path: '/blog/transport-sanitaire-psychiatrie-ald-23',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const BlogTransportSanitaireProcheDemarchesRoute =
+  BlogTransportSanitaireProcheDemarchesRouteImport.update({
+    id: '/blog/transport-sanitaire-proche-demarches',
+    path: '/blog/transport-sanitaire-proche-demarches',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const BlogTransportPmrPersonnesAgeesRoute =
   BlogTransportPmrPersonnesAgeesRouteImport.update({
     id: '/blog/transport-pmr-personnes-agees',
     path: '/blog/transport-pmr-personnes-agees',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const BlogTransportMedicalPlusieursRendezVousRoute =
+  BlogTransportMedicalPlusieursRendezVousRouteImport.update({
+    id: '/blog/transport-medical-plusieurs-rendez-vous',
+    path: '/blog/transport-medical-plusieurs-rendez-vous',
     getParentRoute: () => rootRouteImport,
   } as any)
 const BlogTransportCpamRoute = BlogTransportCpamRouteImport.update({
@@ -201,10 +234,64 @@ const BlogTransportCpamRoute = BlogTransportCpamRouteImport.update({
   path: '/blog/transport-cpam',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BlogTransfertInterHospitalierTaxiConventionneRoute =
+  BlogTransfertInterHospitalierTaxiConventionneRouteImport.update({
+    id: '/blog/transfert-inter-hospitalier-taxi-conventionne',
+    path: '/blog/transfert-inter-hospitalier-taxi-conventionne',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const BlogTraitementsReguliersTaxiConventionneRoute =
+  BlogTraitementsReguliersTaxiConventionneRouteImport.update({
+    id: '/blog/traitements-reguliers-taxi-conventionne',
+    path: '/blog/traitements-reguliers-taxi-conventionne',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const BlogTaxiSansPrescriptionRoute =
   BlogTaxiSansPrescriptionRouteImport.update({
     id: '/blog/taxi-sans-prescription',
     path: '/blog/taxi-sans-prescription',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const BlogTaxiConventionneSansAvanceFraisRoute =
+  BlogTaxiConventionneSansAvanceFraisRouteImport.update({
+    id: '/blog/taxi-conventionne-sans-avance-frais',
+    path: '/blog/taxi-conventionne-sans-avance-frais',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const BlogTaxiConventionneOuAmbulanceRendezVousRoute =
+  BlogTaxiConventionneOuAmbulanceRendezVousRouteImport.update({
+    id: '/blog/taxi-conventionne-ou-ambulance-rendez-vous',
+    path: '/blog/taxi-conventionne-ou-ambulance-rendez-vous',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const BlogTaxiConventionneGrossesseRoute =
+  BlogTaxiConventionneGrossesseRouteImport.update({
+    id: '/blog/taxi-conventionne-grossesse',
+    path: '/blog/taxi-conventionne-grossesse',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const BlogTaxiConventionneDimancheNuitJourFerieRoute =
+  BlogTaxiConventionneDimancheNuitJourFerieRouteImport.update({
+    id: '/blog/taxi-conventionne-dimanche-nuit-jour-ferie',
+    path: '/blog/taxi-conventionne-dimanche-nuit-jour-ferie',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const BlogTaxiConventionneCureThermaleRoute =
+  BlogTaxiConventionneCureThermaleRouteImport.update({
+    id: '/blog/taxi-conventionne-cure-thermale',
+    path: '/blog/taxi-conventionne-cure-thermale',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const BlogTaxiConventionneAccidentTravailRoute =
+  BlogTaxiConventionneAccidentTravailRouteImport.update({
+    id: '/blog/taxi-conventionne-accident-travail',
+    path: '/blog/taxi-conventionne-accident-travail',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const BlogRetourDomicileSortieHopitalRoute =
+  BlogRetourDomicileSortieHopitalRouteImport.update({
+    id: '/blog/retour-domicile-sortie-hopital',
+    path: '/blog/retour-domicile-sortie-hopital',
     getParentRoute: () => rootRouteImport,
   } as any)
 const BlogPmtPrescriptionRoute = BlogPmtPrescriptionRouteImport.update({
@@ -212,11 +299,29 @@ const BlogPmtPrescriptionRoute = BlogPmtPrescriptionRouteImport.update({
   path: '/blog/pmt-prescription',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BlogBagagesMaterielTaxiConventionneRoute =
+  BlogBagagesMaterielTaxiConventionneRouteImport.update({
+    id: '/blog/bagages-materiel-taxi-conventionne',
+    path: '/blog/bagages-materiel-taxi-conventionne',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const BlogAnnulationRetardTaxiConventionneRoute =
+  BlogAnnulationRetardTaxiConventionneRouteImport.update({
+    id: '/blog/annulation-retard-taxi-conventionne',
+    path: '/blog/annulation-retard-taxi-conventionne',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const BlogAldTransportRoute = BlogAldTransportRouteImport.update({
   id: '/blog/ald-transport',
   path: '/blog/ald-transport',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BlogAccompagnantTaxiConventionneRoute =
+  BlogAccompagnantTaxiConventionneRouteImport.update({
+    id: '/blog/accompagnant-taxi-conventionne',
+    path: '/blog/accompagnant-taxi-conventionne',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiDriverOfflineBeaconRoute = ApiDriverOfflineBeaconRouteImport.update({
   id: '/api/driver-offline-beacon',
   path: '/api/driver-offline-beacon',
@@ -337,11 +442,26 @@ export interface FileRoutesByFullPath {
   '/admin/statistiques': typeof AdminStatistiquesRoute
   '/admin/connexion': typeof AdminConnexionRoute
   '/api/driver-offline-beacon': typeof ApiDriverOfflineBeaconRoute
+  '/blog/accompagnant-taxi-conventionne': typeof BlogAccompagnantTaxiConventionneRoute
   '/blog/ald-transport': typeof BlogAldTransportRoute
+  '/blog/annulation-retard-taxi-conventionne': typeof BlogAnnulationRetardTaxiConventionneRoute
+  '/blog/bagages-materiel-taxi-conventionne': typeof BlogBagagesMaterielTaxiConventionneRoute
   '/blog/pmt-prescription': typeof BlogPmtPrescriptionRoute
+  '/blog/retour-domicile-sortie-hopital': typeof BlogRetourDomicileSortieHopitalRoute
+  '/blog/taxi-conventionne-accident-travail': typeof BlogTaxiConventionneAccidentTravailRoute
+  '/blog/taxi-conventionne-cure-thermale': typeof BlogTaxiConventionneCureThermaleRoute
+  '/blog/taxi-conventionne-dimanche-nuit-jour-ferie': typeof BlogTaxiConventionneDimancheNuitJourFerieRoute
+  '/blog/taxi-conventionne-grossesse': typeof BlogTaxiConventionneGrossesseRoute
+  '/blog/taxi-conventionne-ou-ambulance-rendez-vous': typeof BlogTaxiConventionneOuAmbulanceRendezVousRoute
+  '/blog/taxi-conventionne-sans-avance-frais': typeof BlogTaxiConventionneSansAvanceFraisRoute
   '/blog/taxi-sans-prescription': typeof BlogTaxiSansPrescriptionRoute
+  '/blog/traitements-reguliers-taxi-conventionne': typeof BlogTraitementsReguliersTaxiConventionneRoute
+  '/blog/transfert-inter-hospitalier-taxi-conventionne': typeof BlogTransfertInterHospitalierTaxiConventionneRoute
   '/blog/transport-cpam': typeof BlogTransportCpamRoute
+  '/blog/transport-medical-plusieurs-rendez-vous': typeof BlogTransportMedicalPlusieursRendezVousRoute
   '/blog/transport-pmr-personnes-agees': typeof BlogTransportPmrPersonnesAgeesRoute
+  '/blog/transport-sanitaire-proche-demarches': typeof BlogTransportSanitaireProcheDemarchesRoute
+  '/blog/transport-sanitaire-psychiatrie-ald-23': typeof BlogTransportSanitairePsychiatrieAld23Route
   '/blog/vsl-ou-taxi-conventionne': typeof BlogVslOuTaxiConventionneRoute
   '/chauffeurs/inscription': typeof ChauffeursInscriptionRoute
   '/chauffeurs/tarifs': typeof ChauffeursTarifsRoute
@@ -387,11 +507,26 @@ export interface FileRoutesByTo {
   '/admin/statistiques': typeof AdminStatistiquesRoute
   '/admin/connexion': typeof AdminConnexionRoute
   '/api/driver-offline-beacon': typeof ApiDriverOfflineBeaconRoute
+  '/blog/accompagnant-taxi-conventionne': typeof BlogAccompagnantTaxiConventionneRoute
   '/blog/ald-transport': typeof BlogAldTransportRoute
+  '/blog/annulation-retard-taxi-conventionne': typeof BlogAnnulationRetardTaxiConventionneRoute
+  '/blog/bagages-materiel-taxi-conventionne': typeof BlogBagagesMaterielTaxiConventionneRoute
   '/blog/pmt-prescription': typeof BlogPmtPrescriptionRoute
+  '/blog/retour-domicile-sortie-hopital': typeof BlogRetourDomicileSortieHopitalRoute
+  '/blog/taxi-conventionne-accident-travail': typeof BlogTaxiConventionneAccidentTravailRoute
+  '/blog/taxi-conventionne-cure-thermale': typeof BlogTaxiConventionneCureThermaleRoute
+  '/blog/taxi-conventionne-dimanche-nuit-jour-ferie': typeof BlogTaxiConventionneDimancheNuitJourFerieRoute
+  '/blog/taxi-conventionne-grossesse': typeof BlogTaxiConventionneGrossesseRoute
+  '/blog/taxi-conventionne-ou-ambulance-rendez-vous': typeof BlogTaxiConventionneOuAmbulanceRendezVousRoute
+  '/blog/taxi-conventionne-sans-avance-frais': typeof BlogTaxiConventionneSansAvanceFraisRoute
   '/blog/taxi-sans-prescription': typeof BlogTaxiSansPrescriptionRoute
+  '/blog/traitements-reguliers-taxi-conventionne': typeof BlogTraitementsReguliersTaxiConventionneRoute
+  '/blog/transfert-inter-hospitalier-taxi-conventionne': typeof BlogTransfertInterHospitalierTaxiConventionneRoute
   '/blog/transport-cpam': typeof BlogTransportCpamRoute
+  '/blog/transport-medical-plusieurs-rendez-vous': typeof BlogTransportMedicalPlusieursRendezVousRoute
   '/blog/transport-pmr-personnes-agees': typeof BlogTransportPmrPersonnesAgeesRoute
+  '/blog/transport-sanitaire-proche-demarches': typeof BlogTransportSanitaireProcheDemarchesRoute
+  '/blog/transport-sanitaire-psychiatrie-ald-23': typeof BlogTransportSanitairePsychiatrieAld23Route
   '/blog/vsl-ou-taxi-conventionne': typeof BlogVslOuTaxiConventionneRoute
   '/chauffeurs/inscription': typeof ChauffeursInscriptionRoute
   '/chauffeurs/tarifs': typeof ChauffeursTarifsRoute
@@ -439,11 +574,26 @@ export interface FileRoutesById {
   '/admin/statistiques': typeof AdminStatistiquesRoute
   '/admin_/connexion': typeof AdminConnexionRoute
   '/api/driver-offline-beacon': typeof ApiDriverOfflineBeaconRoute
+  '/blog/accompagnant-taxi-conventionne': typeof BlogAccompagnantTaxiConventionneRoute
   '/blog/ald-transport': typeof BlogAldTransportRoute
+  '/blog/annulation-retard-taxi-conventionne': typeof BlogAnnulationRetardTaxiConventionneRoute
+  '/blog/bagages-materiel-taxi-conventionne': typeof BlogBagagesMaterielTaxiConventionneRoute
   '/blog/pmt-prescription': typeof BlogPmtPrescriptionRoute
+  '/blog/retour-domicile-sortie-hopital': typeof BlogRetourDomicileSortieHopitalRoute
+  '/blog/taxi-conventionne-accident-travail': typeof BlogTaxiConventionneAccidentTravailRoute
+  '/blog/taxi-conventionne-cure-thermale': typeof BlogTaxiConventionneCureThermaleRoute
+  '/blog/taxi-conventionne-dimanche-nuit-jour-ferie': typeof BlogTaxiConventionneDimancheNuitJourFerieRoute
+  '/blog/taxi-conventionne-grossesse': typeof BlogTaxiConventionneGrossesseRoute
+  '/blog/taxi-conventionne-ou-ambulance-rendez-vous': typeof BlogTaxiConventionneOuAmbulanceRendezVousRoute
+  '/blog/taxi-conventionne-sans-avance-frais': typeof BlogTaxiConventionneSansAvanceFraisRoute
   '/blog/taxi-sans-prescription': typeof BlogTaxiSansPrescriptionRoute
+  '/blog/traitements-reguliers-taxi-conventionne': typeof BlogTraitementsReguliersTaxiConventionneRoute
+  '/blog/transfert-inter-hospitalier-taxi-conventionne': typeof BlogTransfertInterHospitalierTaxiConventionneRoute
   '/blog/transport-cpam': typeof BlogTransportCpamRoute
+  '/blog/transport-medical-plusieurs-rendez-vous': typeof BlogTransportMedicalPlusieursRendezVousRoute
   '/blog/transport-pmr-personnes-agees': typeof BlogTransportPmrPersonnesAgeesRoute
+  '/blog/transport-sanitaire-proche-demarches': typeof BlogTransportSanitaireProcheDemarchesRoute
+  '/blog/transport-sanitaire-psychiatrie-ald-23': typeof BlogTransportSanitairePsychiatrieAld23Route
   '/blog/vsl-ou-taxi-conventionne': typeof BlogVslOuTaxiConventionneRoute
   '/chauffeurs/inscription': typeof ChauffeursInscriptionRoute
   '/chauffeurs/tarifs': typeof ChauffeursTarifsRoute
@@ -492,11 +642,26 @@ export interface FileRouteTypes {
     | '/admin/statistiques'
     | '/admin/connexion'
     | '/api/driver-offline-beacon'
+    | '/blog/accompagnant-taxi-conventionne'
     | '/blog/ald-transport'
+    | '/blog/annulation-retard-taxi-conventionne'
+    | '/blog/bagages-materiel-taxi-conventionne'
     | '/blog/pmt-prescription'
+    | '/blog/retour-domicile-sortie-hopital'
+    | '/blog/taxi-conventionne-accident-travail'
+    | '/blog/taxi-conventionne-cure-thermale'
+    | '/blog/taxi-conventionne-dimanche-nuit-jour-ferie'
+    | '/blog/taxi-conventionne-grossesse'
+    | '/blog/taxi-conventionne-ou-ambulance-rendez-vous'
+    | '/blog/taxi-conventionne-sans-avance-frais'
     | '/blog/taxi-sans-prescription'
+    | '/blog/traitements-reguliers-taxi-conventionne'
+    | '/blog/transfert-inter-hospitalier-taxi-conventionne'
     | '/blog/transport-cpam'
+    | '/blog/transport-medical-plusieurs-rendez-vous'
     | '/blog/transport-pmr-personnes-agees'
+    | '/blog/transport-sanitaire-proche-demarches'
+    | '/blog/transport-sanitaire-psychiatrie-ald-23'
     | '/blog/vsl-ou-taxi-conventionne'
     | '/chauffeurs/inscription'
     | '/chauffeurs/tarifs'
@@ -542,11 +707,26 @@ export interface FileRouteTypes {
     | '/admin/statistiques'
     | '/admin/connexion'
     | '/api/driver-offline-beacon'
+    | '/blog/accompagnant-taxi-conventionne'
     | '/blog/ald-transport'
+    | '/blog/annulation-retard-taxi-conventionne'
+    | '/blog/bagages-materiel-taxi-conventionne'
     | '/blog/pmt-prescription'
+    | '/blog/retour-domicile-sortie-hopital'
+    | '/blog/taxi-conventionne-accident-travail'
+    | '/blog/taxi-conventionne-cure-thermale'
+    | '/blog/taxi-conventionne-dimanche-nuit-jour-ferie'
+    | '/blog/taxi-conventionne-grossesse'
+    | '/blog/taxi-conventionne-ou-ambulance-rendez-vous'
+    | '/blog/taxi-conventionne-sans-avance-frais'
     | '/blog/taxi-sans-prescription'
+    | '/blog/traitements-reguliers-taxi-conventionne'
+    | '/blog/transfert-inter-hospitalier-taxi-conventionne'
     | '/blog/transport-cpam'
+    | '/blog/transport-medical-plusieurs-rendez-vous'
     | '/blog/transport-pmr-personnes-agees'
+    | '/blog/transport-sanitaire-proche-demarches'
+    | '/blog/transport-sanitaire-psychiatrie-ald-23'
     | '/blog/vsl-ou-taxi-conventionne'
     | '/chauffeurs/inscription'
     | '/chauffeurs/tarifs'
@@ -593,11 +773,26 @@ export interface FileRouteTypes {
     | '/admin/statistiques'
     | '/admin_/connexion'
     | '/api/driver-offline-beacon'
+    | '/blog/accompagnant-taxi-conventionne'
     | '/blog/ald-transport'
+    | '/blog/annulation-retard-taxi-conventionne'
+    | '/blog/bagages-materiel-taxi-conventionne'
     | '/blog/pmt-prescription'
+    | '/blog/retour-domicile-sortie-hopital'
+    | '/blog/taxi-conventionne-accident-travail'
+    | '/blog/taxi-conventionne-cure-thermale'
+    | '/blog/taxi-conventionne-dimanche-nuit-jour-ferie'
+    | '/blog/taxi-conventionne-grossesse'
+    | '/blog/taxi-conventionne-ou-ambulance-rendez-vous'
+    | '/blog/taxi-conventionne-sans-avance-frais'
     | '/blog/taxi-sans-prescription'
+    | '/blog/traitements-reguliers-taxi-conventionne'
+    | '/blog/transfert-inter-hospitalier-taxi-conventionne'
     | '/blog/transport-cpam'
+    | '/blog/transport-medical-plusieurs-rendez-vous'
     | '/blog/transport-pmr-personnes-agees'
+    | '/blog/transport-sanitaire-proche-demarches'
+    | '/blog/transport-sanitaire-psychiatrie-ald-23'
     | '/blog/vsl-ou-taxi-conventionne'
     | '/chauffeurs/inscription'
     | '/chauffeurs/tarifs'
@@ -637,11 +832,26 @@ export interface RootRouteChildren {
   DepartmentCityRoute: typeof DepartmentCityRoute
   AdminConnexionRoute: typeof AdminConnexionRoute
   ApiDriverOfflineBeaconRoute: typeof ApiDriverOfflineBeaconRoute
+  BlogAccompagnantTaxiConventionneRoute: typeof BlogAccompagnantTaxiConventionneRoute
   BlogAldTransportRoute: typeof BlogAldTransportRoute
+  BlogAnnulationRetardTaxiConventionneRoute: typeof BlogAnnulationRetardTaxiConventionneRoute
+  BlogBagagesMaterielTaxiConventionneRoute: typeof BlogBagagesMaterielTaxiConventionneRoute
   BlogPmtPrescriptionRoute: typeof BlogPmtPrescriptionRoute
+  BlogRetourDomicileSortieHopitalRoute: typeof BlogRetourDomicileSortieHopitalRoute
+  BlogTaxiConventionneAccidentTravailRoute: typeof BlogTaxiConventionneAccidentTravailRoute
+  BlogTaxiConventionneCureThermaleRoute: typeof BlogTaxiConventionneCureThermaleRoute
+  BlogTaxiConventionneDimancheNuitJourFerieRoute: typeof BlogTaxiConventionneDimancheNuitJourFerieRoute
+  BlogTaxiConventionneGrossesseRoute: typeof BlogTaxiConventionneGrossesseRoute
+  BlogTaxiConventionneOuAmbulanceRendezVousRoute: typeof BlogTaxiConventionneOuAmbulanceRendezVousRoute
+  BlogTaxiConventionneSansAvanceFraisRoute: typeof BlogTaxiConventionneSansAvanceFraisRoute
   BlogTaxiSansPrescriptionRoute: typeof BlogTaxiSansPrescriptionRoute
+  BlogTraitementsReguliersTaxiConventionneRoute: typeof BlogTraitementsReguliersTaxiConventionneRoute
+  BlogTransfertInterHospitalierTaxiConventionneRoute: typeof BlogTransfertInterHospitalierTaxiConventionneRoute
   BlogTransportCpamRoute: typeof BlogTransportCpamRoute
+  BlogTransportMedicalPlusieursRendezVousRoute: typeof BlogTransportMedicalPlusieursRendezVousRoute
   BlogTransportPmrPersonnesAgeesRoute: typeof BlogTransportPmrPersonnesAgeesRoute
+  BlogTransportSanitaireProcheDemarchesRoute: typeof BlogTransportSanitaireProcheDemarchesRoute
+  BlogTransportSanitairePsychiatrieAld23Route: typeof BlogTransportSanitairePsychiatrieAld23Route
   BlogVslOuTaxiConventionneRoute: typeof BlogVslOuTaxiConventionneRoute
   ChauffeursInscriptionRoute: typeof ChauffeursInscriptionRoute
   ChauffeursTarifsRoute: typeof ChauffeursTarifsRoute
@@ -846,11 +1056,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BlogVslOuTaxiConventionneRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/blog/transport-sanitaire-psychiatrie-ald-23': {
+      id: '/blog/transport-sanitaire-psychiatrie-ald-23'
+      path: '/blog/transport-sanitaire-psychiatrie-ald-23'
+      fullPath: '/blog/transport-sanitaire-psychiatrie-ald-23'
+      preLoaderRoute: typeof BlogTransportSanitairePsychiatrieAld23RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog/transport-sanitaire-proche-demarches': {
+      id: '/blog/transport-sanitaire-proche-demarches'
+      path: '/blog/transport-sanitaire-proche-demarches'
+      fullPath: '/blog/transport-sanitaire-proche-demarches'
+      preLoaderRoute: typeof BlogTransportSanitaireProcheDemarchesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/blog/transport-pmr-personnes-agees': {
       id: '/blog/transport-pmr-personnes-agees'
       path: '/blog/transport-pmr-personnes-agees'
       fullPath: '/blog/transport-pmr-personnes-agees'
       preLoaderRoute: typeof BlogTransportPmrPersonnesAgeesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog/transport-medical-plusieurs-rendez-vous': {
+      id: '/blog/transport-medical-plusieurs-rendez-vous'
+      path: '/blog/transport-medical-plusieurs-rendez-vous'
+      fullPath: '/blog/transport-medical-plusieurs-rendez-vous'
+      preLoaderRoute: typeof BlogTransportMedicalPlusieursRendezVousRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/blog/transport-cpam': {
@@ -860,11 +1091,74 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BlogTransportCpamRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/blog/transfert-inter-hospitalier-taxi-conventionne': {
+      id: '/blog/transfert-inter-hospitalier-taxi-conventionne'
+      path: '/blog/transfert-inter-hospitalier-taxi-conventionne'
+      fullPath: '/blog/transfert-inter-hospitalier-taxi-conventionne'
+      preLoaderRoute: typeof BlogTransfertInterHospitalierTaxiConventionneRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog/traitements-reguliers-taxi-conventionne': {
+      id: '/blog/traitements-reguliers-taxi-conventionne'
+      path: '/blog/traitements-reguliers-taxi-conventionne'
+      fullPath: '/blog/traitements-reguliers-taxi-conventionne'
+      preLoaderRoute: typeof BlogTraitementsReguliersTaxiConventionneRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/blog/taxi-sans-prescription': {
       id: '/blog/taxi-sans-prescription'
       path: '/blog/taxi-sans-prescription'
       fullPath: '/blog/taxi-sans-prescription'
       preLoaderRoute: typeof BlogTaxiSansPrescriptionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog/taxi-conventionne-sans-avance-frais': {
+      id: '/blog/taxi-conventionne-sans-avance-frais'
+      path: '/blog/taxi-conventionne-sans-avance-frais'
+      fullPath: '/blog/taxi-conventionne-sans-avance-frais'
+      preLoaderRoute: typeof BlogTaxiConventionneSansAvanceFraisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog/taxi-conventionne-ou-ambulance-rendez-vous': {
+      id: '/blog/taxi-conventionne-ou-ambulance-rendez-vous'
+      path: '/blog/taxi-conventionne-ou-ambulance-rendez-vous'
+      fullPath: '/blog/taxi-conventionne-ou-ambulance-rendez-vous'
+      preLoaderRoute: typeof BlogTaxiConventionneOuAmbulanceRendezVousRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog/taxi-conventionne-grossesse': {
+      id: '/blog/taxi-conventionne-grossesse'
+      path: '/blog/taxi-conventionne-grossesse'
+      fullPath: '/blog/taxi-conventionne-grossesse'
+      preLoaderRoute: typeof BlogTaxiConventionneGrossesseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog/taxi-conventionne-dimanche-nuit-jour-ferie': {
+      id: '/blog/taxi-conventionne-dimanche-nuit-jour-ferie'
+      path: '/blog/taxi-conventionne-dimanche-nuit-jour-ferie'
+      fullPath: '/blog/taxi-conventionne-dimanche-nuit-jour-ferie'
+      preLoaderRoute: typeof BlogTaxiConventionneDimancheNuitJourFerieRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog/taxi-conventionne-cure-thermale': {
+      id: '/blog/taxi-conventionne-cure-thermale'
+      path: '/blog/taxi-conventionne-cure-thermale'
+      fullPath: '/blog/taxi-conventionne-cure-thermale'
+      preLoaderRoute: typeof BlogTaxiConventionneCureThermaleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog/taxi-conventionne-accident-travail': {
+      id: '/blog/taxi-conventionne-accident-travail'
+      path: '/blog/taxi-conventionne-accident-travail'
+      fullPath: '/blog/taxi-conventionne-accident-travail'
+      preLoaderRoute: typeof BlogTaxiConventionneAccidentTravailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog/retour-domicile-sortie-hopital': {
+      id: '/blog/retour-domicile-sortie-hopital'
+      path: '/blog/retour-domicile-sortie-hopital'
+      fullPath: '/blog/retour-domicile-sortie-hopital'
+      preLoaderRoute: typeof BlogRetourDomicileSortieHopitalRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/blog/pmt-prescription': {
@@ -874,11 +1168,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BlogPmtPrescriptionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/blog/bagages-materiel-taxi-conventionne': {
+      id: '/blog/bagages-materiel-taxi-conventionne'
+      path: '/blog/bagages-materiel-taxi-conventionne'
+      fullPath: '/blog/bagages-materiel-taxi-conventionne'
+      preLoaderRoute: typeof BlogBagagesMaterielTaxiConventionneRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog/annulation-retard-taxi-conventionne': {
+      id: '/blog/annulation-retard-taxi-conventionne'
+      path: '/blog/annulation-retard-taxi-conventionne'
+      fullPath: '/blog/annulation-retard-taxi-conventionne'
+      preLoaderRoute: typeof BlogAnnulationRetardTaxiConventionneRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/blog/ald-transport': {
       id: '/blog/ald-transport'
       path: '/blog/ald-transport'
       fullPath: '/blog/ald-transport'
       preLoaderRoute: typeof BlogAldTransportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog/accompagnant-taxi-conventionne': {
+      id: '/blog/accompagnant-taxi-conventionne'
+      path: '/blog/accompagnant-taxi-conventionne'
+      fullPath: '/blog/accompagnant-taxi-conventionne'
+      preLoaderRoute: typeof BlogAccompagnantTaxiConventionneRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/driver-offline-beacon': {
@@ -1054,11 +1369,37 @@ const rootRouteChildren: RootRouteChildren = {
   DepartmentCityRoute: DepartmentCityRoute,
   AdminConnexionRoute: AdminConnexionRoute,
   ApiDriverOfflineBeaconRoute: ApiDriverOfflineBeaconRoute,
+  BlogAccompagnantTaxiConventionneRoute: BlogAccompagnantTaxiConventionneRoute,
   BlogAldTransportRoute: BlogAldTransportRoute,
+  BlogAnnulationRetardTaxiConventionneRoute:
+    BlogAnnulationRetardTaxiConventionneRoute,
+  BlogBagagesMaterielTaxiConventionneRoute:
+    BlogBagagesMaterielTaxiConventionneRoute,
   BlogPmtPrescriptionRoute: BlogPmtPrescriptionRoute,
+  BlogRetourDomicileSortieHopitalRoute: BlogRetourDomicileSortieHopitalRoute,
+  BlogTaxiConventionneAccidentTravailRoute:
+    BlogTaxiConventionneAccidentTravailRoute,
+  BlogTaxiConventionneCureThermaleRoute: BlogTaxiConventionneCureThermaleRoute,
+  BlogTaxiConventionneDimancheNuitJourFerieRoute:
+    BlogTaxiConventionneDimancheNuitJourFerieRoute,
+  BlogTaxiConventionneGrossesseRoute: BlogTaxiConventionneGrossesseRoute,
+  BlogTaxiConventionneOuAmbulanceRendezVousRoute:
+    BlogTaxiConventionneOuAmbulanceRendezVousRoute,
+  BlogTaxiConventionneSansAvanceFraisRoute:
+    BlogTaxiConventionneSansAvanceFraisRoute,
   BlogTaxiSansPrescriptionRoute: BlogTaxiSansPrescriptionRoute,
+  BlogTraitementsReguliersTaxiConventionneRoute:
+    BlogTraitementsReguliersTaxiConventionneRoute,
+  BlogTransfertInterHospitalierTaxiConventionneRoute:
+    BlogTransfertInterHospitalierTaxiConventionneRoute,
   BlogTransportCpamRoute: BlogTransportCpamRoute,
+  BlogTransportMedicalPlusieursRendezVousRoute:
+    BlogTransportMedicalPlusieursRendezVousRoute,
   BlogTransportPmrPersonnesAgeesRoute: BlogTransportPmrPersonnesAgeesRoute,
+  BlogTransportSanitaireProcheDemarchesRoute:
+    BlogTransportSanitaireProcheDemarchesRoute,
+  BlogTransportSanitairePsychiatrieAld23Route:
+    BlogTransportSanitairePsychiatrieAld23Route,
   BlogVslOuTaxiConventionneRoute: BlogVslOuTaxiConventionneRoute,
   ChauffeursInscriptionRoute: ChauffeursInscriptionRoute,
   ChauffeursTarifsRoute: ChauffeursTarifsRoute,

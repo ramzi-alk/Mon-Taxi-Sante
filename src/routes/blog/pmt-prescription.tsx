@@ -53,7 +53,7 @@ function PmtPrescriptionArticle() {
       category="Démarches"
       slug="pmt-prescription"
       title="Prescription médicale de transport (PMT) : mode d'emploi"
-      readingTime="4 min"
+      readingTime="5 min"
       publishedAt="28 mars 2026"
     >
       <FaqSchema items={faqItems} />
@@ -90,13 +90,49 @@ function PmtPrescriptionArticle() {
         couvrant l'ensemble du cycle de soins.
       </p>
 
+      <h2>Les 3 points à vérifier avant de réserver</h2>
+      <p>
+        Pour que votre réservation se déroule sans accroc et que le
+        Tiers-Payant soit appliqué, l'ordonnance doit être complétée sans
+        erreur par le médecin. Prenez deux minutes pour vérifier :
+      </p>
+      <ul>
+        <li>
+          <strong>Le mode de transport prescrit</strong> : la case «
+          Transport assis professionnalisé » (qui inclut le taxi
+          conventionné) doit être cochée. Si le médecin a coché « Ambulance »
+          ou « Transports en commun », le chauffeur de taxi ne pourra pas
+          facturer la course à la Sécurité sociale.
+        </li>
+        <li>
+          <strong>La date de la prescription</strong> : elle doit toujours
+          être antérieure ou égale à la date de votre premier trajet.
+        </li>
+        <li>
+          <strong>La case « Accompagnant »</strong>, si votre état de santé
+          nécessite la présence d'un proche pendant le trajet — voir notre
+          guide{" "}
+          <Link to="/blog/accompagnant-taxi-conventionne">
+            Accompagnant en taxi conventionné
+          </Link>{" "}
+          pour le détail des règles applicables.
+        </li>
+      </ul>
+
       <h2>Comment la joindre à votre réservation ?</h2>
       <p>
         Lors de la réservation sur Docteur Taxi, déclarez votre
         prescription dans le formulaire et joignez une photo ou un scan du
         document. Le jour du transport, gardez l'original avec vous : le
         chauffeur en a besoin pour facturer l'Assurance Maladie en
-        Tiers-Payant.
+        Tiers-Payant. Pour un trajet ponctuel, comptez 48 à 72 heures
+        d'avance pour garantir la disponibilité du véhicule ; pour des
+        séries de soins sur plusieurs semaines, vous pouvez grouper vos
+        réservations en une seule fois — voir notre guide sur les{" "}
+        <Link to="/blog/traitements-reguliers-taxi-conventionne">
+          traitements réguliers
+        </Link>{" "}
+        (chimiothérapie, radiothérapie, dialyse).
       </p>
 
       <h2>Je n'ai pas encore de PMT, puis-je réserver ?</h2>
