@@ -157,7 +157,7 @@ function MyBookingsPage() {
 
         {!isLoading && !isError && (
           <div className="mt-10">
-            <PatientEmailLogin />
+            <PatientEmailLogin excludeIds={bookings.map((b) => b.id)} />
           </div>
         )}
 
