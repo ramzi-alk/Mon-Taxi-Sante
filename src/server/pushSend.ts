@@ -87,6 +87,8 @@ export async function sendPushToAllDrivers(payload: PushPayload): Promise<void> 
         const status = (err as { statusCode?: number })?.statusCode;
         if (status === 410 || status === 404) {
           await removeExpiredSubscription(sub.id);
+        } else {
+          logger.error("push.sendToAllDrivers failed", { error: String(err), subscriptionId: sub.id });
         }
       }
     })

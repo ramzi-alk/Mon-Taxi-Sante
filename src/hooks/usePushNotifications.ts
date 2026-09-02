@@ -5,6 +5,26 @@ import {
   savePushSubscriptionServerFn,
   deletePushSubscriptionServerFn,
 } from "~/server/push";
+import { logClientErrorServerFn } from "~/server/errorReporting";
+
+// console.error alone never reaches Vercel Runtime Logs (pino's browser
+// build only writes to the console) — relay through the same server-side
+// logger the root error boundary uses, so a failed subscribe/unsubscribe
+// is visible even though the caller (see chauffeur.tsx) swallows the
+// rethrow with `.catch(() => {})` to avoid an unhandled rejection.
+function reportPushError(message: string, error: unknown): void {
+  console.error(message, error);
+  logClientErrorServerFn({
+    data: {
+      message: `${message}: ${error instanceof Error ? error.message : String(error)}`,
+      stack: error instanceof Error ? error.stack : undefined,
+      url: typeof window !== "undefined" ? window.location.href : undefined,
+      userAgent: typeof navigator !== "undefined" ? navigator.userAgent : undefined,
+    },
+  }).catch(() => {
+    // Best-effort — don't let logging failures compound the original error.
+  });
+}
 
 type PermissionState = "default" | "granted" | "denied" | "unsupported";
 
@@ -93,7 +113,7 @@ export function usePushNotifications(): UsePushNotifications {
       });
       setIsSubscribed(true);
     } catch (err) {
-      console.error("push.subscribe failed", err);
+      reportPushError("push.subscribe failed", err);
       throw err;
     } finally {
       setIsLoading(false);
@@ -117,7 +137,7 @@ export function usePushNotifications(): UsePushNotifications {
       }
       setIsSubscribed(false);
     } catch (err) {
-      console.error("push.unsubscribe failed", err);
+      reportPushError("push.unsubscribe failed", err);
       throw err;
     } finally {
       setIsLoading(false);
