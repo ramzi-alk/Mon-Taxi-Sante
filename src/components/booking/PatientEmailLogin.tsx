@@ -7,8 +7,30 @@ import * as bookingsRepository from "~/repositories/bookingsRepository";
 import { BookingStatusCard } from "./BookingStatusCard";
 import { Input } from "~/components/ui/input";
 import { logger } from "~/lib/logger";
+import { logClientErrorServerFn } from "~/server/errorReporting";
 
 type Stage = "checking" | "signed_out" | "code_sent" | "signed_in";
+
+// signInWithOtp/verifyOtp below call Supabase Auth directly from the
+// browser (see supabaseIsolated.ts) — they never go through our own
+// TanStack Start server, so none of it shows up in Vercel Runtime Logs no
+// matter how the server side is instrumented. logger.warn alone only
+// reaches the browser console (pino's browser build doesn't write to
+// stdout). Relay the real Supabase error message through the same
+// server-side logger the root error boundary uses, so a failure here is
+// actually visible.
+function reportAuthError(message: string, error: Error): void {
+  logger.warn(message, { error: error.message });
+  logClientErrorServerFn({
+    data: {
+      message: `${message}: ${error.message}`,
+      url: typeof window !== "undefined" ? window.location.href : undefined,
+      userAgent: typeof navigator !== "undefined" ? navigator.userAgent : undefined,
+    },
+  }).catch(() => {
+    // Best-effort — don't let logging failures compound the original error.
+  });
+}
 
 /**
  * Deuxième voie de suivi patient, indépendante de l'appareil : le suivi
@@ -52,7 +74,7 @@ export function PatientEmailLogin() {
       setErrorMessage(null);
     },
     onError: (err: Error) => {
-      logger.warn("auth.requestPatientEmailCode failed", { error: err.message });
+      reportAuthError("auth.requestPatientEmailCode failed", err);
       setErrorMessage("Impossible d'envoyer le code pour le moment. Réessayez plus tard.");
     },
   });
@@ -67,7 +89,7 @@ export function PatientEmailLogin() {
       setStage("signed_in");
     },
     onError: (err: Error) => {
-      logger.warn("auth.verifyPatientEmailCode failed", { error: err.message });
+      reportAuthError("auth.verifyPatientEmailCode failed", err);
       setErrorMessage("Code invalide ou expiré. Vérifiez le code reçu par email et réessayez.");
     },
   });

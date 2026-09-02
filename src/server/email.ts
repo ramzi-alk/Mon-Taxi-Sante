@@ -356,7 +356,13 @@ async function notifyBookingUpdated(data: { bookingId: string }): Promise<void> 
     body: `Vérifiez les nouveaux détails de la course du ${new Date(booking.pickup_datetime).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}.`,
     url: "/tableau-de-bord/chauffeur",
     tag: `booking-updated-${data.bookingId}`,
-  }).catch(() => {});
+  }).catch((err: unknown) => {
+    logger.error("booking.notifyDriverUpdated failed", {
+      error: err instanceof Error ? err.message : String(err),
+      bookingId: data.bookingId,
+      driverId: booking.driver_id,
+    });
+  });
 
   try {
     const { data: driverProfile } = await admin
@@ -498,7 +504,13 @@ async function notifyDriverPatientCancelled(data: { bookingId: string }): Promis
     body: `La course du ${new Date(booking.pickup_datetime).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })} a été annulée.`,
     url: "/tableau-de-bord/chauffeur",
     tag: `booking-cancelled-${data.bookingId}`,
-  }).catch(() => {});
+  }).catch((err: unknown) => {
+    logger.error("booking.notifyDriverCancelled failed", {
+      error: err instanceof Error ? err.message : String(err),
+      bookingId: data.bookingId,
+      driverId: booking.driver_id,
+    });
+  });
 
   try {
     const { subject, html } = bookingCancelledDriverEmail({
@@ -715,7 +727,13 @@ async function notifyDriverReassignedAway(input: {
     body: `Votre course du ${new Date(booking.pickup_datetime).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })} a été confiée à un autre chauffeur.`,
     url: "/tableau-de-bord/chauffeur",
     tag: `booking-reassigned-${input.bookingId}`,
-  }).catch(() => {});
+  }).catch((err: unknown) => {
+    logger.error("booking.notifyDriverReassigned failed", {
+      error: err instanceof Error ? err.message : String(err),
+      bookingId: input.bookingId,
+      driverId: input.previousDriverId,
+    });
+  });
 
   try {
     const { subject, html } = driverReassignedAwayEmail({
