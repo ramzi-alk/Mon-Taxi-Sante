@@ -43,7 +43,19 @@ function reportAuthError(message: string, error: Error): void {
  * référence + téléphone (BookingLookupForm), qui restent les deux seules
  * voies dont le back-end vérifie la propriété pour ces actions.
  */
-export function PatientEmailLogin() {
+type PatientEmailLoginProps = {
+  /**
+   * IDs des réservations déjà affichées via le suivi par session anonyme
+   * (mes-reservations.tsx). L'historique par email retrouve les
+   * réservations tous appareils confondus (migration 069) et se recoupe
+   * donc souvent avec ces IDs quand le patient a réservé et se reconnecte
+   * depuis le même appareil — on les exclut ici pour ne pas les afficher
+   * deux fois sur la page.
+   */
+  excludeIds?: string[];
+};
+
+export function PatientEmailLogin({ excludeIds }: PatientEmailLoginProps) {
   const client = getPatientEmailAuthClient();
   const [stage, setStage] = useState<Stage>("checking");
   const [emailInput, setEmailInput] = useState("");
@@ -62,6 +74,9 @@ export function PatientEmailLogin() {
     queryFn: () => bookingsRepository.fetchMyBookingsByEmail(client),
     enabled: stage === "signed_in",
   });
+
+  const excludeIdSet = new Set(excludeIds);
+  const bookings = (bookingsQuery.data ?? []).filter((booking) => !excludeIdSet.has(booking.id));
 
   const requestCodeMutation = useMutation({
     mutationFn: async (email: string) => {
@@ -228,12 +243,12 @@ export function PatientEmailLogin() {
               Impossible de charger votre historique pour le moment.
             </p>
           )}
-          {bookingsQuery.data && bookingsQuery.data.length === 0 && (
+          {bookingsQuery.data && bookings.length === 0 && (
             <p className="text-sm text-muted-foreground">
               Aucune réservation trouvée pour cette adresse email.
             </p>
           )}
-          {bookingsQuery.data && bookingsQuery.data.length > 0 && (
+          {bookings.length > 0 && (
             <>
               <p className="text-sm text-muted-foreground">
                 Pour annuler ou modifier une réservation active, utilisez le
@@ -241,7 +256,7 @@ export function PatientEmailLogin() {
                 référence plus bas.
               </p>
               <div className="space-y-4">
-                {bookingsQuery.data.map((booking) => (
+                {bookings.map((booking) => (
                   <BookingStatusCard key={booking.id} booking={booking} />
                 ))}
               </div>
