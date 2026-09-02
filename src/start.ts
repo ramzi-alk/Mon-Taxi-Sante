@@ -119,6 +119,13 @@ if (typeof window === "undefined" && !globalThis.__docteurTaxiProcessLoggingRegi
 }
 
 export const startInstance = createStart(() => ({
+  // The client bootstrap (`tz` in the built bundle) unconditionally does
+  // `options.serializationAdapters.push(...)` once a `startInstance` is
+  // registered — omitting this field left it `undefined` there, throwing
+  // "Cannot read properties of undefined (reading 'push')" during
+  // hydration and blanking out the whole page right after the server-
+  // rendered HTML painted.
+  serializationAdapters: [],
   requestMiddleware: [requestLoggingMiddleware],
   functionMiddleware: [functionLoggingMiddleware],
 }));
