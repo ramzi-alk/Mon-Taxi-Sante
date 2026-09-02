@@ -174,7 +174,7 @@ function renderEmail(user: HookUser, emailData: HookEmailData): { subject: strin
             url: confirmationUrl(emailData.token_hash, email_action_type, redirect_to),
           },
           footnote:
-            "Ce lien est valable une heure. Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet e-mail — votre mot de passe actuel reste inchangé.",
+            "Ce lien est valable une heure. Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet e-mail — votre mot de passe ne sera pas modifié.",
         }),
       };
 
@@ -245,7 +245,8 @@ function renderEmail(user: HookUser, emailData: HookEmailData): { subject: strin
             label: "Confirmer la nouvelle adresse",
             url: confirmationUrl(tokenHash, email_action_type, redirect_to),
           },
-          footnote: "Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet e-mail.",
+          footnote:
+            "Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet e-mail — votre adresse actuelle restera inchangée.",
         }),
       };
     }
