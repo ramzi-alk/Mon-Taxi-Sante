@@ -18,7 +18,7 @@ export function getResendClient(): Resend {
 }
 
 export const EMAIL_FROM =
-  process.env.RESEND_FROM_EMAIL || "Docteur Taxi <reservations@mon-taxi-sante.com>";
+  process.env.RESEND_FROM_EMAIL || "Docteur Taxi <reservations@docteurtaxi.fr>";
 
 export const ADMIN_NOTIFICATION_EMAIL =
   process.env.ADMIN_NOTIFICATION_EMAIL || "contact@mon-taxi-sante.com";
