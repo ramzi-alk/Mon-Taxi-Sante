@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
-import { AlertTriangle, ArrowLeft, ArrowRight, ClipboardList, ExternalLink, UserCog, XCircle } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowRight, ClipboardList, ExternalLink, Loader2, UserCog, XCircle } from "lucide-react";
 import { supabase } from "~/lib/supabase";
 import * as adminBookingsRepository from "~/repositories/adminBookingsRepository";
 import type { AdminBookingRow, EligibleDriver } from "~/repositories/adminBookingsRepository";
@@ -67,6 +67,19 @@ const TRIP_TYPE_LABELS: Record<AdminBookingRow["trip_type"], string> = {
   aller_retour: "Aller-retour",
   multiple: "Trajets multiples",
 };
+
+function tripTypeSummary(
+  booking: Pick<AdminBookingRow, "trip_type" | "return_datetime" | "series_index" | "series_total">
+): string {
+  const label = TRIP_TYPE_LABELS[booking.trip_type];
+  if (booking.trip_type === "aller_retour" && booking.return_datetime) {
+    return `${label} (retour ${formatTimeFr(booking.return_datetime)})`;
+  }
+  if (booking.trip_type === "multiple" && booking.series_index && booking.series_total) {
+    return `${label} (${booking.series_index}/${booking.series_total})`;
+  }
+  return label;
+}
 
 function AdminReservationsPage() {
   const search = Route.useSearch();
@@ -174,7 +187,7 @@ function AdminReservationsPage() {
                   </div>
                   <p className="mt-1.5 font-semibold text-[#0B0F1C]">{booking.patient_full_name}</p>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    {formatDateFr(booking.pickup_datetime)} à {formatTimeFr(booking.pickup_datetime)} · {VEHICLE_LABELS[booking.vehicle_type]} · {TRIP_TYPE_LABELS[booking.trip_type]}
+                    {formatDateFr(booking.pickup_datetime)} à {formatTimeFr(booking.pickup_datetime)} · {VEHICLE_LABELS[booking.vehicle_type]} · {tripTypeSummary(booking)}
                   </p>
                   <p className="text-xs text-gray-400 mt-0.5">Chauffeur : {booking.driver?.full_name ?? "—"}</p>
                 </button>
@@ -211,7 +224,7 @@ function AdminReservationsPage() {
                       <div className="text-xs text-gray-400">{formatTimeFr(booking.pickup_datetime)}</div>
                     </td>
                     <td className="px-5 py-4 text-gray-500">{VEHICLE_LABELS[booking.vehicle_type]}</td>
-                    <td className="px-5 py-4 text-gray-500">{TRIP_TYPE_LABELS[booking.trip_type]}</td>
+                    <td className="px-5 py-4 text-gray-500">{tripTypeSummary(booking)}</td>
                     <td className="px-5 py-4 text-gray-500">{booking.driver?.full_name ?? "—"}</td>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-2">
@@ -452,6 +465,19 @@ function BookingDetailDialog({ bookingId, onClose }: { bookingId: string; onClos
               <DetailField label="Adresse d'arrivée" value={booking.dropoff_address} />
               <DetailField label="Véhicule" value={VEHICLE_LABELS[booking.vehicle_type]} />
               <DetailField label="Type de trajet" value={TRIP_TYPE_LABELS[booking.trip_type]} />
+              {booking.trip_type === "aller_retour" && booking.return_datetime && (
+                <DetailField
+                  label="Retour"
+                  value={`${formatDateFr(booking.return_datetime)} à ${formatTimeFr(booking.return_datetime)}`}
+                />
+              )}
+              {booking.trip_type === "multiple" && booking.series_index && booking.series_total && (
+                <DetailField label="Trajet de la série" value={`${booking.series_index} / ${booking.series_total}`} />
+              )}
+              {booking.passenger_count > 1 && (
+                <DetailField label="Voyageurs" value={String(booking.passenger_count)} />
+              )}
+              {booking.is_hospitalization && <DetailField label="Contexte" value="Hospitalisation" />}
               <DetailField
                 label="Équipements requis"
                 value={
@@ -466,6 +492,17 @@ function BookingDetailDialog({ bookingId, onClose }: { bookingId: string; onClos
               <DetailField label="Prix estimé" value={booking.estimated_price != null ? formatPrice(booking.estimated_price) : "—"} />
               <DetailField label="Statut CPAM" value={booking.cpam_status} />
               {booking.mutual_name && <DetailField label="Mutuelle" value={booking.mutual_name} />}
+              {booking.booking_for_other && (
+                <div className="sm:col-span-2 rounded-lg bg-gray-50 p-3">
+                  <p className="text-[10.5px] font-bold uppercase tracking-wide text-gray-400 mb-2">Réservé par (pour un tiers)</p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {booking.booker_full_name && <DetailField label="Nom" value={booking.booker_full_name} />}
+                    {booking.booker_phone && <DetailField label="Téléphone" value={booking.booker_phone} />}
+                    {booking.booker_email && <DetailField label="Email" value={booking.booker_email} />}
+                  </div>
+                </div>
+              )}
+              <PmtField declared={booking.pmt_declared} filePath={booking.pmt_file_path} />
               {booking.medical_notes && (
                 <div className="sm:col-span-2">
                   <DetailField label="Notes médicales" value={booking.medical_notes} />
@@ -474,6 +511,16 @@ function BookingDetailDialog({ bookingId, onClose }: { bookingId: string; onClos
               {booking.cancellation_reason && (
                 <div className="sm:col-span-2">
                   <DetailField label="Motif d'annulation" value={booking.cancellation_reason} />
+                </div>
+              )}
+              {(booking.accepted_at || booking.picked_up_at || booking.completed_at) && (
+                <div className="sm:col-span-2 rounded-lg bg-gray-50 p-3">
+                  <p className="text-[10.5px] font-bold uppercase tracking-wide text-gray-400 mb-2">Suivi de la course</p>
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    {booking.accepted_at && <DetailField label="Acceptée le" value={`${formatDateFr(booking.accepted_at)} à ${formatTimeFr(booking.accepted_at)}`} />}
+                    {booking.picked_up_at && <DetailField label="Prise en charge le" value={`${formatDateFr(booking.picked_up_at)} à ${formatTimeFr(booking.picked_up_at)}`} />}
+                    {booking.completed_at && <DetailField label="Terminée le" value={`${formatDateFr(booking.completed_at)} à ${formatTimeFr(booking.completed_at)}`} />}
+                  </div>
                 </div>
               )}
             </div>
@@ -522,6 +569,46 @@ function DetailField({ label, value }: { label: string; value: string }) {
     <div>
       <div className="text-[10.5px] font-bold uppercase tracking-wide text-gray-400">{label}</div>
       <div className="mt-0.5 text-[#0B0F1C]">{value}</div>
+    </div>
+  );
+}
+
+function PmtField({ declared, filePath }: { declared: boolean; filePath: string | null }) {
+  const [isOpening, setIsOpening] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleView() {
+    if (!filePath) return;
+    setError(null);
+    setIsOpening(true);
+    try {
+      const url = await adminBookingsRepository.getSignedPmtUrl(supabase, filePath);
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch {
+      setError("Impossible de générer le lien. Réessayez.");
+    } finally {
+      setIsOpening(false);
+    }
+  }
+
+  return (
+    <div>
+      <div className="text-[10.5px] font-bold uppercase tracking-wide text-gray-400">PMT</div>
+      <div className="mt-0.5 flex items-center gap-2 text-[#0B0F1C]">
+        <span>{declared ? "Déclarée" : "Non déclarée"}</span>
+        {filePath && (
+          <button
+            type="button"
+            onClick={handleView}
+            disabled={isOpening}
+            className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-2 py-0.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60 transition-colors"
+          >
+            {isOpening ? <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" /> : <ExternalLink className="h-3 w-3" aria-hidden="true" />}
+            Voir le document
+          </button>
+        )}
+      </div>
+      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
     </div>
   );
 }

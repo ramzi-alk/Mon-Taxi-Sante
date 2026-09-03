@@ -1,6 +1,9 @@
 import type { SupabaseClient } from "~/lib/supabase";
 import type { Database } from "~/lib/database.types";
 import { logger } from "~/lib/logger";
+import * as storageRepository from "~/repositories/storageRepository";
+
+const PMT_DOCUMENTS_BUCKET = "pmt-documents";
 
 type BookingStatus = Database["public"]["Tables"]["bookings"]["Row"]["status"];
 type BookingVehicleType = Database["public"]["Tables"]["bookings"]["Row"]["vehicle_type"];
@@ -14,8 +17,11 @@ export interface AdminBookingRow {
   pickup_address: string;
   dropoff_address: string;
   pickup_datetime: string;
+  return_datetime: string | null;
   vehicle_type: BookingVehicleType;
   trip_type: BookingTripType;
+  series_index: number | null;
+  series_total: number | null;
   requires_wheelchair: boolean;
   requires_stretcher: boolean;
   requires_oxygen: boolean;
@@ -33,6 +39,17 @@ export interface AdminBookingDetail extends AdminBookingRow {
   medical_notes: string | null;
   cancellation_reason: string | null;
   created_at: string;
+  accepted_at: string | null;
+  picked_up_at: string | null;
+  completed_at: string | null;
+  passenger_count: number;
+  is_hospitalization: boolean;
+  booking_for_other: boolean;
+  booker_full_name: string | null;
+  booker_phone: string | null;
+  booker_email: string | null;
+  pmt_declared: boolean;
+  pmt_file_path: string | null;
 }
 
 export interface EligibleDriver {
@@ -44,7 +61,7 @@ export interface EligibleDriver {
 }
 
 const ADMIN_BOOKING_COLUMNS =
-  "id, reference_code, patient_full_name, patient_phone, pickup_address, dropoff_address, pickup_datetime, vehicle_type, trip_type, requires_wheelchair, requires_stretcher, requires_oxygen, status, estimated_price, driver_id, driver:profiles!bookings_driver_id_fkey(full_name)";
+  "id, reference_code, patient_full_name, patient_phone, pickup_address, dropoff_address, pickup_datetime, return_datetime, vehicle_type, trip_type, series_index, series_total, requires_wheelchair, requires_stretcher, requires_oxygen, status, estimated_price, driver_id, driver:profiles!bookings_driver_id_fkey(full_name)";
 
 export interface AdminBookingFilters {
   status?: BookingStatus;
@@ -95,7 +112,7 @@ export async function fetchBookingDetailAdmin(
   const { data, error } = await client
     .from("bookings")
     .select(
-      `${ADMIN_BOOKING_COLUMNS}, patient_email, patient_birth_date, cpam_status, mutual_name, medical_notes, cancellation_reason, created_at`
+      `${ADMIN_BOOKING_COLUMNS}, patient_email, patient_birth_date, cpam_status, mutual_name, medical_notes, cancellation_reason, created_at, accepted_at, picked_up_at, completed_at, passenger_count, is_hospitalization, booking_for_other, booker_full_name, booker_phone, booker_email, pmt_declared, pmt_file_path`
     )
     .eq("id", bookingId)
     .maybeSingle();
@@ -257,6 +274,15 @@ export async function adminMarkExternalProvider(
     logger.error("adminBookings.adminMarkExternalProvider failed", { error: error.message, bookingId });
     throw new Error(error.message);
   }
+}
+
+/**
+ * Lien signé à courte durée de vie pour consulter le PMT (Prescription
+ * Médicale de Transport) d'une réservation — bucket privé, voir la policy
+ * "pmt-documents: admin lit tout" (migration 062).
+ */
+export async function getSignedPmtUrl(client: SupabaseClient, path: string): Promise<string> {
+  return storageRepository.createSignedUrl(client, PMT_DOCUMENTS_BUCKET, path);
 }
 
 export async function adminCancelBooking(
