@@ -4,6 +4,7 @@ import { logger } from "~/lib/logger";
 
 type BookingStatus = Database["public"]["Tables"]["bookings"]["Row"]["status"];
 type BookingVehicleType = Database["public"]["Tables"]["bookings"]["Row"]["vehicle_type"];
+type BookingTripType = Database["public"]["Tables"]["bookings"]["Row"]["trip_type"];
 
 export interface AdminBookingRow {
   id: string;
@@ -14,6 +15,7 @@ export interface AdminBookingRow {
   dropoff_address: string;
   pickup_datetime: string;
   vehicle_type: BookingVehicleType;
+  trip_type: BookingTripType;
   requires_wheelchair: boolean;
   requires_stretcher: boolean;
   requires_oxygen: boolean;
@@ -42,7 +44,7 @@ export interface EligibleDriver {
 }
 
 const ADMIN_BOOKING_COLUMNS =
-  "id, reference_code, patient_full_name, patient_phone, pickup_address, dropoff_address, pickup_datetime, vehicle_type, requires_wheelchair, requires_stretcher, requires_oxygen, status, estimated_price, driver_id, driver:profiles!bookings_driver_id_fkey(full_name)";
+  "id, reference_code, patient_full_name, patient_phone, pickup_address, dropoff_address, pickup_datetime, vehicle_type, trip_type, requires_wheelchair, requires_stretcher, requires_oxygen, status, estimated_price, driver_id, driver:profiles!bookings_driver_id_fkey(full_name)";
 
 export interface AdminBookingFilters {
   status?: BookingStatus;

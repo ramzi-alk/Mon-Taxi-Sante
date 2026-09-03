@@ -62,6 +62,12 @@ const VEHICLE_LABELS: Record<(typeof vehicleTypeValues)[number], string> = {
   ambulance: "Ambulance",
 };
 
+const TRIP_TYPE_LABELS: Record<AdminBookingRow["trip_type"], string> = {
+  aller_simple: "Aller simple",
+  aller_retour: "Aller-retour",
+  multiple: "Trajets multiples",
+};
+
 function AdminReservationsPage() {
   const search = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
@@ -168,7 +174,7 @@ function AdminReservationsPage() {
                   </div>
                   <p className="mt-1.5 font-semibold text-[#0B0F1C]">{booking.patient_full_name}</p>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    {formatDateFr(booking.pickup_datetime)} à {formatTimeFr(booking.pickup_datetime)} · {VEHICLE_LABELS[booking.vehicle_type]}
+                    {formatDateFr(booking.pickup_datetime)} à {formatTimeFr(booking.pickup_datetime)} · {VEHICLE_LABELS[booking.vehicle_type]} · {TRIP_TYPE_LABELS[booking.trip_type]}
                   </p>
                   <p className="text-xs text-gray-400 mt-0.5">Chauffeur : {booking.driver?.full_name ?? "—"}</p>
                 </button>
@@ -184,6 +190,7 @@ function AdminReservationsPage() {
                   <th scope="col" className="px-5 py-3 font-semibold text-[#0B0F1C]">Patient</th>
                   <th scope="col" className="px-5 py-3 font-semibold text-[#0B0F1C]">Date</th>
                   <th scope="col" className="px-5 py-3 font-semibold text-[#0B0F1C]">Véhicule</th>
+                  <th scope="col" className="px-5 py-3 font-semibold text-[#0B0F1C]">Trajet</th>
                   <th scope="col" className="px-5 py-3 font-semibold text-[#0B0F1C]">Chauffeur</th>
                   <th scope="col" className="px-5 py-3 font-semibold text-[#0B0F1C]">Statut</th>
                 </tr>
@@ -204,6 +211,7 @@ function AdminReservationsPage() {
                       <div className="text-xs text-gray-400">{formatTimeFr(booking.pickup_datetime)}</div>
                     </td>
                     <td className="px-5 py-4 text-gray-500">{VEHICLE_LABELS[booking.vehicle_type]}</td>
+                    <td className="px-5 py-4 text-gray-500">{TRIP_TYPE_LABELS[booking.trip_type]}</td>
                     <td className="px-5 py-4 text-gray-500">{booking.driver?.full_name ?? "—"}</td>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-2">
@@ -443,6 +451,7 @@ function BookingDetailDialog({ bookingId, onClose }: { bookingId: string; onClos
               <DetailField label="Adresse de départ" value={booking.pickup_address} />
               <DetailField label="Adresse d'arrivée" value={booking.dropoff_address} />
               <DetailField label="Véhicule" value={VEHICLE_LABELS[booking.vehicle_type]} />
+              <DetailField label="Type de trajet" value={TRIP_TYPE_LABELS[booking.trip_type]} />
               <DetailField
                 label="Équipements requis"
                 value={
