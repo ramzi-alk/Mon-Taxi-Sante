@@ -3,6 +3,7 @@ import { getResendClient, EMAIL_FROM, ADMIN_NOTIFICATION_EMAIL } from "~/lib/res
 import { getSupabaseAdminClient } from "~/lib/supabaseAdmin";
 import { logger, withServerFnLogging } from "~/lib/logger";
 import { isContactRevealedAt } from "~/lib/bookingMasking";
+import { fetchPhoneVisible } from "~/repositories/siteSettingsRepository";
 import { sendPushToDriver } from "./pushSend";
 import {
   bookingConfirmationEmail,
@@ -52,7 +53,8 @@ export async function sendBookingConfirmationEmail(params: {
   seriesLastPickupDatetime?: string;
 }): Promise<void> {
   try {
-    const { subject, html } = bookingConfirmationEmail(params);
+    const phoneVisible = await fetchPhoneVisible(getSupabaseAdminClient());
+    const { subject, html } = bookingConfirmationEmail({ ...params, phoneVisible });
     const { error } = await getResendClient().emails.send({
       from: EMAIL_FROM,
       to: params.to,
@@ -86,6 +88,7 @@ async function notifyBookingCancelled(data: { bookingId: string }): Promise<void
 
   const bookingTyped = booking as typeof booking & { booking_for_other: boolean; booker_email: string | null };
   const cancellationRecipient = resolveNotificationRecipient(bookingTyped);
+  const phoneVisible = await fetchPhoneVisible(admin);
 
   if (cancellationRecipient) {
     try {
@@ -94,6 +97,7 @@ async function notifyBookingCancelled(data: { bookingId: string }): Promise<void
         referenceCode: booking.reference_code,
         pickupDatetime: booking.pickup_datetime,
         cancellationReason: booking.cancellation_reason,
+        phoneVisible,
       });
       const { error: sendApiError } = await getResendClient().emails.send({
         from: EMAIL_FROM,
@@ -128,6 +132,7 @@ async function notifyBookingCancelled(data: { bookingId: string }): Promise<void
           driverFullName: driverProfile.full_name,
           referenceCode: booking.reference_code,
           pickupDatetime: booking.pickup_datetime,
+          phoneVisible,
         });
         const { error: sendApiError } = await getResendClient().emails.send({
           from: EMAIL_FROM,
@@ -217,6 +222,7 @@ async function notifyBookingAccepted(data: { bookingId: string }): Promise<void>
     : undefined;
 
   try {
+    const phoneVisible = await fetchPhoneVisible(admin);
     const { subject, html } = bookingAcceptedEmail({
       patientFullName: booking.patient_full_name,
       referenceCode: booking.reference_code,
@@ -231,6 +237,7 @@ async function notifyBookingAccepted(data: { bookingId: string }): Promise<void>
       driverAverageRating: driverAverageRating ?? null,
       seriesTotal,
       seriesLastPickupDatetime,
+      phoneVisible,
     });
     const { error: sendApiError } = await getResendClient().emails.send({
       from: EMAIL_FROM,
@@ -301,6 +308,7 @@ async function notifyDriverRideAccepted(data: { bookingId: string; seriesAccepte
   const contactRevealed = isContactRevealedAt(bookingTyped.pickup_datetime);
 
   try {
+    const phoneVisible = await fetchPhoneVisible(admin);
     const { subject, html } = rideAcceptedDriverEmail({
       driverFullName: driverProfile.full_name,
       patientFullName: bookingTyped.patient_full_name,
@@ -312,6 +320,7 @@ async function notifyDriverRideAccepted(data: { bookingId: string; seriesAccepte
       pickupDatetime: bookingTyped.pickup_datetime,
       seriesTotal,
       seriesLastPickupDatetime,
+      phoneVisible,
     });
     const { error: sendApiError } = await getResendClient().emails.send({
       from: EMAIL_FROM,
@@ -375,12 +384,14 @@ async function notifyBookingUpdated(data: { bookingId: string }): Promise<void> 
       return;
     }
 
+    const phoneVisible = await fetchPhoneVisible(admin);
     const { subject, html } = bookingUpdatedDriverEmail({
       driverFullName: driverProfile.full_name,
       referenceCode: booking.reference_code,
       pickupAddress: booking.pickup_address,
       dropoffAddress: booking.dropoff_address,
       pickupDatetime: booking.pickup_datetime,
+      phoneVisible,
     });
     const { error: sendApiError } = await getResendClient().emails.send({
       from: EMAIL_FROM,
@@ -448,12 +459,14 @@ async function notifyRideUnassigned(data: { bookingId: string; seriesAffectedCou
   }
 
   try {
+    const phoneVisible = await fetchPhoneVisible(admin);
     const { subject, html } = rideUnassignedByDriverEmail({
       patientFullName: booking.patient_full_name,
       referenceCode: booking.reference_code,
       pickupDatetime: booking.pickup_datetime,
       seriesTotal,
       seriesLastPickupDatetime,
+      phoneVisible,
     });
     const { error: sendApiError } = await getResendClient().emails.send({
       from: EMAIL_FROM,
@@ -513,10 +526,12 @@ async function notifyDriverPatientCancelled(data: { bookingId: string }): Promis
   });
 
   try {
+    const phoneVisible = await fetchPhoneVisible(admin);
     const { subject, html } = bookingCancelledDriverEmail({
       driverFullName: profile.full_name ?? "Chauffeur",
       referenceCode: booking.reference_code,
       pickupDatetime: booking.pickup_datetime,
+      phoneVisible,
     });
     const { error: sendError } = await getResendClient().emails.send({
       from: EMAIL_FROM,
@@ -562,6 +577,7 @@ async function notifyAdminNewDriverApplication(input: { driverDetailsId: string 
   }
 
   try {
+    const phoneVisible = await fetchPhoneVisible(admin);
     const { subject, html } = adminNewDriverApplicationEmail({
       driverFullName: driver.profiles.full_name,
       driverEmail: driver.profiles.email,
@@ -570,6 +586,7 @@ async function notifyAdminNewDriverApplication(input: { driverDetailsId: string 
       vehicleRegistration: driver.vehicle_registration,
       siret: driver.siret,
       companyName: driver.company_name,
+      phoneVisible,
     });
     const { error: sendApiError } = await getResendClient().emails.send({
       from: EMAIL_FROM,
@@ -621,7 +638,8 @@ async function notifyDriverApproved(input: { driverDetailsId: string }): Promise
   }
 
   try {
-    const { subject, html } = driverApprovedEmail({ driverFullName: profile.full_name });
+    const phoneVisible = await fetchPhoneVisible(admin);
+    const { subject, html } = driverApprovedEmail({ driverFullName: profile.full_name, phoneVisible });
     const { error: sendApiError } = await getResendClient().emails.send({
       from: EMAIL_FROM,
       to: profile.email,
@@ -670,9 +688,11 @@ async function notifyDriverRejected(input: { driverDetailsId: string }): Promise
   }
 
   try {
+    const phoneVisible = await fetchPhoneVisible(admin);
     const { subject, html } = driverRejectedEmail({
       driverFullName: profile.full_name,
       reason: driver.rejection_reason,
+      phoneVisible,
     });
     const { error: sendApiError } = await getResendClient().emails.send({
       from: EMAIL_FROM,
@@ -736,10 +756,12 @@ async function notifyDriverReassignedAway(input: {
   });
 
   try {
+    const phoneVisible = await fetchPhoneVisible(admin);
     const { subject, html } = driverReassignedAwayEmail({
       driverFullName: driverProfile.full_name ?? "Chauffeur",
       referenceCode: booking.reference_code,
       pickupDatetime: booking.pickup_datetime,
+      phoneVisible,
     });
     const { error: sendApiError } = await getResendClient().emails.send({
       from: EMAIL_FROM,
@@ -790,9 +812,11 @@ async function notifyDriverDocumentRequest(input: {
   }
 
   try {
+    const phoneVisible = await fetchPhoneVisible(admin);
     const { subject, html } = driverDocumentRequestEmail({
       driverFullName: profile.full_name ?? "Chauffeur",
       message: input.message,
+      phoneVisible,
     });
     const { error: sendApiError } = await getResendClient().emails.send({
       from: EMAIL_FROM,

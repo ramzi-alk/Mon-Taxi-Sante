@@ -53,6 +53,29 @@ interface HookPayload {
   email_data: HookEmailData;
 }
 
+// Mirrors src/hooks/usePhoneVisibility.ts / the phoneVisible plumbing in
+// src/server/emailTemplates.ts for the app's own transactional emails: this
+// hook has no access to that app code (separate Deno runtime), so it reads
+// site_settings directly via the REST API using the service role key every
+// Edge Function gets injected automatically. Fails open to `true` — same
+// convention as the app-side fetchPhoneVisible — so an outage here doesn't
+// block auth emails from going out.
+async function fetchPhoneVisible(): Promise<boolean> {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!supabaseUrl || !serviceRoleKey) return true;
+  try {
+    const res = await fetch(`${supabaseUrl}/rest/v1/site_settings?select=phone_number_visible&id=eq.true`, {
+      headers: { apikey: serviceRoleKey, Authorization: `Bearer ${serviceRoleKey}` },
+    });
+    if (!res.ok) return true;
+    const rows = (await res.json()) as Array<{ phone_number_visible: boolean }>;
+    return rows[0]?.phone_number_visible ?? true;
+  } catch {
+    return true;
+  }
+}
+
 // GoTrue's own verify endpoint — same one Supabase's default mailer links
 // to, reconstructed here since the hook only gives us the token hash, not
 // a ready-made URL. PROJECT_REF is stable per Supabase project (not a
@@ -75,6 +98,7 @@ function shell(opts: {
     | { kind: "button"; label: string; url: string }
     | { kind: "code"; value: string };
   footnote: string;
+  phoneVisible: boolean;
 }): string {
   const ctaHtml =
     opts.cta.kind === "button"
@@ -120,9 +144,13 @@ function shell(opts: {
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:28px;border-top:1px solid #f1f2f6;">
             <tr>
               <td style="padding-top:18px;font-size:13px;color:#6b7280;line-height:1.6;">
-                Une question ? Appelez le
+                ${
+                  opts.phoneVisible
+                    ? `Une question ? Appelez le
                 <a href="tel:${SUPPORT_PHONE_TEL}" style="color:#1244E8;font-weight:600;text-decoration:none;">${SUPPORT_PHONE_DISPLAY}</a>
-                ou écrivez à
+                ou écrivez à`
+                    : `Une question ? Écrivez à`
+                }
                 <a href="mailto:${SUPPORT_EMAIL}" style="color:#1244E8;font-weight:600;text-decoration:none;">${SUPPORT_EMAIL}</a>.
               </td>
             </tr>
@@ -136,7 +164,11 @@ function shell(opts: {
 
 const ACTION_BADGE = { badge: "Action requise", badgeBg: "#EFF4FF", badgeColor: "#1244E8" };
 
-function renderEmail(user: HookUser, emailData: HookEmailData): { subject: string; to: string; html: string } | null {
+function renderEmail(
+  user: HookUser,
+  emailData: HookEmailData,
+  phoneVisible: boolean
+): { subject: string; to: string; html: string } | null {
   const { email_action_type, redirect_to } = emailData;
 
   switch (email_action_type) {
@@ -148,6 +180,7 @@ function renderEmail(user: HookUser, emailData: HookEmailData): { subject: strin
           emoji: "✉️",
           heading: "Confirmez votre adresse e-mail",
           ...ACTION_BADGE,
+          phoneVisible,
           intro: "Merci de votre inscription sur Docteur Taxi. Confirmez votre adresse e-mail pour activer votre compte.",
           cta: {
             kind: "button",
@@ -166,6 +199,7 @@ function renderEmail(user: HookUser, emailData: HookEmailData): { subject: strin
           emoji: "🔑",
           heading: "Réinitialisez votre mot de passe",
           ...ACTION_BADGE,
+          phoneVisible,
           intro:
             "Vous avez demandé la réinitialisation de votre mot de passe Docteur Taxi. Cliquez sur le bouton ci-dessous pour choisir un nouveau mot de passe.",
           cta: {
@@ -188,6 +222,7 @@ function renderEmail(user: HookUser, emailData: HookEmailData): { subject: strin
           emoji: "🔑",
           heading: "Votre code de connexion",
           ...ACTION_BADGE,
+          phoneVisible,
           intro:
             "Saisissez ce code sur la page où vous avez demandé à vous connecter ou à retrouver votre historique de réservations Docteur Taxi.",
           cta: { kind: "code", value: emailData.token },
@@ -206,6 +241,7 @@ function renderEmail(user: HookUser, emailData: HookEmailData): { subject: strin
           badge: "Invitation",
           badgeBg: "#ECFDF5",
           badgeColor: "#059669",
+          phoneVisible,
           intro:
             "Vous avez été invité(e) à créer un compte sur Docteur Taxi. Cliquez sur le bouton ci-dessous pour choisir votre mot de passe et accéder à votre espace.",
           cta: {
@@ -237,6 +273,7 @@ function renderEmail(user: HookUser, emailData: HookEmailData): { subject: strin
           emoji: "📧",
           heading: "Confirmez votre nouvelle adresse e-mail",
           ...ACTION_BADGE,
+          phoneVisible,
           intro: `Vous avez demandé à remplacer l'adresse e-mail de votre compte Docteur Taxi par <strong>${
             user.new_email || ""
           }</strong>. Confirmez ce changement en cliquant sur le bouton ci-dessous.`,
@@ -285,7 +322,8 @@ Deno.serve(async (req) => {
     });
   }
 
-  const email = renderEmail(data.user, data.email_data);
+  const phoneVisible = await fetchPhoneVisible();
+  const email = renderEmail(data.user, data.email_data, phoneVisible);
   if (!email) {
     return new Response(
       JSON.stringify({ error: { message: `Unsupported email_action_type: ${data.email_data.email_action_type}` } }),

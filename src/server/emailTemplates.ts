@@ -24,8 +24,8 @@ function escapeHtml(value: string): string {
     .replace(/'/g, "&#39;");
 }
 
-function layout(params: { title: string; icon: string; bodyHtml: string }): string {
-  const { title, icon, bodyHtml } = params;
+function layout(params: { title: string; icon: string; bodyHtml: string; phoneVisible: boolean }): string {
+  const { title, icon, bodyHtml, phoneVisible } = params;
   return `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;margin:0 auto;border-collapse:collapse;font-family:-apple-system,Helvetica,Arial,sans-serif;color:#0B0F1C;">
       <tr>
@@ -42,9 +42,13 @@ function layout(params: { title: string; icon: string; bodyHtml: string }): stri
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:28px;border-top:1px solid #f1f2f6;">
             <tr>
               <td style="padding-top:18px;font-size:13px;color:#6b7280;line-height:1.6;">
-                Une question ? Appelez le
+                ${
+                  phoneVisible
+                    ? `Une question ? Appelez le
                 <a href="tel:${CONTACT_PHONE_TEL}" style="color:#1244E8;font-weight:600;text-decoration:none;">${CONTACT_PHONE_DISPLAY}</a>
-                ou écrivez à
+                ou écrivez à`
+                    : `Une question ? Écrivez à`
+                }
                 <a href="mailto:${CONTACT_EMAIL}" style="color:#1244E8;font-weight:600;text-decoration:none;">${CONTACT_EMAIL}</a>.
               </td>
             </tr>
@@ -125,6 +129,7 @@ export function bookingConfirmationEmail(params: {
   // d'envoyer un email par réservation générée.
   seriesTotal?: number;
   seriesLastPickupDatetime?: string;
+  phoneVisible: boolean;
 }): EmailContent {
   const {
     patientFullName,
@@ -135,6 +140,7 @@ export function bookingConfirmationEmail(params: {
     pickupDatetime,
     seriesTotal,
     seriesLastPickupDatetime,
+    phoneVisible,
   } = params;
   const isSeries = !!seriesTotal && seriesTotal > 1 && !!seriesLastPickupDatetime;
   const isThirdParty = !!bookerFullName;
@@ -158,6 +164,7 @@ export function bookingConfirmationEmail(params: {
     html: layout({
       title: isSeries ? "Série de soins confirmée" : "Réservation confirmée",
       icon: "✅",
+      phoneVisible,
       bodyHtml: `
         ${badge("Confirmée", "green")}
         <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">${greeting}</p>
@@ -190,6 +197,7 @@ export function bookingAcceptedEmail(params: {
   driverAverageRating?: number | null;
   seriesTotal?: number;
   seriesLastPickupDatetime?: string;
+  phoneVisible: boolean;
 }): EmailContent {
   const {
     patientFullName,
@@ -205,6 +213,7 @@ export function bookingAcceptedEmail(params: {
     driverAverageRating,
     seriesTotal,
     seriesLastPickupDatetime,
+    phoneVisible,
   } = params;
   const isSeries = !!seriesTotal && seriesTotal > 1 && !!seriesLastPickupDatetime;
   const vehicleLabel = [vehicleBrand, vehicleModel].filter(Boolean).join(" ");
@@ -221,6 +230,7 @@ export function bookingAcceptedEmail(params: {
     html: layout({
       title: isSeries ? `Chauffeur affecté — ${seriesTotal} séances` : "Chauffeur affecté",
       icon: "🚗",
+      phoneVisible,
       bodyHtml: `
         ${badge("Chauffeur affecté", "blue")}
         <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${escapeHtml(patientFullName)},</p>
@@ -257,13 +267,15 @@ export function bookingCancellationEmail(params: {
   referenceCode: string;
   pickupDatetime: string;
   cancellationReason: string | null;
+  phoneVisible: boolean;
 }): EmailContent {
-  const { patientFullName, referenceCode, pickupDatetime, cancellationReason } = params;
+  const { patientFullName, referenceCode, pickupDatetime, cancellationReason, phoneVisible } = params;
   return {
     subject: `Réservation annulée — Réf. ${formatReferenceCode(referenceCode)}`,
     html: layout({
       title: "Réservation annulée",
       icon: "🚫",
+      phoneVisible,
       bodyHtml: `
         ${badge("Annulée", "red")}
         <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${escapeHtml(patientFullName)},</p>
@@ -283,13 +295,15 @@ export function bookingExpiredEmail(params: {
   patientFullName: string;
   referenceCode: string;
   pickupDatetime: string;
+  phoneVisible: boolean;
 }): EmailContent {
-  const { patientFullName, referenceCode, pickupDatetime } = params;
+  const { patientFullName, referenceCode, pickupDatetime, phoneVisible } = params;
   return {
     subject: `Aucun chauffeur trouvé — Réf. ${formatReferenceCode(referenceCode)}`,
     html: layout({
       title: "Aucun chauffeur n'a pu être trouvé",
       icon: "⚠️",
+      phoneVisible,
       bodyHtml: `
         ${badge("Course expirée", "amber")}
         <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${escapeHtml(patientFullName)},</p>
@@ -308,8 +322,9 @@ export function adminNewDriverApplicationEmail(params: {
   vehicleRegistration: string;
   siret: string;
   companyName: string | null;
+  phoneVisible: boolean;
 }): EmailContent {
-  const { driverFullName, driverEmail, driverPhone, vehicleType, vehicleRegistration, siret, companyName } = params;
+  const { driverFullName, driverEmail, driverPhone, vehicleType, vehicleRegistration, siret, companyName, phoneVisible } = params;
   const rows = [
     { label: "Nom", value: driverFullName },
     { label: "Email", value: driverEmail },
@@ -322,6 +337,7 @@ export function adminNewDriverApplicationEmail(params: {
     html: layout({
       title: "Nouvelle candidature chauffeur",
       icon: "🔔",
+      phoneVisible,
       bodyHtml: `
         ${badge("En attente de validation", "blue")}
         <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Une nouvelle candidature chauffeur vient d'être soumise et attend votre validation.</p>
@@ -335,8 +351,9 @@ export function adminNewDriverApplicationEmail(params: {
 export function atRiskBookingsAlertEmail(params: {
   bookings: Array<{ referenceCode: string; patientFullName: string; pickupDatetime: string }>;
   hoursThreshold: number;
+  phoneVisible: boolean;
 }): EmailContent {
-  const { bookings, hoursThreshold } = params;
+  const { bookings, hoursThreshold, phoneVisible } = params;
   const rows = bookings.map((b) => ({
     label: formatReferenceCode(b.referenceCode),
     value: `${b.patientFullName} — ${formatDateFr(b.pickupDatetime)} à ${formatTimeFr(b.pickupDatetime)}`,
@@ -346,6 +363,7 @@ export function atRiskBookingsAlertEmail(params: {
     html: layout({
       title: "Courses à risque",
       icon: "⚠️",
+      phoneVisible,
       bodyHtml: `
         ${badge(`${bookings.length} course${bookings.length > 1 ? "s" : ""} sans chauffeur`, "red")}
         <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Les réservations suivantes n'ont pas encore de chauffeur alors que le départ est prévu dans moins de ${hoursThreshold}h. Une intervention manuelle (assignation depuis le panel admin) est recommandée.</p>
@@ -365,31 +383,42 @@ export function atRiskPatientEmail(params: {
   patientFullName: string;
   referenceCode: string;
   pickupDatetime: string;
+  phoneVisible: boolean;
 }): EmailContent {
-  const { patientFullName, referenceCode, pickupDatetime } = params;
+  const { patientFullName, referenceCode, pickupDatetime, phoneVisible } = params;
   return {
     subject: `Votre course du ${formatDateFr(pickupDatetime)} — recherche de chauffeur en cours`,
     html: layout({
       title: "Nous recherchons encore votre chauffeur",
       icon: "🔎",
+      phoneVisible,
       bodyHtml: `
         ${badge("Recherche en cours", "amber")}
         <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${escapeHtml(patientFullName)},</p>
         <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Votre réservation du <strong>${formatDateFr(pickupDatetime)} à ${formatTimeFr(pickupDatetime)}</strong> (réf. ${formatReferenceCode(referenceCode)}) n'a pas encore de chauffeur assigné. Notre équipe en est informée et continue la recherche.</p>
-        <p style="margin:0;font-size:14px;color:#6b7280;line-height:1.5;">Si vous n'avez pas de nouvelles peu avant l'heure prévue, appelez-nous directement au ${CONTACT_PHONE_DISPLAY} pour que nous puissions organiser votre transport sans délai.</p>
+        <p style="margin:0;font-size:14px;color:#6b7280;line-height:1.5;">${
+          phoneVisible
+            ? `Si vous n'avez pas de nouvelles peu avant l'heure prévue, appelez-nous directement au ${CONTACT_PHONE_DISPLAY} pour que nous puissions organiser votre transport sans délai.`
+            : `Si vous n'avez pas de nouvelles peu avant l'heure prévue, écrivez-nous à ${CONTACT_EMAIL} pour que nous puissions organiser votre transport sans délai.`
+        }</p>
         ${ctaButton("Suivre ma réservation", trackingUrl(referenceCode))}
       `,
     }),
   };
 }
 
-export function driverDocumentRequestEmail(params: { driverFullName: string; message: string }): EmailContent {
-  const { driverFullName, message } = params;
+export function driverDocumentRequestEmail(params: {
+  driverFullName: string;
+  message: string;
+  phoneVisible: boolean;
+}): EmailContent {
+  const { driverFullName, message, phoneVisible } = params;
   return {
     subject: "Mise à jour de documents demandée — Docteur Taxi",
     html: layout({
       title: "Documents à mettre à jour",
       icon: "📄",
+      phoneVisible,
       bodyHtml: `
         ${badge("Action requise", "amber")}
         <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${escapeHtml(driverFullName)},</p>
@@ -401,13 +430,14 @@ export function driverDocumentRequestEmail(params: { driverFullName: string; mes
   };
 }
 
-export function driverApprovedEmail(params: { driverFullName: string }): EmailContent {
-  const { driverFullName } = params;
+export function driverApprovedEmail(params: { driverFullName: string; phoneVisible: boolean }): EmailContent {
+  const { driverFullName, phoneVisible } = params;
   return {
     subject: "Votre candidature a été approuvée — Docteur Taxi",
     html: layout({
       title: "Candidature approuvée",
       icon: "🎉",
+      phoneVisible,
       bodyHtml: `
         ${badge("Compte activé", "green")}
         <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${escapeHtml(driverFullName)},</p>
@@ -417,13 +447,18 @@ export function driverApprovedEmail(params: { driverFullName: string }): EmailCo
   };
 }
 
-export function driverRejectedEmail(params: { driverFullName: string; reason: string }): EmailContent {
-  const { driverFullName, reason } = params;
+export function driverRejectedEmail(params: {
+  driverFullName: string;
+  reason: string;
+  phoneVisible: boolean;
+}): EmailContent {
+  const { driverFullName, reason, phoneVisible } = params;
   return {
     subject: "Votre candidature chauffeur — Docteur Taxi",
     html: layout({
       title: "Candidature non retenue",
       icon: "📋",
+      phoneVisible,
       bodyHtml: `
         ${badge("Candidature non retenue", "amber")}
         <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${escapeHtml(driverFullName)},</p>
@@ -442,13 +477,15 @@ export function bookingReminderEmail(params: {
   dropoffAddress: string;
   pickupDatetime: string;
   token: string;
+  phoneVisible: boolean;
 }): EmailContent {
-  const { patientFullName, referenceCode, pickupAddress, dropoffAddress, pickupDatetime, token } = params;
+  const { patientFullName, referenceCode, pickupAddress, dropoffAddress, pickupDatetime, token, phoneVisible } = params;
   return {
     subject: `Rappel — votre course de demain (Réf. ${formatReferenceCode(referenceCode)})`,
     html: layout({
       title: "Votre course est demain",
       icon: "📅",
+      phoneVisible,
       bodyHtml: `
         ${badge("Confirmation requise", "blue")}
         <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${escapeHtml(patientFullName)},</p>
@@ -472,13 +509,15 @@ export function bookingUpdatedDriverEmail(params: {
   pickupAddress: string;
   dropoffAddress: string;
   pickupDatetime: string;
+  phoneVisible: boolean;
 }): EmailContent {
-  const { driverFullName, referenceCode, pickupAddress, dropoffAddress, pickupDatetime } = params;
+  const { driverFullName, referenceCode, pickupAddress, dropoffAddress, pickupDatetime, phoneVisible } = params;
   return {
     subject: `Détails modifiés — Réf. ${formatReferenceCode(referenceCode)}`,
     html: layout({
       title: "Détails de la course modifiés",
       icon: "✏️",
+      phoneVisible,
       bodyHtml: `
         ${badge("Mise à jour", "blue")}
         <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${escapeHtml(driverFullName)},</p>
@@ -501,8 +540,9 @@ export function rideUnassignedByDriverEmail(params: {
   pickupDatetime: string;
   seriesTotal?: number;
   seriesLastPickupDatetime?: string;
+  phoneVisible: boolean;
 }): EmailContent {
-  const { patientFullName, referenceCode, pickupDatetime, seriesTotal, seriesLastPickupDatetime } = params;
+  const { patientFullName, referenceCode, pickupDatetime, seriesTotal, seriesLastPickupDatetime, phoneVisible } = params;
   const isSeries = !!seriesTotal && seriesTotal > 1 && !!seriesLastPickupDatetime;
   const body = isSeries
     ? `Le chauffeur affecté à votre série de <strong>${seriesTotal} séances</strong> (du ${formatDateFr(pickupDatetime)} au ${formatDateFr(seriesLastPickupDatetime!)}, réf. ${formatReferenceCode(referenceCode)}) n'est finalement plus disponible. Toutes les séances sont de nouveau proposées à notre réseau de chauffeurs conventionnés ; vous serez averti dès qu'un nouveau chauffeur les accepte.`
@@ -514,6 +554,7 @@ export function rideUnassignedByDriverEmail(params: {
     html: layout({
       title: "Recherche d'un nouveau chauffeur",
       icon: "🔄",
+      phoneVisible,
       bodyHtml: `
         ${badge("Nouvelle recherche en cours", "amber")}
         <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${escapeHtml(patientFullName)},</p>
@@ -528,13 +569,15 @@ export function driverReassignedAwayEmail(params: {
   driverFullName: string;
   referenceCode: string;
   pickupDatetime: string;
+  phoneVisible: boolean;
 }): EmailContent {
-  const { driverFullName, referenceCode, pickupDatetime } = params;
+  const { driverFullName, referenceCode, pickupDatetime, phoneVisible } = params;
   return {
     subject: `Course réattribuée — Réf. ${formatReferenceCode(referenceCode)}`,
     html: layout({
       title: "Course réattribuée",
       icon: "🔄",
+      phoneVisible,
       bodyHtml: `
         ${badge("Retirée de votre planning", "amber")}
         <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${escapeHtml(driverFullName)},</p>
@@ -556,6 +599,7 @@ export function rideAcceptedDriverEmail(params: {
   pickupDatetime: string;
   seriesTotal?: number;
   seriesLastPickupDatetime?: string;
+  phoneVisible: boolean;
 }): EmailContent {
   const {
     driverFullName,
@@ -568,6 +612,7 @@ export function rideAcceptedDriverEmail(params: {
     pickupDatetime,
     seriesTotal,
     seriesLastPickupDatetime,
+    phoneVisible,
   } = params;
   const isSeries = !!seriesTotal && seriesTotal > 1 && !!seriesLastPickupDatetime;
   const dateValue = isSeries
@@ -594,6 +639,7 @@ export function rideAcceptedDriverEmail(params: {
     html: layout({
       title: isSeries ? `${seriesTotal} séances acceptées` : "Course acceptée",
       icon: "✅",
+      phoneVisible,
       bodyHtml: `
         ${badge(isSeries ? `${seriesTotal} séances acceptées` : "Course acceptée", "green")}
         <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${escapeHtml(driverFullName)},</p>
@@ -623,13 +669,15 @@ export function bookingCancelledDriverEmail(params: {
   driverFullName: string;
   referenceCode: string;
   pickupDatetime: string;
+  phoneVisible: boolean;
 }): EmailContent {
-  const { driverFullName, referenceCode, pickupDatetime } = params;
+  const { driverFullName, referenceCode, pickupDatetime, phoneVisible } = params;
   return {
     subject: `Course annulée par le patient — Réf. ${formatReferenceCode(referenceCode)}`,
     html: layout({
       title: "Course annulée",
       icon: "🚫",
+      phoneVisible,
       bodyHtml: `
         ${badge("Annulée", "red")}
         <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Bonjour ${escapeHtml(driverFullName)},</p>

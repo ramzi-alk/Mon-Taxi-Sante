@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { getSupabaseAdminClient } from "~/lib/supabaseAdmin";
 import { getResendClient, EMAIL_FROM } from "~/lib/resend";
 import { bookingExpiredEmail } from "~/server/emailTemplates";
+import { fetchPhoneVisible } from "~/repositories/siteSettingsRepository";
 import { logger } from "~/lib/logger";
 
 // The actual 'available' → 'expired' status flip happens in Postgres itself
@@ -49,6 +50,8 @@ export const Route = createFileRoute("/api/cron/expire-bookings")({
       return Response.json({ notified: 0 });
     }
 
+    const phoneVisible = await fetchPhoneVisible(admin);
+
     let notified = 0;
     for (const booking of bookings) {
       if (booking.patient_email) {
@@ -57,6 +60,7 @@ export const Route = createFileRoute("/api/cron/expire-bookings")({
             patientFullName: booking.patient_full_name,
             referenceCode: booking.reference_code,
             pickupDatetime: booking.pickup_datetime,
+            phoneVisible,
           });
           const { error: sendApiError } = await getResendClient().emails.send({
             from: EMAIL_FROM,
