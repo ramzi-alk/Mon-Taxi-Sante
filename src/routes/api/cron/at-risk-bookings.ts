@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { getSupabaseAdminClient } from "~/lib/supabaseAdmin";
 import { getResendClient, EMAIL_FROM, ADMIN_NOTIFICATION_EMAIL } from "~/lib/resend";
 import { atRiskBookingsAlertEmail, atRiskPatientEmail } from "~/server/emailTemplates";
+import { fetchPhoneVisible } from "~/repositories/siteSettingsRepository";
 import { logger } from "~/lib/logger";
 
 // Vercel Cron hits this once a day (see vercel.json — Hobby plan caps cron
@@ -53,6 +54,8 @@ export const Route = createFileRoute("/api/cron/at-risk-bookings")({
       return Response.json({ alerted: 0 });
     }
 
+    const phoneVisible = await fetchPhoneVisible(admin);
+
     try {
       const { subject, html } = atRiskBookingsAlertEmail({
         bookings: bookings.map((b) => ({
@@ -61,6 +64,7 @@ export const Route = createFileRoute("/api/cron/at-risk-bookings")({
           pickupDatetime: b.pickup_datetime,
         })),
         hoursThreshold: AT_RISK_HOURS,
+        phoneVisible,
       });
       const { error: sendApiError } = await getResendClient().emails.send({
         from: EMAIL_FROM,
@@ -110,6 +114,7 @@ export const Route = createFileRoute("/api/cron/at-risk-bookings")({
             patientFullName: booking.patient_full_name,
             referenceCode: booking.reference_code,
             pickupDatetime: booking.pickup_datetime,
+            phoneVisible,
           });
           const { error: sendApiError } = await getResendClient().emails.send({
             from: EMAIL_FROM,

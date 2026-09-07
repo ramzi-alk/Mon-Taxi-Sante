@@ -3,6 +3,7 @@ import { randomBytes, createHash } from "node:crypto";
 import { getSupabaseAdminClient } from "~/lib/supabaseAdmin";
 import { getResendClient, EMAIL_FROM } from "~/lib/resend";
 import { bookingReminderEmail } from "~/server/emailTemplates";
+import { fetchPhoneVisible } from "~/repositories/siteSettingsRepository";
 import { logger } from "~/lib/logger";
 
 // Vercel Cron hits this once daily (see vercel.json) to send the day-before
@@ -52,6 +53,8 @@ export const Route = createFileRoute("/api/cron/booking-reminders")({
       return Response.json({ sent: 0, error: error.message }, { status: 500 });
     }
 
+    const phoneVisible = await fetchPhoneVisible(admin);
+
     let sent = 0;
     for (const booking of bookings ?? []) {
       if (!booking.patient_email) continue;
@@ -80,6 +83,7 @@ export const Route = createFileRoute("/api/cron/booking-reminders")({
           dropoffAddress: booking.dropoff_address,
           pickupDatetime: booking.pickup_datetime,
           token,
+          phoneVisible,
         });
         const { error: sendApiError } = await getResendClient().emails.send({
           from: EMAIL_FROM,

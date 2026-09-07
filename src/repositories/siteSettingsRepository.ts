@@ -19,6 +19,21 @@ export async function fetchSiteSettings(client: SupabaseClient): Promise<SiteSet
   return data;
 }
 
+/**
+ * Same intent as usePhoneVisibility (src/hooks/usePhoneVisibility.ts) but
+ * for server-side callers (emails) that can't use a React hook: fail open
+ * to `true` on error so a transient fetch hiccup doesn't silently swallow
+ * an email send that's otherwise best-effort itself (see src/server/email.ts).
+ */
+export async function fetchPhoneVisible(client: SupabaseClient): Promise<boolean> {
+  try {
+    const settings = await fetchSiteSettings(client);
+    return settings.phone_number_visible;
+  } catch {
+    return true;
+  }
+}
+
 export async function updatePhoneVisibility(
   client: SupabaseClient,
   visible: boolean,
