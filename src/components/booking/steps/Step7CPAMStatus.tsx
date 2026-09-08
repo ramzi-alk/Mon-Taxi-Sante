@@ -145,7 +145,7 @@ export function Step7CPAMStatus({ form }: StepProps) {
         >
           <CalendarIcon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
           Date de naissance du patient{" "}
-          <span className="text-muted-foreground text-xs font-normal">(optionnel)</span>
+          <span className="text-red-500" aria-hidden="true">*</span>
         </label>
         <input type="hidden" {...register("patient_birth_date")} />
         <Popover>
@@ -154,7 +154,9 @@ export function Step7CPAMStatus({ form }: StepProps) {
               id="patient_birth_date"
               type="button"
               variant="outline"
-              aria-describedby="birth-hint"
+              aria-required="true"
+              aria-describedby={errors.patient_birth_date ? "birth-date-error" : "birth-hint"}
+              aria-invalid={!!errors.patient_birth_date}
               className={cn(
                 "h-auto w-full justify-start rounded-xl px-4 py-3.5 text-left text-base font-normal",
                 !birthDate && "text-muted-foreground"
@@ -184,9 +186,15 @@ export function Step7CPAMStatus({ form }: StepProps) {
             />
           </PopoverContent>
         </Popover>
-        <p id="birth-hint" className="text-sm text-muted-foreground">
-          Demandée pour vérifier certains droits ALD, CMU-C ou CSS auprès de l&apos;Assurance Maladie.
-        </p>
+        {errors.patient_birth_date ? (
+          <p id="birth-date-error" role="alert" className="text-sm text-red-600">
+            {errors.patient_birth_date.message}
+          </p>
+        ) : (
+          <p id="birth-hint" className="text-sm text-muted-foreground">
+            Demandée pour vérifier certains droits ALD, CMU-C ou CSS auprès de l&apos;Assurance Maladie.
+          </p>
+        )}
       </div>
 
       {/* Mutual name */}

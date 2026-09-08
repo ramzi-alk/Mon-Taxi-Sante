@@ -29,9 +29,8 @@ export const bookingObjectSchema = z.object({
       .or(z.literal("")),
     patient_birth_date: z
       .string()
-      .regex(frenchDate, "Date de naissance invalide")
-      .optional()
-      .or(z.literal("")),
+      .min(1, "La date de naissance du patient est requise")
+      .regex(frenchDate, "Date de naissance invalide"),
     // Booker (the person placing the reservation, when different from the patient)
     booker_full_name: z.string().optional().or(z.literal("")),
     booker_phone: z.string().optional().or(z.literal("")),
