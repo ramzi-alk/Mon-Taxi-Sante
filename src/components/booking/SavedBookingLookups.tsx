@@ -76,10 +76,8 @@ export function SavedBookingLookups() {
       {!isSuccess && (
         <div className="rounded-2xl bg-white shadow-sm ring-1 ring-gray-100 p-6 space-y-4">
           <p className="text-sm text-muted-foreground">
-            {saved.length === 1
-              ? "1 réservation ajoutée précédemment via une recherche par référence."
-              : `${saved.length} réservations ajoutées précédemment via une recherche par référence.`}{" "}
-            Une vérification est nécessaire pour les afficher.
+            {saved.length === 1 ? "1 réservation enregistrée." : `${saved.length} réservations enregistrées.`}{" "}
+            Vérification nécessaire pour les afficher.
           </p>
           <div className="flex flex-wrap gap-2">
             {saved.map((l) => (

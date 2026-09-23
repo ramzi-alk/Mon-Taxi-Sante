@@ -93,8 +93,7 @@ function MyBookingsPage() {
           Mes réservations
         </h1>
         <p className="mt-3 text-gray-500 leading-relaxed">
-          Retrouvez ici l&apos;avancement de vos demandes en cours et
-          l&apos;historique de vos trajets passés, depuis cet appareil.
+          Suivi de vos demandes, depuis cet appareil.
         </p>
 
         {isLoading && (
@@ -121,11 +120,8 @@ function MyBookingsPage() {
               Aucune réservation trouvée sur cet appareil
             </p>
             <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-              Le suivi est lié au navigateur utilisé pour réserver. Si vous
-              avez réservé depuis un autre appareil, ou si l&apos;historique a
-              été effacé, retrouvez-la ci-dessous avec sa référence, ou
-              connectez-vous avec l&apos;email utilisé pour afficher tout
-              votre historique — ou contactez-nous directement.
+              Réservé depuis un autre appareil ? Retrouvez-la ci-dessous, ou
+              contactez-nous.
             </p>
             <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
               <Link
@@ -160,7 +156,6 @@ function MyBookingsPage() {
           <div className="mt-6">
             <BookingRecoveryPanel
               heading="Retrouver une réservation"
-              description="Recherchez-la avec sa référence de réservation, ou connectez-vous avec l'email utilisé pour retrouver tout votre historique, quel que soit l'appareil."
               defaultReferenceCode={ref}
               excludeIds={bookings.map((b) => b.id)}
             />
