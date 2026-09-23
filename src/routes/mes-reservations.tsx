@@ -1,19 +1,21 @@
+import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ClipboardList, History, Phone, Mail } from "lucide-react";
+import { ClipboardList, History, Phone, Mail, RefreshCw } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "~/lib/supabase";
 import { useRealtime } from "~/hooks/useRealtime";
 import { BookingStatusCard } from "~/components/booking/BookingStatusCard";
-import { BookingLookupForm } from "~/components/booking/BookingLookupForm";
-import { SavedBookingLookups } from "~/components/booking/SavedBookingLookups";
-import { PatientEmailLogin } from "~/components/booking/PatientEmailLogin";
+import { BookingRecoveryPanel } from "~/components/booking/BookingRecoveryPanel";
 import { useToast } from "~/components/ui/toast";
 import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL, CONTACT_EMAIL } from "~/lib/contact";
 import { trackCallButtonClick } from "~/lib/trackCallClick";
 import { usePhoneVisibility } from "~/hooks/usePhoneVisibility";
 import * as bookingsRepository from "~/repositories/bookingsRepository";
 import { STATUS_LABELS, isTerminalStatus, type BookingStatus } from "~/lib/bookingStatus";
+import { cn } from "~/lib/utils";
+
+const PAST_PAGE_SIZE = 10;
 
 // `ref` only ever carries the public reference code (e.g. from the
 // confirmation email link) — never a phone number or anything else that
@@ -48,10 +50,16 @@ function MyBookingsPage() {
   const { toast } = useToast();
   const { ref } = Route.useSearch();
   const phoneVisible = usePhoneVisibility();
+  const [showAllPast, setShowAllPast] = useState(false);
 
-  const { data, isLoading, isError, error } = useQuery({
+  const { data, isLoading, isFetching, isError, error } = useQuery({
     queryKey: ["my-bookings"],
     queryFn: fetchMyBookings,
+    // Realtime (below) already invalidates this query on any change to the
+    // patient's own bookings, so a longer staleTime here just avoids an
+    // extra refetch on every navigation back to this page — it never masks
+    // a stale status.
+    staleTime: 30_000,
   });
 
   useRealtime({
@@ -85,8 +93,7 @@ function MyBookingsPage() {
           Mes réservations
         </h1>
         <p className="mt-3 text-gray-500 leading-relaxed">
-          Retrouvez ici l&apos;avancement de vos demandes en cours et
-          l&apos;historique de vos trajets passés, depuis cet appareil.
+          Suivi de vos demandes, depuis cet appareil.
         </p>
 
         {isLoading && (
@@ -113,10 +120,8 @@ function MyBookingsPage() {
               Aucune réservation trouvée sur cet appareil
             </p>
             <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-              Le suivi est lié au navigateur utilisé pour réserver. Si vous
-              avez réservé depuis un autre appareil, ou si l&apos;historique a
-              été effacé, retrouvez-la ci-dessous avec sa référence, ou
-              contactez-nous directement.
+              Réservé depuis un autre appareil ? Retrouvez-la ci-dessous, ou
+              contactez-nous.
             </p>
             <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
               <Link
@@ -149,15 +154,11 @@ function MyBookingsPage() {
 
         {!isLoading && !isError && bookings.length === 0 && (
           <div className="mt-6">
-            <BookingLookupForm defaultReferenceCode={ref} />
-          </div>
-        )}
-
-        {!isLoading && !isError && <SavedBookingLookups />}
-
-        {!isLoading && !isError && (
-          <div className="mt-10">
-            <PatientEmailLogin excludeIds={bookings.map((b) => b.id)} />
+            <BookingRecoveryPanel
+              heading="Retrouver une réservation"
+              defaultReferenceCode={ref}
+              excludeIds={bookings.map((b) => b.id)}
+            />
           </div>
         )}
 
@@ -168,9 +169,9 @@ function MyBookingsPage() {
               className="flex items-center gap-2 text-xl font-bold text-gray-900 mb-4"
             >
               <ClipboardList className="h-5 w-5 text-brand-blue-600" aria-hidden="true" />
-              En cours
+              En cours ({active.length})
             </h2>
-            <div className="space-y-4">
+            <div className="space-y-4" aria-live="polite" aria-atomic="false">
               {active.map((booking) => (
                 <BookingStatusCard key={booking.id} booking={booking} allowCancel allowEdit />
               ))}
@@ -185,13 +186,22 @@ function MyBookingsPage() {
               className="flex items-center gap-2 text-xl font-bold text-gray-900 mb-4"
             >
               <History className="h-5 w-5 text-gray-500" aria-hidden="true" />
-              Historique
+              Historique ({past.length})
             </h2>
-            <div className="space-y-4">
-              {past.map((booking) => (
+            <div className="space-y-4" aria-live="polite" aria-atomic="false">
+              {(showAllPast ? past : past.slice(0, PAST_PAGE_SIZE)).map((booking) => (
                 <BookingStatusCard key={booking.id} booking={booking} />
               ))}
             </div>
+            {!showAllPast && past.length > PAST_PAGE_SIZE && (
+              <button
+                type="button"
+                onClick={() => setShowAllPast(true)}
+                className="mt-4 text-sm font-medium text-brand-blue-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+              >
+                Voir les {past.length - PAST_PAGE_SIZE} réservations précédentes
+              </button>
+            )}
           </section>
         )}
 
@@ -200,17 +210,19 @@ function MyBookingsPage() {
             <button
               type="button"
               onClick={() => queryClient.invalidateQueries({ queryKey: ["my-bookings"] })}
-              className="mt-8 text-sm font-medium text-brand-blue-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+              disabled={isFetching}
+              className="mt-8 flex items-center gap-1.5 text-sm font-medium text-brand-blue-600 hover:underline disabled:opacity-60 disabled:no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
             >
-              Actualiser
+              <RefreshCw className={cn("h-3.5 w-3.5", isFetching && "animate-spin")} aria-hidden="true" />
+              {isFetching ? "Actualisation…" : "Actualiser"}
             </button>
 
-            <section aria-labelledby="lookup-heading" className="mt-10">
-              <h2 id="lookup-heading" className="text-sm font-semibold text-gray-500 mb-3">
-                Une réservation faite depuis un autre appareil n&apos;apparaît pas ici ?
-              </h2>
-              <BookingLookupForm />
-            </section>
+            <div className="mt-10">
+              <BookingRecoveryPanel
+                heading="Une réservation faite depuis un autre appareil n'apparaît pas ici ?"
+                excludeIds={bookings.map((b) => b.id)}
+              />
+            </div>
           </>
         )}
       </div>

@@ -54,12 +54,12 @@ export function SavedBookingLookups() {
   }
 
   return (
-    <section aria-labelledby="saved-lookups-heading" className="mt-10">
+    <section aria-labelledby="saved-lookups-heading">
       <div className="flex items-center justify-between gap-3 mb-4">
-        <h2 id="saved-lookups-heading" className="flex items-center gap-2 text-xl font-bold text-gray-900">
+        <h3 id="saved-lookups-heading" className="flex items-center gap-2 text-base font-bold text-gray-900">
           <BookmarkCheck className="h-5 w-5 text-brand-blue-600" aria-hidden="true" />
           Réservations enregistrées sur cet appareil
-        </h2>
+        </h3>
         {isSuccess && (
           <button
             type="button"
@@ -76,10 +76,8 @@ export function SavedBookingLookups() {
       {!isSuccess && (
         <div className="rounded-2xl bg-white shadow-sm ring-1 ring-gray-100 p-6 space-y-4">
           <p className="text-sm text-muted-foreground">
-            {saved.length === 1
-              ? "1 réservation ajoutée précédemment via une recherche par référence."
-              : `${saved.length} réservations ajoutées précédemment via une recherche par référence.`}{" "}
-            Une vérification est nécessaire pour les afficher.
+            {saved.length === 1 ? "1 réservation enregistrée." : `${saved.length} réservations enregistrées.`}{" "}
+            Vérification nécessaire pour les afficher.
           </p>
           <div className="flex flex-wrap gap-2">
             {saved.map((l) => (

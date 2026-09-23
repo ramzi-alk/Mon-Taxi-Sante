@@ -73,9 +73,7 @@ export function BookingLookupForm({ defaultReferenceCode }: { defaultReferenceCo
         Retrouver une réservation avec sa référence
       </h3>
       <p className="mt-1 text-sm text-muted-foreground leading-relaxed">
-        Réservé depuis un autre appareil, ou navigateur réinitialisé ? Entrez
-        la référence affichée sur votre page de confirmation et le numéro de
-        téléphone utilisé pour la réservation.
+        Référence et numéro de téléphone utilisés pour la réservation.
       </p>
 
       <form
@@ -166,9 +164,7 @@ export function BookingLookupForm({ defaultReferenceCode }: { defaultReferenceCo
           {isLookupSaved(credentials.referenceCode) || justSaved ? (
             <p className="flex items-center gap-1.5 text-sm font-medium text-brand-green-700">
               <BookmarkCheck className="h-4 w-4" aria-hidden="true" />
-              Enregistrée sur cet appareil — elle apparaîtra désormais dans
-              &laquo;&nbsp;Mes réservations&nbsp;&raquo; sans avoir à la
-              rechercher à nouveau.
+              Enregistrée sur cet appareil.
             </p>
           ) : (
             <button

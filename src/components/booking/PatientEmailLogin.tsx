@@ -73,6 +73,7 @@ export function PatientEmailLogin({ excludeIds }: PatientEmailLoginProps) {
     queryKey: ["my-bookings-by-email"],
     queryFn: () => bookingsRepository.fetchMyBookingsByEmail(client),
     enabled: stage === "signed_in",
+    staleTime: 30_000,
   });
 
   const excludeIdSet = new Set(excludeIds);
@@ -124,18 +125,15 @@ export function PatientEmailLogin({ excludeIds }: PatientEmailLoginProps) {
       aria-labelledby="email-login-heading"
       className="rounded-2xl bg-white shadow-sm ring-1 ring-gray-100 p-6"
     >
-      <h2
+      <h3
         id="email-login-heading"
         className="flex items-center gap-2 text-base font-bold text-gray-900"
       >
         <History className="h-5 w-5 text-brand-blue-600 shrink-0" aria-hidden="true" />
         Retrouver tout mon historique par email
-      </h2>
+      </h3>
       <p className="mt-1 text-sm text-muted-foreground leading-relaxed">
-        Connectez-vous avec l&apos;adresse email utilisée lors de vos réservations
-        pour afficher votre historique complet, quel que soit l&apos;appareil
-        utilisé pour réserver. Vous restez connecté sur cet appareil pour vos
-        prochaines visites.
+        Historique complet, quel que soit l&apos;appareil utilisé pour réserver.
       </p>
 
       {stage === "signed_out" && (
@@ -251,9 +249,7 @@ export function PatientEmailLogin({ excludeIds }: PatientEmailLoginProps) {
           {bookings.length > 0 && (
             <>
               <p className="text-sm text-muted-foreground">
-                Pour annuler ou modifier une réservation active, utilisez le
-                suivi ci-dessus depuis cet appareil, ou la recherche par
-                référence plus bas.
+                Lecture seule — annulez ou modifiez via l&apos;onglet Par référence.
               </p>
               <div className="space-y-4">
                 {bookings.map((booking) => (
