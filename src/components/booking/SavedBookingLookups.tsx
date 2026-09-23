@@ -54,12 +54,12 @@ export function SavedBookingLookups() {
   }
 
   return (
-    <section aria-labelledby="saved-lookups-heading" className="mt-10">
+    <section aria-labelledby="saved-lookups-heading">
       <div className="flex items-center justify-between gap-3 mb-4">
-        <h2 id="saved-lookups-heading" className="flex items-center gap-2 text-xl font-bold text-gray-900">
+        <h3 id="saved-lookups-heading" className="flex items-center gap-2 text-base font-bold text-gray-900">
           <BookmarkCheck className="h-5 w-5 text-brand-blue-600" aria-hidden="true" />
           Réservations enregistrées sur cet appareil
-        </h2>
+        </h3>
         {isSuccess && (
           <button
             type="button"
