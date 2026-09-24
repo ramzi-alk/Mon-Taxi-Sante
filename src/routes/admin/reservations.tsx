@@ -6,6 +6,8 @@ import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
   AlertTriangle,
+  Archive,
+  ArchiveRestore,
   ArrowDown,
   ArrowLeft,
   ArrowRight,
@@ -106,6 +108,7 @@ const reservationsSearchSchema = z.object({
   atRisk: z.boolean().optional(),
   missingPmt: z.boolean().optional(),
   reminderPending: z.boolean().optional(),
+  archived: z.boolean().optional(),
   q: z.string().optional(),
   sort: z.enum(["asc", "desc"]).optional().default("desc"),
   page: z.number().int().min(0).optional().default(0),
@@ -164,7 +167,7 @@ function tripTypeSummary(
 const CSV_HEADERS = [
   "Référence", "Patient", "Téléphone", "Date", "Heure", "Adresse de départ", "Adresse d'arrivée",
   "Véhicule", "Type de trajet", "Statut", "Chauffeur", "Prix estimé (€)", "Statut CPAM",
-  "Mutuelle", "PMT déclarée", "Rappel envoyé", "Rappel confirmé", "Statut de facturation",
+  "Mutuelle", "PMT déclarée", "Rappel envoyé", "Rappel confirmé", "Statut de facturation", "Archivée",
 ];
 
 function bookingToCsvRow(b: AdminBookingRow): string[] {
@@ -187,13 +190,14 @@ function bookingToCsvRow(b: AdminBookingRow): string[] {
     b.reminder_sent_at ? "oui" : "non",
     b.reminder_confirmed_at ? "oui" : "non",
     PAYMENT_STATUS_LABELS[b.payment_status] ?? b.payment_status,
+    b.archived_at ? "oui" : "non",
   ];
 }
 
 function hasAdvancedFilters(search: z.infer<typeof reservationsSearchSchema>): boolean {
   return Boolean(
     search.dateFrom || search.dateTo || search.driverId || search.cpamStatus || search.paymentStatus ||
-    search.atRisk || search.missingPmt || search.reminderPending
+    search.atRisk || search.missingPmt || search.reminderPending || search.archived
   );
 }
 
@@ -270,7 +274,7 @@ function AdminReservationsPage() {
   }, [
     search.status, search.vehicleType, search.q, search.driverId, search.cpamStatus, search.paymentStatus,
     search.seriesId, search.dateFrom, search.dateTo, search.atRisk, search.missingPmt,
-    search.reminderPending, search.sort, search.page,
+    search.reminderPending, search.archived, search.sort, search.page,
   ]);
 
   const filters: adminBookingsRepository.AdminBookingFilters = {
@@ -283,6 +287,7 @@ function AdminReservationsPage() {
     seriesId: search.seriesId,
     missingPmt: search.missingPmt || undefined,
     reminderPending: search.reminderPending || undefined,
+    archived: search.archived || undefined,
   };
   if (search.atRisk) {
     filters.status = "available";
@@ -302,7 +307,7 @@ function AdminReservationsPage() {
       "admin-bookings",
       search.status, search.vehicleType, search.q, search.driverId, search.cpamStatus, search.paymentStatus,
       search.seriesId, search.dateFrom, search.dateTo, search.atRisk, search.missingPmt,
-      search.reminderPending, search.sort, search.page,
+      search.reminderPending, search.archived, search.sort, search.page,
     ],
     queryFn: () => adminBookingsRepository.fetchBookingsAdmin(supabase, filters, search.page, PAGE_SIZE, search.sort),
   });
@@ -333,6 +338,24 @@ function AdminReservationsPage() {
   const selectedRows = data ? data.rows.filter((b) => selected.has(b.id)) : [];
   const selectedCancellableIds = selectedRows.filter((b) => isCancellable(b.status)).map((b) => b.id);
   const selectedAssignableRows = selectedRows.filter((b) => b.status === "available");
+
+  const { mutate: bulkSetArchived, isPending: isBulkArchiving } = useMutation({
+    mutationFn: async ({ ids, archived }: { ids: string[]; archived: boolean }) => {
+      await adminBookingsRepository.adminSetArchived(supabase, ids, archived);
+      return { ids, archived };
+    },
+    onSuccess: ({ ids, archived }) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-bookings"] });
+      toast({
+        title: archived
+          ? `${ids.length} réservation${ids.length > 1 ? "s" : ""} archivée${ids.length > 1 ? "s" : ""}`
+          : `${ids.length} réservation${ids.length > 1 ? "s" : ""} désarchivée${ids.length > 1 ? "s" : ""}`,
+        variant: "success",
+      });
+      setSelected(new Set());
+    },
+    onError: () => toast({ title: "Échec de l'opération", description: "Réessayez dans un instant.", variant: "error" }),
+  });
 
   const { mutate: bulkCancel, isPending: isBulkCancelling } = useMutation({
     mutationFn: async ({ ids, reason }: { ids: string[]; reason: string }) => {
@@ -429,6 +452,7 @@ function AdminReservationsPage() {
         status: undefined,
         dateFrom: undefined,
         dateTo: undefined,
+        archived: undefined,
         page: 0,
       }),
     });
@@ -447,6 +471,10 @@ function AdminReservationsPage() {
     });
   }
 
+  function toggleArchived() {
+    navigate({ search: (prev) => ({ ...prev, archived: prev.archived ? undefined : true, page: 0 }) });
+  }
+
   return (
     <div>
       <div className="flex items-center gap-2 mb-5">
@@ -459,13 +487,13 @@ function AdminReservationsPage() {
           label="Aujourd'hui"
           value={kpis?.today ?? "—"}
           active={search.dateFrom === todayIso() && search.dateTo === todayIso()}
-          onClick={() => navigate({ search: (prev) => ({ ...prev, dateFrom: todayIso(), dateTo: todayIso(), atRisk: undefined, page: 0 }) })}
+          onClick={() => navigate({ search: (prev) => ({ ...prev, dateFrom: todayIso(), dateTo: todayIso(), atRisk: undefined, archived: undefined, page: 0 }) })}
         />
         <KpiTile
           label="Non assignées"
           value={kpis?.unassigned ?? "—"}
           active={search.status === "available" && !search.atRisk}
-          onClick={() => navigate({ search: (prev) => ({ ...prev, status: "available", atRisk: undefined, page: 0 }) })}
+          onClick={() => navigate({ search: (prev) => ({ ...prev, status: "available", atRisk: undefined, archived: undefined, page: 0 }) })}
         />
         <KpiTile
           label="À risque"
@@ -614,6 +642,7 @@ function AdminReservationsPage() {
           <div className="flex flex-wrap gap-2">
             <FilterChip label="PMT manquant" active={Boolean(search.missingPmt)} onClick={toggleMissingPmt} />
             <FilterChip label="Rappel J-1 non envoyé" active={Boolean(search.reminderPending)} onClick={toggleReminderPending} />
+            <FilterChip label="Afficher les archivées" active={Boolean(search.archived)} onClick={toggleArchived} />
           </div>
         </div>
       )}
@@ -636,6 +665,23 @@ function AdminReservationsPage() {
         </div>
       )}
 
+      {search.archived && (
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-gray-100 px-4 py-3 text-sm">
+          <span className="inline-flex items-center gap-1.5 font-semibold text-gray-600">
+            <Archive className="h-4 w-4" aria-hidden="true" />
+            Archives {data ? `(${data.total})` : ""} — masquées de la liste par défaut
+          </span>
+          <button
+            type="button"
+            onClick={() => navigate({ search: (prev) => ({ ...prev, archived: undefined, page: 0 }) })}
+            className="inline-flex items-center gap-1 text-xs font-bold text-[#1244E8] hover:underline"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
+            Quitter les archives
+          </button>
+        </div>
+      )}
+
       {selected.size > 0 && (
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-brand-blue-50 px-4 py-2.5">
           <span className="text-sm font-semibold text-brand-blue-900">
@@ -649,6 +695,24 @@ function AdminReservationsPage() {
             >
               <Download className="h-3.5 w-3.5" aria-hidden="true" />
               Exporter
+            </button>
+            <button
+              type="button"
+              disabled={isBulkArchiving}
+              onClick={() => bulkSetArchived({ ids: Array.from(selected), archived: !search.archived })}
+              className="inline-flex items-center gap-1.5 rounded-full bg-white px-3.5 py-1.5 text-xs font-bold text-gray-700 ring-1 ring-gray-200 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+            >
+              {search.archived ? (
+                <>
+                  <ArchiveRestore className="h-3.5 w-3.5" aria-hidden="true" />
+                  Désarchiver ({selected.size})
+                </>
+              ) : (
+                <>
+                  <Archive className="h-3.5 w-3.5" aria-hidden="true" />
+                  Archiver ({selected.size})
+                </>
+              )}
             </button>
             {selectedAssignableRows.length > 0 && (
               <button
@@ -813,7 +877,7 @@ function AdminReservationsPage() {
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            navigate({ search: { seriesId: booking.series_id!, page: 0 } });
+                            navigate({ search: { seriesId: booking.series_id!, archived: search.archived, page: 0 } });
                           }}
                           className="inline-flex items-center gap-1 rounded-full bg-brand-blue-50 px-2 py-0.5 text-xs font-semibold text-brand-blue-700 hover:bg-brand-blue-100 transition-colors"
                           title="Voir tous les trajets de cette série"
@@ -887,7 +951,7 @@ function AdminReservationsPage() {
         <BookingDetailDialog
           bookingId={search.bookingId}
           onClose={() => navigate({ search: (prev) => ({ ...prev, bookingId: undefined }) })}
-          onViewSeries={(seriesId) => navigate({ search: { seriesId, page: 0 } })}
+          onViewSeries={(seriesId) => navigate({ search: { seriesId, archived: search.archived, page: 0 } })}
         />
       )}
 
@@ -1077,6 +1141,15 @@ function BookingDetailDialog({
     onError: () => toast({ title: "Échec de la mise à jour", description: "Réessayez dans un instant.", variant: "error" }),
   });
 
+  const { mutate: setArchived, isPending: isSettingArchived } = useMutation({
+    mutationFn: (archived: boolean) => adminBookingsRepository.adminSetArchived(supabase, [bookingId], archived),
+    onSuccess: (_, archived) => {
+      invalidateList();
+      toast({ title: archived ? "Réservation archivée" : "Réservation désarchivée", variant: "success" });
+    },
+    onError: () => toast({ title: "Échec de l'opération", description: "Réessayez dans un instant.", variant: "error" }),
+  });
+
   const [noteInput, setNoteInput] = useState("");
   const { data: notes, isLoading: isLoadingNotes } = useQuery({
     queryKey: ["admin-booking-notes", bookingId],
@@ -1187,6 +1260,12 @@ function BookingDetailDialog({
                 {isAtRisk(booking) && (
                   <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700">
                     À risque
+                  </span>
+                )}
+                {booking.archived_at && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-semibold text-gray-600">
+                    <Archive className="h-3 w-3" aria-hidden="true" />
+                    Archivée
                   </span>
                 )}
               </div>
@@ -1378,6 +1457,24 @@ function BookingDetailDialog({
             </div>
 
             <DialogFooter>
+              <button
+                type="button"
+                disabled={isSettingArchived}
+                onClick={() => setArchived(!booking.archived_at)}
+                className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+              >
+                {booking.archived_at ? (
+                  <>
+                    <ArchiveRestore className="h-4 w-4" aria-hidden="true" />
+                    Désarchiver
+                  </>
+                ) : (
+                  <>
+                    <Archive className="h-4 w-4" aria-hidden="true" />
+                    Archiver
+                  </>
+                )}
+              </button>
               {isCancellable(booking.status) && (
                 <button
                   type="button"

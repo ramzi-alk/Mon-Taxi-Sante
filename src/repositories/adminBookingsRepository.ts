@@ -39,6 +39,7 @@ export interface AdminBookingRow {
   reminder_sent_at: string | null;
   reminder_confirmed_at: string | null;
   payment_status: PaymentStatus;
+  archived_at: string | null;
 }
 
 export interface AdminBookingDetail extends AdminBookingRow {
@@ -68,7 +69,7 @@ export interface EligibleDriver {
 }
 
 const ADMIN_BOOKING_COLUMNS =
-  "id, reference_code, patient_full_name, patient_phone, pickup_address, dropoff_address, pickup_datetime, return_datetime, vehicle_type, trip_type, series_id, series_index, series_total, requires_wheelchair, requires_stretcher, requires_oxygen, status, estimated_price, driver_id, driver:profiles!bookings_driver_id_fkey(full_name), cpam_status, mutual_name, pmt_declared, reminder_sent_at, reminder_confirmed_at, payment_status";
+  "id, reference_code, patient_full_name, patient_phone, pickup_address, dropoff_address, pickup_datetime, return_datetime, vehicle_type, trip_type, series_id, series_index, series_total, requires_wheelchair, requires_stretcher, requires_oxygen, status, estimated_price, driver_id, driver:profiles!bookings_driver_id_fkey(full_name), cpam_status, mutual_name, pmt_declared, reminder_sent_at, reminder_confirmed_at, payment_status, archived_at";
 
 export interface AdminBookingFilters {
   status?: BookingStatus;
@@ -85,6 +86,10 @@ export interface AdminBookingFilters {
   /** Insurance coverage declared but no PMT file on record yet. */
   missingPmt?: boolean;
   reminderPending?: boolean;
+  /** false/undefined (the default everywhere this is used): only
+   * non-archived bookings. true: only archived ones — a dedicated "view
+   * the archive" mode, not a toggle that mixes both into one list. */
+  archived?: boolean;
 }
 
 // Shared between the paginated list and the unpaginated CSV export so the
@@ -104,6 +109,7 @@ function applyBookingFilters(query: any, filters: AdminBookingFilters): any {
   if (filters.pickupTo) query = query.lte("pickup_datetime", filters.pickupTo);
   if (filters.missingPmt) query = query.neq("cpam_status", "none").eq("pmt_declared", false);
   if (filters.reminderPending) query = query.is("reminder_sent_at", null);
+  query = filters.archived ? query.not("archived_at", "is", null) : query.is("archived_at", null);
   if (filters.search) {
     const term = filters.search.trim();
     query = query.or(
@@ -195,11 +201,11 @@ export async function fetchBookingsKpis(
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
   const [today, unassigned, atRisk, period, cancelled] = await Promise.all([
-    client.from("bookings").select("id", { count: "exact", head: true }).gte("pickup_datetime", todayStart).lt("pickup_datetime", todayEnd),
-    client.from("bookings").select("id", { count: "exact", head: true }).eq("status", "available"),
-    client.from("bookings").select("id", { count: "exact", head: true }).eq("status", "available").lte("pickup_datetime", atRiskCutoff),
-    client.from("bookings").select("id", { count: "exact", head: true }).gte("created_at", thirtyDaysAgo),
-    client.from("bookings").select("id", { count: "exact", head: true }).gte("created_at", thirtyDaysAgo).eq("status", "cancelled"),
+    client.from("bookings").select("id", { count: "exact", head: true }).is("archived_at", null).gte("pickup_datetime", todayStart).lt("pickup_datetime", todayEnd),
+    client.from("bookings").select("id", { count: "exact", head: true }).is("archived_at", null).eq("status", "available"),
+    client.from("bookings").select("id", { count: "exact", head: true }).is("archived_at", null).eq("status", "available").lte("pickup_datetime", atRiskCutoff),
+    client.from("bookings").select("id", { count: "exact", head: true }).is("archived_at", null).gte("created_at", thirtyDaysAgo),
+    client.from("bookings").select("id", { count: "exact", head: true }).is("archived_at", null).gte("created_at", thirtyDaysAgo).eq("status", "cancelled"),
   ]);
 
   for (const result of [today, unassigned, atRisk, period, cancelled]) {
@@ -281,6 +287,7 @@ export async function fetchAtRiskBookings(
   const { data, error } = await client
     .from("bookings")
     .select(ADMIN_BOOKING_COLUMNS)
+    .is("archived_at", null)
     .eq("status", "available")
     .lte("pickup_datetime", cutoff)
     .order("pickup_datetime", { ascending: true });
@@ -463,6 +470,27 @@ export async function adminSetPaymentStatus(
 
   if (error) {
     logger.error("adminBookings.adminSetPaymentStatus failed", { error: error.message, bookingId });
+    throw new Error(error.message);
+  }
+}
+
+/**
+ * Archive/unarchive (migration 075) — purely an admin-side visibility flag,
+ * never touches `status`. Accepts multiple ids so it can back both the
+ * single-booking dialog action and the bulk action bar.
+ */
+export async function adminSetArchived(
+  client: SupabaseClient,
+  bookingIds: string[],
+  archived: boolean
+): Promise<void> {
+  const { error } = await client
+    .from("bookings")
+    .update({ archived_at: archived ? new Date().toISOString() : null })
+    .in("id", bookingIds);
+
+  if (error) {
+    logger.error("adminBookings.adminSetArchived failed", { error: error.message, bookingIds, archived });
     throw new Error(error.message);
   }
 }

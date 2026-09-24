@@ -485,6 +485,7 @@ export type Database = {
       bookings: {
         Row: {
           accepted_at: string | null
+          archived_at: string | null
           booker_email: string | null
           booker_full_name: string | null
           booker_phone: string | null
@@ -540,6 +541,7 @@ export type Database = {
         }
         Insert: {
           accepted_at?: string | null
+          archived_at?: string | null
           booker_email?: string | null
           booker_full_name?: string | null
           booker_phone?: string | null
@@ -595,6 +597,7 @@ export type Database = {
         }
         Update: {
           accepted_at?: string | null
+          archived_at?: string | null
           booker_email?: string | null
           booker_full_name?: string | null
           booker_phone?: string | null
