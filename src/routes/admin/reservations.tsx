@@ -37,8 +37,19 @@ import { useRealtime } from "~/hooks/useRealtime";
 import { useToast } from "~/components/ui/toast";
 import { Input } from "~/components/ui/input";
 import { Textarea } from "~/components/ui/textarea";
+import { Checkbox } from "~/components/ui/checkbox";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "~/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "~/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "~/components/ui/alert-dialog";
 import { AdminErrorState } from "~/components/admin/AdminErrorState";
 import { STATUS_LABELS, STATUS_BADGE_CLASSES, isCancellable, type BookingStatus } from "~/lib/bookingStatus";
 import { CPAM_LABELS } from "~/lib/cpam";
@@ -129,6 +140,34 @@ function tripTypeSummary(
   return label;
 }
 
+const CSV_HEADERS = [
+  "Référence", "Patient", "Téléphone", "Date", "Heure", "Adresse de départ", "Adresse d'arrivée",
+  "Véhicule", "Type de trajet", "Statut", "Chauffeur", "Prix estimé (€)", "Statut CPAM",
+  "Mutuelle", "PMT déclarée", "Rappel envoyé", "Rappel confirmé",
+];
+
+function bookingToCsvRow(b: AdminBookingRow): string[] {
+  return [
+    formatReferenceCode(b.reference_code),
+    b.patient_full_name,
+    b.patient_phone,
+    formatDateFr(b.pickup_datetime),
+    formatTimeFr(b.pickup_datetime),
+    b.pickup_address,
+    b.dropoff_address,
+    VEHICLE_LABELS[b.vehicle_type],
+    TRIP_TYPE_LABELS[b.trip_type],
+    STATUS_LABELS[b.status],
+    b.driver?.full_name ?? "",
+    b.estimated_price != null ? String(b.estimated_price) : "",
+    CPAM_LABELS[b.cpam_status] ?? b.cpam_status,
+    b.mutual_name ?? "",
+    b.pmt_declared ? "oui" : "non",
+    b.reminder_sent_at ? "oui" : "non",
+    b.reminder_confirmed_at ? "oui" : "non",
+  ];
+}
+
 function hasAdvancedFilters(search: z.infer<typeof reservationsSearchSchema>): boolean {
   return Boolean(
     search.dateFrom || search.dateTo || search.driverId || search.cpamStatus ||
@@ -182,9 +221,14 @@ function FilterChip({ label, active, onClick }: { label: string; active: boolean
 function AdminReservationsPage() {
   const search = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
+  const queryClient = useQueryClient();
   const { toast } = useToast();
   const [searchInput, setSearchInput] = useState(search.q ?? "");
   const [showAdvanced, setShowAdvanced] = useState(() => hasAdvancedFilters(search));
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkCancelOpen, setBulkCancelOpen] = useState(false);
+  const [bulkCancelReason, setBulkCancelReason] = useState("");
+  const [bulkReassignOpen, setBulkReassignOpen] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -195,6 +239,17 @@ function AdminReservationsPage() {
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchInput]);
+
+  // Selection is page/filter-scoped — dropped whenever the visible set of
+  // rows could change, but not on a realtime-triggered refetch of the same
+  // page (which would otherwise wipe an in-progress bulk action).
+  useEffect(() => {
+    setSelected(new Set());
+  }, [
+    search.status, search.vehicleType, search.q, search.driverId, search.cpamStatus,
+    search.seriesId, search.dateFrom, search.dateTo, search.atRisk, search.missingPmt,
+    search.reminderPending, search.sort, search.page,
+  ]);
 
   const filters: adminBookingsRepository.AdminBookingFilters = {
     status: search.status,
@@ -247,36 +302,90 @@ function AdminReservationsPage() {
         toast({ title: "Aucune réservation à exporter pour ces filtres", variant: "error" });
         return;
       }
-      downloadCsv(
-        `reservations_${todayIso()}.csv`,
-        [
-          "Référence", "Patient", "Téléphone", "Date", "Heure", "Adresse de départ", "Adresse d'arrivée",
-          "Véhicule", "Type de trajet", "Statut", "Chauffeur", "Prix estimé (€)", "Statut CPAM",
-          "Mutuelle", "PMT déclarée", "Rappel envoyé", "Rappel confirmé",
-        ],
-        rows.map((b) => [
-          formatReferenceCode(b.reference_code),
-          b.patient_full_name,
-          b.patient_phone,
-          formatDateFr(b.pickup_datetime),
-          formatTimeFr(b.pickup_datetime),
-          b.pickup_address,
-          b.dropoff_address,
-          VEHICLE_LABELS[b.vehicle_type],
-          TRIP_TYPE_LABELS[b.trip_type],
-          STATUS_LABELS[b.status],
-          b.driver?.full_name ?? "",
-          b.estimated_price != null ? String(b.estimated_price) : "",
-          CPAM_LABELS[b.cpam_status] ?? b.cpam_status,
-          b.mutual_name ?? "",
-          b.pmt_declared ? "oui" : "non",
-          b.reminder_sent_at ? "oui" : "non",
-          b.reminder_confirmed_at ? "oui" : "non",
-        ])
-      );
+      downloadCsv(`reservations_${todayIso()}.csv`, CSV_HEADERS, rows.map(bookingToCsvRow));
     },
     onError: () => toast({ title: "Échec de l'export", description: "Réessayez dans un instant.", variant: "error" }),
   });
+
+  const selectedRows = data ? data.rows.filter((b) => selected.has(b.id)) : [];
+  const selectedCancellableIds = selectedRows.filter((b) => isCancellable(b.status)).map((b) => b.id);
+  const selectedAssignableRows = selectedRows.filter((b) => b.status === "available");
+
+  const { mutate: bulkCancel, isPending: isBulkCancelling } = useMutation({
+    mutationFn: async ({ ids, reason }: { ids: string[]; reason: string }) => {
+      await Promise.all(ids.map((id) => adminBookingsRepository.adminCancelBooking(supabase, id, reason)));
+      return ids;
+    },
+    onSuccess: (ids) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-bookings"] });
+      toast({ title: `${ids.length} réservation${ids.length > 1 ? "s" : ""} annulée${ids.length > 1 ? "s" : ""}`, variant: "success" });
+      ids.forEach((id) => {
+        notifyBookingCancelledServerFn({ data: { bookingId: id } }).catch((err) => {
+          logger.warn("email.notifyBookingCancelled failed", { error: err.message, bookingId: id });
+        });
+      });
+      setSelected(new Set());
+      setBulkCancelOpen(false);
+      setBulkCancelReason("");
+    },
+    onError: () => toast({ title: "Échec de l'annulation groupée", description: "Réessayez dans un instant.", variant: "error" }),
+  });
+
+  const { data: bulkEligibleDrivers, isLoading: isLoadingBulkDrivers } = useQuery({
+    queryKey: ["admin-bulk-eligible-drivers", selectedAssignableRows.map((b) => b.id).sort().join(",")],
+    queryFn: async () => {
+      const perBooking = await Promise.all(
+        selectedAssignableRows.map((b) => adminBookingsRepository.fetchEligibleDriversForBooking(supabase, b))
+      );
+      const [first, ...rest] = perBooking;
+      if (!first) return [];
+      return first.filter((d) => rest.every((list) => list.some((d2) => d2.profile_id === d.profile_id)));
+    },
+    enabled: bulkReassignOpen && selectedAssignableRows.length > 0,
+  });
+
+  const { mutate: bulkAssign, isPending: isBulkAssigning } = useMutation({
+    mutationFn: async ({ ids, driverId }: { ids: string[]; driverId: string }) => {
+      await Promise.all(ids.map((id) => adminBookingsRepository.adminAssignDriver(supabase, id, driverId)));
+      return ids;
+    },
+    onSuccess: (ids) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-bookings"] });
+      toast({ title: `Chauffeur assigné à ${ids.length} réservation${ids.length > 1 ? "s" : ""}`, variant: "success" });
+      ids.forEach((id) => {
+        notifyBookingAcceptedServerFn({ data: { bookingId: id } }).catch((err) => {
+          logger.warn("email.notifyBookingAccepted failed", { error: err.message, bookingId: id });
+        });
+        notifyDriverRideAcceptedServerFn({ data: { bookingId: id } }).catch((err) => {
+          logger.warn("email.notifyDriverRideAccepted failed", { error: err.message, bookingId: id });
+        });
+      });
+      setSelected(new Set());
+      setBulkReassignOpen(false);
+    },
+    onError: () => toast({ title: "Échec de l'assignation groupée", description: "Réessayez dans un instant.", variant: "error" }),
+  });
+
+  function toggleSelected(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleAllOnPage() {
+    if (!data) return;
+    setSelected((prev) =>
+      data.rows.length > 0 && data.rows.every((b) => prev.has(b.id)) ? new Set() : new Set(data.rows.map((b) => b.id))
+    );
+  }
+
+  function exportSelected() {
+    if (selectedRows.length === 0) return;
+    downloadCsv(`reservations_selection_${todayIso()}.csv`, CSV_HEADERS, selectedRows.map(bookingToCsvRow));
+  }
 
   useRealtime({ table: "bookings", queryKey: ["admin-bookings"] });
 
@@ -488,6 +597,44 @@ function AdminReservationsPage() {
         </div>
       )}
 
+      {selected.size > 0 && (
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-brand-blue-50 px-4 py-2.5">
+          <span className="text-sm font-semibold text-brand-blue-900">
+            {selected.size} sélectionnée{selected.size > 1 ? "s" : ""}
+          </span>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={exportSelected}
+              className="inline-flex items-center gap-1.5 rounded-full bg-white px-3.5 py-1.5 text-xs font-bold text-gray-700 ring-1 ring-gray-200 hover:bg-gray-50 transition-colors"
+            >
+              <Download className="h-3.5 w-3.5" aria-hidden="true" />
+              Exporter
+            </button>
+            {selectedAssignableRows.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setBulkReassignOpen(true)}
+                className="inline-flex items-center gap-1.5 rounded-full bg-white px-3.5 py-1.5 text-xs font-bold text-gray-700 ring-1 ring-gray-200 hover:bg-gray-50 transition-colors"
+              >
+                <UserCog className="h-3.5 w-3.5" aria-hidden="true" />
+                Assigner un chauffeur ({selectedAssignableRows.length})
+              </button>
+            )}
+            {selectedCancellableIds.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setBulkCancelOpen(true)}
+                className="inline-flex items-center gap-1.5 rounded-full bg-red-600 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-red-700 transition-colors"
+              >
+                <XCircle className="h-3.5 w-3.5" aria-hidden="true" />
+                Annuler ({selectedCancellableIds.length})
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {isError ? (
         <AdminErrorState message="Impossible de charger les réservations." onRetry={() => refetch()} />
       ) : isLoading ? (
@@ -544,6 +691,13 @@ function AdminReservationsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-gray-50 text-left">
+                  <th scope="col" className="px-4 py-3 w-8">
+                    <Checkbox
+                      checked={data.rows.length > 0 && data.rows.every((b) => selected.has(b.id))}
+                      onCheckedChange={toggleAllOnPage}
+                      aria-label="Tout sélectionner sur cette page"
+                    />
+                  </th>
                   <th scope="col" className="px-5 py-3 font-semibold text-[#0B0F1C]">Référence</th>
                   <th scope="col" className="px-5 py-3 font-semibold text-[#0B0F1C]">Patient</th>
                   <th scope="col" className="px-5 py-3 font-semibold text-[#0B0F1C]">
@@ -570,6 +724,13 @@ function AdminReservationsPage() {
                     onClick={() => navigate({ search: (prev) => ({ ...prev, bookingId: booking.id }) })}
                     className="cursor-pointer hover:bg-gray-50 transition-colors"
                   >
+                    <td className="px-4 py-4" onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        checked={selected.has(booking.id)}
+                        onCheckedChange={() => toggleSelected(booking.id)}
+                        aria-label={`Sélectionner ${formatReferenceCode(booking.reference_code)}`}
+                      />
+                    </td>
                     <td className="px-5 py-4 font-mono text-xs font-bold text-gray-500">
                       {formatReferenceCode(booking.reference_code)}
                     </td>
@@ -673,6 +834,97 @@ function AdminReservationsPage() {
           onViewSeries={(seriesId) => navigate({ search: { seriesId, page: 0 } })}
         />
       )}
+
+      <AlertDialog
+        open={bulkCancelOpen}
+        onOpenChange={(open) => { if (!open) { setBulkCancelOpen(false); setBulkCancelReason(""); } }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Annuler {selectedCancellableIds.length} réservation{selectedCancellableIds.length > 1 ? "s" : ""} ?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Chaque patient concerné sera prévenu par email. Cette action est irréversible.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <Textarea
+            value={bulkCancelReason}
+            onChange={(e) => setBulkCancelReason(e.target.value)}
+            placeholder="Motif de l'annulation…"
+            rows={3}
+            aria-label="Motif de l'annulation groupée"
+          />
+          <AlertDialogFooter>
+            <AlertDialogCancel>Retour</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isBulkCancelling || bulkCancelReason.trim().length === 0}
+              onClick={() => bulkCancel({ ids: selectedCancellableIds, reason: bulkCancelReason.trim() })}
+            >
+              {isBulkCancelling ? "Annulation…" : "Confirmer l'annulation"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog open={bulkReassignOpen} onOpenChange={setBulkReassignOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              Assigner un chauffeur à {selectedAssignableRows.length} réservation{selectedAssignableRows.length > 1 ? "s" : ""}
+            </DialogTitle>
+            <DialogDescription>
+              Seuls les chauffeurs compatibles avec toutes les réservations sélectionnées (véhicule et équipement) sont proposés.
+            </DialogDescription>
+          </DialogHeader>
+
+          {isLoadingBulkDrivers ? (
+            <p className="text-gray-400 py-4 text-center">Chargement…</p>
+          ) : !bulkEligibleDrivers || bulkEligibleDrivers.length === 0 ? (
+            <p className="text-gray-400 py-4 text-center text-sm">
+              Aucun chauffeur n'est compatible avec l'ensemble de la sélection.
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-2 max-h-72 overflow-y-auto">
+              {bulkEligibleDrivers.map((driver) => (
+                <li key={driver.profile_id}>
+                  <button
+                    type="button"
+                    disabled={isBulkAssigning}
+                    onClick={() => bulkAssign({ ids: selectedAssignableRows.map((b) => b.id), driverId: driver.profile_id })}
+                    className="flex w-full items-center justify-between gap-3 rounded-xl border border-gray-100 px-4 py-3 text-left hover:border-[#1244E8] hover:bg-brand-blue-50/40 disabled:opacity-50 transition-colors"
+                  >
+                    <div>
+                      <p className="font-semibold text-[#0B0F1C]">{driver.full_name}</p>
+                      <p className="text-xs text-gray-400">
+                        {VEHICLE_LABELS[driver.vehicle_type as keyof typeof VEHICLE_LABELS] ?? driver.vehicle_type} · {driver.vehicle_registration}
+                      </p>
+                    </div>
+                    <span
+                      className={cn(
+                        "shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold",
+                        driver.availability === "online" ? "bg-emerald-50 text-emerald-700" : "bg-gray-100 text-gray-500"
+                      )}
+                    >
+                      {driver.availability === "online" ? "En ligne" : driver.availability === "paused" ? "En pause" : "Hors ligne"}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <DialogFooter>
+            <button
+              type="button"
+              onClick={() => setBulkReassignOpen(false)}
+              className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              Retour
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
