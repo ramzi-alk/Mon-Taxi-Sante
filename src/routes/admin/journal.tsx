@@ -38,6 +38,8 @@ const TRACKED_FIELDS: Record<string, { key: string; label: string }[]> = {
     { key: "status", label: "Statut" },
     { key: "driver_id", label: "Chauffeur assigné" },
     { key: "cancellation_reason", label: "Motif d'annulation" },
+    { key: "payment_status", label: "Statut de facturation" },
+    { key: "archived_at", label: "Archivée" },
   ],
   drivers_details: [
     { key: "approved_at", label: "Approuvé le" },

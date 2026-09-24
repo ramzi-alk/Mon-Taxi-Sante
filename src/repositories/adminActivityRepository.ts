@@ -14,6 +14,7 @@ export interface AdminActivityRow {
 
 export interface AdminActivityFilters {
   targetTable?: string;
+  targetId?: string;
 }
 
 export async function fetchActivityLog(
@@ -32,6 +33,9 @@ export async function fetchActivityLog(
 
   if (filters.targetTable) {
     query = query.eq("target_table", filters.targetTable);
+  }
+  if (filters.targetId) {
+    query = query.eq("target_id", filters.targetId);
   }
 
   const from = page * pageSize;
