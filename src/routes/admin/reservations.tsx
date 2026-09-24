@@ -4,7 +4,25 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
-import { AlertTriangle, ArrowLeft, ArrowRight, ClipboardList, ExternalLink, Loader2, UserCog, XCircle } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowDown,
+  ArrowLeft,
+  ArrowRight,
+  ArrowUp,
+  ChevronDown,
+  ChevronUp,
+  ClipboardList,
+  Download,
+  ExternalLink,
+  Layers,
+  Loader2,
+  Mail,
+  MailCheck,
+  RotateCcw,
+  UserCog,
+  XCircle,
+} from "lucide-react";
 import { supabase } from "~/lib/supabase";
 import * as adminBookingsRepository from "~/repositories/adminBookingsRepository";
 import type { AdminBookingRow, EligibleDriver } from "~/repositories/adminBookingsRepository";
@@ -23,6 +41,8 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "~
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "~/components/ui/dialog";
 import { AdminErrorState } from "~/components/admin/AdminErrorState";
 import { STATUS_LABELS, STATUS_BADGE_CLASSES, isCancellable, type BookingStatus } from "~/lib/bookingStatus";
+import { CPAM_LABELS } from "~/lib/cpam";
+import { downloadCsv } from "~/lib/csv";
 import { cn, formatDateFr, formatTimeFr, formatPrice, formatReferenceCode } from "~/lib/utils";
 
 const PAGE_SIZE = 20;
@@ -32,14 +52,42 @@ const bookingStatusValues = [
   "draft", "pending", "confirmed", "available", "accepted", "in_progress", "completed", "cancelled", "expired", "external_provider",
 ] as const;
 const vehicleTypeValues = ["taxi", "vsl", "pmr", "ambulance"] as const;
+const cpamStatusValues = ["ald", "cmu", "css", "standard", "none"] as const;
+
+const CPAM_SHORT_LABELS: Record<(typeof cpamStatusValues)[number], string> = {
+  ald: "ALD",
+  cmu: "CMU-C",
+  css: "CSS",
+  standard: "Standard",
+  none: "Perso",
+};
 
 const reservationsSearchSchema = z.object({
   bookingId: z.string().optional(),
   status: z.enum(bookingStatusValues).optional(),
   vehicleType: z.enum(vehicleTypeValues).optional(),
+  cpamStatus: z.enum(cpamStatusValues).optional(),
+  driverId: z.string().optional(),
+  seriesId: z.string().optional(),
+  dateFrom: z.string().optional(),
+  dateTo: z.string().optional(),
+  atRisk: z.boolean().optional(),
+  missingPmt: z.boolean().optional(),
+  reminderPending: z.boolean().optional(),
   q: z.string().optional(),
+  sort: z.enum(["asc", "desc"]).optional().default("desc"),
   page: z.number().int().min(0).optional().default(0),
 });
+
+function todayIso(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function addDaysIso(days: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
 
 export const Route = createFileRoute("/admin/reservations")({
   validateSearch: reservationsSearchSchema,
@@ -81,10 +129,62 @@ function tripTypeSummary(
   return label;
 }
 
+function hasAdvancedFilters(search: z.infer<typeof reservationsSearchSchema>): boolean {
+  return Boolean(
+    search.dateFrom || search.dateTo || search.driverId || search.cpamStatus ||
+    search.atRisk || search.missingPmt || search.reminderPending
+  );
+}
+
+function KpiTile({
+  label,
+  value,
+  active,
+  onClick,
+}: {
+  label: string;
+  value: string | number;
+  active?: boolean;
+  onClick?: () => void;
+}) {
+  const Tag = onClick ? "button" : "div";
+  return (
+    <Tag
+      type={onClick ? "button" : undefined}
+      onClick={onClick}
+      className={cn(
+        "rounded-xl bg-white p-4 text-left ring-1 transition-colors",
+        onClick && "hover:ring-gray-200 cursor-pointer",
+        active ? "ring-2 ring-[#1244E8]" : "ring-gray-100"
+      )}
+    >
+      <p className="text-xs font-semibold text-gray-400">{label}</p>
+      <p className="mt-1 text-2xl font-bold text-[#0B0F1C]">{value}</p>
+    </Tag>
+  );
+}
+
+function FilterChip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "rounded-full px-3 py-2 text-xs font-bold transition-colors",
+        active ? "bg-[#1244E8] text-white" : "bg-white text-gray-600 ring-1 ring-gray-200 hover:bg-gray-50"
+      )}
+    >
+      {label}
+    </button>
+  );
+}
+
 function AdminReservationsPage() {
   const search = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
+  const { toast } = useToast();
   const [searchInput, setSearchInput] = useState(search.q ?? "");
+  const [showAdvanced, setShowAdvanced] = useState(() => hasAdvancedFilters(search));
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -96,7 +196,23 @@ function AdminReservationsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchInput]);
 
-  const filters = { status: search.status, vehicleType: search.vehicleType, search: search.q };
+  const filters: adminBookingsRepository.AdminBookingFilters = {
+    status: search.status,
+    vehicleType: search.vehicleType,
+    search: search.q,
+    driverId: search.driverId,
+    cpamStatus: search.cpamStatus,
+    seriesId: search.seriesId,
+    missingPmt: search.missingPmt || undefined,
+    reminderPending: search.reminderPending || undefined,
+  };
+  if (search.atRisk) {
+    filters.status = "available";
+    filters.pickupTo = new Date(Date.now() + AT_RISK_HOURS * 60 * 60 * 1000).toISOString();
+  } else {
+    if (search.dateFrom) filters.pickupFrom = `${search.dateFrom}T00:00:00.000`;
+    if (search.dateTo) filters.pickupTo = `${search.dateTo}T23:59:59.999`;
+  }
 
   const {
     data,
@@ -104,13 +220,100 @@ function AdminReservationsPage() {
     isError,
     refetch,
   } = useQuery({
-    queryKey: ["admin-bookings", filters.status, filters.vehicleType, filters.search, search.page],
-    queryFn: () => adminBookingsRepository.fetchBookingsAdmin(supabase, filters, search.page, PAGE_SIZE),
+    queryKey: [
+      "admin-bookings",
+      search.status, search.vehicleType, search.q, search.driverId, search.cpamStatus,
+      search.seriesId, search.dateFrom, search.dateTo, search.atRisk, search.missingPmt,
+      search.reminderPending, search.sort, search.page,
+    ],
+    queryFn: () => adminBookingsRepository.fetchBookingsAdmin(supabase, filters, search.page, PAGE_SIZE, search.sort),
+  });
+
+  const { data: kpis } = useQuery({
+    queryKey: ["admin-bookings", "kpis"],
+    queryFn: () => adminBookingsRepository.fetchBookingsKpis(supabase, AT_RISK_HOURS),
+  });
+
+  const { data: driverOptions } = useQuery({
+    queryKey: ["admin-drivers-filter-options"],
+    queryFn: () => adminBookingsRepository.fetchDriversForFilter(supabase),
+    staleTime: 5 * 60_000,
+  });
+
+  const { mutate: exportCsv, isPending: isExporting } = useMutation({
+    mutationFn: () => adminBookingsRepository.fetchBookingsForExport(supabase, filters),
+    onSuccess: (rows) => {
+      if (rows.length === 0) {
+        toast({ title: "Aucune réservation à exporter pour ces filtres", variant: "error" });
+        return;
+      }
+      downloadCsv(
+        `reservations_${todayIso()}.csv`,
+        [
+          "Référence", "Patient", "Téléphone", "Date", "Heure", "Adresse de départ", "Adresse d'arrivée",
+          "Véhicule", "Type de trajet", "Statut", "Chauffeur", "Prix estimé (€)", "Statut CPAM",
+          "Mutuelle", "PMT déclarée", "Rappel envoyé", "Rappel confirmé",
+        ],
+        rows.map((b) => [
+          formatReferenceCode(b.reference_code),
+          b.patient_full_name,
+          b.patient_phone,
+          formatDateFr(b.pickup_datetime),
+          formatTimeFr(b.pickup_datetime),
+          b.pickup_address,
+          b.dropoff_address,
+          VEHICLE_LABELS[b.vehicle_type],
+          TRIP_TYPE_LABELS[b.trip_type],
+          STATUS_LABELS[b.status],
+          b.driver?.full_name ?? "",
+          b.estimated_price != null ? String(b.estimated_price) : "",
+          CPAM_LABELS[b.cpam_status] ?? b.cpam_status,
+          b.mutual_name ?? "",
+          b.pmt_declared ? "oui" : "non",
+          b.reminder_sent_at ? "oui" : "non",
+          b.reminder_confirmed_at ? "oui" : "non",
+        ])
+      );
+    },
+    onError: () => toast({ title: "Échec de l'export", description: "Réessayez dans un instant.", variant: "error" }),
   });
 
   useRealtime({ table: "bookings", queryKey: ["admin-bookings"] });
 
   const totalPages = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1;
+  const advancedActive = hasAdvancedFilters(search);
+  const anyFilterActive = advancedActive || Boolean(search.status || search.vehicleType || search.q || search.seriesId);
+
+  function resetFilters() {
+    setSearchInput("");
+    navigate({ search: {} });
+  }
+
+  function toggleAtRisk() {
+    navigate({
+      search: (prev) => ({
+        ...prev,
+        atRisk: prev.atRisk ? undefined : true,
+        status: undefined,
+        dateFrom: undefined,
+        dateTo: undefined,
+        page: 0,
+      }),
+    });
+  }
+
+  function toggleMissingPmt() {
+    navigate({ search: (prev) => ({ ...prev, missingPmt: prev.missingPmt ? undefined : true, page: 0 }) });
+  }
+
+  function toggleReminderPending() {
+    navigate({
+      search: (prev) =>
+        prev.reminderPending
+          ? { ...prev, reminderPending: undefined }
+          : { ...prev, reminderPending: true, atRisk: undefined, dateFrom: todayIso(), dateTo: addDaysIso(2), page: 0 },
+    });
+  }
 
   return (
     <div>
@@ -119,7 +322,29 @@ function AdminReservationsPage() {
         <h1 className="text-xl font-bold text-[#0B0F1C]">Réservations</h1>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3 mb-5">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+        <KpiTile
+          label="Aujourd'hui"
+          value={kpis?.today ?? "—"}
+          active={search.dateFrom === todayIso() && search.dateTo === todayIso()}
+          onClick={() => navigate({ search: (prev) => ({ ...prev, dateFrom: todayIso(), dateTo: todayIso(), atRisk: undefined, page: 0 }) })}
+        />
+        <KpiTile
+          label="Non assignées"
+          value={kpis?.unassigned ?? "—"}
+          active={search.status === "available" && !search.atRisk}
+          onClick={() => navigate({ search: (prev) => ({ ...prev, status: "available", atRisk: undefined, page: 0 }) })}
+        />
+        <KpiTile
+          label="À risque"
+          value={kpis?.atRisk ?? "—"}
+          active={Boolean(search.atRisk)}
+          onClick={toggleAtRisk}
+        />
+        <KpiTile label="Annulation (30j)" value={kpis ? `${kpis.cancellationRate30d}%` : "—"} />
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-3 mb-3">
         <Input
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
@@ -130,7 +355,7 @@ function AdminReservationsPage() {
         <Select
           value={search.status ?? "all"}
           onValueChange={(v) =>
-            navigate({ search: (prev) => ({ ...prev, status: v === "all" ? undefined : (v as BookingStatus), page: 0 }) })
+            navigate({ search: (prev) => ({ ...prev, status: v === "all" ? undefined : (v as BookingStatus), atRisk: undefined, page: 0 }) })
           }
         >
           <SelectTrigger className="sm:w-48"><SelectValue placeholder="Statut" /></SelectTrigger>
@@ -155,7 +380,113 @@ function AdminReservationsPage() {
             ))}
           </SelectContent>
         </Select>
+
+        <button
+          type="button"
+          onClick={() => setShowAdvanced((v) => !v)}
+          className={cn(
+            "inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-sm font-semibold transition-colors",
+            advancedActive ? "border-[#1244E8] text-[#1244E8] bg-brand-blue-50/40" : "border-gray-200 text-gray-600 hover:bg-gray-50"
+          )}
+        >
+          Filtres avancés
+          {showAdvanced ? <ChevronUp className="h-4 w-4" aria-hidden="true" /> : <ChevronDown className="h-4 w-4" aria-hidden="true" />}
+        </button>
+
+        <div className="flex gap-2 sm:ml-auto">
+          {anyFilterActive && (
+            <button
+              type="button"
+              onClick={resetFilters}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+            >
+              <RotateCcw className="h-4 w-4" aria-hidden="true" />
+              Réinitialiser
+            </button>
+          )}
+          <button
+            type="button"
+            disabled={isExporting}
+            onClick={() => exportCsv()}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-[#0B0F1C] px-3 py-2 text-sm font-bold text-white hover:bg-[#1244E8] disabled:opacity-60 transition-colors"
+          >
+            <Download className="h-4 w-4" aria-hidden="true" />
+            {isExporting ? "Export…" : "Exporter CSV"}
+          </button>
+        </div>
       </div>
+
+      {showAdvanced && (
+        <div className="flex flex-wrap items-end gap-3 mb-5 rounded-xl bg-gray-50 p-4">
+          <div className="space-y-1">
+            <label htmlFor="reservations-date-from" className="block text-xs font-semibold text-gray-700">Du</label>
+            <Input
+              id="reservations-date-from"
+              type="date"
+              value={search.dateFrom ?? ""}
+              disabled={Boolean(search.atRisk)}
+              onChange={(e) => navigate({ search: (prev) => ({ ...prev, dateFrom: e.target.value || undefined, page: 0 }) })}
+              className="w-40"
+            />
+          </div>
+          <div className="space-y-1">
+            <label htmlFor="reservations-date-to" className="block text-xs font-semibold text-gray-700">Au</label>
+            <Input
+              id="reservations-date-to"
+              type="date"
+              value={search.dateTo ?? ""}
+              disabled={Boolean(search.atRisk)}
+              onChange={(e) => navigate({ search: (prev) => ({ ...prev, dateTo: e.target.value || undefined, page: 0 }) })}
+              className="w-40"
+            />
+          </div>
+          <Select
+            value={search.driverId ?? "all"}
+            onValueChange={(v) => navigate({ search: (prev) => ({ ...prev, driverId: v === "all" ? undefined : v, page: 0 }) })}
+          >
+            <SelectTrigger className="w-48"><SelectValue placeholder="Chauffeur" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous les chauffeurs</SelectItem>
+              {driverOptions?.map((d) => (
+                <SelectItem key={d.profile_id} value={d.profile_id}>{d.full_name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select
+            value={search.cpamStatus ?? "all"}
+            onValueChange={(v) => navigate({ search: (prev) => ({ ...prev, cpamStatus: v === "all" ? undefined : (v as typeof cpamStatusValues[number]), page: 0 }) })}
+          >
+            <SelectTrigger className="w-56"><SelectValue placeholder="Statut CPAM" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous les statuts CPAM</SelectItem>
+              {cpamStatusValues.map((c) => (
+                <SelectItem key={c} value={c}>{CPAM_LABELS[c]}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <FilterChip label="PMT manquant" active={Boolean(search.missingPmt)} onClick={toggleMissingPmt} />
+          <FilterChip label="Rappel J-1 non envoyé" active={Boolean(search.reminderPending)} onClick={toggleReminderPending} />
+        </div>
+      )}
+
+      {search.seriesId && (
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-brand-blue-50/60 px-4 py-3 text-sm">
+          <span className="inline-flex items-center gap-1.5 font-semibold text-[#0B0F1C]">
+            <Layers className="h-4 w-4" aria-hidden="true" />
+            Trajets de cette série {data ? `(${data.total})` : ""}
+            {data?.rows[0] ? ` — ${data.rows[0].patient_full_name}` : ""}
+          </span>
+          <button
+            type="button"
+            onClick={() => navigate({ search: {} })}
+            className="inline-flex items-center gap-1 text-xs font-bold text-[#1244E8] hover:underline"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
+            Toutes les réservations
+          </button>
+        </div>
+      )}
 
       {isError ? (
         <AdminErrorState message="Impossible de charger les réservations." onRetry={() => refetch()} />
@@ -190,6 +521,20 @@ function AdminReservationsPage() {
                     {formatDateFr(booking.pickup_datetime)} à {formatTimeFr(booking.pickup_datetime)} · {VEHICLE_LABELS[booking.vehicle_type]} · {tripTypeSummary(booking)}
                   </p>
                   <p className="text-xs text-gray-400 mt-0.5">Chauffeur : {booking.driver?.full_name ?? "—"}</p>
+                  <div className="mt-1.5 flex items-center gap-1.5">
+                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10.5px] font-semibold text-gray-600">
+                      {CPAM_SHORT_LABELS[booking.cpam_status as (typeof cpamStatusValues)[number]] ?? booking.cpam_status}
+                    </span>
+                    {booking.reminder_confirmed_at ? (
+                      <span className="inline-flex items-center gap-1 text-[10.5px] font-semibold text-emerald-600">
+                        <MailCheck className="h-3 w-3" aria-hidden="true" /> Rappel confirmé
+                      </span>
+                    ) : booking.reminder_sent_at ? (
+                      <span className="inline-flex items-center gap-1 text-[10.5px] font-semibold text-gray-400">
+                        <Mail className="h-3 w-3" aria-hidden="true" /> Rappel envoyé
+                      </span>
+                    ) : null}
+                  </div>
                 </button>
               </li>
             ))}
@@ -201,10 +546,20 @@ function AdminReservationsPage() {
                 <tr className="bg-gray-50 text-left">
                   <th scope="col" className="px-5 py-3 font-semibold text-[#0B0F1C]">Référence</th>
                   <th scope="col" className="px-5 py-3 font-semibold text-[#0B0F1C]">Patient</th>
-                  <th scope="col" className="px-5 py-3 font-semibold text-[#0B0F1C]">Date</th>
+                  <th scope="col" className="px-5 py-3 font-semibold text-[#0B0F1C]">
+                    <button
+                      type="button"
+                      onClick={() => navigate({ search: (prev) => ({ ...prev, sort: prev.sort === "asc" ? "desc" : "asc" }) })}
+                      className="inline-flex items-center gap-1 hover:text-[#1244E8] transition-colors"
+                    >
+                      Date
+                      {search.sort === "asc" ? <ArrowUp className="h-3.5 w-3.5" aria-hidden="true" /> : <ArrowDown className="h-3.5 w-3.5" aria-hidden="true" />}
+                    </button>
+                  </th>
                   <th scope="col" className="px-5 py-3 font-semibold text-[#0B0F1C]">Véhicule</th>
                   <th scope="col" className="px-5 py-3 font-semibold text-[#0B0F1C]">Trajet</th>
                   <th scope="col" className="px-5 py-3 font-semibold text-[#0B0F1C]">Chauffeur</th>
+                  <th scope="col" className="px-5 py-3 font-semibold text-[#0B0F1C]">CPAM</th>
                   <th scope="col" className="px-5 py-3 font-semibold text-[#0B0F1C]">Statut</th>
                 </tr>
               </thead>
@@ -221,11 +576,50 @@ function AdminReservationsPage() {
                     <td className="px-5 py-4 font-medium text-[#0B0F1C]">{booking.patient_full_name}</td>
                     <td className="px-5 py-4 text-gray-500">
                       {formatDateFr(booking.pickup_datetime)}
-                      <div className="text-xs text-gray-400">{formatTimeFr(booking.pickup_datetime)}</div>
+                      <div className="text-xs text-gray-400 flex items-center gap-1">
+                        {formatTimeFr(booking.pickup_datetime)}
+                        {booking.reminder_confirmed_at ? (
+                          <span title={`Rappel confirmé le ${formatDateFr(booking.reminder_confirmed_at)}`}>
+                            <MailCheck className="h-3 w-3 text-emerald-600" aria-hidden="true" />
+                          </span>
+                        ) : booking.reminder_sent_at ? (
+                          <span title={`Rappel envoyé le ${formatDateFr(booking.reminder_sent_at)}, non confirmé`}>
+                            <Mail className="h-3 w-3 text-gray-400" aria-hidden="true" />
+                          </span>
+                        ) : null}
+                      </div>
                     </td>
                     <td className="px-5 py-4 text-gray-500">{VEHICLE_LABELS[booking.vehicle_type]}</td>
-                    <td className="px-5 py-4 text-gray-500">{tripTypeSummary(booking)}</td>
+                    <td className="px-5 py-4 text-gray-500">
+                      {booking.trip_type === "multiple" && booking.series_id ? (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate({ search: { seriesId: booking.series_id!, page: 0 } });
+                          }}
+                          className="inline-flex items-center gap-1 rounded-full bg-brand-blue-50 px-2 py-0.5 text-xs font-semibold text-brand-blue-700 hover:bg-brand-blue-100 transition-colors"
+                          title="Voir tous les trajets de cette série"
+                        >
+                          <Layers className="h-3 w-3" aria-hidden="true" />
+                          {tripTypeSummary(booking)}
+                        </button>
+                      ) : (
+                        tripTypeSummary(booking)
+                      )}
+                    </td>
                     <td className="px-5 py-4 text-gray-500">{booking.driver?.full_name ?? "—"}</td>
+                    <td className="px-5 py-4 text-gray-500">
+                      <span
+                        className={cn(
+                          "rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap",
+                          booking.cpam_status === "none" ? "bg-gray-100 text-gray-600" : "bg-brand-blue-50 text-brand-blue-700"
+                        )}
+                        title={CPAM_LABELS[booking.cpam_status] ?? booking.cpam_status}
+                      >
+                        {CPAM_SHORT_LABELS[booking.cpam_status as (typeof cpamStatusValues)[number]] ?? booking.cpam_status}
+                      </span>
+                    </td>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-2">
                         <span className={cn("rounded-full px-2.5 py-1 text-[11px] font-semibold whitespace-nowrap", STATUS_BADGE_CLASSES[booking.status])}>
@@ -276,6 +670,7 @@ function AdminReservationsPage() {
         <BookingDetailDialog
           bookingId={search.bookingId}
           onClose={() => navigate({ search: (prev) => ({ ...prev, bookingId: undefined }) })}
+          onViewSeries={(seriesId) => navigate({ search: { seriesId, page: 0 } })}
         />
       )}
     </div>
@@ -286,7 +681,15 @@ function AdminReservationsPage() {
 
 type DialogMode = "view" | "reassign" | "cancel" | "external";
 
-function BookingDetailDialog({ bookingId, onClose }: { bookingId: string; onClose: () => void }) {
+function BookingDetailDialog({
+  bookingId,
+  onClose,
+  onViewSeries,
+}: {
+  bookingId: string;
+  onClose: () => void;
+  onViewSeries: (seriesId: string) => void;
+}) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [mode, setMode] = useState<DialogMode>("view");
@@ -472,7 +875,19 @@ function BookingDetailDialog({ bookingId, onClose }: { bookingId: string; onClos
                 />
               )}
               {booking.trip_type === "multiple" && booking.series_index && booking.series_total && (
-                <DetailField label="Trajet de la série" value={`${booking.series_index} / ${booking.series_total}`} />
+                <div>
+                  <DetailField label="Trajet de la série" value={`${booking.series_index} / ${booking.series_total}`} />
+                  {booking.series_id && (
+                    <button
+                      type="button"
+                      onClick={() => onViewSeries(booking.series_id!)}
+                      className="mt-1 inline-flex items-center gap-1 text-xs font-bold text-[#1244E8] hover:underline"
+                    >
+                      <Layers className="h-3 w-3" aria-hidden="true" />
+                      Voir tous les trajets de cette série
+                    </button>
+                  )}
+                </div>
               )}
               {booking.passenger_count > 1 && (
                 <DetailField label="Voyageurs" value={String(booking.passenger_count)} />
@@ -490,8 +905,18 @@ function BookingDetailDialog({ bookingId, onClose }: { bookingId: string; onClos
               />
               <DetailField label="Chauffeur" value={booking.driver?.full_name ?? "Non assigné"} />
               <DetailField label="Prix estimé" value={booking.estimated_price != null ? formatPrice(booking.estimated_price) : "—"} />
-              <DetailField label="Statut CPAM" value={booking.cpam_status} />
+              <DetailField label="Statut CPAM" value={CPAM_LABELS[booking.cpam_status] ?? booking.cpam_status} />
               {booking.mutual_name && <DetailField label="Mutuelle" value={booking.mutual_name} />}
+              <DetailField
+                label="Rappel J-1"
+                value={
+                  booking.reminder_confirmed_at
+                    ? `Confirmé le ${formatDateFr(booking.reminder_confirmed_at)} à ${formatTimeFr(booking.reminder_confirmed_at)}`
+                    : booking.reminder_sent_at
+                    ? `Envoyé le ${formatDateFr(booking.reminder_sent_at)}, non confirmé`
+                    : "Pas encore envoyé"
+                }
+              />
               {booking.booking_for_other && (
                 <div className="sm:col-span-2 rounded-lg bg-gray-50 p-3">
                   <p className="text-[10.5px] font-bold uppercase tracking-wide text-gray-400 mb-2">Réservé par (pour un tiers)</p>
