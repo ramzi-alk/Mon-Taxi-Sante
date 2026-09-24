@@ -685,13 +685,30 @@ function AdminReservationsPage() {
       ) : (
         <>
           {/* Mobile: stacked cards (a 6-column table doesn't fit a phone screen) */}
+          <div className="flex sm:hidden items-center gap-2 mb-2 px-1">
+            <Checkbox
+              checked={data.rows.length > 0 && data.rows.every((b) => selected.has(b.id))}
+              onCheckedChange={toggleAllOnPage}
+              aria-label="Tout sélectionner sur cette page"
+            />
+            <span className="text-xs font-semibold text-gray-500">Tout sélectionner</span>
+          </div>
           <ul className="flex flex-col gap-2 sm:hidden">
             {data.rows.map((booking) => (
-              <li key={booking.id}>
+              <li
+                key={booking.id}
+                className="flex items-start gap-3 rounded-xl bg-white p-4 ring-1 ring-gray-100 hover:ring-gray-200 transition-colors"
+              >
+                <Checkbox
+                  checked={selected.has(booking.id)}
+                  onCheckedChange={() => toggleSelected(booking.id)}
+                  aria-label={`Sélectionner ${formatReferenceCode(booking.reference_code)}`}
+                  className="mt-1 shrink-0"
+                />
                 <button
                   type="button"
                   onClick={() => navigate({ search: (prev) => ({ ...prev, bookingId: booking.id }) })}
-                  className="w-full rounded-xl bg-white p-4 text-left ring-1 ring-gray-100 hover:ring-gray-200 transition-colors"
+                  className="min-w-0 flex-1 text-left"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-mono text-xs font-bold text-gray-400">{formatReferenceCode(booking.reference_code)}</span>
