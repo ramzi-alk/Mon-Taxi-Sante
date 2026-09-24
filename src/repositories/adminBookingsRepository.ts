@@ -10,6 +10,7 @@ type BookingVehicleType = Database["public"]["Tables"]["bookings"]["Row"]["vehic
 type BookingTripType = Database["public"]["Tables"]["bookings"]["Row"]["trip_type"];
 
 type CpamStatus = Database["public"]["Tables"]["bookings"]["Row"]["cpam_status"];
+type PaymentStatus = Database["public"]["Tables"]["bookings"]["Row"]["payment_status"];
 
 export interface AdminBookingRow {
   id: string;
@@ -37,6 +38,7 @@ export interface AdminBookingRow {
   pmt_declared: boolean;
   reminder_sent_at: string | null;
   reminder_confirmed_at: string | null;
+  payment_status: PaymentStatus;
 }
 
 export interface AdminBookingDetail extends AdminBookingRow {
@@ -66,7 +68,7 @@ export interface EligibleDriver {
 }
 
 const ADMIN_BOOKING_COLUMNS =
-  "id, reference_code, patient_full_name, patient_phone, pickup_address, dropoff_address, pickup_datetime, return_datetime, vehicle_type, trip_type, series_id, series_index, series_total, requires_wheelchair, requires_stretcher, requires_oxygen, status, estimated_price, driver_id, driver:profiles!bookings_driver_id_fkey(full_name), cpam_status, mutual_name, pmt_declared, reminder_sent_at, reminder_confirmed_at";
+  "id, reference_code, patient_full_name, patient_phone, pickup_address, dropoff_address, pickup_datetime, return_datetime, vehicle_type, trip_type, series_id, series_index, series_total, requires_wheelchair, requires_stretcher, requires_oxygen, status, estimated_price, driver_id, driver:profiles!bookings_driver_id_fkey(full_name), cpam_status, mutual_name, pmt_declared, reminder_sent_at, reminder_confirmed_at, payment_status";
 
 export interface AdminBookingFilters {
   status?: BookingStatus;
@@ -74,6 +76,7 @@ export interface AdminBookingFilters {
   search?: string;
   driverId?: string;
   cpamStatus?: CpamStatus;
+  paymentStatus?: PaymentStatus;
   seriesId?: string;
   /** ISO timestamps — used for both the date-range filter and, computed
    * by the caller, the "at risk" / "reminder pending" quick filters. */
@@ -95,6 +98,7 @@ function applyBookingFilters(query: any, filters: AdminBookingFilters): any {
   if (filters.vehicleType) query = query.eq("vehicle_type", filters.vehicleType);
   if (filters.driverId) query = query.eq("driver_id", filters.driverId);
   if (filters.cpamStatus) query = query.eq("cpam_status", filters.cpamStatus);
+  if (filters.paymentStatus) query = query.eq("payment_status", filters.paymentStatus);
   if (filters.seriesId) query = query.eq("series_id", filters.seriesId);
   if (filters.pickupFrom) query = query.gte("pickup_datetime", filters.pickupFrom);
   if (filters.pickupTo) query = query.lte("pickup_datetime", filters.pickupTo);
@@ -437,6 +441,69 @@ export async function adminCancelBooking(
 
   if (error) {
     logger.error("adminBookings.adminCancelBooking failed", { error: error.message, bookingId });
+    throw new Error(error.message);
+  }
+}
+
+/**
+ * Manual accounts-receivable status (migration 074) — unrelated to any
+ * online payment flow, this is purely the admin team's own bookkeeping of
+ * "did we invoice / get paid for this ride". Picked up for free by the
+ * existing log_admin_activity trigger like any other bookings column.
+ */
+export async function adminSetPaymentStatus(
+  client: SupabaseClient,
+  bookingId: string,
+  paymentStatus: PaymentStatus
+): Promise<void> {
+  const { error } = await client
+    .from("bookings")
+    .update({ payment_status: paymentStatus })
+    .eq("id", bookingId);
+
+  if (error) {
+    logger.error("adminBookings.adminSetPaymentStatus failed", { error: error.message, bookingId });
+    throw new Error(error.message);
+  }
+}
+
+export interface AdminBookingNote {
+  id: string;
+  note: string;
+  created_at: string;
+  author: { full_name: string } | null;
+}
+
+/**
+ * Internal team notes (migration 074) — append-only by RLS design (see the
+ * migration): no update/delete function is exposed here on purpose.
+ */
+export async function fetchBookingNotes(client: SupabaseClient, bookingId: string): Promise<AdminBookingNote[]> {
+  const { data, error } = await client
+    .from("booking_admin_notes")
+    .select("id, note, created_at, author:profiles!booking_admin_notes_author_id_fkey(full_name)")
+    .eq("booking_id", bookingId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    logger.error("adminBookings.fetchBookingNotes failed", { error: error.message, bookingId });
+    throw new Error(error.message);
+  }
+  return (data ?? []) as unknown as AdminBookingNote[];
+}
+
+export async function addBookingNote(
+  client: SupabaseClient,
+  bookingId: string,
+  authorId: string | null,
+  note: string
+): Promise<void> {
+  const { error } = await client
+    .from("booking_admin_notes")
+    .insert({ booking_id: bookingId, author_id: authorId, note });
+
+  if (error) {
+    logger.error("adminBookings.addBookingNote failed", { error: error.message, bookingId });
     throw new Error(error.message);
   }
 }

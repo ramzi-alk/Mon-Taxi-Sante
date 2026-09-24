@@ -15,17 +15,22 @@ import {
   ClipboardList,
   Download,
   ExternalLink,
+  History,
   Layers,
   Loader2,
   Mail,
   MailCheck,
+  Plus,
   RotateCcw,
+  StickyNote,
   UserCog,
   XCircle,
 } from "lucide-react";
 import { supabase } from "~/lib/supabase";
 import * as adminBookingsRepository from "~/repositories/adminBookingsRepository";
 import type { AdminBookingRow, EligibleDriver } from "~/repositories/adminBookingsRepository";
+import * as adminActivityRepository from "~/repositories/adminActivityRepository";
+import * as authRepository from "~/repositories/authRepository";
 import {
   notifyBookingCancelledServerFn,
   notifyBookingAcceptedServerFn,
@@ -64,6 +69,7 @@ const bookingStatusValues = [
 ] as const;
 const vehicleTypeValues = ["taxi", "vsl", "pmr", "ambulance"] as const;
 const cpamStatusValues = ["ald", "cmu", "css", "standard", "none"] as const;
+const paymentStatusValues = ["non_facture", "facture", "encaisse", "sans_objet"] as const;
 
 const CPAM_SHORT_LABELS: Record<(typeof cpamStatusValues)[number], string> = {
   ald: "ALD",
@@ -73,11 +79,26 @@ const CPAM_SHORT_LABELS: Record<(typeof cpamStatusValues)[number], string> = {
   none: "Perso",
 };
 
+const PAYMENT_STATUS_LABELS: Record<(typeof paymentStatusValues)[number], string> = {
+  non_facture: "À facturer",
+  facture: "Facturée",
+  encaisse: "Encaissée",
+  sans_objet: "Sans objet",
+};
+
+const PAYMENT_STATUS_BADGE_CLASSES: Record<(typeof paymentStatusValues)[number], string> = {
+  non_facture: "bg-amber-50 text-amber-700",
+  facture: "bg-brand-blue-50 text-brand-blue-700",
+  encaisse: "bg-emerald-50 text-emerald-700",
+  sans_objet: "bg-gray-100 text-gray-500",
+};
+
 const reservationsSearchSchema = z.object({
   bookingId: z.string().optional(),
   status: z.enum(bookingStatusValues).optional(),
   vehicleType: z.enum(vehicleTypeValues).optional(),
   cpamStatus: z.enum(cpamStatusValues).optional(),
+  paymentStatus: z.enum(paymentStatusValues).optional(),
   driverId: z.string().optional(),
   seriesId: z.string().optional(),
   dateFrom: z.string().optional(),
@@ -143,7 +164,7 @@ function tripTypeSummary(
 const CSV_HEADERS = [
   "Référence", "Patient", "Téléphone", "Date", "Heure", "Adresse de départ", "Adresse d'arrivée",
   "Véhicule", "Type de trajet", "Statut", "Chauffeur", "Prix estimé (€)", "Statut CPAM",
-  "Mutuelle", "PMT déclarée", "Rappel envoyé", "Rappel confirmé",
+  "Mutuelle", "PMT déclarée", "Rappel envoyé", "Rappel confirmé", "Statut de facturation",
 ];
 
 function bookingToCsvRow(b: AdminBookingRow): string[] {
@@ -165,12 +186,13 @@ function bookingToCsvRow(b: AdminBookingRow): string[] {
     b.pmt_declared ? "oui" : "non",
     b.reminder_sent_at ? "oui" : "non",
     b.reminder_confirmed_at ? "oui" : "non",
+    PAYMENT_STATUS_LABELS[b.payment_status] ?? b.payment_status,
   ];
 }
 
 function hasAdvancedFilters(search: z.infer<typeof reservationsSearchSchema>): boolean {
   return Boolean(
-    search.dateFrom || search.dateTo || search.driverId || search.cpamStatus ||
+    search.dateFrom || search.dateTo || search.driverId || search.cpamStatus || search.paymentStatus ||
     search.atRisk || search.missingPmt || search.reminderPending
   );
 }
@@ -246,7 +268,7 @@ function AdminReservationsPage() {
   useEffect(() => {
     setSelected(new Set());
   }, [
-    search.status, search.vehicleType, search.q, search.driverId, search.cpamStatus,
+    search.status, search.vehicleType, search.q, search.driverId, search.cpamStatus, search.paymentStatus,
     search.seriesId, search.dateFrom, search.dateTo, search.atRisk, search.missingPmt,
     search.reminderPending, search.sort, search.page,
   ]);
@@ -257,6 +279,7 @@ function AdminReservationsPage() {
     search: search.q,
     driverId: search.driverId,
     cpamStatus: search.cpamStatus,
+    paymentStatus: search.paymentStatus,
     seriesId: search.seriesId,
     missingPmt: search.missingPmt || undefined,
     reminderPending: search.reminderPending || undefined,
@@ -277,7 +300,7 @@ function AdminReservationsPage() {
   } = useQuery({
     queryKey: [
       "admin-bookings",
-      search.status, search.vehicleType, search.q, search.driverId, search.cpamStatus,
+      search.status, search.vehicleType, search.q, search.driverId, search.cpamStatus, search.paymentStatus,
       search.seriesId, search.dateFrom, search.dateTo, search.atRisk, search.missingPmt,
       search.reminderPending, search.sort, search.page,
     ],
@@ -570,6 +593,18 @@ function AdminReservationsPage() {
               <SelectItem value="all">Tous les statuts CPAM</SelectItem>
               {cpamStatusValues.map((c) => (
                 <SelectItem key={c} value={c}>{CPAM_LABELS[c]}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select
+            value={search.paymentStatus ?? "all"}
+            onValueChange={(v) => navigate({ search: (prev) => ({ ...prev, paymentStatus: v === "all" ? undefined : (v as typeof paymentStatusValues[number]), page: 0 }) })}
+          >
+            <SelectTrigger className="w-56"><SelectValue placeholder="Statut de facturation" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous les statuts de facturation</SelectItem>
+              {paymentStatusValues.map((p) => (
+                <SelectItem key={p} value={p}>{PAYMENT_STATUS_LABELS[p]}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -1011,6 +1046,40 @@ function BookingDetailDialog({
     onError: () => toast({ title: "Échec de l'opération", description: "Réessayez dans un instant.", variant: "error" }),
   });
 
+  const { mutate: setPaymentStatus, isPending: isSettingPaymentStatus } = useMutation({
+    mutationFn: (paymentStatus: (typeof paymentStatusValues)[number]) =>
+      adminBookingsRepository.adminSetPaymentStatus(supabase, bookingId, paymentStatus),
+    onSuccess: () => {
+      invalidateList();
+      toast({ title: "Statut de facturation mis à jour", variant: "success" });
+    },
+    onError: () => toast({ title: "Échec de la mise à jour", description: "Réessayez dans un instant.", variant: "error" }),
+  });
+
+  const [noteInput, setNoteInput] = useState("");
+  const { data: notes, isLoading: isLoadingNotes } = useQuery({
+    queryKey: ["admin-booking-notes", bookingId],
+    queryFn: () => adminBookingsRepository.fetchBookingNotes(supabase, bookingId),
+  });
+
+  const { mutate: addNote, isPending: isAddingNote } = useMutation({
+    mutationFn: async (note: string) => {
+      const user = await authRepository.getCurrentUser(supabase);
+      await adminBookingsRepository.addBookingNote(supabase, bookingId, user?.id ?? null, note);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-booking-notes", bookingId] });
+      setNoteInput("");
+    },
+    onError: () => toast({ title: "Échec de l'ajout de la note", description: "Réessayez dans un instant.", variant: "error" }),
+  });
+
+  const { data: activity, isLoading: isLoadingActivity } = useQuery({
+    queryKey: ["admin-booking-activity", bookingId],
+    queryFn: () =>
+      adminActivityRepository.fetchActivityLog(supabase, { targetTable: "bookings", targetId: bookingId }, 0, 5),
+  });
+
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
@@ -1157,6 +1226,27 @@ function BookingDetailDialog({
               />
               <DetailField label="Chauffeur" value={booking.driver?.full_name ?? "Non assigné"} />
               <DetailField label="Prix estimé" value={booking.estimated_price != null ? formatPrice(booking.estimated_price) : "—"} />
+              <div>
+                <div className="text-[10.5px] font-bold uppercase tracking-wide text-gray-400 mb-1">Statut de facturation</div>
+                <Select
+                  value={booking.payment_status}
+                  disabled={isSettingPaymentStatus}
+                  onValueChange={(v) => setPaymentStatus(v as (typeof paymentStatusValues)[number])}
+                >
+                  <SelectTrigger className="h-8 w-full sm:w-48">
+                    <SelectValue>
+                      <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-semibold", PAYMENT_STATUS_BADGE_CLASSES[booking.payment_status])}>
+                        {PAYMENT_STATUS_LABELS[booking.payment_status]}
+                      </span>
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {paymentStatusValues.map((p) => (
+                      <SelectItem key={p} value={p}>{PAYMENT_STATUS_LABELS[p]}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <DetailField label="Statut CPAM" value={CPAM_LABELS[booking.cpam_status] ?? booking.cpam_status} />
               {booking.mutual_name && <DetailField label="Mutuelle" value={booking.mutual_name} />}
               <DetailField
@@ -1200,6 +1290,70 @@ function BookingDetailDialog({
                   </div>
                 </div>
               )}
+
+              <div className="sm:col-span-2 rounded-lg bg-gray-50 p-3">
+                <p className="text-[10.5px] font-bold uppercase tracking-wide text-gray-400 mb-2 flex items-center gap-1.5">
+                  <StickyNote className="h-3.5 w-3.5" aria-hidden="true" />
+                  Notes internes
+                </p>
+                {isLoadingNotes ? (
+                  <p className="text-xs text-gray-400">Chargement…</p>
+                ) : notes && notes.length > 0 ? (
+                  <ul className="flex flex-col gap-2 mb-3 max-h-48 overflow-y-auto">
+                    {notes.map((n) => (
+                      <li key={n.id} className="rounded-lg bg-white p-2.5 ring-1 ring-gray-100">
+                        <p className="text-sm text-[#0B0F1C] whitespace-pre-wrap">{n.note}</p>
+                        <p className="mt-1 text-[10.5px] text-gray-400">
+                          {n.author?.full_name ?? "Compte supprimé"} · {formatDateFr(n.created_at)} à {formatTimeFr(n.created_at)}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-xs text-gray-400 mb-3">Aucune note pour l'instant.</p>
+                )}
+                <div className="flex gap-2">
+                  <Textarea
+                    value={noteInput}
+                    onChange={(e) => setNoteInput(e.target.value)}
+                    placeholder="Ajouter une note interne (visible uniquement par l'équipe admin)…"
+                    rows={2}
+                    aria-label="Nouvelle note interne"
+                    className="bg-white"
+                  />
+                  <button
+                    type="button"
+                    disabled={isAddingNote || noteInput.trim().length === 0}
+                    onClick={() => addNote(noteInput.trim())}
+                    className="inline-flex shrink-0 items-center justify-center gap-1 self-end rounded-xl bg-[#0B0F1C] px-3 py-2.5 text-xs font-bold text-white hover:bg-[#1244E8] disabled:opacity-50 transition-colors"
+                  >
+                    <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                    Ajouter
+                  </button>
+                </div>
+              </div>
+
+              <div className="sm:col-span-2 rounded-lg bg-gray-50 p-3">
+                <p className="text-[10.5px] font-bold uppercase tracking-wide text-gray-400 mb-2 flex items-center gap-1.5">
+                  <History className="h-3.5 w-3.5" aria-hidden="true" />
+                  Historique récent
+                </p>
+                {isLoadingActivity ? (
+                  <p className="text-xs text-gray-400">Chargement…</p>
+                ) : !activity || activity.rows.length === 0 ? (
+                  <p className="text-xs text-gray-400">Aucune action admin enregistrée sur cette réservation.</p>
+                ) : (
+                  <ul className="flex flex-col gap-1.5">
+                    {activity.rows.map((row) => (
+                      <li key={row.id} className="text-xs text-gray-600">
+                        <span className="font-semibold text-gray-500">{row.actor?.full_name ?? "Compte supprimé"}</span>
+                        {" — "}
+                        {formatDateFr(row.created_at)} à {formatTimeFr(row.created_at)}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             </div>
 
             <DialogFooter>
