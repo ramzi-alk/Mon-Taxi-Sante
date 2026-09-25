@@ -722,17 +722,6 @@ function DriverDashboard() {
                   disponibles.
                 </p>
               </div>
-            ) : poolRides.length === 0 ? (
-              <div className="rounded-2xl bg-white shadow-sm ring-1 ring-gray-100 p-12 text-center">
-                <Car className="h-12 w-12 text-gray-300 mx-auto mb-3" aria-hidden="true" />
-                <p className="text-lg font-semibold text-gray-700">
-                  Aucune course disponible
-                </p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Les nouvelles courses apparaissent ici en temps réel. Gardez
-                  cette page ouverte.
-                </p>
-              </div>
             ) : (
               <PoolList
                 rides={poolRides}
