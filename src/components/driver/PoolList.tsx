@@ -366,9 +366,13 @@ export function PoolList({
 
       {filteredRides.length === 0 ? (
         <div className="rounded-2xl bg-white shadow-sm ring-1 ring-gray-100 p-12 text-center">
-          <p className="text-lg font-semibold text-gray-700">Aucune course ne correspond</p>
+          <p className="text-lg font-semibold text-gray-700">
+            {rides.length === 0 ? "Aucune course disponible" : "Aucune course ne correspond"}
+          </p>
           <p className="text-sm text-muted-foreground mt-1">
-            Essayez d'élargir vos filtres ou votre recherche.
+            {rides.length === 0
+              ? "Les nouvelles courses apparaissent ici en temps réel. Gardez cette page ouverte."
+              : "Essayez d'élargir vos filtres ou votre recherche."}
           </p>
         </div>
       ) : viewMode === "grid" ? (
