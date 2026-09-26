@@ -3,26 +3,29 @@ import { Loader2 } from "lucide-react";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "~/components/ui/select";
 import { Textarea } from "~/components/ui/textarea";
 
-const REASON_PRESETS = [
-  { value: "patient_a_annule", label: "Le patient a annulé / m'a prévenu" },
-  { value: "erreur_acceptation", label: "Erreur d'acceptation" },
-  { value: "imprevu_vehicule", label: "Imprévu véhicule" },
-  { value: "autre", label: "Autre" },
-] as const;
+export interface CancelReasonPreset {
+  value: string;
+  label: string;
+}
 
 interface CancelReasonFormProps {
+  presets: readonly CancelReasonPreset[];
   isSubmitting: boolean;
   confirmLabel?: string;
   onConfirm: (reason: string) => void;
   onClose: () => void;
 }
 
-// Motif obligatoire depuis migration 057 (cancel_ride_by_driver) : la
-// détection d'annulation suspecte reste purement temporelle côté serveur,
-// mais ce motif est désormais stocké (bookings.cancellation_reason) pour que
-// l'admin puisse arbitrer une suspension de pool plutôt que la déclencher à
-// l'aveugle sur un simple minuteur.
+/**
+ * Sélecteur de motif générique (chauffeur et patient) : une liste de presets
+ * fournie par l'appelant, plus un choix "Autre" à texte libre. Partagé pour
+ * que les deux flux d'annulation stockent un motif exploitable
+ * (bookings.cancellation_reason) au lieu de rien — voir CancelReasonForm
+ * chauffeur (RideCard.tsx, motif obligatoire depuis migration 057) et
+ * CancelBookingAction côté patient.
+ */
 export function CancelReasonForm({
+  presets,
   isSubmitting,
   confirmLabel = "Confirmer l'annulation",
   onConfirm,
@@ -31,7 +34,7 @@ export function CancelReasonForm({
   const [preset, setPreset] = useState("");
   const [detail, setDetail] = useState("");
 
-  const presetLabel = REASON_PRESETS.find((r) => r.value === preset)?.label;
+  const presetLabel = presets.find((r) => r.value === preset)?.label;
   const reason = preset === "autre" ? detail.trim() : presetLabel ?? "";
   const canConfirm = preset !== "" && (preset !== "autre" || detail.trim().length > 0);
 
@@ -44,7 +47,7 @@ export function CancelReasonForm({
           <SelectValue placeholder="Choisir un motif" />
         </SelectTrigger>
         <SelectContent>
-          {REASON_PRESETS.map((r) => (
+          {presets.map((r) => (
             <SelectItem key={r.value} value={r.value}>
               {r.label}
             </SelectItem>

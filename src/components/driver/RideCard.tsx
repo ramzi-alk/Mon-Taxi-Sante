@@ -1,11 +1,18 @@
 import { useState, useEffect } from "react";
 import { MapPin, Clock, Car, Users, Navigation, Loader2, PlayCircle, FlagTriangleRight, XCircle, User, Phone, CalendarPlus, Banknote, ChevronDown, ChevronUp, ClipboardCheck, Building2, Repeat, Lock, Info } from "lucide-react";
 import { SeriesRideSelectPanel } from "./SeriesRideSelectPanel";
-import { CancelReasonForm } from "./CancelReasonForm";
+import { CancelReasonForm, type CancelReasonPreset } from "~/components/CancelReasonForm";
 import { CompletedRideExtras } from "./CompletedRideExtras";
 import { formatDateFr, formatTimeFr, formatCountdown } from "~/lib/utils";
 import { cn } from "~/lib/utils";
 import { revealThresholdMin } from "~/lib/bookingMasking";
+
+const DRIVER_CANCEL_REASON_PRESETS: readonly CancelReasonPreset[] = [
+  { value: "patient_a_annule", label: "Le patient a annulé / m'a prévenu" },
+  { value: "erreur_acceptation", label: "Erreur d'acceptation" },
+  { value: "imprevu_vehicule", label: "Imprévu véhicule" },
+  { value: "autre", label: "Autre" },
+];
 
 function useMinutesUntil(datetimeStr: string) {
   const [minutes, setMinutes] = useState(() =>
@@ -837,6 +844,7 @@ export function RideCard({
                 /* Motif obligatoire avant confirmation, quel que soit le
                    chemin (course seule ou série sélectionnée ci-dessous) */
                 <CancelReasonForm
+                  presets={DRIVER_CANCEL_REASON_PRESETS}
                   isSubmitting={cancelTarget.kind === "single" ? !!isCancelling : !!isCancellingSeries}
                   onConfirm={(reason) => {
                     if (cancelTarget.kind === "single") onCancel(cancelTarget.id, reason);

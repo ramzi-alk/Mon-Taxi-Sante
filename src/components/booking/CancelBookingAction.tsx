@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { XCircle, Loader2 } from "lucide-react";
+import { XCircle } from "lucide-react";
 import { cn } from "~/lib/utils";
 import { supabase } from "~/lib/supabase";
 import { useToast } from "~/components/ui/toast";
@@ -8,6 +8,19 @@ import * as bookingsRepository from "~/repositories/bookingsRepository";
 import type { LookupCredentials } from "~/repositories/bookingsRepository";
 import { notifyBookingCancelledServerFn, notifyDriverPatientCancelledServerFn } from "~/server/email";
 import { logger } from "~/lib/logger";
+import { CancelReasonForm, type CancelReasonPreset } from "~/components/CancelReasonForm";
+
+// Reformulations neutres, sans jugement sur le patient — l'objectif est de
+// comprendre pourquoi une réservation confirmée est annulée (voir enquête
+// Resend : ~50% des réservations récentes finissent annulées, sans motif
+// exploitable jusqu'ici puisque cancelBooking() n'en recevait jamais aucun).
+const PATIENT_CANCEL_REASON_PRESETS: readonly CancelReasonPreset[] = [
+  { value: "autre_moyen_transport", label: "J'ai trouvé un autre moyen de transport" },
+  { value: "rdv_annule_reporte", label: "Mon rendez-vous médical a été annulé ou reporté" },
+  { value: "erreur_reservation", label: "Je me suis trompé(e) en réservant (date, adresse, horaire…)" },
+  { value: "plus_besoin", label: "Je n'ai plus besoin de ce trajet" },
+  { value: "autre", label: "Autre" },
+];
 
 interface CancelBookingActionProps {
   bookingId: string;
@@ -35,14 +48,15 @@ export function CancelBookingAction({
   const queryClient = useQueryClient();
 
   const cancelMutation = useMutation({
-    mutationFn: () =>
+    mutationFn: (reason: string) =>
       lookupCredentials
         ? bookingsRepository.cancelBookingByReference(
             supabase,
             lookupCredentials.referenceCode,
-            lookupCredentials.phone
+            lookupCredentials.phone,
+            reason
           )
-        : bookingsRepository.cancelBooking(supabase, bookingId),
+        : bookingsRepository.cancelBooking(supabase, bookingId, reason),
     onSuccess: () => {
       setConfirming(false);
       toast({ title: "Réservation annulée", variant: "success" });
@@ -99,26 +113,13 @@ export function CancelBookingAction({
           ? "Vous êtes dans le délai d'annulation gratuite (plus de 24h avant le départ)."
           : "Ce départ est prévu dans moins de 24h — merci de nous prévenir au plus vite pour laisser une chance à un autre patient d'utiliser ce créneau."}
       </p>
-      <div className="flex items-center gap-3 text-sm">
-        <span className="text-gray-700">Confirmer l&apos;annulation ?</span>
-        <button
-          type="button"
-          onClick={() => cancelMutation.mutate()}
-          disabled={cancelMutation.isPending}
-          className="font-bold text-red-600 hover:underline disabled:opacity-60 flex items-center gap-1.5"
-        >
-          {cancelMutation.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
-          Oui, annuler
-        </button>
-        <button
-          type="button"
-          onClick={() => setConfirming(false)}
-          disabled={cancelMutation.isPending}
-          className="text-gray-500 hover:underline"
-        >
-          Non
-        </button>
-      </div>
+      <CancelReasonForm
+        presets={PATIENT_CANCEL_REASON_PRESETS}
+        isSubmitting={cancelMutation.isPending}
+        confirmLabel="Oui, annuler"
+        onConfirm={(reason) => cancelMutation.mutate(reason)}
+        onClose={() => setConfirming(false)}
+      />
     </div>
   );
 }
