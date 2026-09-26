@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "~/lib/supabase";
 import type { Database } from "~/lib/database.types";
 import { logger } from "~/lib/logger";
+import { phoneSearchDigits } from "~/lib/phone";
 import * as storageRepository from "~/repositories/storageRepository";
 
 const PMT_DOCUMENTS_BUCKET = "pmt-documents";
@@ -92,6 +93,27 @@ export interface AdminBookingFilters {
   archived?: boolean;
 }
 
+/**
+ * Builds the reference/nom/téléphone OR clause shared by the list filter
+ * and the command-palette search. Phone numbers appear in several
+ * formats in the data (+33, 0033, ou un 0 initial selon la source de
+ * saisie), donc on ajoute une clause ilike supplémentaire sur le "cœur"
+ * du numéro (voir phoneSearchDigits) pour qu'une recherche dans un format
+ * retrouve un numéro stocké dans un autre.
+ */
+function buildBookingSearchOr(term: string): string {
+  const clauses = [
+    `reference_code.ilike.%${term}%`,
+    `patient_full_name.ilike.%${term}%`,
+    `patient_phone.ilike.%${term}%`,
+  ];
+  const phoneDigits = phoneSearchDigits(term);
+  if (phoneDigits && phoneDigits !== term) {
+    clauses.push(`patient_phone.ilike.%${phoneDigits}%`);
+  }
+  return clauses.join(",");
+}
+
 // Shared between the paginated list and the unpaginated CSV export so the
 // two stay in sync as filters are added. Typed as `any` because the
 // Postgrest query builder's generics change shape after every chained
@@ -111,10 +133,7 @@ function applyBookingFilters(query: any, filters: AdminBookingFilters): any {
   if (filters.reminderPending) query = query.is("reminder_sent_at", null);
   query = filters.archived ? query.not("archived_at", "is", null) : query.is("archived_at", null);
   if (filters.search) {
-    const term = filters.search.trim();
-    query = query.or(
-      `reference_code.ilike.%${term}%,patient_full_name.ilike.%${term}%,patient_phone.ilike.%${term}%`
-    );
+    query = query.or(buildBookingSearchOr(filters.search.trim()));
   }
   return query;
 }
@@ -309,7 +328,7 @@ export async function searchBookingsAdmin(
   const { data, error } = await client
     .from("bookings")
     .select(ADMIN_BOOKING_COLUMNS)
-    .or(`reference_code.ilike.%${trimmed}%,patient_full_name.ilike.%${trimmed}%,patient_phone.ilike.%${trimmed}%`)
+    .or(buildBookingSearchOr(trimmed))
     .order("pickup_datetime", { ascending: false })
     .limit(8);
 
