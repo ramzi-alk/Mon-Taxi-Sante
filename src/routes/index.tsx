@@ -638,7 +638,7 @@ function HomeStructuredData() {
         description:
           "Plateforme de réservation de taxis conventionnés agréés Sécurité Sociale pour le transport médical en France.",
         ...(phoneVisible ? { telephone: CONTACT_PHONE_TEL } : {}),
-        email: "contact@mon-taxi-sante.com",
+        email: "contact@docteurtaxi.fr",
         areaServed: { "@type": "Country", name: "France" },
         serviceType: "Transport médical conventionné Assurance Maladie",
       },

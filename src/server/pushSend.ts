@@ -11,7 +11,7 @@ import { logger } from "~/lib/logger";
 function getConfiguredWebPush() {
   const publicKey = process.env.VAPID_PUBLIC_KEY;
   const privateKey = process.env.VAPID_PRIVATE_KEY;
-  const email = process.env.VAPID_EMAIL ?? "mailto:contact@mon-taxi-sante.com";
+  const email = process.env.VAPID_EMAIL ?? "mailto:contact@docteurtaxi.fr";
   if (!publicKey || !privateKey) {
     logger.warn("push.vapidKeysNotConfigured — skipping push");
     return null;
