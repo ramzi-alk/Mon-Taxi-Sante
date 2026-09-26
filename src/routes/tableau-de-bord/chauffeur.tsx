@@ -704,7 +704,7 @@ function DriverDashboard() {
                   </p>
                 </div>
                 <a
-                  href="mailto:contact@mon-taxi-sante.com?subject=Suspension%20de%20pool%20-%20demande%20de%20r%C3%A9examen"
+                  href="mailto:contact@docteurtaxi.fr?subject=Suspension%20de%20pool%20-%20demande%20de%20r%C3%A9examen"
                   className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-red-700 transition-colors"
                 >
                   <Mail className="h-4 w-4" aria-hidden="true" />

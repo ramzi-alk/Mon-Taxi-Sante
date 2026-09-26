@@ -29,7 +29,7 @@ import { Webhook } from "https://esm.sh/standardwebhooks@1.0.0";
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const HOOK_SECRET = Deno.env.get("SEND_EMAIL_HOOK_SECRET")?.replace("v1,whsec_", "");
 const FROM_EMAIL = Deno.env.get("RESEND_FROM_EMAIL") || "Docteur Taxi <reservations@docteurtaxi.fr>";
-const SUPPORT_EMAIL = "contact@mon-taxi-sante.com";
+const SUPPORT_EMAIL = "contact@docteurtaxi.fr";
 const SUPPORT_PHONE_DISPLAY = "06 02 12 19 07";
 const SUPPORT_PHONE_TEL = "+33602121907";
 
