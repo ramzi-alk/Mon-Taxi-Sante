@@ -11,15 +11,17 @@ import { BookingStatusCard } from "./BookingStatusCard";
 import { Input } from "~/components/ui/input";
 import { useTurnstile, TURNSTILE_SITE_KEY } from "~/hooks/useTurnstile";
 import { saveLookup, isLookupSaved } from "~/lib/savedBookingLookups";
+import { FRENCH_PHONE_LOOKUP_PATTERN } from "~/lib/phone";
 
-const frenchPhone = /^(\+33|0)[1-9](\d{2}){4}$/;
 const referenceCodePattern = /^[A-Z2-9]{4}-?[A-Z2-9]{4}$/i;
 
 const lookupSchema = z.object({
   reference_code: z
     .string()
     .regex(referenceCodePattern, "Référence invalide (format : K7H4-X9QF)"),
-  phone: z.string().regex(frenchPhone, "Numéro de téléphone français invalide"),
+  phone: z
+    .string()
+    .regex(FRENCH_PHONE_LOOKUP_PATTERN, "Numéro de téléphone français invalide"),
 });
 
 type LookupSchema = z.infer<typeof lookupSchema>;

@@ -11,6 +11,19 @@
  * ressemble pas à un numéro, pour que l'appelant n'ajoute pas une clause
  * ilike inutile sur une recherche par nom ou référence.
  */
+/**
+ * Numéro français valide, en acceptant les trois indicatifs rencontrés en
+ * base (+33, 0033, ou un simple 0 initial) ainsi que des espaces/points/
+ * tirets entre les groupes de chiffres — contrairement à `frenchPhone`
+ * (schema.ts du formulaire de réservation), qui n'autorise qu'un format
+ * compact et sert à normaliser la saisie à la création. Utilisé par le
+ * formulaire "Retrouver une réservation avec sa référence", où on veut
+ * plutôt laisser le patient retaper son numéro comme il l'a en tête —
+ * normalize_phone_fr (migration 076) fait ensuite matcher côté serveur
+ * quel que soit le format stocké.
+ */
+export const FRENCH_PHONE_LOOKUP_PATTERN = /^(?:\+33|0033|0)[\s.-]?[1-9](?:[\s.-]?\d{2}){4}$/;
+
 export function phoneSearchDigits(term: string): string | null {
   const trimmed = term.trim();
   if (!trimmed || !/^[0-9+\s.-]+$/.test(trimmed)) return null;
