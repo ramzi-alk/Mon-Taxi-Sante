@@ -30,6 +30,7 @@ import {
   createDriverPortalSessionServerFn,
 } from "~/server/billing";
 import type { DriverSubscriptionPlan } from "~/lib/stripe";
+import { trackDriverCheckoutStarted, trackDriverPortalOpened } from "~/lib/analytics";
 import { Input } from "~/components/ui/input";
 import { Checkbox } from "~/components/ui/checkbox";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "~/components/ui/select";
@@ -96,12 +97,14 @@ async function getAccessTokenOrThrow(): Promise<string> {
 async function startDriverCheckout(plan: DriverSubscriptionPlan): Promise<void> {
   const accessToken = await getAccessTokenOrThrow();
   const { url } = await createDriverCheckoutSessionServerFn({ data: { accessToken, plan } });
+  trackDriverCheckoutStarted(plan);
   window.location.href = url;
 }
 
 async function openDriverPortal(): Promise<void> {
   const accessToken = await getAccessTokenOrThrow();
   const { url } = await createDriverPortalSessionServerFn({ data: { accessToken } });
+  trackDriverPortalOpened();
   window.location.href = url;
 }
 

@@ -5,6 +5,7 @@ import { RatingForm } from "./RatingForm";
 import { supabase } from "~/lib/supabase";
 import * as bookingsRepository from "~/repositories/bookingsRepository";
 import type { LookupCredentials } from "~/repositories/bookingsRepository";
+import { trackBookingRatedByPatient } from "~/lib/analytics";
 
 interface BookingRatingSectionProps {
   bookingId: string;
@@ -43,6 +44,7 @@ export function BookingRatingSection({
         : bookingsRepository.rateBookingAsPatient(supabase, bookingId, vars.rating, vars.comment),
     onSuccess: (_, vars) => {
       toast({ title: "Merci pour votre avis !", variant: "success" });
+      trackBookingRatedByPatient({ bookingId, rating: vars.rating, hasComment: !!vars.comment });
       onRated(vars.rating);
       queryClient.invalidateQueries({ queryKey: ["my-bookings"] });
     },

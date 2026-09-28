@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
+import { getStoredConsent, storeConsent, type ConsentValue } from "~/lib/cookieConsent";
+import { setPostHogConsent } from "~/lib/posthog";
 
-const CONSENT_KEY = "dt_cookie_consent";
 const OPEN_EVENT = "dt:open-cookie-preferences";
-
-type ConsentValue = "granted" | "denied";
 
 function pushConsentUpdate(value: ConsentValue) {
   if (typeof window === "undefined" || typeof window.gtag !== "function") return;
@@ -28,8 +27,7 @@ export function CookieConsent() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem(CONSENT_KEY);
-    if (stored !== "granted" && stored !== "denied") {
+    if (getStoredConsent() === null) {
       setVisible(true);
     }
 
@@ -39,8 +37,9 @@ export function CookieConsent() {
   }, []);
 
   function choose(value: ConsentValue) {
-    localStorage.setItem(CONSENT_KEY, value);
+    storeConsent(value);
     pushConsentUpdate(value);
+    setPostHogConsent(value === "granted");
     setVisible(false);
   }
 

@@ -53,6 +53,14 @@ import { submitBookingServerFn } from "~/server/booking";
 import * as authRepository from "~/repositories/authRepository";
 import * as storageRepository from "~/repositories/storageRepository";
 import { useToast } from "~/components/ui/toast";
+import {
+  trackBookingDraftDiscarded,
+  trackBookingDraftResumed,
+  trackBookingStepCompleted,
+  trackBookingStepViewed,
+  trackBookingSubmitFailed,
+  trackBookingSubmitted,
+} from "~/lib/analytics";
 
 const DEFAULT_VALUES: Partial<BookingSchema> = {
   booking_for_other: false,
@@ -272,8 +280,18 @@ export function BookingForm() {
     };
   }, [form, currentStep, pendingDraft]);
 
+  // Pageview de chaque étape du tunnel — sert à mesurer le taux d'abandon
+  // par étape dans PostHog. Ignoré tant que la reprise/l'abandon du
+  // brouillon n'a pas été décidé (l'étape affichée n'est alors qu'un écran
+  // de choix, pas une étape du formulaire).
+  useEffect(() => {
+    if (pendingDraft) return;
+    trackBookingStepViewed(currentStep);
+  }, [currentStep, pendingDraft]);
+
   function resumeDraft() {
     if (!pendingDraft) return;
+    trackBookingDraftResumed(pendingDraft.step);
     form.reset({ ...DEFAULT_VALUES, ...pendingDraft.values });
     setCurrentStep(Math.min(Math.max(pendingDraft.step, 1), BOOKING_STEPS.length));
     consumeBookingPrefill();
@@ -281,13 +299,27 @@ export function BookingForm() {
   }
 
   function discardDraft() {
+    trackBookingDraftDiscarded(pendingDraft?.step ?? 1);
     clearBookingDraft();
     setPendingDraft(null);
   }
 
   const { mutateAsync, isPending } = useMutation({
     mutationFn: submitBooking,
-    onSuccess: (booking) => {
+    onSuccess: (booking, variables) => {
+      trackBookingSubmitted({
+        tripType: variables.trip_type,
+        vehicleType: variables.vehicle_type,
+        cpamStatus: variables.cpam_status,
+        isSeries: !!booking.seriesTotal && booking.seriesTotal > 1,
+        seriesTotal: booking.seriesTotal,
+        requiresWheelchair: variables.requires_wheelchair,
+        requiresStretcher: variables.requires_stretcher,
+        requiresOxygen: variables.requires_oxygen,
+        isHospitalization: variables.is_hospitalization,
+        bookingForOther: variables.booking_for_other,
+        pmtDeclared: variables.pmt_declared,
+      });
       clearBookingDraft();
       navigate({
         to: "/reservation/confirmation",
@@ -300,6 +332,7 @@ export function BookingForm() {
     },
     onError: (error: Error) => {
       logger.error("booking.submit failed", { error: error.message });
+      trackBookingSubmitFailed(error.message);
       setSubmitError(
         "Une erreur est survenue lors de l'envoi de votre réservation. Veuillez réessayer ou nous appeler directement."
       );
@@ -310,6 +343,7 @@ export function BookingForm() {
     const fieldsForStep = STEP_FIELDS[currentStep];
     const valid = await form.trigger(fieldsForStep);
     if (valid) {
+      trackBookingStepCompleted(currentStep);
       const nextStep = Math.min(currentStep + 1, BOOKING_STEPS.length);
       setCurrentStep(nextStep);
       saveBookingDraft(nextStep, form.getValues());
