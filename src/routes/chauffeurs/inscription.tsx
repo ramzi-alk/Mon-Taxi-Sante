@@ -14,6 +14,7 @@ import { AddressAutocomplete } from "~/components/booking/AddressAutocomplete";
 import { Input } from "~/components/ui/input";
 import type { CompanySuggestion } from "~/lib/siren";
 import { canonicalLinks } from "~/lib/seoLinks";
+import { trackDriverApplicationFailed, trackDriverApplicationSubmitted } from "~/lib/analytics";
 
 export const Route = createFileRoute("/chauffeurs/inscription")({
   head: () => ({
@@ -108,7 +109,16 @@ function InscriptionChauffeurPage() {
 
   const { mutate, isPending, isSuccess } = useMutation({
     mutationFn: (data: InscriptionSchema) => registerDriver(data, company as CompanySuggestion),
-    onError: (error: Error) => setErrorMessage(error.message),
+    onSuccess: (_, variables) => {
+      trackDriverApplicationSubmitted({
+        vehicleType: variables.vehicle_type,
+        pmrEquipped: variables.pmr_equipped,
+      });
+    },
+    onError: (error: Error) => {
+      trackDriverApplicationFailed(error.message);
+      setErrorMessage(error.message);
+    },
   });
 
   function onSubmit(data: InscriptionSchema) {

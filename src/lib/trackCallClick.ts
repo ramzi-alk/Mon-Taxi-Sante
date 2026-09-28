@@ -1,5 +1,6 @@
 import { supabase } from "~/lib/supabase";
 import { logger } from "~/lib/logger";
+import { posthog } from "~/lib/posthog";
 
 // Doit rester synchronisé avec le CHECK constraint de call_button_clicks
 // (migration 052) et couvrir chaque endroit du site où un CTA "Appeler"
@@ -32,4 +33,10 @@ export function trackCallButtonClick(source: CallButtonSource): void {
         logger.error("trackCallButtonClick failed", { source, error: error.message });
       }
     });
+
+  try {
+    posthog.capture("call_button_click", { source });
+  } catch {
+    // best-effort — ne doit jamais retarder ni empêcher le lien tel: natif.
+  }
 }

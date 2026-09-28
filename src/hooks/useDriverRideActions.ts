@@ -9,6 +9,14 @@ import {
 } from "~/server/email";
 import { logger } from "~/lib/logger";
 import { useToast } from "~/components/ui/toast";
+import {
+  trackRideAccepted,
+  trackRideCancelledByDriver,
+  trackRideCompleted,
+  trackRideRatedByDriver,
+  trackRideRefused,
+  trackRideStarted,
+} from "~/lib/analytics";
 
 async function acceptRide(rideId: string): Promise<void> {
   await bookingsRepository.acceptRide(supabase, rideId);
@@ -59,6 +67,7 @@ export function useDriverRideActions() {
     onMutate: (rideId) => setAcceptingId(rideId),
     onSuccess: (_, rideId) => {
       toast({ title: "Course acceptée — coordonnées du patient envoyées par email", variant: "success" });
+      trackRideAccepted({ rideId });
       notifyBookingAcceptedServerFn({ data: { bookingId: rideId } }).catch((err) => {
         logger.warn("email.notifyBookingAccepted failed", { error: err.message, rideId });
       });
@@ -80,8 +89,9 @@ export function useDriverRideActions() {
   const refuseMutation = useMutation({
     mutationFn: refuseRide,
     onMutate: (rideId) => setRefusingId(rideId),
-    onSuccess: () => {
+    onSuccess: (_, rideId) => {
       toast({ title: "Course refusée", description: "Elle n'apparaîtra plus dans votre pool.", variant: "default" });
+      trackRideRefused(rideId);
     },
     onSettled: () => {
       setRefusingId(null);
@@ -96,8 +106,9 @@ export function useDriverRideActions() {
   const startMutation = useMutation({
     mutationFn: startRide,
     onMutate: (rideId) => setStartingId(rideId),
-    onSuccess: () => {
+    onSuccess: (_, rideId) => {
       toast({ title: "Course démarrée", variant: "success" });
+      trackRideStarted(rideId);
     },
     onSettled: () => {
       setStartingId(null);
@@ -112,8 +123,9 @@ export function useDriverRideActions() {
   const completeMutation = useMutation({
     mutationFn: completeRide,
     onMutate: (rideId) => setCompletingId(rideId),
-    onSuccess: () => {
+    onSuccess: (_, rideId) => {
       toast({ title: "Course terminée !", variant: "success" });
+      trackRideCompleted(rideId);
     },
     onSettled: () => {
       setCompletingId(null);
@@ -130,6 +142,7 @@ export function useDriverRideActions() {
     onMutate: ({ rideId }) => setCancellingId(rideId),
     onSuccess: (_, { rideId }) => {
       toast({ title: "Course annulée", description: "La course est retournée dans le pool.", variant: "default" });
+      trackRideCancelledByDriver({ rideId });
       notifyRideUnassignedServerFn({ data: { bookingId: rideId } }).catch((err) => {
         logger.warn("email.notifyRideUnassigned failed", { error: err.message, rideId });
       });
@@ -157,6 +170,7 @@ export function useDriverRideActions() {
         description: "Retournées dans le pool.",
         variant: "default",
       });
+      trackRideCancelledByDriver({ rideId: rideIds[0], isSeries: true, count: n });
       // Un seul email récap : on passe le compte exact annulé pour que l'email
       // reflète les séances réellement perdues (sélection partielle possible)
       notifyRideUnassignedServerFn({ data: { bookingId: rideIds[0], seriesAffectedCount: rideIds.length } }).catch((err) => {
@@ -185,6 +199,7 @@ export function useDriverRideActions() {
         title: `${n} séance${n > 1 ? "s" : ""} acceptée${n > 1 ? "s" : ""} — coordonnées du patient envoyées par email`,
         variant: "success",
       });
+      trackRideAccepted({ rideId: rideIds[0], isSeries: true, count: n });
       notifyBookingAcceptedServerFn({ data: { bookingId: rideIds[0] } }).catch((err) => {
         logger.warn("email.notifySeriesAccepted failed", { error: err.message, rideId: rideIds[0] });
       });
@@ -206,8 +221,9 @@ export function useDriverRideActions() {
   const rateMutation = useMutation({
     mutationFn: rateRide,
     onMutate: (vars) => setRatingId(vars.rideId),
-    onSuccess: () => {
+    onSuccess: (_, vars) => {
       toast({ title: "Avis envoyé", variant: "success" });
+      trackRideRatedByDriver(vars.rideId);
     },
     onSettled: () => {
       setRatingId(null);

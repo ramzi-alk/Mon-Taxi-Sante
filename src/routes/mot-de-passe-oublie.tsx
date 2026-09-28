@@ -9,6 +9,7 @@ import { supabase } from "~/lib/supabase";
 import { logger } from "~/lib/logger";
 import * as authRepository from "~/repositories/authRepository";
 import { Input } from "~/components/ui/input";
+import { trackPasswordResetRequested } from "~/lib/analytics";
 
 export const Route = createFileRoute("/mot-de-passe-oublie")({
   head: () => ({
@@ -48,6 +49,7 @@ function MotDePasseOubliePage() {
 
   const { mutate, isPending, isSuccess } = useMutation({
     mutationFn: requestPasswordReset,
+    onSuccess: () => trackPasswordResetRequested(),
     onError: (error: Error) => setErrorMessage(error.message),
   });
 

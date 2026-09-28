@@ -12,6 +12,7 @@ import * as driversRepository from "~/repositories/driversRepository";
 import { Input } from "~/components/ui/input";
 import { loginServerFn } from "~/server/auth";
 import { useTurnstile, TURNSTILE_SITE_KEY } from "~/hooks/useTurnstile";
+import { identifyUser, trackLoginFailed, trackLoginSucceeded } from "~/lib/analytics";
 
 export const Route = createFileRoute("/connexion")({
   head: () => ({
@@ -72,7 +73,7 @@ async function login(data: LoginSchema & { turnstileToken: string }) {
     });
   }
 
-  return { role: role ?? "patient", isAdmin };
+  return { role: role ?? "patient", isAdmin, userId: userData.user.id };
 }
 
 function ConnexionPage() {
@@ -91,12 +92,15 @@ function ConnexionPage() {
 
   const { mutate, isPending } = useMutation({
     mutationFn: login,
-    onSuccess: ({ role, isAdmin }) => {
+    onSuccess: ({ role, isAdmin, userId }) => {
+      identifyUser(userId, { role, is_admin: isAdmin });
+      trackLoginSucceeded(isAdmin ? "admin" : role);
       if (isAdmin) navigate({ to: "/admin" });
       else if (role === "driver") navigate({ to: "/tableau-de-bord/chauffeur" });
       else navigate({ to: "/" });
     },
     onError: (error: Error) => {
+      trackLoginFailed(error.message);
       setErrorMessage(ERROR_MESSAGES[error.message] ?? error.message);
       reset();
     },

@@ -9,6 +9,7 @@ import type { LookupCredentials } from "~/repositories/bookingsRepository";
 import { notifyBookingCancelledServerFn, notifyDriverPatientCancelledServerFn } from "~/server/email";
 import { logger } from "~/lib/logger";
 import { CancelReasonForm, type CancelReasonPreset } from "~/components/CancelReasonForm";
+import { trackBookingCancelled } from "~/lib/analytics";
 
 // Reformulations neutres, sans jugement sur le patient — l'objectif est de
 // comprendre pourquoi une réservation confirmée est annulée (voir enquête
@@ -57,9 +58,14 @@ export function CancelBookingAction({
             reason
           )
         : bookingsRepository.cancelBooking(supabase, bookingId, reason),
-    onSuccess: () => {
+    onSuccess: (_, reason) => {
       setConfirming(false);
       toast({ title: "Réservation annulée", variant: "success" });
+      trackBookingCancelled({
+        bookingId,
+        reason,
+        hoursUntilPickup: (new Date(pickupDatetime).getTime() - Date.now()) / 3_600_000,
+      });
       onCancelled();
       queryClient.invalidateQueries({ queryKey: ["my-bookings"] });
       notifyBookingCancelledServerFn({ data: { bookingId } }).catch((err) => {

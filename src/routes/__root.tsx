@@ -3,6 +3,7 @@ import {
   Outlet,
   HeadContent,
   Scripts,
+  useRouter,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -18,6 +19,8 @@ import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "~/lib/contact";
 import { trackCallButtonClick } from "~/lib/trackCallClick";
 import { usePhoneVisibility } from "~/hooks/usePhoneVisibility";
 import { GOOGLE_ADS_ID } from "~/lib/googleAds";
+import { getStoredConsent } from "~/lib/cookieConsent";
+import { initPostHog, posthog } from "~/lib/posthog";
 import appCss from "~/styles/app.css?url";
 
 /**
@@ -147,6 +150,31 @@ function GlobalErrorListener() {
 }
 
 /**
+ * Démarre PostHog (opt-out par défaut tant que le consentement cookies
+ * n'est pas accordé, voir CookieConsent.tsx) et envoie une pageview à
+ * chaque navigation. capture_pageview est désactivé dans posthog.init —
+ * TanStack Router est une SPA côté client, donc PostHog n'a aucune
+ * navigation full-page à observer automatiquement.
+ */
+function PostHogTracking() {
+  const router = useRouter();
+
+  useEffect(() => {
+    initPostHog(getStoredConsent() === "granted");
+    posthog.capture("$pageview");
+
+    return router.subscribe("onResolved", (event) => {
+      // Ignore pure hash changes (e.g. AuthRedirectListener consuming
+      // #access_token=...) — same route, no new page to count.
+      if (!event.pathChanged && !event.hrefChanged) return;
+      posthog.capture("$pageview");
+    });
+  }, [router]);
+
+  return null;
+}
+
+/**
  * Supabase Auth (GoTrue) redirects here after /auth/v1/verify with the
  * outcome appended as a URL hash fragment (#access_token=... on success,
  * #error=...&error_code=...&error_description=... on failure). Without
@@ -245,6 +273,7 @@ function RootDocument({ children }: { children: ReactNode }) {
           <ToastProvider>
             <GlobalErrorListener />
             <AuthRedirectListener />
+            <PostHogTracking />
             <Navbar />
             <main id="main-content">{children}</main>
             <Footer />
