@@ -68,7 +68,7 @@ function AdminParametresPage() {
               </label>
               <p className="mt-2 text-sm text-gray-500 leading-relaxed">
                 Contrôle l&apos;affichage du numéro standard ({" "}
-                <span className="font-mono">06 02 12 19 07</span>) sur l&apos;ensemble des
+                <span className="font-mono">07 45 67 17 08</span>) sur l&apos;ensemble des
                 pages publiques (en-tête, pied de page, accueil, pages villes/hôpitaux/ALD,
                 FAQ, CGV, mentions légales, suivi de réservation…). Quand il est désactivé,
                 ces pages redirigent vers le formulaire de réservation en ligne ou l&apos;email
