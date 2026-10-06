@@ -91,7 +91,7 @@ France entière · Réservation en 5 minutes
 **Extrait de site structuré** — Services : Taxi conventionné, VSL, Véhicule
 PMR, Transport longue distance
 
-**Extension d'appel** : `06 02 12 19 07`, suivi des appels activé. Si le
+**Extension d'appel** : `07 45 67 17 08`, suivi des appels activé. Si le
 standard n'est pas ouvert 24/7, poser un calendrier de diffusion sur les
 horaires réels ; `/reservation` reste disponible en continu.
 
@@ -243,7 +243,7 @@ campagne par campagne).
 | Conversion | Déclencheur | Statut dans le code |
 |---|---|---|
 | Réservation soumise | Chargement de `/reservation/confirmation` | Route existante (`src/routes/reservation/confirmation.tsx`) — poser le tag de conversion sur cette page |
-| Appel initié | Clic sur `tel:+33602121907` | Lien déjà présent partout via `CONTACT_PHONE_TEL` — activer le suivi des clics d'appel |
+| Appel initié | Clic sur `tel:+33745671708` | Lien déjà présent partout via `CONTACT_PHONE_TEL` — activer le suivi des clics d'appel |
 
 Recommandation : poser le tag de conversion en événement de page sur la
 route de confirmation plutôt que dans le callback de soumission de
