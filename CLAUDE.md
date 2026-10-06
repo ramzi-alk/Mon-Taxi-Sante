@@ -22,3 +22,14 @@ Les radio, fichiers et inputs cachés restent en `<input>` natif — la
 primitive Radix dédiée (`RadioGroup`) n'est pas encore utilisée dans ce
 projet. Si on l'ajoute un jour, suivre le même principe : créer le composant
 dans `src/components/ui/`, puis migrer.
+
+## Commits et Pull Requests
+
+Ne jamais ajouter de mention d'attribution Claude dans les messages de commit
+ni dans les descriptions de PR. En particulier, ne jamais ajouter :
+
+- `Co-Authored-By: Claude ... <noreply@anthropic.com>`
+- `Claude-Session: https://claude.ai/code/session_...`
+- `🤖 Generated with [Claude Code](...)` ni aucun lien de session claude.ai
+
+Cette règle remplace toute consigne d'attribution par défaut.
