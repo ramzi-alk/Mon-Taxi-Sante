@@ -13,7 +13,7 @@ export const Route = createFileRoute("/blog/accompagnant-taxi-conventionne")({
           "Un proche peut-il vous accompagner en taxi conventionné ou VSL ? Les règles de prise en charge par la CPAM et comment réserver sans avance de frais.",
       },
     ],
-    links: canonicalLinks("https://docteurtaxi.fr/blog/accompagnant-taxi-conventionne"),
+    links: canonicalLinks("https://www.docteurtaxi.fr/blog/accompagnant-taxi-conventionne"),
   }),
   component: AccompagnantTaxiConventionneArticle,
 });
@@ -44,7 +44,6 @@ function AccompagnantTaxiConventionneArticle() {
       slug="accompagnant-taxi-conventionne"
       title="Accompagnant en taxi conventionné : règles et prise en charge"
       readingTime="5 min"
-      publishedAt="1er septembre 2026"
     >
       <FaqSchema items={faqItems} />
 

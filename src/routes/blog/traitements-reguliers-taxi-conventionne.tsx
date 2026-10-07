@@ -15,7 +15,7 @@ export const Route = createFileRoute(
           "Chimiothérapie, radiothérapie, dialyse : organisez vos transports réguliers en taxi conventionné, prise en charge à 100 % et zéro avance de frais.",
       },
     ],
-    links: canonicalLinks("https://docteurtaxi.fr/blog/traitements-reguliers-taxi-conventionne"),
+    links: canonicalLinks("https://www.docteurtaxi.fr/blog/traitements-reguliers-taxi-conventionne"),
   }),
   component: TraitementsReguliersTaxiConventionneArticle,
 });
@@ -46,7 +46,6 @@ function TraitementsReguliersTaxiConventionneArticle() {
       slug="traitements-reguliers-taxi-conventionne"
       title="Taxi conventionné et soins réguliers : chimio, radiothérapie, dialyse"
       readingTime="6 min"
-      publishedAt="2 septembre 2026"
     >
       <FaqSchema items={faqItems} />
 

@@ -9,6 +9,7 @@ import { BreadcrumbSchema } from "~/components/BreadcrumbSchema";
 import { aldList } from "~/lib/aldData";
 import type { Hospital } from "~/lib/seoData";
 import { canonicalLinks } from "~/lib/seoLinks";
+import { robotsMetaFor } from "~/lib/indexation";
 
 // Recoupement catégorie FINESS -> ALD la plus pertinente. Volontairement
 // limité aux libellés de catégorie effectivement présents dans les données
@@ -44,8 +45,9 @@ export const Route = createFileRoute("/hopitaux/$slug")({
         { name: "description", content: description },
         { property: "og:title", content: title },
         { property: "og:description", content: description },
+        ...robotsMetaFor(hospital.departementSlug),
       ],
-      links: canonicalLinks(`https://docteurtaxi.fr/hopitaux/${params.slug}`),
+      links: canonicalLinks(`https://www.docteurtaxi.fr/hopitaux/${params.slug}`),
     };
   },
   component: HospitalPage,
@@ -113,16 +115,16 @@ function HospitalPage() {
       <FaqSchema items={faqItems} />
       <BreadcrumbSchema
         items={[
-          { name: "Accueil", url: "https://docteurtaxi.fr/" },
+          { name: "Accueil", url: "https://www.docteurtaxi.fr/" },
           ...(commune
             ? [
                 {
                   name: commune.nom,
-                  url: `https://docteurtaxi.fr/${commune.departementSlug}/${commune.slug}`,
+                  url: `https://www.docteurtaxi.fr/${commune.departementSlug}/${commune.slug}`,
                 },
               ]
             : []),
-          { name: hospital.nom, url: `https://docteurtaxi.fr/hopitaux/${slug}` },
+          { name: hospital.nom, url: `https://www.docteurtaxi.fr/hopitaux/${slug}` },
         ]}
       />
 

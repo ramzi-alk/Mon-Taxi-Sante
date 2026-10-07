@@ -28,7 +28,7 @@ export const Route = createFileRoute("/maladies/$ald")({
         { property: "og:title", content: title },
         { property: "og:description", content: description },
       ],
-      links: canonicalLinks(`https://docteurtaxi.fr/maladies/${params.ald}`),
+      links: canonicalLinks(`https://www.docteurtaxi.fr/maladies/${params.ald}`),
     };
   },
   component: MaladiePage,
@@ -62,9 +62,9 @@ function MaladiePage() {
       <FaqSchema items={faqItems} />
       <BreadcrumbSchema
         items={[
-          { name: "Accueil", url: "https://docteurtaxi.fr/" },
-          { name: "Maladies (ALD)", url: "https://docteurtaxi.fr/maladies" },
-          { name: affection.nomCourt, url: `https://docteurtaxi.fr/maladies/${affection.slug}` },
+          { name: "Accueil", url: "https://www.docteurtaxi.fr/" },
+          { name: "Maladies (ALD)", url: "https://www.docteurtaxi.fr/maladies" },
+          { name: affection.nomCourt, url: `https://www.docteurtaxi.fr/maladies/${affection.slug}` },
         ]}
       />
 

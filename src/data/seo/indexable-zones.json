@@ -1,0 +1,15 @@
+{
+  "_comment": "Seules les pages ville, hôpital et département situées dans ces départements (Oise, Somme, Île-de-France) sont indexables par Google ; les autres restent accessibles mais en noindex et hors sitemap.",
+  "departmentSlugs": [
+    "oise",
+    "somme",
+    "paris",
+    "seine-et-marne",
+    "yvelines",
+    "essonne",
+    "hauts-de-seine",
+    "seine-saint-denis",
+    "val-de-marne",
+    "val-d-oise"
+  ]
+}

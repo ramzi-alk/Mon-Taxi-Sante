@@ -13,7 +13,7 @@ export const Route = createFileRoute("/blog/retour-domicile-sortie-hopital")({
           "Comment organiser votre retour à domicile après une hospitalisation en taxi conventionné ? Bon de transport, règles CPAM et zéro avance de frais.",
       },
     ],
-    links: canonicalLinks("https://docteurtaxi.fr/blog/retour-domicile-sortie-hopital"),
+    links: canonicalLinks("https://www.docteurtaxi.fr/blog/retour-domicile-sortie-hopital"),
   }),
   component: RetourDomicileSortieHopitalArticle,
 });
@@ -44,7 +44,6 @@ function RetourDomicileSortieHopitalArticle() {
       slug="retour-domicile-sortie-hopital"
       title="Sortie d'hôpital : votre retour en taxi conventionné"
       readingTime="5 min"
-      publishedAt="4 septembre 2026"
     >
       <FaqSchema items={faqItems} />
 

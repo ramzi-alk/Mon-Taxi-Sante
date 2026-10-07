@@ -36,7 +36,7 @@ export const Route = createFileRoute("/")({
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
-    links: canonicalLinks("https://docteurtaxi.fr/"),
+    links: canonicalLinks("https://www.docteurtaxi.fr/"),
   }),
   component: HomePage,
 });
@@ -631,10 +631,10 @@ function HomeStructuredData() {
     "@graph": [
       {
         "@type": "Organization",
-        "@id": "https://docteurtaxi.fr/#organization",
+        "@id": "https://www.docteurtaxi.fr/#organization",
         name: "Docteur Taxi",
-        url: "https://docteurtaxi.fr",
-        logo: "https://docteurtaxi.fr/icons/icon-512.png",
+        url: "https://www.docteurtaxi.fr",
+        logo: "https://www.docteurtaxi.fr/icons/icon-512.png",
         description:
           "Plateforme de réservation de taxis conventionnés agréés Sécurité Sociale pour le transport médical en France.",
         ...(phoneVisible ? { telephone: CONTACT_PHONE_TEL } : {}),
@@ -644,10 +644,10 @@ function HomeStructuredData() {
       },
       {
         "@type": "WebSite",
-        "@id": "https://docteurtaxi.fr/#website",
-        url: "https://docteurtaxi.fr",
+        "@id": "https://www.docteurtaxi.fr/#website",
+        url: "https://www.docteurtaxi.fr",
         name: "Docteur Taxi",
-        publisher: { "@id": "https://docteurtaxi.fr/#organization" },
+        publisher: { "@id": "https://www.docteurtaxi.fr/#organization" },
       },
     ],
   };

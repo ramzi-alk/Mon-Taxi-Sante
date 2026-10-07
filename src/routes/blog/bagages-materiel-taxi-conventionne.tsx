@@ -15,7 +15,7 @@ export const Route = createFileRoute(
           "Valise, déambulateur ou fauteuil roulant : le matériel que vous pouvez emporter dans un taxi conventionné pour votre hospitalisation.",
       },
     ],
-    links: canonicalLinks("https://docteurtaxi.fr/blog/bagages-materiel-taxi-conventionne"),
+    links: canonicalLinks("https://www.docteurtaxi.fr/blog/bagages-materiel-taxi-conventionne"),
   }),
   component: BagagesMaterielTaxiConventionneArticle,
 });
@@ -38,7 +38,6 @@ function BagagesMaterielTaxiConventionneArticle() {
       slug="bagages-materiel-taxi-conventionne"
       title="Bagages et matériel en taxi conventionné : que peut-on emporter ?"
       readingTime="4 min"
-      publishedAt="16 septembre 2026"
     >
       <FaqSchema items={faqItems} />
 

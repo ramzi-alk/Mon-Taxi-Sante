@@ -16,7 +16,7 @@ export const Route = createFileRoute("/blog/pmt-prescription")({
           "Qu'est-ce qu'une PMT, qui peut la délivrer, sa durée de validité et comment la joindre à votre réservation de taxi conventionné pour être remboursé sans avance de frais.",
       },
     ],
-    links: canonicalLinks("https://docteurtaxi.fr/blog/pmt-prescription"),
+    links: canonicalLinks("https://www.docteurtaxi.fr/blog/pmt-prescription"),
   }),
   component: PmtPrescriptionArticle,
 });
@@ -55,7 +55,6 @@ function PmtPrescriptionArticle() {
       slug="pmt-prescription"
       title="Prescription médicale de transport (PMT) : mode d'emploi"
       readingTime="5 min"
-      publishedAt="28 mars 2026"
     >
       <FaqSchema items={faqItems} />
       <h2>Qu'est-ce qu'une PMT ?</h2>

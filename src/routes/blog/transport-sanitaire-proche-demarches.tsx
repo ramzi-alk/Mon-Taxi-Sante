@@ -15,7 +15,7 @@ export const Route = createFileRoute(
           "Aidant familial ? Les démarches pour organiser le transport sanitaire d'un proche malade en taxi conventionné, avec Tiers-Payant intégral.",
       },
     ],
-    links: canonicalLinks("https://docteurtaxi.fr/blog/transport-sanitaire-proche-demarches"),
+    links: canonicalLinks("https://www.docteurtaxi.fr/blog/transport-sanitaire-proche-demarches"),
   }),
   component: TransportSanitaireProcheDemarchesArticle,
 });
@@ -46,7 +46,6 @@ function TransportSanitaireProcheDemarchesArticle() {
       slug="transport-sanitaire-proche-demarches"
       title="Transport sanitaire d'un proche : démarches et conseils"
       readingTime="6 min"
-      publishedAt="8 septembre 2026"
     >
       <FaqSchema items={faqItems} />
 

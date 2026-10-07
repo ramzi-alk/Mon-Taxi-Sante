@@ -21,7 +21,7 @@ export const Route = createFileRoute("/tarifs-cpam")({
           "Forfait 13€, tarif/km par département, remboursement à 100% en ALD. Le détail complet de la convention nationale 2025.",
       },
     ],
-    links: canonicalLinks("https://docteurtaxi.fr/tarifs-cpam"),
+    links: canonicalLinks("https://www.docteurtaxi.fr/tarifs-cpam"),
   }),
   component: TarifsCpamPage,
 });
@@ -115,8 +115,8 @@ function TarifsCpamPage() {
       <FaqSchema items={faqItems} />
       <BreadcrumbSchema
         items={[
-          { name: "Accueil", url: "https://docteurtaxi.fr/" },
-          { name: "Tarifs CPAM", url: "https://docteurtaxi.fr/tarifs-cpam" },
+          { name: "Accueil", url: "https://www.docteurtaxi.fr/" },
+          { name: "Tarifs CPAM", url: "https://www.docteurtaxi.fr/tarifs-cpam" },
         ]}
       />
 

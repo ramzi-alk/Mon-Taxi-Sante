@@ -13,7 +13,7 @@ export const Route = createFileRoute("/blog/vsl-ou-taxi-conventionne")({
           "Taxi conventionné, VSL (Véhicule Sanitaire Léger) ou ambulance : les différences de véhicule, de conducteur, de tarif et comment choisir selon votre état de santé.",
       },
     ],
-    links: canonicalLinks("https://docteurtaxi.fr/blog/vsl-ou-taxi-conventionne"),
+    links: canonicalLinks("https://www.docteurtaxi.fr/blog/vsl-ou-taxi-conventionne"),
   }),
   component: VslOuTaxiConventionneArticle,
 });
@@ -48,7 +48,6 @@ function VslOuTaxiConventionneArticle() {
       slug="vsl-ou-taxi-conventionne"
       title="Taxi conventionné, VSL ou ambulance : quelle différence ?"
       readingTime="4 min"
-      publishedAt="21 juillet 2026"
     >
       <FaqSchema items={faqItems} />
 

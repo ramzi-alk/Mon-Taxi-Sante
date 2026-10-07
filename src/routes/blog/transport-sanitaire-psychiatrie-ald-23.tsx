@@ -15,7 +15,7 @@ export const Route = createFileRoute(
           "Vos soins psychiatriques nécessitent des déplacements réguliers ? Vos droits au taxi conventionné sans avance de frais dans le cadre de l'ALD 23.",
       },
     ],
-    links: canonicalLinks("https://docteurtaxi.fr/blog/transport-sanitaire-psychiatrie-ald-23"),
+    links: canonicalLinks("https://www.docteurtaxi.fr/blog/transport-sanitaire-psychiatrie-ald-23"),
   }),
   component: TransportSanitairePsychiatrieAld23Article,
 });
@@ -38,7 +38,6 @@ function TransportSanitairePsychiatrieAld23Article() {
       slug="transport-sanitaire-psychiatrie-ald-23"
       title="Santé mentale (ALD 23) : vos droits au transport médicalisé"
       readingTime="4 min"
-      publishedAt="17 septembre 2026"
     >
       <FaqSchema items={faqItems} />
 
