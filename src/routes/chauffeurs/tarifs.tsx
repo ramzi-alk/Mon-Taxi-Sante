@@ -12,7 +12,7 @@ export const Route = createFileRoute("/chauffeurs/tarifs")({
           "Découvrez nos formules d'abonnement pour chauffeurs conventionnés : essai gratuit, abonnement mensuel ou annuel, sans engagement.",
       },
     ],
-    links: canonicalLinks("https://docteurtaxi.fr/chauffeurs/tarifs"),
+    links: canonicalLinks("https://www.docteurtaxi.fr/chauffeurs/tarifs"),
   }),
   component: TarifsChauffeurPage,
 });

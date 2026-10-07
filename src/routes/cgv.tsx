@@ -14,7 +14,7 @@ export const Route = createFileRoute("/cgv")({
           "Conditions Générales de Vente de Docteur Taxi : réservation, prise en charge Assurance Maladie, annulation et responsabilité.",
       },
     ],
-    links: canonicalLinks("https://docteurtaxi.fr/cgv"),
+    links: canonicalLinks("https://www.docteurtaxi.fr/cgv"),
   }),
   component: CgvPage,
 });

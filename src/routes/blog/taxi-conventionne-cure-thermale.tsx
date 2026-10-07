@@ -13,7 +13,7 @@ export const Route = createFileRoute("/blog/taxi-conventionne-cure-thermale")({
           "Les règles strictes de la CPAM pour le remboursement du transport vers une cure thermale : conditions de ressources et prise en charge expliquées.",
       },
     ],
-    links: canonicalLinks("https://docteurtaxi.fr/blog/taxi-conventionne-cure-thermale"),
+    links: canonicalLinks("https://www.docteurtaxi.fr/blog/taxi-conventionne-cure-thermale"),
   }),
   component: TaxiConventionneCureThermaleArticle,
 });
@@ -36,7 +36,6 @@ function TaxiConventionneCureThermaleArticle() {
       slug="taxi-conventionne-cure-thermale"
       title="Cure thermale : le transport en taxi conventionné est-il remboursé ?"
       readingTime="4 min"
-      publishedAt="14 septembre 2026"
     >
       <FaqSchema items={faqItems} />
 

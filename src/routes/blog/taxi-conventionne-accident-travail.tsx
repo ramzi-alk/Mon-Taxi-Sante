@@ -15,7 +15,7 @@ export const Route = createFileRoute(
           "Victime d'un accident du travail ou d'une maladie professionnelle ? Comment réserver un taxi conventionné pris en charge à 100 %, sans avance de frais.",
       },
     ],
-    links: canonicalLinks("https://docteurtaxi.fr/blog/taxi-conventionne-accident-travail"),
+    links: canonicalLinks("https://www.docteurtaxi.fr/blog/taxi-conventionne-accident-travail"),
   }),
   component: TaxiConventionneAccidentTravailArticle,
 });
@@ -46,7 +46,6 @@ function TaxiConventionneAccidentTravailArticle() {
       slug="taxi-conventionne-accident-travail"
       title="Accident du travail et taxi conventionné : prise en charge"
       readingTime="5 min"
-      publishedAt="10 septembre 2026"
     >
       <FaqSchema items={faqItems} />
 

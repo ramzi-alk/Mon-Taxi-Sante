@@ -9,6 +9,7 @@ import { FaqSchema } from "~/components/FaqSchema";
 import { BreadcrumbSchema } from "~/components/BreadcrumbSchema";
 import type { Commune, Hospital } from "~/lib/seoData";
 import { canonicalLinks } from "~/lib/seoLinks";
+import { robotsMetaFor } from "~/lib/indexation";
 
 // Sélection de pathologies parmi les 30 ALD, à forte notoriété/volume de
 // recherche, pour le maillage croisé ville -> maladie (le lien "toutes les
@@ -49,12 +50,13 @@ export const Route = createFileRoute("/$department/$city")({
         { property: "og:type", content: "website" },
         {
           property: "og:url",
-          content: `https://docteurtaxi.fr/${params.department}/${params.city}`,
+          content: `https://www.docteurtaxi.fr/${params.department}/${params.city}`,
         },
         { name: "geo.region", content: `FR-${commune.codeDepartement}` },
         { name: "geo.placename", content: commune.nom },
+        ...robotsMetaFor(commune.departementSlug),
       ],
-      links: canonicalLinks(`https://docteurtaxi.fr/${params.department}/${params.city}`),
+      links: canonicalLinks(`https://www.docteurtaxi.fr/${params.department}/${params.city}`),
     };
   },
   component: LocalPage,
@@ -65,13 +67,13 @@ function LocalBusinessSchema({ commune, hospitals }: { commune: Commune; hospita
   const schema = {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
-    "@id": `https://docteurtaxi.fr/${commune.departementSlug}/${commune.slug}#business`,
+    "@id": `https://www.docteurtaxi.fr/${commune.departementSlug}/${commune.slug}#business`,
     name: `Docteur Taxi — ${commune.nom}`,
     description: `Service de taxi médical conventionné Assurance Maladie à ${commune.nom} (${commune.codeDepartement}). Transport pour dialyse, chimiothérapie, ALD. Tiers-Payant.`,
-    url: "https://docteurtaxi.fr",
+    url: "https://www.docteurtaxi.fr",
     ...(phoneVisible ? { telephone: CONTACT_PHONE_TEL } : {}),
     priceRange: "Pris en charge Assurance Maladie",
-    image: "https://docteurtaxi.fr/icons/icon-512.png",
+    image: "https://www.docteurtaxi.fr/icons/icon-512.png",
     address: {
       "@type": "PostalAddress",
       addressLocality: commune.nom,
@@ -147,14 +149,14 @@ function LocalPage() {
       <FaqSchema items={faqItems} />
       <BreadcrumbSchema
         items={[
-          { name: "Accueil", url: "https://docteurtaxi.fr/" },
+          { name: "Accueil", url: "https://www.docteurtaxi.fr/" },
           {
             name: Dept,
-            url: `https://docteurtaxi.fr/${commune.departementSlug}`,
+            url: `https://www.docteurtaxi.fr/${commune.departementSlug}`,
           },
           {
             name: City,
-            url: `https://docteurtaxi.fr/${commune.departementSlug}/${commune.slug}`,
+            url: `https://www.docteurtaxi.fr/${commune.departementSlug}/${commune.slug}`,
           },
         ]}
       />

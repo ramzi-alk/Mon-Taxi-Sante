@@ -23,7 +23,7 @@ export const Route = createFileRoute("/comment-ca-marche")({
           "Découvrez comment réserver votre taxi médical conventionné Assurance Maladie en ligne : réservation, prise en charge, déroulement du trajet et Tiers-Payant.",
       },
     ],
-    links: canonicalLinks("https://docteurtaxi.fr/comment-ca-marche"),
+    links: canonicalLinks("https://www.docteurtaxi.fr/comment-ca-marche"),
   }),
   component: CommentCaMarchePage,
 });

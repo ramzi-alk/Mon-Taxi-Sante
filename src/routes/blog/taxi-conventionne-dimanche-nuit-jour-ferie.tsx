@@ -15,7 +15,7 @@ export const Route = createFileRoute(
           "Besoin d'un taxi conventionné la nuit, un dimanche ou un jour férié ? Les règles de la CPAM et comment réserver sans avance de frais.",
       },
     ],
-    links: canonicalLinks("https://docteurtaxi.fr/blog/taxi-conventionne-dimanche-nuit-jour-ferie"),
+    links: canonicalLinks("https://www.docteurtaxi.fr/blog/taxi-conventionne-dimanche-nuit-jour-ferie"),
   }),
   component: TaxiConventionneDimancheNuitJourFerieArticle,
 });
@@ -42,7 +42,6 @@ function TaxiConventionneDimancheNuitJourFerieArticle() {
       slug="taxi-conventionne-dimanche-nuit-jour-ferie"
       title="Taxi conventionné la nuit ou le dimanche : est-ce possible ?"
       readingTime="4 min"
-      publishedAt="15 septembre 2026"
     >
       <FaqSchema items={faqItems} />
 

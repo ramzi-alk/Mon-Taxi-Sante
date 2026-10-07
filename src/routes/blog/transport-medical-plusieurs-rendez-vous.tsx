@@ -15,7 +15,7 @@ export const Route = createFileRoute(
           "Comment organiser plusieurs rendez-vous médicaux le même jour avec un taxi conventionné ? Règles de la PMT et réservation sans avance de frais.",
       },
     ],
-    links: canonicalLinks("https://docteurtaxi.fr/blog/transport-medical-plusieurs-rendez-vous"),
+    links: canonicalLinks("https://www.docteurtaxi.fr/blog/transport-medical-plusieurs-rendez-vous"),
   }),
   component: TransportMedicalPlusieursRendezVousArticle,
 });
@@ -46,7 +46,6 @@ function TransportMedicalPlusieursRendezVousArticle() {
       slug="transport-medical-plusieurs-rendez-vous"
       title="Transport médical : gérer plusieurs rendez-vous en taxi conventionné"
       readingTime="5 min"
-      publishedAt="6 septembre 2026"
     >
       <FaqSchema items={faqItems} />
 

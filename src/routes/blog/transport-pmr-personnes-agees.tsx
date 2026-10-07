@@ -13,7 +13,7 @@ export const Route = createFileRoute("/blog/transport-pmr-personnes-agees")({
           "Taxi PMR pour personnes à mobilité réduite ou en fauteuil roulant : véhicule adapté, prise en charge Assurance Maladie et comment réserver.",
       },
     ],
-    links: canonicalLinks("https://docteurtaxi.fr/blog/transport-pmr-personnes-agees"),
+    links: canonicalLinks("https://www.docteurtaxi.fr/blog/transport-pmr-personnes-agees"),
   }),
   component: TransportPmrArticle,
 });
@@ -48,7 +48,6 @@ function TransportPmrArticle() {
       slug="transport-pmr-personnes-agees"
       title="Taxi PMR : transport médical pour fauteuil roulant"
       readingTime="3 min"
-      publishedAt="21 juillet 2026"
     >
       <FaqSchema items={faqItems} />
 

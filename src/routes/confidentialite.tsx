@@ -12,7 +12,7 @@ export const Route = createFileRoute("/confidentialite")({
           "Politique de confidentialité de Docteur Taxi : données collectées, hébergement HDS, durée de conservation et vos droits RGPD.",
       },
     ],
-    links: canonicalLinks("https://docteurtaxi.fr/confidentialite"),
+    links: canonicalLinks("https://www.docteurtaxi.fr/confidentialite"),
   }),
   component: ConfidentialitePage,
 });

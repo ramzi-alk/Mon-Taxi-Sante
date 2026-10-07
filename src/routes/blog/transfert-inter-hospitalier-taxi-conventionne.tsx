@@ -15,7 +15,7 @@ export const Route = createFileRoute(
           "Vous êtes transféré d'un hôpital à un autre ? Qui organise et paie votre transport en taxi conventionné lors d'un transfert inter-hospitalier.",
       },
     ],
-    links: canonicalLinks("https://docteurtaxi.fr/blog/transfert-inter-hospitalier-taxi-conventionne"),
+    links: canonicalLinks("https://www.docteurtaxi.fr/blog/transfert-inter-hospitalier-taxi-conventionne"),
   }),
   component: TransfertInterHospitalierTaxiConventionneArticle,
 });
@@ -38,7 +38,6 @@ function TransfertInterHospitalierTaxiConventionneArticle() {
       slug="transfert-inter-hospitalier-taxi-conventionne"
       title="Transfert entre deux hôpitaux : qui organise et paie le transport ?"
       readingTime="4 min"
-      publishedAt="19 septembre 2026"
     >
       <FaqSchema items={faqItems} />
 

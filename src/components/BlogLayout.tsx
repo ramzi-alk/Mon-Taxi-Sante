@@ -3,14 +3,58 @@ import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import { BreadcrumbSchema } from "~/components/BreadcrumbSchema";
 import { BlogCoverImage } from "~/components/BlogCoverImage";
+import { blogPosts } from "~/lib/blog-posts";
 
 interface BlogLayoutProps {
   category: string;
   title: string;
   slug: string;
   readingTime: string;
-  publishedAt: string;
   children: ReactNode;
+}
+
+// JSON-LD Article — https://schema.org/Article. Les dates viennent de
+// src/data/seo/blog-dates.json (via blog-posts.ts), jamais saisies à la main
+// dans les articles : elles doivent refléter la vraie date de mise en ligne.
+function ArticleSchema({
+  title,
+  slug,
+  publishedAtIso,
+  updatedAtIso,
+}: {
+  title: string;
+  slug: string;
+  publishedAtIso: string;
+  updatedAtIso?: string;
+}) {
+  const url = `https://www.docteurtaxi.fr/blog/${slug}`;
+  const organization = {
+    "@type": "Organization",
+    name: "Docteur Taxi",
+    url: "https://www.docteurtaxi.fr",
+    logo: {
+      "@type": "ImageObject",
+      url: "https://www.docteurtaxi.fr/icons/icon-512.png",
+    },
+  };
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: title,
+    datePublished: publishedAtIso,
+    ...(updatedAtIso && { dateModified: updatedAtIso }),
+    mainEntityOfPage: url,
+    inLanguage: "fr-FR",
+    author: organization,
+    publisher: organization,
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
 }
 
 export function BlogLayout({
@@ -18,16 +62,25 @@ export function BlogLayout({
   title,
   slug,
   readingTime,
-  publishedAt,
   children,
 }: BlogLayoutProps) {
+  const post = blogPosts.find((p) => p.slug === slug);
+
   return (
     <>
+      {post && (
+        <ArticleSchema
+          title={title}
+          slug={slug}
+          publishedAtIso={post.publishedAtIso}
+          updatedAtIso={post.updatedAtIso}
+        />
+      )}
       <BreadcrumbSchema
         items={[
-          { name: "Accueil", url: "https://docteurtaxi.fr/" },
-          { name: "Guides patients", url: "https://docteurtaxi.fr/blog" },
-          { name: title, url: `https://docteurtaxi.fr/blog/${slug}` },
+          { name: "Accueil", url: "https://www.docteurtaxi.fr/" },
+          { name: "Guides patients", url: "https://www.docteurtaxi.fr/blog" },
+          { name: title, url: `https://www.docteurtaxi.fr/blog/${slug}` },
         ]}
       />
 
@@ -53,7 +106,8 @@ export function BlogLayout({
             {title}
           </h1>
           <p className="mt-4 text-sm text-white/50">
-            Publié le {publishedAt} · {readingTime} de lecture
+            {post ? `Publié le ${post.publishedAt} · ` : ""}
+            {readingTime} de lecture
           </p>
         </div>
       </section>

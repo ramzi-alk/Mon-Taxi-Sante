@@ -15,7 +15,7 @@ export const Route = createFileRoute(
           "Taxi conventionné ou ambulance pour votre rendez-vous médical ? Les critères de décision, qui tranche, et les règles de prise en charge CPAM.",
       },
     ],
-    links: canonicalLinks("https://docteurtaxi.fr/blog/taxi-conventionne-ou-ambulance-rendez-vous"),
+    links: canonicalLinks("https://www.docteurtaxi.fr/blog/taxi-conventionne-ou-ambulance-rendez-vous"),
   }),
   component: TaxiConventionneOuAmbulanceRendezVousArticle,
 });
@@ -46,7 +46,6 @@ function TaxiConventionneOuAmbulanceRendezVousArticle() {
       slug="taxi-conventionne-ou-ambulance-rendez-vous"
       title="Taxi conventionné ou ambulance : quel transport médical choisir ?"
       readingTime="5 min"
-      publishedAt="7 septembre 2026"
     >
       <FaqSchema items={faqItems} />
 

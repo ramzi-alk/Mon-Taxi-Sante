@@ -1,3 +1,5 @@
+import blogDates from "~/data/seo/blog-dates.json";
+
 export interface BlogPost {
   slug: string;
   to: string;
@@ -5,10 +7,39 @@ export interface BlogPost {
   title: string;
   excerpt: string;
   readingTime: string;
+  // Dérivés de src/data/seo/blog-dates.json (source unique, aussi lue par
+  // scripts/seo-data/generate-sitemap.mjs) : "1er septembre 2026" pour
+  // l'affichage, "2026-09-01" pour les données structurées Article.
   publishedAt: string;
+  publishedAtIso: string;
+  updatedAtIso?: string;
 }
 
-export const blogPosts: BlogPost[] = [
+const MONTHS_FR = [
+  "janvier",
+  "février",
+  "mars",
+  "avril",
+  "mai",
+  "juin",
+  "juillet",
+  "août",
+  "septembre",
+  "octobre",
+  "novembre",
+  "décembre",
+];
+
+// Formatage manuel (et non Intl) pour obtenir exactement le même texte au
+// rendu serveur et client, quel que soit l'ICU de l'environnement.
+function formatDateFr(iso: string): string {
+  const [year, month, day] = iso.split("-").map(Number);
+  return `${day === 1 ? "1er" : day} ${MONTHS_FR[month - 1]} ${year}`;
+}
+
+type RawBlogPost = Omit<BlogPost, "publishedAt" | "publishedAtIso" | "updatedAtIso">;
+
+const rawBlogPosts: RawBlogPost[] = [
   {
     slug: "transport-cpam",
     to: "/blog/transport-cpam",
@@ -17,7 +48,6 @@ export const blogPosts: BlogPost[] = [
     excerpt:
       "Quelles situations médicales ouvrent droit à un transport remboursé, comment fonctionne le Tiers-Payant et quelles démarches effectuer.",
     readingTime: "5 min",
-    publishedAt: "12 mars 2026",
   },
   {
     slug: "pmt-prescription",
@@ -27,7 +57,6 @@ export const blogPosts: BlogPost[] = [
     excerpt:
       "Qu'est-ce qu'une PMT, qui peut la délivrer, les 3 points à vérifier avant de réserver et comment la joindre à votre réservation.",
     readingTime: "5 min",
-    publishedAt: "28 mars 2026",
   },
   {
     slug: "ald-transport",
@@ -37,7 +66,6 @@ export const blogPosts: BlogPost[] = [
     excerpt:
       "Affection de Longue Durée et transport sanitaire : prise en charge à 100 %, pathologies concernées et démarches à suivre.",
     readingTime: "5 min",
-    publishedAt: "9 avril 2026",
   },
   {
     slug: "vsl-ou-taxi-conventionne",
@@ -47,7 +75,6 @@ export const blogPosts: BlogPost[] = [
     excerpt:
       "Véhicule, conducteur, tarif : les différences entre taxi conventionné, VSL et ambulance, et comment choisir selon votre état de santé.",
     readingTime: "4 min",
-    publishedAt: "21 juillet 2026",
   },
   {
     slug: "taxi-sans-prescription",
@@ -57,7 +84,6 @@ export const blogPosts: BlogPost[] = [
     excerpt:
       "Ce qui change pour votre remboursement si vous n'avez pas encore de Prescription Médicale de Transport, et comment régulariser votre dossier.",
     readingTime: "3 min",
-    publishedAt: "21 juillet 2026",
   },
   {
     slug: "transport-pmr-personnes-agees",
@@ -67,7 +93,6 @@ export const blogPosts: BlogPost[] = [
     excerpt:
       "Véhicule adapté au fauteuil roulant, prise en charge Assurance Maladie et démarches pour réserver un Taxi PMR.",
     readingTime: "3 min",
-    publishedAt: "21 juillet 2026",
   },
   {
     slug: "accompagnant-taxi-conventionne",
@@ -77,7 +102,6 @@ export const blogPosts: BlogPost[] = [
     excerpt:
       "Un proche peut-il vous accompagner en taxi conventionné ou VSL ? Les règles de l'Assurance Maladie et comment réserver votre trajet.",
     readingTime: "5 min",
-    publishedAt: "1er septembre 2026",
   },
   {
     slug: "traitements-reguliers-taxi-conventionne",
@@ -87,7 +111,6 @@ export const blogPosts: BlogPost[] = [
     excerpt:
       "Chimiothérapie, radiothérapie, dialyse : comment organiser vos transports réguliers en taxi conventionné, avec prise en charge à 100 % et zéro avance de frais.",
     readingTime: "6 min",
-    publishedAt: "2 septembre 2026",
   },
   {
     slug: "taxi-conventionne-grossesse",
@@ -97,7 +120,6 @@ export const blogPosts: BlogPost[] = [
     excerpt:
       "Échographies, rendez-vous mensuels, préparation à l'accouchement : comment bénéficier d'un taxi conventionné pendant votre grossesse avec la CPAM.",
     readingTime: "5 min",
-    publishedAt: "3 septembre 2026",
   },
   {
     slug: "retour-domicile-sortie-hopital",
@@ -107,7 +129,6 @@ export const blogPosts: BlogPost[] = [
     excerpt:
       "Comment organiser votre retour à domicile après une hospitalisation ? Qui rédige votre bon de transport et comment bénéficier du Tiers-Payant.",
     readingTime: "5 min",
-    publishedAt: "4 septembre 2026",
   },
   {
     slug: "taxi-conventionne-sans-avance-frais",
@@ -117,7 +138,6 @@ export const blogPosts: BlogPost[] = [
     excerpt:
       "Les conditions concrètes du Tiers-Payant en taxi conventionné : documents à fournir, et ce qui se passe s'il en manque un le jour du trajet.",
     readingTime: "4 min",
-    publishedAt: "5 septembre 2026",
   },
   {
     slug: "transport-medical-plusieurs-rendez-vous",
@@ -127,7 +147,6 @@ export const blogPosts: BlogPost[] = [
     excerpt:
       "Plusieurs consultations le même jour ou la même semaine ? Comment organiser vos trajets en taxi conventionné, PMT à l'appui, sans stress.",
     readingTime: "5 min",
-    publishedAt: "6 septembre 2026",
   },
   {
     slug: "taxi-conventionne-ou-ambulance-rendez-vous",
@@ -137,7 +156,6 @@ export const blogPosts: BlogPost[] = [
     excerpt:
       "Transport assis ou allongé ? Qui décide entre taxi conventionné et ambulance pour un rendez-vous médical, et ce que dit votre prescription.",
     readingTime: "5 min",
-    publishedAt: "7 septembre 2026",
   },
   {
     slug: "transport-sanitaire-proche-demarches",
@@ -147,7 +165,6 @@ export const blogPosts: BlogPost[] = [
     excerpt:
       "Aidant familial ? Les démarches pour organiser le transport médical d'un proche âgé ou malade en taxi conventionné, sans avance de frais.",
     readingTime: "6 min",
-    publishedAt: "8 septembre 2026",
   },
   {
     slug: "taxi-conventionne-accident-travail",
@@ -157,7 +174,6 @@ export const blogPosts: BlogPost[] = [
     excerpt:
       "Victime d'un accident du travail ou d'une maladie professionnelle ? Comment bénéficier d'un transport sanitaire à 100 % sans avance de frais.",
     readingTime: "5 min",
-    publishedAt: "10 septembre 2026",
   },
   {
     slug: "taxi-conventionne-cure-thermale",
@@ -167,7 +183,6 @@ export const blogPosts: BlogPost[] = [
     excerpt:
       "Les règles strictes de l'Assurance Maladie pour le remboursement de vos trajets vers une cure thermale : conditions de ressources et base de remboursement.",
     readingTime: "4 min",
-    publishedAt: "14 septembre 2026",
   },
   {
     slug: "taxi-conventionne-dimanche-nuit-jour-ferie",
@@ -177,7 +192,6 @@ export const blogPosts: BlogPost[] = [
     excerpt:
       "Peut-on réserver un taxi conventionné en dehors des heures ouvrées ? Les règles de la CPAM pour la nuit, les dimanches et les jours fériés.",
     readingTime: "4 min",
-    publishedAt: "15 septembre 2026",
   },
   {
     slug: "bagages-materiel-taxi-conventionne",
@@ -187,7 +201,6 @@ export const blogPosts: BlogPost[] = [
     excerpt:
       "Valise d'hospitalisation, déambulateur, fauteuil roulant : quel matériel emporter lors de votre trajet en taxi médicalisé.",
     readingTime: "4 min",
-    publishedAt: "16 septembre 2026",
   },
   {
     slug: "transport-sanitaire-psychiatrie-ald-23",
@@ -197,7 +210,6 @@ export const blogPosts: BlogPost[] = [
     excerpt:
       "Vos droits au taxi conventionné pour vos soins psychiatriques (CMP, hôpital de jour) dans le cadre de l'ALD 23, sans avance de frais.",
     readingTime: "4 min",
-    publishedAt: "17 septembre 2026",
   },
   {
     slug: "annulation-retard-taxi-conventionne",
@@ -207,7 +219,6 @@ export const blogPosts: BlogPost[] = [
     excerpt:
       "Rendez-vous annulé ou retard imprévu ? Comment gérer ces aléas avec votre taxi conventionné, sans frais et sans nouvelle prescription.",
     readingTime: "4 min",
-    publishedAt: "18 septembre 2026",
   },
   {
     slug: "transfert-inter-hospitalier-taxi-conventionne",
@@ -217,6 +228,15 @@ export const blogPosts: BlogPost[] = [
     excerpt:
       "Vous ou un proche êtes transféré d'un hôpital à un autre ? Les règles du transfert inter-hospitalier et la prise en charge financière.",
     readingTime: "4 min",
-    publishedAt: "19 septembre 2026",
   },
 ];
+
+export const blogPosts: BlogPost[] = rawBlogPosts.map((post) => {
+  const dates = (blogDates as Record<string, { published: string; modified?: string }>)[post.slug];
+  return {
+    ...post,
+    publishedAt: formatDateFr(dates.published),
+    publishedAtIso: dates.published,
+    updatedAtIso: dates.modified,
+  };
+});

@@ -15,7 +15,7 @@ export const Route = createFileRoute("/faq")({
           "Toutes les réponses à vos questions sur la réservation, la prise en charge Assurance Maladie, le Tiers-Payant et les chauffeurs partenaires.",
       },
     ],
-    links: canonicalLinks("https://docteurtaxi.fr/faq"),
+    links: canonicalLinks("https://www.docteurtaxi.fr/faq"),
   }),
   component: FaqPage,
 });

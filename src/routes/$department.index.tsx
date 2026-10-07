@@ -6,6 +6,7 @@ import { Input } from "~/components/ui/input";
 import { slugify } from "~/lib/utils";
 import { BreadcrumbSchema } from "~/components/BreadcrumbSchema";
 import { canonicalLinks } from "~/lib/seoLinks";
+import { robotsMetaFor } from "~/lib/indexation";
 
 export const Route = createFileRoute("/$department/")({
   // Voir le commentaire équivalent dans $department.$city.tsx : la fonction
@@ -27,8 +28,9 @@ export const Route = createFileRoute("/$department/")({
         { name: "description", content: description },
         { property: "og:title", content: title },
         { property: "og:description", content: description },
+        ...robotsMetaFor(department.slug),
       ],
-      links: canonicalLinks(`https://docteurtaxi.fr/${params.department}`),
+      links: canonicalLinks(`https://www.docteurtaxi.fr/${params.department}`),
     };
   },
   component: DepartmentPage,
@@ -48,9 +50,9 @@ function DepartmentPage() {
     <>
       <BreadcrumbSchema
         items={[
-          { name: "Accueil", url: "https://docteurtaxi.fr/" },
-          { name: "Villes desservies", url: "https://docteurtaxi.fr/villes" },
-          { name: department.nom, url: `https://docteurtaxi.fr/${department.slug}` },
+          { name: "Accueil", url: "https://www.docteurtaxi.fr/" },
+          { name: "Villes desservies", url: "https://www.docteurtaxi.fr/villes" },
+          { name: department.nom, url: `https://www.docteurtaxi.fr/${department.slug}` },
         ]}
       />
       <section className="bg-gradient-to-br from-brand-blue-700 to-brand-blue-600 text-white py-16">

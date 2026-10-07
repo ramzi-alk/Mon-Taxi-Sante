@@ -26,7 +26,7 @@ export const Route = createFileRoute("/chauffeurs/inscription")({
           "Rejoignez le réseau Docteur Taxi : chauffeurs de taxi et VSL conventionnés Assurance Maladie. Inscription en ligne, validation par notre équipe.",
       },
     ],
-    links: canonicalLinks("https://docteurtaxi.fr/chauffeurs/inscription"),
+    links: canonicalLinks("https://www.docteurtaxi.fr/chauffeurs/inscription"),
   }),
   component: InscriptionChauffeurPage,
 });

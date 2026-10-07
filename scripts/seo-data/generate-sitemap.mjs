@@ -9,11 +9,27 @@
 // automatiquement toutes les communes retenues.
 import { writeFile } from "node:fs/promises";
 import ald from "../../src/data/seo/ald.json" with { type: "json" };
+import blogDates from "../../src/data/seo/blog-dates.json" with { type: "json" };
+import indexableZones from "../../src/data/seo/indexable-zones.json" with { type: "json" };
 
-// Ce script tourne en Node pur (avant `vite build`), donc pas d'accès à
-// `import.meta.env` : on lit directement `process.env`, que Vercel (et les
-// autres CI) peuplent avec les variables VITE_* définies dans le projet.
-const BASE_URL = process.env.VITE_APP_URL ?? "https://docteurtaxi.fr";
+// Domaine canonique : doit rester identique à celui codé en dur dans les
+// balises canonical/hreflang des routes (src/routes/**, via canonicalLinks) et
+// à la redirection Vercel docteurtaxi.fr -> www.docteurtaxi.fr. Volontairement
+// PAS lu depuis VITE_APP_URL : une variable d'environnement divergente
+// réintroduirait un sitemap sur une autre adresse que les canonical.
+const BASE_URL = "https://www.docteurtaxi.fr";
+
+// Seules les pages ville / hôpital / département des zones listées dans
+// indexable-zones.json sont indexables (les autres sont en noindex, cf.
+// src/lib/indexation.ts) : elles n'ont donc rien à faire dans le sitemap.
+const indexableDepartments = new Set(indexableZones.departmentSlugs);
+
+function latestBlogDate() {
+  return Object.values(blogDates)
+    .map((d) => d.modified ?? d.published)
+    .sort()
+    .at(-1);
+}
 
 const STATIC_PAGES = [
   { path: "/", changefreq: "weekly", priority: "1.0" },
@@ -22,28 +38,7 @@ const STATIC_PAGES = [
   { path: "/faq", changefreq: "monthly", priority: "0.7" },
   { path: "/chauffeurs/inscription", changefreq: "monthly", priority: "0.7" },
   { path: "/chauffeurs/tarifs", changefreq: "monthly", priority: "0.6" },
-  { path: "/blog", changefreq: "weekly", priority: "0.6" },
-  { path: "/blog/transport-cpam", changefreq: "yearly", priority: "0.6" },
-  { path: "/blog/pmt-prescription", changefreq: "yearly", priority: "0.6" },
-  { path: "/blog/ald-transport", changefreq: "yearly", priority: "0.6" },
-  { path: "/blog/vsl-ou-taxi-conventionne", changefreq: "yearly", priority: "0.6" },
-  { path: "/blog/taxi-sans-prescription", changefreq: "yearly", priority: "0.6" },
-  { path: "/blog/transport-pmr-personnes-agees", changefreq: "yearly", priority: "0.6" },
-  { path: "/blog/accompagnant-taxi-conventionne", changefreq: "yearly", priority: "0.6" },
-  { path: "/blog/traitements-reguliers-taxi-conventionne", changefreq: "yearly", priority: "0.6" },
-  { path: "/blog/taxi-conventionne-grossesse", changefreq: "yearly", priority: "0.6" },
-  { path: "/blog/retour-domicile-sortie-hopital", changefreq: "yearly", priority: "0.6" },
-  { path: "/blog/taxi-conventionne-sans-avance-frais", changefreq: "yearly", priority: "0.6" },
-  { path: "/blog/transport-medical-plusieurs-rendez-vous", changefreq: "yearly", priority: "0.6" },
-  { path: "/blog/taxi-conventionne-ou-ambulance-rendez-vous", changefreq: "yearly", priority: "0.6" },
-  { path: "/blog/transport-sanitaire-proche-demarches", changefreq: "yearly", priority: "0.6" },
-  { path: "/blog/taxi-conventionne-accident-travail", changefreq: "yearly", priority: "0.6" },
-  { path: "/blog/taxi-conventionne-cure-thermale", changefreq: "yearly", priority: "0.6" },
-  { path: "/blog/taxi-conventionne-dimanche-nuit-jour-ferie", changefreq: "yearly", priority: "0.6" },
-  { path: "/blog/bagages-materiel-taxi-conventionne", changefreq: "yearly", priority: "0.6" },
-  { path: "/blog/transport-sanitaire-psychiatrie-ald-23", changefreq: "yearly", priority: "0.6" },
-  { path: "/blog/annulation-retard-taxi-conventionne", changefreq: "yearly", priority: "0.6" },
-  { path: "/blog/transfert-inter-hospitalier-taxi-conventionne", changefreq: "yearly", priority: "0.6" },
+  { path: "/blog", changefreq: "weekly", priority: "0.6", lastmod: latestBlogDate() },
   { path: "/villes", changefreq: "monthly", priority: "0.8" },
   { path: "/maladies", changefreq: "monthly", priority: "0.8" },
   { path: "/cgv", changefreq: "yearly", priority: "0.3" },
@@ -97,12 +92,14 @@ async function main() {
   const hospitals = await loadHospitals();
 
   const cityUrls = communes
-    ? communes.map((c) => ({
-        path: `/${c.departementSlug}/${c.slug}`,
-        changefreq: "monthly",
-        // Les plus grandes villes ont une priorité légèrement plus élevée.
-        priority: c.population >= 50000 ? "0.8" : "0.6",
-      }))
+    ? communes
+        .filter((c) => indexableDepartments.has(c.departementSlug))
+        .map((c) => ({
+          path: `/${c.departementSlug}/${c.slug}`,
+          changefreq: "monthly",
+          // Les plus grandes villes ont une priorité légèrement plus élevée.
+          priority: c.population >= 50000 ? "0.8" : "0.6",
+        }))
     : FALLBACK_CITIES.map(({ department, city }) => ({
         path: `/${department}/${city}`,
         changefreq: "monthly",
@@ -111,9 +108,11 @@ async function main() {
 
   // Une page /$department par département ayant au moins une commune
   // retenue (maillage interne — voir src/routes/$department.index.tsx).
-  const departmentSlugs = communes
-    ? [...new Set(communes.map((c) => c.departementSlug))]
-    : [...new Set(FALLBACK_CITIES.map((c) => c.department))];
+  const departmentSlugs = (
+    communes
+      ? [...new Set(communes.map((c) => c.departementSlug))]
+      : [...new Set(FALLBACK_CITIES.map((c) => c.department))]
+  ).filter((slug) => indexableDepartments.has(slug));
   const departmentUrls = departmentSlugs.map((slug) => ({
     path: `/${slug}`,
     changefreq: "monthly",
@@ -129,19 +128,33 @@ async function main() {
   // Une page /hopitaux/$slug uniquement pour les établissements reliés à une
   // ville connue (voir fetch-hospitals.mjs) — pas de slug sinon.
   const hospitalUrls = (hospitals ?? [])
-    .filter((h) => h.slug)
+    .filter((h) => h.slug && indexableDepartments.has(h.departementSlug))
     .map((h) => ({
       path: `/hopitaux/${h.slug}`,
       changefreq: "yearly",
       priority: "0.5",
     }));
 
-  const allUrls = [...STATIC_PAGES, ...departmentUrls, ...cityUrls, ...aldUrls, ...hospitalUrls];
+  const blogUrls = Object.entries(blogDates).map(([slug, d]) => ({
+    path: `/blog/${slug}`,
+    changefreq: "yearly",
+    priority: "0.6",
+    lastmod: d.modified ?? d.published,
+  }));
+
+  const allUrls = [
+    ...STATIC_PAGES,
+    ...blogUrls,
+    ...departmentUrls,
+    ...cityUrls,
+    ...aldUrls,
+    ...hospitalUrls,
+  ];
 
   const body = allUrls
     .map(
-      ({ path, changefreq, priority }) => `  <url>
-    <loc>${xmlEscape(BASE_URL + path)}</loc>
+      ({ path, changefreq, priority, lastmod }) => `  <url>
+    <loc>${xmlEscape(BASE_URL + path)}</loc>${lastmod ? `\n    <lastmod>${lastmod}</lastmod>` : ""}
     <changefreq>${changefreq}</changefreq>
     <priority>${priority}</priority>
   </url>`
@@ -153,7 +166,7 @@ async function main() {
   await writeFile(new URL("../../public/sitemap.xml", import.meta.url), xml);
 
   console.log(
-    `✓ sitemap.xml généré avec ${allUrls.length} URLs (${cityUrls.length} pages villes, ${aldUrls.length} pages maladies, ${hospitalUrls.length} pages hôpitaux, source: ${
+    `✓ sitemap.xml généré avec ${allUrls.length} URLs (${cityUrls.length} pages villes, ${blogUrls.length} articles, ${aldUrls.length} pages maladies, ${hospitalUrls.length} pages hôpitaux, source: ${
       communes ? "src/data/seo/communes.json" : "liste de secours (communes.json absent)"
     })`
   );

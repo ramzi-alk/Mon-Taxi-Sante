@@ -15,7 +15,7 @@ export const Route = createFileRoute(
           "Votre rendez-vous médical est annulé ou en retard ? Comment gérer ces imprévus avec votre taxi conventionné, et s'il y a des frais à prévoir.",
       },
     ],
-    links: canonicalLinks("https://docteurtaxi.fr/blog/annulation-retard-taxi-conventionne"),
+    links: canonicalLinks("https://www.docteurtaxi.fr/blog/annulation-retard-taxi-conventionne"),
   }),
   component: AnnulationRetardTaxiConventionneArticle,
 });
@@ -38,7 +38,6 @@ function AnnulationRetardTaxiConventionneArticle() {
       slug="annulation-retard-taxi-conventionne"
       title="Annulation ou retard de rendez-vous : quid de votre taxi ?"
       readingTime="4 min"
-      publishedAt="18 septembre 2026"
     >
       <FaqSchema items={faqItems} />
 

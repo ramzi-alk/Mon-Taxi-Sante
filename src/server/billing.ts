@@ -7,7 +7,7 @@ import { getStripeClient, stripePriceIdForPlan, type DriverSubscriptionPlan } fr
 import { withServerFnLogging, logger } from "~/lib/logger";
 
 function appUrl(): string {
-  return (import.meta.env.VITE_APP_URL as string | undefined) ?? "https://docteurtaxi.fr";
+  return (import.meta.env.VITE_APP_URL as string | undefined) ?? "https://www.docteurtaxi.fr";
 }
 
 // Même pattern que savePushSubscriptionServerFn (src/server/push.ts) :

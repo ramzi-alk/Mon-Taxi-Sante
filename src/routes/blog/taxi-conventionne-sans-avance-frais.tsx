@@ -15,7 +15,7 @@ export const Route = createFileRoute(
           "Comment bénéficier d'un taxi conventionné remboursé sans avance de frais ? Le fonctionnement concret du Tiers-Payant et les documents à préparer.",
       },
     ],
-    links: canonicalLinks("https://docteurtaxi.fr/blog/taxi-conventionne-sans-avance-frais"),
+    links: canonicalLinks("https://www.docteurtaxi.fr/blog/taxi-conventionne-sans-avance-frais"),
   }),
   component: TaxiConventionneSansAvanceFraisArticle,
 });
@@ -46,7 +46,6 @@ function TaxiConventionneSansAvanceFraisArticle() {
       slug="taxi-conventionne-sans-avance-frais"
       title="Taxi conventionné : comment être remboursé sans avancer les frais ?"
       readingTime="4 min"
-      publishedAt="5 septembre 2026"
     >
       <FaqSchema items={faqItems} />
 

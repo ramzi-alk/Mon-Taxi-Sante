@@ -6,4 +6,4 @@ Disallow: /tableau-de-bord/
 Disallow: /connexion
 Disallow: /reservation/
 
-Sitemap: https://docteurtaxi.fr/sitemap.xml
+Sitemap: https://www.docteurtaxi.fr/sitemap.xml

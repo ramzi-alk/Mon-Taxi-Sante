@@ -14,7 +14,7 @@ export const Route = createFileRoute("/mentions-legales")({
           "Mentions légales du site Docteur Taxi : éditeur, hébergement, propriété intellectuelle et droit applicable.",
       },
     ],
-    links: canonicalLinks("https://docteurtaxi.fr/mentions-legales"),
+    links: canonicalLinks("https://www.docteurtaxi.fr/mentions-legales"),
   }),
   component: MentionsLegalesPage,
 });

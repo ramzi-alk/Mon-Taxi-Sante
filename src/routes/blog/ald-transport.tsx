@@ -13,7 +13,7 @@ export const Route = createFileRoute("/blog/ald-transport")({
           "ALD et transport sanitaire : prise en charge à 100% avec Prescription Médicale de Transport, pathologies concernées, démarches et Tiers-Payant sans avance de frais.",
       },
     ],
-    links: canonicalLinks("https://docteurtaxi.fr/blog/ald-transport"),
+    links: canonicalLinks("https://www.docteurtaxi.fr/blog/ald-transport"),
   }),
   component: AldTransportArticle,
 });
@@ -48,7 +48,6 @@ function AldTransportArticle() {
       slug="ald-transport"
       title="Transport ALD : tout savoir"
       readingTime="5 min"
-      publishedAt="9 avril 2026"
     >
       <FaqSchema items={faqItems} />
       <h2>Qu'est-ce qu'une Affection de Longue Durée (ALD) ?</h2>
